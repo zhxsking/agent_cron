@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 2,
-  "last_run_date": "2026-07-30",
+  "last_index": 3,
+  "last_run_date": "2026-07-31",
   "papers_covered": [
     {
       "index": 1,
@@ -18,10 +18,18 @@
       "date": "2018-10-11",
       "era": "预训练范式期 2018–2020",
       "filename": "2_20260730_BERT.html"
+    },
+    {
+      "index": 3,
+      "title_en": "Language Models are Unsupervised Multitask Learners",
+      "title_zh": "GPT-2：语言模型本身就是无监督多任务学习器",
+      "date": "2019-02-14",
+      "era": "预训练范式期 2018–2020",
+      "filename": "3_20260731_GPT-2.html"
     }
   ],
   "next_preview": {
-    "title_en": "Language Models are Unsupervised Multitask Learners",
-    "title_zh": "GPT-2：语言模型本身就是无监督多任务学习器"
+    "title_en": "Language Models are Few-Shot Learners",
+    "title_zh": "GPT-3：语言模型是少样本学习器"
   }
 }

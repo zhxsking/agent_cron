@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPT-2 论文精读 · 大模型经典论文系列 #003</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:38px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  /* 中文没有真实斜体设计，混排斜体会被浏览器"伪斜体"强行倾斜 CJK 字形，
+     可读性差且违背"禁止伪斜体"的初衷。默认 <em> 用于中文/中英混排强调，
+     改用颜色+字重区分，不使用斜体。 */
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  /* 仅当强调内容是纯英文/拉丁字母（如论文英文标题、模型英文名等）时，
+     才使用 Lora 的真实 ital 轴斜体：<em class="latin">Attention</em> */
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:28px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#003</span>
+  </div>
+
+  <h1 class="title">
+    Language Models are Unsupervised Multitask Learners
+    <span class="en">GPT-2：语言模型本身就是无监督多任务学习器</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Alec Radford, Jeffrey Wu, Rewon Child, David Luan, Dario Amodei, Ilya Sutskever</span>
+    <span>机构：OpenAI</span>
+    <span>发表：2019-02 / OpenAI 技术报告 + 博客</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf" target="_blank" rel="noopener">论文 PDF</a>
+    <a href="https://github.com/openai/gpt-2" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://openai.com/index/better-language-models/" target="_blank" rel="noopener">Project</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">上篇我们读完 BERT，它在"理解"战场上所向披靡，靠的是预训练加微调——但每来一个新任务，你都得为它重新搭一个输出层、标注一批数据、跑一轮梯度下降。OpenAI 那边坐不住了：如果模型足够大、数据足够多，是不是连"微调"这一步都可以省掉？</p>
+
+  <p class="lead">2019 年 2 月 14 日，情人节那天，OpenAI 丢出一份不像论文的论文——没有 arXiv 编号、没有正式会议、只有一篇博客加一份技术报告 PDF。但他们做了一件让整个 AI 圈炸锅的事：<em>宣布训练出了一个"太危险"所以不打算发布的模型</em>。这份"危险"的礼物，就是 GPT-2。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    GPT-2 用一个 15 亿参数的纯解码器语言模型，只做"预测下一个词"这一件事，就能在不微调、不标注的情况下完成翻译、问答、摘要、阅读理解——它证明了<em>语言模型本身就是无监督多任务学习器</em>。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>如果说 Transformer 是一把锻造好的利刃、BERT 是把它磨成"理解"工具，那么 GPT-2 干的是另一件更野心勃勃的事——<em>把"任务"这个概念本身干掉</em>。在 BERT 的世界里，情感分析、问答、命名实体识别是十几个不同的下游任务，每个都要单独微调；在 GPT-2 的世界里，这些全是同一件事：<em>给定一段文本，接着往下写</em>。翻译就是"中文：英文："后面接英文，问答就是"问：… 答："后面接答案，摘要就是文章末尾加个"TL;DR:"。</p>
+  <p>这个看似简单的"重新定义任务"，直接把 NLP 的接口从"一个任务一个模型"压缩成了"一个模型一段提示词"。今天我们用 ChatGPT 写代码、改简历、做翻译，背后那套"对话即接口"的哲学，源头就在 GPT-2。它承接了 GPT-1 的解码器路线和 Transformer 架构，又开启了后来 GPT-3 few-shot、ChatGPT 对话的整条产品线。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowT1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="130" x2="660" y2="130" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 2013 word2vec -->
+        <circle cx="80" cy="130" r="5" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="80" y="108" text-anchor="middle">2013</text>
+        <text x="80" y="158" text-anchor="middle" fill="#2E2A22">word2vec</text>
+
+        <!-- 2017 Transformer 已解析 -->
+        <circle cx="220" cy="130" r="7" fill="#24555A" stroke="#24555A"/>
+        <text x="220" y="104" text-anchor="middle" fill="#24555A" font-weight="600">2017</text>
+        <text x="220" y="160" text-anchor="middle" fill="#24555A" font-weight="600">Transformer ✓</text>
+
+        <!-- 2018 GPT-1 / BERT -->
+        <circle cx="340" cy="130" r="7" fill="#24555A" stroke="#24555A"/>
+        <text x="340" y="104" text-anchor="middle" fill="#24555A" font-weight="600">2018</text>
+        <text x="340" y="160" text-anchor="middle" fill="#24555A" font-weight="600">BERT ✓ / GPT-1</text>
+
+        <!-- 2019 GPT-2 本篇 -->
+        <circle cx="440" cy="130" r="9" fill="#B54A2C" stroke="#B54A2C"/>
+        <text x="440" y="96" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="440" y="164" text-anchor="middle" fill="#2E2A22" font-weight="600">GPT-2 (2019)</text>
+
+        <!-- 2020 GPT-3 -->
+        <circle cx="540" cy="130" r="5" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="540" y="108" text-anchor="middle">2020</text>
+        <text x="540" y="158" text-anchor="middle" fill="#2E2A22">GPT-3</text>
+
+        <!-- 2022 ChatGPT -->
+        <circle cx="640" cy="130" r="5" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="640" y="108" text-anchor="middle">2022</text>
+        <text x="640" y="158" text-anchor="middle" fill="#2E2A22">ChatGPT</text>
+
+        <!-- 时代带 -->
+        <rect x="40" y="195" width="180" height="34" fill="#24555A" fill-opacity="0.06"/>
+        <text x="130" y="216" text-anchor="middle" fill="#24555A">奠基期 2014–2017</text>
+        <rect x="230" y="195" width="410" height="34" fill="#B54A2C" fill-opacity="0.07"/>
+        <text x="435" y="216" text-anchor="middle" fill="#B54A2C">预训练范式期 2018–2020</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的位置：GPT-2 站在"预训练范式期"中段，是从"微调"走向"提示"的关键中转站</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要理解 GPT-2 为什么重要，得先回到 2018 年那个"多任务学习"的死结。彼时 NLP 圈有个共识：<em>人类语言的任务种类实在太多</em>——翻译、问答、摘要、情感分析、文本蕴含、命名实体……每一种都需要专门的标注数据，每一种都得微调一遍模型。研究者们幻想过一种"通用模型"：训练一次，什么任务都能做。但这条路一直走不通，原因有两个：</p>
+  <ul>
+    <li><em>多任务学习需要混合数据集</em>：你要把翻译对、问答对、摘要对全部揉到一起训练，但每个任务的样本量、格式、损失函数都不同，工程上极难平衡，谁多了谁就压倒谁。</li>
+    <li><em>监督信号太贵</em>：每加一个任务就要请人标注一批新数据，标注成本是 NLP 的天花板。无标注文本倒是有几十个 TB，但怎么让模型从纯文本里"自学"出任务能力？没人知道。</li>
+  </ul>
+  <p>OpenAI 的核心洞察来自一句朴素到离谱的观察：<em>自然语言的文本里，本身就嵌着无数"任务示范"</em>。一篇新闻稿里，标题就是这篇文章的摘要；一个论坛帖子里，问题后面跟着答案；一份双语对照网页里，左栏英文右栏法文就是翻译对。如果模型只是去"预测下一个词"，它就必须学会摘要、问答、翻译这些能力，否则它就预测不准。换句话说——<em>语言建模的目标函数里，已经天然包含了一切任务</em>。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象一个小孩，从来没上过课，只是把整个互联网的网页一页页读下去。读到"问：地球到月亮多远？答：约 38 万公里"这种段落，他不知不觉就学会了问答；读到"标题：xxx 正文：xxx"，他学会了写摘要；读到中英对照页面，他学会了翻译。没人告诉他"你在学翻译"，他只是想把每句话的下一个词猜对——但为了猜对，他不得不顺手把这些任务都学会。GPT-2 想做的，就是把这台"猜测下一个词的机器"放大到极致，看看它能不能像这个小孩一样，把任务能力"长"出来。
+  </div>
+
+  <p>这正是论文标题的来由——<em class="latin">Language Models are Unsupervised Multitask Learners</em>（语言模型就是无监督多任务学习器）。它不是在描述一个新方法，而是在抛出一个赌注：规模够大，能力就会涌现。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>一句话：<em>能不能用一个纯语言模型，在不微调、不监督任何具体任务的情况下，靠"预测下一个词"学会完成各种 NLP 任务？</em></p>
+  <p>更技术化地说，作者想验证一个假设——当语言模型的容量和数据规模都足够大时，标准的语言建模目标 $P(\text{output} \mid \text{input})$ 会自然学会任务条件化：给定一个任务提示（比如翻译任务的"中文：你好 英文："），模型能继续生成符合任务格式的答案。如果能成，就等于把"多任务学习"从"精心混合多个监督数据集"简化成"在一个无标注语料上无监督训练一次"。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果让你设计一个翻译任务的"提示词"喂给一个只会续写文本的语言模型，你会怎么写？提示：想想平时网页上"中英对照"是怎么排版的。再想想：摘要任务能不能也用类似的"网页排版"思路来诱导？
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>GPT-2 的方法可以用三个关键词概括：<em>放大、换料、零调</em>。放大模型和数据规模、换更干净更广阔的训练语料、零微调直接用提示词评估。下面我们分四步拆解。</p>
+
+  <h3>4.1 架构：把 GPT-1 放大十倍</h3>
+  <p>GPT-2 在架构上几乎没有发明新东西，它就是把 GPT-1 那套纯解码器 Transformer 原封不动地放大了十倍。但有几个看似不起眼、却影响深远的小改动：</p>
+  <ul>
+    <li><em>Pre-LN（前置 LayerNorm）</em>：把 LayerNorm 从子层后面挪到子层输入处。这个改动让深层 Transformer 训练更稳定，后来几乎所有大模型都沿用了它。</li>
+    <li><em>初始化按层缩放</em>：残差层权重按 $1/\sqrt{N}$ 缩放，$N$ 是层数。同样是为了让 48 层这么深的网络能训得动。</li>
+    <li><em>Byte-level BPE 分词</em>：词表从 GPT-1 的约 4 万扩到 50,257，并且基于字节而非字符做 BPE。好处是任何字符串都能被编码，永远不会出现"未知词 <span class="mono">&lt;unk&gt;</span>"——一个表情包、一个生僻汉字，模型都能逐字节处理。</li>
+    <li><em>上下文窗口 1024</em>：是 GPT-1 的两倍。看似不大，但对生成连贯长文至关重要。</li>
+  </ul>
+
+  <table>
+    <thead>
+      <tr><th>模型</th><th>层数</th><th>隐藏维度</th><th>注意力头</th><th>参数量</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">GPT-2 Small</td><td>12</td><td>768</td><td>12</td><td>124M</td></tr>
+      <tr><td class="text">GPT-2 Medium</td><td>24</td><td>1024</td><td>16</td><td>355M</td></tr>
+      <tr><td class="text">GPT-2 Large</td><td>36</td><td>1280</td><td>20</td><td>774M</td></tr>
+      <tr><td class="text">GPT-2 XL（论文主角）</td><td>48</td><td>1600</td><td>25</td><td>1.5B</td></tr>
+    </tbody>
+  </table>
+
+  <p>注意 Small 这一档的参数量，恰好和 BERT-Base 一模一样（都是 12 层 768 维 124M 左右）。这种"对齐基线"的小心思和 BERT 论文如出一辙——大家都想在同等规模下证明自己路线的优越。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 360" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowM1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 输入端 -->
+        <text x="130" y="32" text-anchor="middle" font-weight="600" fill="#24555A">输入：提示词序列</text>
+        <rect x="40" y="48" width="180" height="36" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="130" y="71" text-anchor="middle">Byte-level BPE 编码</text>
+        <rect x="40" y="92" width="180" height="36" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="130" y="115" text-anchor="middle">Token + Position Embed</text>
+
+        <!-- 中间：解码器堆叠 -->
+        <text x="350" y="32" text-anchor="middle" font-weight="600" fill="#B54A2C">解码器堆叠 ×48（核心）</text>
+        <rect x="270" y="48" width="160" height="34" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="350" y="70" text-anchor="middle" fill="#B54A2C">LayerNorm（前置）</text>
+        <rect x="270" y="88" width="160" height="34" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="350" y="110" text-anchor="middle" fill="#B54A2C">掩码多头自注意力</text>
+        <rect x="270" y="128" width="160" height="34" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="350" y="150" text-anchor="middle" fill="#B54A2C">LayerNorm + FFN</text>
+        <rect x="270" y="168" width="160" height="34" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="350" y="190" text-anchor="middle" fill="#B54A2C">残差连接</text>
+        <text x="350" y="220" text-anchor="middle" fill="#96897A">⋮ 重复 48 层</text>
+
+        <!-- 输出 -->
+        <text x="570" y="32" text-anchor="middle" font-weight="600" fill="#24555A">输出：下一个词概率</text>
+        <rect x="480" y="100" width="180" height="60" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="570" y="125" text-anchor="middle" fill="#24555A">softmax 词表分布</text>
+        <text x="570" y="145" text-anchor="middle" fill="#24555A">50,257 维</text>
+
+        <!-- 箭头 -->
+        <line x1="220" y1="110" x2="270" y2="110" stroke="#96897A" stroke-width="1" marker-end="url(#arrowM1)"/>
+        <line x1="430" y1="110" x2="480" y2="125" stroke="#96897A" stroke-width="1" marker-end="url(#arrowM1)"/>
+
+        <!-- 自回归回环 -->
+        <path d="M570 175 Q 570 260 350 260 Q 130 260 130 168" stroke="#96897A" stroke-width="1" fill="none" stroke-dasharray="4 3" marker-end="url(#arrowM1)"/>
+        <text x="350" y="280" text-anchor="middle" fill="#96897A" font-size="11">自回归：预测出的 token 再喂回去，继续生成下一个</text>
+
+        <text x="350" y="320" text-anchor="middle" fill="#B54A2C" font-weight="600">训练只做一件事：最大化每个位置的下一个词概率</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · GPT-2 架构与自回归生成循环：48 层解码器堆叠 + 掩码自注意力，输出再喂回输入继续生成</figcaption>
+  </figure>
+
+  <h3>4.2 训练数据：WebText， Reddit 投票当滤网</h3>
+  <p>GPT-2 最被低估的"创新"其实是数据。OpenAI 没用现成的 Wikipedia 或 Common Crawl，而是自己造了一个新数据集 <em class="latin">WebText</em>。做法朴素到惊人：</p>
+  <ol>
+    <li>从 Reddit 上抓所有至少有 3 个赞的外链（karma ≥ 3）；</li>
+    <li>抓取这些外链对应的网页正文，去掉 HTML 和导航；</li>
+    <li>去重、清洗、过滤；</li>
+    <li>显式剔除 Wikipedia——因为它出现在太多评测集里，混进去会"作弊"。</li>
+  </ol>
+  <p>最终得到约 4500 万条链接、清洗后约 800 万篇文档、文本量约 40GB，对应约 100 亿 token。这个"karma ≥ 3"的简单滤网是关键——它不是"高质量"的精确定义，但至少过滤掉了大量垃圾内容、营销灌水、机器人评论，留下的多是真实人类认真写的东西。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    你想训练一个会"接话"的模型，给它喂什么文本很关键。给它喂电话推销话术，它学到的就是推销腔；给它喂贴吧水帖，它学到的就是网络梗。OpenAI 的"karma ≥ 3"是个粗暴但有效的过滤——相当于让 Reddit 用户当编辑，凡是没人愿意点赞的网页直接扔掉。这是早期大模型数据工程的雏形，后来 LLaMA、RefinedWeb、RedPajama 都在沿用类似的"质量信号过滤"思路。
+  </div>
+
+  <p>有意思的是，OpenAI 在论文里特地提了一句：<em>即使 GPT-2 已经 1.5B 参数，它在 WebText 上仍然欠拟合（underfit）</em>——也就是说模型还没学够，再加训练还能继续降 loss。这是"scale 还没到头"的第一个明确信号，也直接为后来的 GPT-3 埋了伏笔。</p>
+
+  <h3>4.3 训练目标：就这一个公式</h3>
+  <p>GPT-2 的训练目标朴素得像道课后习题——标准的自回归语言建模：</p>
+
+  <div class="formula-block">
+    $$ \mathcal{L} = -\sum_{i=1}^{n} \log P(x_i \mid x_{<i}), \quad P(x_i \mid x_{<i}) = \text{softmax}(W h_i) $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>其中 $x_{<i}$ 是第 $i$ 个位置之前的所有 token，$h_i$ 是 48 层解码器在位置 $i$ 的输出隐状态，$W$ 是把隐状态映射回 50,257 维词表的投影矩阵。整个模型只做一件事：<em>在每个位置上，最大化真实下一个词的概率</em>。没有 BERT 那种 [MASK] 标记，没有 NSP 那种辅助任务，没有对比学习，没有任何花活。OpenAI 的赌注是——只要这个目标足够大，任务能力会"白送"。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowM2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 训练流程 -->
+        <text x="350" y="28" text-anchor="middle" font-weight="600" fill="#24555A">训练流程（无监督，单目标）</text>
+        <rect x="40" y="50" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="100" y="78" text-anchor="middle">WebText</text>
+        <text x="100" y="94" text-anchor="middle" font-size="10" fill="#96897A">40GB · 8M 文档</text>
+
+        <rect x="200" y="50" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="260" y="78" text-anchor="middle">BPE 分词</text>
+        <text x="260" y="94" text-anchor="middle" font-size="10" fill="#96897A">50,257 词表</text>
+
+        <rect x="360" y="50" width="140" height="50" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="430" y="78" text-anchor="middle" fill="#B54A2C" font-weight="600">解码器训练</text>
+        <text x="430" y="94" text-anchor="middle" font-size="10" fill="#96897A">预测下一个词</text>
+
+        <rect x="540" y="50" width="120" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="600" y="78" text-anchor="middle" fill="#24555A" font-weight="600">GPT-2 权重</text>
+        <text x="600" y="94" text-anchor="middle" font-size="10" fill="#96897A">1.5B 参数</text>
+
+        <line x1="160" y1="75" x2="200" y2="75" stroke="#96897A" marker-end="url(#arrowM2)"/>
+        <line x1="320" y1="75" x2="360" y2="75" stroke="#96897A" marker-end="url(#arrowM2)"/>
+        <line x1="500" y1="75" x2="540" y2="75" stroke="#96897A" marker-end="url(#arrowM2)"/>
+
+        <!-- 评估流程 -->
+        <text x="350" y="170" text-anchor="middle" font-weight="600" fill="#B54A2C">评估流程（zero-shot，不调任何参数）</text>
+        <rect x="40" y="190" width="140" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="110" y="210" text-anchor="middle">任务提示词</text>
+        <text x="110" y="226" text-anchor="middle" font-size="10" fill="#96897A">"问：… 答："</text>
+
+        <rect x="220" y="190" width="140" height="50" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="290" y="210" text-anchor="middle" fill="#B54A2C">GPT-2 续写</text>
+        <text x="290" y="226" text-anchor="middle" font-size="10" fill="#96897A">不更新梯度</text>
+
+        <rect x="400" y="190" width="140" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="470" y="210" text-anchor="middle" fill="#24555A">取生成结果</text>
+        <text x="470" y="226" text-anchor="middle" font-size="10" fill="#96897A">作为答案</text>
+
+        <rect x="580" y="190" width="80" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="620" y="218" text-anchor="middle" font-size="11">打分</text>
+
+        <line x1="180" y1="215" x2="220" y2="215" stroke="#96897A" marker-end="url(#arrowM2)"/>
+        <line x1="360" y1="215" x2="400" y2="215" stroke="#96897A" marker-end="url(#arrowM2)"/>
+        <line x1="540" y1="215" x2="580" y2="215" stroke="#96897A" marker-end="url(#arrowM2)"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 训练与评估双流程：训练只做"下一个词"，评估直接用提示词续写，全程无梯度更新</figcaption>
+  </figure>
+
+  <h3>4.4 Zero-Shot：把任务"翻译"成提示词</h3>
+  <p>这是 GPT-2 最革命性的部分。评估时模型权重完全冻结，不微调、不加输出层、不更新任何参数，只通过<em>提示词</em>告诉模型"现在该做什么任务"。具体怎么写提示词，OpenAI 给了几种范式：</p>
+
+  <table>
+    <thead>
+      <tr><th>任务</th><th>提示词模板</th><th>模型行为</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">翻译（英→法）</td><td class="text">"translate to french, &lt;英文&gt;, &lt;法文&gt;"</td><td class="text">续写法文</td></tr>
+      <tr><td class="text">阅读理解</td><td class="text">"文章 + 问题 + A:"</td><td class="text">续写答案</td></tr>
+      <tr><td class="text">摘要</td><td class="text">"文章正文 + TL;DR:"</td><td class="text">续写摘要</td></tr>
+      <tr><td class="text">问答</td><td class="text">"Q: 问题 A:"</td><td class="text">续写答案</td></tr>
+    </tbody>
+  </table>
+
+  <p>这种"任务即文本前缀"的写法，今天看来稀松平常，但 2019 年这是颠覆性的——它意味着<em>同一个模型、同一套权重、同一次推理代码，可以处理任意任务</em>，只换提示词就行。后来 GPT-3 的 few-shot、ChatGPT 的 system prompt，全都是在这个范式上做的延伸。</p>
+
+  <div class="callout">
+    <span class="label">关键洞察</span>
+    GPT-2 把"任务接口"从代码层面提到了文本层面。BERT 时代你写 Python 调用 <span class="mono">model.predict(input)</span>，每个任务要换不同的输出层；GPT-2 时代你只换一段字符串。这个抽象层的提升，是大模型从"研究工具"变成"通用产品"的必要条件。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>结果分两类：一类是<em>语言建模基准</em>——这是 GPT-2 真正"赢"的地方；另一类是<em>下游任务 zero-shot</em>——这是它"惊艳但还远不到 SOTA"的地方。</p>
+
+  <table>
+    <thead>
+      <tr><th>数据集 / 任务</th><th>此前 SOTA</th><th>GPT-2 zero-shot</th><th>结果</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">WikiText-2 PPL ↓</td><td>28.4</td><td>17.48</td><td>刷新</td></tr>
+      <tr><td class="text">WikiText-103 PPL ↓</td><td>37.5</td><td>17.65</td><td>刷新</td></tr>
+      <tr><td class="text">LAMBADA 准确率 ↑</td><td>59.23%</td><td>63.24%</td><td>刷新</td></tr>
+      <tr><td class="text">CBT（Children's Book）↑</td><td>—</td><td>87.65%</td><td>刷新</td></tr>
+      <tr><td class="text">PTB PPL ↓</td><td>47.17</td><td>35.76</td><td>刷新</td></tr>
+      <tr><td class="text">en→fr 翻译 BLEU</td><td>40.6（监督）</td><td>5.0</td><td>远不及，但 zero-shot 已惊人</td></tr>
+      <tr><td class="text">CNN/DailyMail 摘要</td><td>—</td><td>近似人工评分</td><td>质量惊人</td></tr>
+    </tbody>
+  </table>
+
+  <p>最戏剧性的是两个细节：</p>
+  <ul>
+    <li><em>8 个语言建模基准里 7 个零样本刷新 SOTA</em>——而且这些 SOTA 是专门在那个数据集上训练过的模型。GPT-2 一次都没见过这些数据，凭"猜下一个词"就压过了它们，这从经验上证明了"无监督大规模预训练"的力量。</li>
+    <li><em>翻译和摘要虽然离监督模型还有差距，但质量已经"令人不安"</em>。OpenAI 在博客里放出的 GPT-2 生成样本——比如续写一段关于"独角兽在安第斯山脉被发现"的假新闻——通顺到普通读者几乎分不清真假。这正是他们不敢放全模型的直接原因。</li>
+  </ul>
+
+  <p>还有个有趣的失败案例，论文也诚实写出来了：当提示词涉及高度技术性或冷门内容时（比如生僻科学术语），GPT-2 会一本正经地胡编——博客里举例说它写过"水下着火"这种物理上不可能的描述。这个毛病后来有个专门的名字：<em>幻觉</em>（hallucination），至今仍是 LLM 的头号顽疾。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="120" y="30" text-anchor="middle" font-weight="600">BERT（微调范式）</text>
+        <text x="350" y="30" text-anchor="middle" font-weight="600">GPT-1（预训练+微调）</text>
+        <text x="580" y="30" text-anchor="middle" font-weight="600" fill="#B54A2C">GPT-2（zero-shot）</text>
+        <line x1="235" y1="20" x2="235" y2="260" stroke="#96897A" stroke-dasharray="4 4"/>
+        <line x1="465" y1="20" x2="465" y2="260" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <!-- BERT -->
+        <rect x="50" y="55" width="140" height="30" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="75" text-anchor="middle">双向 Encoder</text>
+        <rect x="50" y="95" width="140" height="30" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="115" text-anchor="middle">MLM + NSP 训练</text>
+        <text x="120" y="155" text-anchor="middle" fill="#96897A">每个任务单独微调</text>
+        <text x="120" y="175" text-anchor="middle" fill="#96897A">需要标注数据</text>
+        <text x="120" y="230" text-anchor="middle" fill="#96897A" font-size="11">擅长"理解"，不善生成</text>
+
+        <!-- GPT-1 -->
+        <rect x="280" y="55" width="140" height="30" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="75" text-anchor="middle">单向 Decoder</text>
+        <rect x="280" y="95" width="140" height="30" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="115" text-anchor="middle">语言模型训练</text>
+        <text x="350" y="155" text-anchor="middle" fill="#96897A">每个任务单独微调</text>
+        <text x="350" y="175" text-anchor="middle" fill="#96897A">需要标注数据</text>
+        <text x="350" y="230" text-anchor="middle" fill="#96897A" font-size="11">能生成，但理解不如 BERT</text>
+
+        <!-- GPT-2 -->
+        <rect x="510" y="55" width="140" height="30" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="580" y="75" text-anchor="middle" fill="#B54A2C" font-weight="600">单向 Decoder</text>
+        <rect x="510" y="95" width="140" height="30" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="580" y="115" text-anchor="middle" fill="#B54A2C" font-weight="600">语言模型训练</text>
+        <text x="580" y="155" text-anchor="middle" fill="#B54A2C" font-weight="600">所有任务 zero-shot</text>
+        <text x="580" y="175" text-anchor="middle" fill="#B54A2C" font-weight="600">完全无需标注</text>
+        <text x="580" y="230" text-anchor="middle" fill="#B54A2C" font-size="11" font-weight="600">提示词统一一切接口 ✓</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 三种范式对比：BERT 和 GPT-1 都要"每个任务微调一次"，GPT-2 把这步彻底省掉</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>GPT-2 的影响怎么高估都不过分，它至少改写了三件事：</p>
+  <ul>
+    <li><em>把"提示词"推上了舞台中央</em>。在 GPT-2 之前，prompt engineering 几乎不存在；GPT-2 之后，"怎么写提示词"成了一个独立的研究方向，催生了 later 的 prompt tuning、chain-of-thought、in-context learning 整条产业链。今天你跟 ChatGPT 对话时多打一句"请一步一步思考"，这条因果链的源头就在 GPT-2。</li>
+    <li><em>验证了 scaling 假设的可行性</em>。GPT-2 是第一个明确暗示"模型越大、能力越强"的工程证据。OpenAI 在论文里写"GPT-2 还在欠拟合"，这句话后来被解读成<em>"再加 scale 还能继续涨"</em>，直接催生了 GPT-3 把参数推到 1750 亿的疯狂实验，也奠定了 OpenAI 之后整整五年的"大力出奇迹"路线。</li>
+    <li><em>引爆了 AI 安全议题</em>。GPT-2 是历史上第一个因为"太危险"而被作者自己扣下的模型。这场关于"该不该公开发布"的争论，从学术界蔓延到媒体、再到政策圈，直接催生了后来的"负责任披露"实践、模型卡（model card）、风险评估框架。今天各家大模型发布前都要做的红队测试，源头就是 GPT-2 那场 staged release。</li>
+  </ul>
+  <p>更重要的是，GPT-2 让整个 NLP 圈第一次看到了<em>"一个模型搞定一切"</em>的真实可能性。它没有完全做到，但它把那条路标了出来。后来的 GPT-3、ChatGPT、Claude、Gemini，本质都是沿着 GPT-2 这条路把规模和强化学习叠加上去。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>GPT-2 自己也埋了不少"地雷"，后来者一个个补上：</p>
+  <ul>
+    <li><em>zero-shot 还不够强</em>。翻译、摘要这些任务上，GPT-2 zero-shot 远不及监督 SOTA。GPT-3 后来发现只要给几个示例（few-shot），性能就能暴涨——这是 GPT-2 没探索的维度。</li>
+    <li><em>幻觉从一开始就有</em>。GPT-2 写"水下着火"那段被 OpenAI 自己拎出来当反面教材。这个毛病是自回归语言建模的固有副作用，后来用 RLHF、RAG、工具调用一层层缓解，但至今没根除。</li>
+    <li><em>上下文窗口只有 1024 token</em>。约 750 个英文单词，相当于一篇短博客。长文档、长对话根本喂不进去。后来的 Longformer、GPT-4 32K、Claude 200K 都在补这个洞。</li>
+    <li><em>训练数据有偏见且未公开</em>。Reddit 用户群体偏英文、偏男性、偏技术圈，WebText 的偏见会被模型继承。更糟的是 WebText 从未公开发布，复现困难，后来 GPT-Neo、GPT-NeoX 用 OpenWebText 做了开源平替。</li>
+    <li><em>缺乏对齐</em>。GPT-2 是纯语言模型，没有价值对齐，问它"怎么造炸弹"它就照写。这个问题要等到 InstructGPT 和 ChatGPT 用 RLHF 才真正缓解。</li>
+  </ul>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把镜头拉远，"生成式语言模型"这条线是这样一路走来的：</p>
+  <ol>
+    <li><em>2013 前后</em>：word2vec 等静态词向量登场，让词第一次有了"语义坐标"，但每个词只有一个固定向量。</li>
+    <li><em>2017（系列第 1 篇）</em>：Transformer 用纯注意力替换 RNN/CNN，并行训练 + 长程依赖，奠定了所有后续大模型的架构基础。</li>
+    <li><em>2018 上半年</em>：GPT-1 把 Transformer Decoder 拿出来做单向语言模型，提出"预训练 + 微调"范式，但每个下游任务还要单独微调。</li>
+    <li><em>2018 下半年（系列第 2 篇）</em>：BERT 用双向 Encoder + 掩码语言模型，在"理解"类任务上横扫榜单，与 GPT 路线分庭抗礼。</li>
+    <li><em>2019（本篇）</em>：GPT-2 把 Decoder 路线放大到 1.5B，第一次证明 zero-shot 多任务可行，把"任务"压缩成"提示词"。</li>
+    <li><em>2020</em>：GPT-3 把规模推到 1750 亿参数，从 zero-shot 进化到 few-shot，"提示即接口"成为产品形态。同期 T5 把所有任务统一成"文本到文本"。</li>
+    <li><em>2022 及之后</em>：InstructGPT / ChatGPT 用 RLHF 完成对齐，对话式 LLM 走入大众。理解与生成两条路线在"超大规模 + 指令微调 + 人类反馈"中重新汇流。</li>
+  </ol>
+  <p>本系列的 Transformer 给了利刃，BERT 把它磨成理解工具，本篇 GPT-2 则第一次让人看到<em>"这把刀还能自己挥"</em>。下一篇我们要看的 GPT-3，就是把这次"自己挥"放大到 100 倍规模后的疯狂实验。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>GPT-2 论文最有趣的地方不在论文里，而在论文<em>外</em>。它是 AI 历史上第一个"未发先红"的模型——2019 年 2 月 14 日 OpenAI 博客一发，标题"Better Language Models and Their Implications"立刻登上 Hacker News 头条，全网炸锅。但大家议论最多的不是技术细节，而是那句"<em>我们决定不发布完整模型</em>"。</p>
+  <p>这个决定在 AI 圈直接撕裂成两派。反对派以微软研究院的 Mario Callegaro 等为代表，指责 OpenAI 是"安全剧场"——技术都是公开的，扣模型只是炒作。支持派则认为这是负责任的初步尝试。当时还在 OpenAI 的 Dario Amodei 后来出走创立 Anthropic，某种程度上也是这场安全争论的副产品。一个模型引发公司分裂，AI 史上不多见。</p>
+
+  <div class="callout">
+    <span class="label">小八卦</span>
+    OpenAI 一开始只放了 124M 的"小号"模型，对外说"先观察一下影响"。结果社区立刻开始训练自己的"真·完整 GPT-2"。一个叫 Connor Leahy 的德国年轻人拉着几个志愿者，用 OpenWebText 复现了 GPT-2 1.5B，开源项目叫 <em class="latin">GPT-Neo</em>。后来他创立了 EleutherAI，又开源了 GPT-NeoX-20B，成了 OpenAI 之外最重要的开源大模型力量。OpenAI 想扣住的，社区硬是给训了出来。
+  </div>
+
+  <p>更有趣的是 OpenAI 自己的"打脸"过程。他们原计划观察 6 个月再决定是否放全模型，结果 5 月放 355M、8 月放 774M、11 月 5 日干脆把 1.5B 全放了出来，配套写了篇博客承认"<em>我们没看到想象中那么大的滥用</em>"。这场 staged release 实际上成了一个"渐进披露"的实验——它没找到滥用，但找到了开源社区"你不放我就自己训"的决心。</p>
+  <p>还有个细节鲜为人知：GPT-2 的论文其实<em>没有 arXiv 编号</em>。OpenAI 当时担心 arXiv 上正式发布会让更多人拿到论文去复现，于是只在自己的 cdn.openai.com 上挂了 PDF，配一篇博客。这是绝无仅有的"AI 顶流论文不上 arXiv"。直到今天，你引用 GPT-2 时还得写"OpenAI 技术报告"，而不是 arXiv:xxxx——这种"学术非主流"的姿态，反而强化了它的传奇色彩。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- staged release 时间线 -->
+        <line x1="60" y1="110" x2="640" y2="110" stroke="#96897A" stroke-width="1"/>
+        <text x="350" y="40" text-anchor="middle" font-weight="600" fill="#B54A2C">GPT-2 的"分批放料"九个月</text>
+
+        <circle cx="100" cy="110" r="6" fill="#B54A2C"/>
+        <text x="100" y="90" text-anchor="middle" fill="#B54A2C" font-weight="600">2019-02</text>
+        <text x="100" y="135" text-anchor="middle">124M</text>
+        <text x="100" y="155" text-anchor="middle" fill="#96897A" font-size="10">情人节首发</text>
+
+        <circle cx="260" cy="110" r="6" fill="#B54A2C"/>
+        <text x="260" y="90" text-anchor="middle" fill="#B54A2C" font-weight="600">2019-05</text>
+        <text x="260" y="135" text-anchor="middle">355M</text>
+        <text x="260" y="155" text-anchor="middle" fill="#96897A" font-size="10">"观察一下"</text>
+
+        <circle cx="420" cy="110" r="6" fill="#B54A2C"/>
+        <text x="420" y="90" text-anchor="middle" fill="#B54A2C" font-weight="600">2019-08</text>
+        <text x="420" y="135" text-anchor="middle">774M</text>
+        <text x="420" y="155" text-anchor="middle" fill="#96897A" font-size="10">"还没人滥用"</text>
+
+        <circle cx="580" cy="110" r="8" fill="#B54A2C"/>
+        <text x="580" y="88" text-anchor="middle" fill="#B54A2C" font-weight="600">2019-11-05</text>
+        <text x="580" y="135" text-anchor="middle" font-weight="600">1.5B 全量</text>
+        <text x="580" y="155" text-anchor="middle" fill="#96897A" font-size="10">"算了，全放吧"</text>
+
+        <text x="350" y="200" text-anchor="middle" fill="#96897A" font-size="11">原计划 6 个月观察期 → 实际九个月分四批，每批都配一篇安全分析</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · GPT-2 分阶段发布时间线：从"太危险不发"到"全量开源"，九个月的反复横跳</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读 GPT-2，最让我感慨的不是它的参数量，也不是它的 zero-shot 成绩，而是它体现的一种<em>研究哲学</em>：当所有人都在为"多任务学习"绞尽脑汁设计混合数据集、平衡损失函数时，OpenAI 选择了一个看似偷懒、实则最锋利的角度——<em>把任务定义本身换掉</em>。这个问题不是技术问题，是<em>视角问题</em>：你把"翻译"看作一个独立任务，就需要监督数据；你把它看作"网页文本里的一种排版模式"，它就成了语言建模的自然副产品。</p>
+  <p>另一个值得玩味的是 GPT-2 的"半衰期"。它发布时是顶流，但只过了一年就被 GPT-3 完全盖过；今天大众几乎不再提 GPT-2，但它其实是 ChatGPT 最直接的祖先——架构、目标函数、提示词接口、自回归生成，全都在 GPT-2 这里定型。GPT-3 只是把它放大，InstructGPT 只是在它上面加 RLHF，ChatGPT 只是把对话包装成产品。某种意义上，今天所有对话式 LLM 都是"<em>带对齐的 GPT-2</em>"。这恰是伟大技术的命运：<em>重要到隐形</em>。</p>
+  <p>最后一点个人观察：GPT-2 的 staged release 是一场未完成的社会实验。OpenAI 想用它证明"AI 危险到需要管控"，结果却证明了"开源社区的决心比单个公司更大"。今天回头看，这场博弈没有赢家——OpenAI 既没拦住滥用（因为社区自己训了），也没真正建立起"负责任披露"的全球规范（因为后来每家都按自己的节奏发）。但它给所有人提了个醒：<em>当模型能力跨过某个阈值，"发或不发"就不再只是技术问题，而是治理问题</em>。这个阈值的轮廓，正是 GPT-2 第一次勾勒出来的。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果一个模型只学过"预测下一个词"，它学到的"翻译能力"和"摘要能力"，本质上是同一种东西吗？再想一步：当你写"TL;DR:"让 GPT-2 出摘要时，它是在"做摘要"，还是在"续写一种它见过的网页排版"？这两种描述，对未来的 AI 安全和可控性，意味着什么不同的东西？
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Language Models are Few-Shot Learners (GPT-3)</h3>
+    <p style="margin:0;">GPT-2 证明了"规模够大就能 zero-shot"，但翻译、摘要的成绩离监督模型还差一截。OpenAI 的回应简单粗暴：把参数再放大 100 倍。2020 年的 GPT-3 拿出 1750 亿参数，第一次展示出惊人的 few-shot 能力——给它两三个例子，它就能模仿格式完成全新任务。下一篇，我们来看这场把"大力出奇迹"推到极致的实验，以及它如何把"提示工程"变成了一个新工种。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 003 篇</span>
+    <span>2026-07-31</span>
+  </footer>
+
+</div>
+</body>
+</html>
