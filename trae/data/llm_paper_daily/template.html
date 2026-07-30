@@ -144,7 +144,21 @@
 
   p{ margin:0 0 18px; }
 
-  em{ font-style:italic; } /* Lora 自带 ital 轴，真实斜体 */
+  /* 中文没有真实斜体设计，混排斜体会被浏览器"伪斜体"强行倾斜 CJK 字形，
+     可读性差且违背"禁止伪斜体"的初衷。默认 <em> 用于中文/中英混排强调，
+     改用颜色+字重区分，不使用斜体。 */
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  /* 仅当强调内容是纯英文/拉丁字母（如论文英文标题、模型英文名等）时，
+     才使用 Lora 的真实 ital 轴斜体：<em class="latin">Attention</em> */
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
 
   a{ color:var(--accent2); text-decoration-thickness:1px; }
 
@@ -377,6 +391,17 @@
 
   <!-- ============ 研究背景 ============ -->
   <h2><span class="num">02</span>研究背景</h2>
+
+  <!-- ============ 斜体强调用法示例（仅供参考，正文生成时删除本段） ============
+       规则：<em> 内若全部为拉丁字符，加 class="latin" 使用真实斜体；
+             只要出现中文字符（含中英混排），使用默认 <em>（颜色+字重，不倾斜）。 -->
+  <p>
+    纯英文强调（真实斜体）：这类模型通常被称为 <em class="latin">large language model</em>，缩写为 <em class="latin">LLM</em>。<br>
+    纯中文强调（颜色+字重，不倾斜）：这篇论文最关键的洞察是<em>去掉循环结构、只保留注意力机制</em>。<br>
+    中英混排强调（颜色+字重，不倾斜）：作者们意识到，既然 <em>attention 机制已经能让模型"看到"很远的词</em>，那 RNN 这个慢吞吞的外壳还有必要留着吗？
+  </p>
+  <!-- ============ 示例结束 ============ -->
+
   <p>[为什么需要这项工作？之前的方法有什么不足？用类比讲清楚旧方法的痛点。]</p>
 
   <div class="callout">
