@@ -1,6 +1,7 @@
 {
-  "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)",
+  "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
   "last_index": 0,
   "last_run_date": "",
-  "papers_covered": []
+  "papers_covered": [],
+  "next_preview": null
 }
