@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transformer 论文精读 · 大模型经典论文系列 #001</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#001</span>
+  </div>
+
+  <h1 class="title">
+    Attention Is All You Need
+    <span class="en">注意力即一切：扔掉循环、扔掉卷积，Transformer 的诞生</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Łukasz Kaiser, Illia Polosukhin</span>
+    <span>机构：Google Brain / Google Research / University of Toronto</span>
+    <span>发表：2017-06 / NeurIPS 2017</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/tensorflow/tensor2tensor" target="_blank" rel="noopener">GitHub</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">2017 年 6 月 12 日，一篇标题听起来像流行歌曲的论文悄然出现在 arXiv 上。没人知道，它即将在之后几年里彻底改写整个人工智能的版图——从机器翻译，到聊天机器人，再到会写代码、会推理的通用助手，几乎所有"现代 AI"的故事，都得从这一天讲起。</p>
+  <p class="lead">那篇论文的名字叫《Attention Is All You Need》。它只做了一件事：把过去十年 NLP 界的"标配"——循环神经网络和卷积网络，统统扔掉，只留下"注意力"这一种运算。同事们起初觉得这个想法过于激进，但八位来自 Google 的研究者坚持试了一把——结果他们自己都被吓了一跳。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    抛弃 RNN 和 CNN，只用注意力机制堆出一个 Encoder-Decoder 架构——这就是 Transformer，今天所有大语言模型共同的祖先。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>如果说大语言模型是一条奔涌的大河，那么 Transformer 就是它的源头。在它之前，NLP 的主流是<em>循环神经网络（RNN/LSTM）</em>加上<em>注意力机制</em>的组合；在它之后，几乎所有序列建模工作都转向了"纯注意力"路线。一年之后的 <em class="latin">GPT</em> 与 <em class="latin">BERT</em>，今天的 <em class="latin">Claude</em>、<em class="latin">GPT-4</em>、<em class="latin">Gemini</em>、<em class="latin">LLaMA</em>——它们之间的差异再大，也都共享同一份 DNA。</p>
+  <p>本系列的开篇，我们就从这条河流的源头讲起：看一群 Google 工程师如何用一个"过于简单"的想法，撬动了之后八年的 AI 革命。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowMain" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="120" x2="660" y2="120" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 2014 Bahdanau Attention -->
+        <circle cx="80" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="100" text-anchor="middle">2014</text>
+        <text x="80" y="148" text-anchor="middle">Bahdanau</text>
+        <text x="80" y="162" text-anchor="middle">注意力</text>
+
+        <!-- 2017 Transformer (本篇, 高亮) -->
+        <circle cx="200" cy="120" r="9" fill="#B54A2C"/>
+        <circle cx="200" cy="120" r="14" fill="none" stroke="#B54A2C" stroke-width="1" stroke-opacity="0.4"/>
+        <text x="200" y="92" text-anchor="middle" fill="#B54A2C" font-weight="600">2017</text>
+        <text x="200" y="78" text-anchor="middle" fill="#B54A2C" font-weight="600">★ 本篇位置</text>
+        <text x="200" y="148" text-anchor="middle" fill="#2E2A22" font-weight="600">Transformer</text>
+
+        <!-- 2018 GPT / BERT -->
+        <circle cx="320" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="320" y="100" text-anchor="middle">2018</text>
+        <text x="320" y="148" text-anchor="middle">GPT / BERT</text>
+
+        <!-- 2020 GPT-3 -->
+        <circle cx="440" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="440" y="100" text-anchor="middle">2020</text>
+        <text x="440" y="148" text-anchor="middle">GPT-3</text>
+
+        <!-- 2022 ChatGPT -->
+        <circle cx="540" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="540" y="100" text-anchor="middle">2022</text>
+        <text x="540" y="148" text-anchor="middle">ChatGPT</text>
+
+        <!-- 2024+ 前沿 -->
+        <circle cx="640" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="640" y="100" text-anchor="middle">2024+</text>
+        <text x="640" y="148" text-anchor="middle">推理模型</text>
+
+        <!-- 已解析覆盖区间标识 -->
+        <line x1="200" y1="200" x2="200" y2="206" stroke="#B54A2C" stroke-width="1"/>
+        <text x="200" y="220" text-anchor="middle" fill="#B54A2C" font-size="10">已解析</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的位置示意。本系列开篇从 Transformer 切入，后续将沿时间线依次解析关键里程碑。</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>时间回到 2016 年。那一年，Google 把自家翻译系统从"统计机器翻译"全面切换到神经机器翻译，代号 <em class="latin">GNMT</em>。这是一套 8 层 LSTM 堆出来的大家伙，上线后翻译质量肉眼可见地变好了，每天处理上千亿词的请求，是当时地球上规模最大的 AI 系统之一。</p>
+  <p>但工程师们心里清楚，这套系统有一道难以逾越的天花板——它的核心是 LSTM，必须<em>逐字逐句顺序处理</em>。第 <span class="mono">t</span> 个词的隐状态依赖第 <span class="mono">t-1</span> 个词算完才能开始。这意味着即便 Google 拥有全球最强的 TPU 集群，硬件也始终在"等"——等上一步算完。GNMT 训一次要数周，把模型做大，时间成本像滚雪球一样越滚越快。</p>
+  <p>问题的根源不在调参，而在<em>结构本身</em>。这是一个<em>结构性瓶颈</em>，不是更宽的层、更多的卡能解决的。</p>
+
+  <div class="callout">
+    <span class="label">类比 · 图书馆管理员</span>
+    想象一个管理员要读完一整本书。RNN 的做法是：从第 1 页开始，一页一页翻，每一页读完之后把"印象"压缩成一个便签递给下一页。读到第 500 页时想回头核对第 3 页的内容，他得把那条便签一路传递——信息越传越模糊，越传越慢。而且他没法让同事帮他同时翻后面的页码，因为"下一页"必须等"上一页"读完。<br><br>
+    而 CNN（卷积网络）的做法相当于雇一组管理员，每人盯着连续的几页，看似能并行，但要联系第 1 页和第 500 页，得让信息经过好多层中间人，路径长度随距离增长。<br><br>
+    注意力机制则像是给每个管理员配了一台"任意门"——你想核对哪一页，瞬间就翻到哪一页，距离不再是问题。
+  </div>
+
+  <p>在 Transformer 之前，已有不少工作尝试缓解这两个痛点：</p>
+  <ul>
+    <li><em class="latin">Bahdanau Attention (2014)</em>：在 encoder-decoder 之间加一个注意力层，让解码器每一步都能"回头看"编码器的所有隐状态。但它本身<em>仍然依附在 RNN 之上</em>，循环依旧存在。</li>
+    <li><em class="latin">ConvS2S (Facebook, 2017)</em>：用 CNN 替代 RNN，让编码可以并行。但两个相距很远的词要建立联系，需要堆叠多层卷积，路径长度是 <span class="mono">O(log n)</span>。</li>
+    <li><em class="latin">ByteNet (DeepMind, 2016)</em>：膨胀卷积，路径长度 <span class="mono">O(log n)</span>，仍未做到"一步直达"。</li>
+  </ul>
+  <p>换句话说，所有这些方案都还在<em>给 RNN/CNN 打补丁</em>。Vaswani 团队的问题是：能不能干脆把 RNN 和 CNN 都扔掉，<em>只用注意力</em>？</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>这篇论文要回答的，其实就一个问题——</p>
+  <div class="callout">
+    <span class="label">核心问题</span>
+    既然注意力机制已经能让模型直接建立任意两个位置之间的关联，那我们还需要 RNN 来维持那条"顺序链条"吗？能不能<em>只用注意力</em>，就做出一个并行、高效、还能跑出 SOTA 的序列模型？
+  </div>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果一个模型完全没有"循环"结构，它怎么知道"猫吃了老鼠"和"老鼠吃了猫"是不一样的两句话？先在心里猜一猜，再往下看答案。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>答案是：<em>位置编码</em>。模型确实不"逐步推进"了，但它会给每个位置额外贴一个"我是第几个词"的标签，让注意力在计算时既能看到"内容是什么"，也能看到"位置在哪"。下面我们一步步拆开 Transformer 的结构。</p>
+
+  <h3>4.1 整体骨架：Encoder + Decoder</h3>
+  <p>Transformer 沿用了机器翻译领域成熟的 <em>Encoder-Decoder</em> 范式：编码器把输入句子（如英文）"读"成一个连续向量序列，解码器再据此"写"出目标句子（如德文），每生成一个词就把它喂回去生成下一个。不同之处在于：编码器和解码器内部，循环层被彻底替换成了<em>自注意力 + 前馈网络</em>，外加残差连接和层归一化。</p>
+  <p>默认配置：编码器 6 层、解码器 6 层，特征维度 <span class="mono">d_model = 512</span>。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 460" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowArch" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 标题 -->
+        <text x="180" y="22" text-anchor="middle" font-weight="600" fill="#24555A">编码器 Encoder ×6</text>
+        <text x="540" y="22" text-anchor="middle" font-weight="600" fill="#B54A2C">解码器 Decoder ×6</text>
+
+        <!-- ============ Encoder 列 ============ -->
+        <!-- Input Embedding -->
+        <rect x="100" y="40" width="160" height="32" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="180" y="60" text-anchor="middle">Input Embedding</text>
+        <!-- Positional Encoding -->
+        <rect x="100" y="80" width="160" height="28" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="180" y="99" text-anchor="middle" fill="#B54A2C">+ Positional Encoding</text>
+
+        <!-- Encoder block (N×) -->
+        <rect x="80" y="125" width="200" height="200" rx="2" fill="none" stroke="#96897A" stroke-dasharray="4 3"/>
+        <text x="280" y="138" text-anchor="end" font-size="9" fill="#96897A">× 6</text>
+        <!-- Multi-Head Self-Attention -->
+        <rect x="100" y="135" width="160" height="40" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="180" y="159" text-anchor="middle" fill="#24555A">Multi-Head Self-Attention</text>
+        <!-- Add & Norm -->
+        <rect x="100" y="180" width="160" height="22" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="180" y="195" text-anchor="middle">Add &amp; LayerNorm</text>
+        <!-- Feed-Forward -->
+        <rect x="100" y="208" width="160" height="40" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="180" y="232" text-anchor="middle" fill="#24555A">Feed-Forward (FFN)</text>
+        <!-- Add & Norm -->
+        <rect x="100" y="253" width="160" height="22" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="180" y="268" text-anchor="middle">Add &amp; LayerNorm</text>
+
+        <!-- Encoder 内部箭头 -->
+        <line x1="180" y1="108" x2="180" y2="135" stroke="#96897A" marker-end="url(#arrowArch)"/>
+        <line x1="180" y1="175" x2="180" y2="180" stroke="#96897A"/>
+        <line x1="180" y1="202" x2="180" y2="208" stroke="#96897A"/>
+        <line x1="180" y1="248" x2="180" y2="253" stroke="#96897A"/>
+
+        <!-- 输出箭头到 Cross-Attention -->
+        <line x1="260" y1="195" x2="430" y2="195" stroke="#96897A" marker-end="url(#arrowArch)"/>
+        <text x="345" y="188" text-anchor="middle" font-size="9" fill="#96897A">K, V</text>
+
+        <!-- ============ Decoder 列 ============ -->
+        <!-- Output Embedding (shifted right) -->
+        <rect x="460" y="40" width="160" height="32" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="540" y="60" text-anchor="middle">Output Embedding (shifted)</text>
+        <rect x="460" y="80" width="160" height="28" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="540" y="99" text-anchor="middle" fill="#B54A2C">+ Positional Encoding</text>
+
+        <!-- Decoder block (N×) -->
+        <rect x="440" y="125" width="200" height="290" rx="2" fill="none" stroke="#96897A" stroke-dasharray="4 3"/>
+        <text x="640" y="138" text-anchor="end" font-size="9" fill="#96897A">× 6</text>
+        <!-- Masked Multi-Head Self-Attention -->
+        <rect x="460" y="135" width="160" height="40" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="540" y="155" text-anchor="middle" fill="#24555A">Masked Multi-Head</text>
+        <text x="540" y="170" text-anchor="middle" fill="#24555A">Self-Attention</text>
+        <rect x="460" y="180" width="160" height="22" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="540" y="195" text-anchor="middle">Add &amp; LayerNorm</text>
+
+        <!-- Cross-Attention -->
+        <rect x="460" y="208" width="160" height="40" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="540" y="228" text-anchor="middle" fill="#B54A2C">Encoder-Decoder</text>
+        <text x="540" y="243" text-anchor="middle" fill="#B54A2C">Cross-Attention</text>
+        <rect x="460" y="253" width="160" height="22" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="540" y="268" text-anchor="middle">Add &amp; LayerNorm</text>
+
+        <!-- Feed-Forward -->
+        <rect x="460" y="281" width="160" height="40" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="540" y="305" text-anchor="middle" fill="#24555A">Feed-Forward (FFN)</text>
+        <rect x="460" y="326" width="160" height="22" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="540" y="341" text-anchor="middle">Add &amp; LayerNorm</text>
+
+        <!-- Decoder 内部箭头 -->
+        <line x1="540" y1="108" x2="540" y2="135" stroke="#96897A" marker-end="url(#arrowArch)"/>
+        <line x1="540" y1="175" x2="540" y2="180" stroke="#96897A"/>
+        <line x1="540" y1="202" x2="540" y2="208" stroke="#96897A"/>
+        <line x1="540" y1="248" x2="540" y2="253" stroke="#96897A"/>
+        <line x1="540" y1="275" x2="540" y2="281" stroke="#96897A"/>
+        <line x1="540" y1="321" x2="540" y2="326" stroke="#96897A"/>
+
+        <!-- Linear + Softmax -->
+        <line x1="540" y1="348" x2="540" y2="370" stroke="#96897A" marker-end="url(#arrowArch)"/>
+        <rect x="460" y="370" width="160" height="28" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="540" y="388" text-anchor="middle">Linear + Softmax</text>
+        <line x1="540" y1="398" x2="540" y2="420" stroke="#96897A" marker-end="url(#arrowArch)"/>
+        <text x="540" y="438" text-anchor="middle" fill="#24555A" font-weight="600">输出概率</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · Transformer 整体架构。左为编码器栈（自注意力 + 前馈），右为解码器栈（掩码自注意力 + 交叉注意力 + 前馈），每个子层都包一层残差连接与层归一化。虚线框表示堆叠 6 次。</figcaption>
+  </figure>
+
+  <p>这里面有几个关键词需要逐一展开：<em>缩放点积注意力</em>、<em>多头注意力</em>、<em>位置编码</em>、<em>前馈网络</em>、<em>残差与层归一化</em>。我们挨个看。</p>
+
+  <h3>4.2 缩放点积注意力（Scaled Dot-Product Attention）</h3>
+  <p>注意力本质上是"加权求和"。给定一组"查询 <span class="mono">Q</span>"、一组"键 <span class="mono">K</span>"和一组"值 <span class="mono">V</span>"，先看 Q 和每个 K 有多像（点积），把相似度归一化成权重（softmax），再用这些权重对 V 做加权平均。</p>
+
+  <div class="formula-block">
+    $$ \text{Attention}(Q, K, V) = \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right) V $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>这里的 <span class="mono">d_k</span> 是键向量的维度。除以 <span class="mono">√d_k</span> 这个看似不起眼的步骤——论文叫它"缩放"（scaling）——其实至关重要。当维度较大时，点积的方差会随维度线性增大，把 softmax 推到梯度极小的"饱和区"，模型几乎学不动东西。除以 <span class="mono">√d_k</span> 把方差拉回 1 附近，梯度才恢复正常。</p>
+
+  <div class="callout">
+    <span class="label">类比 · 查字典</span>
+    你拿一个"问题"（Q）去问"字典"：字典里每一条都有"标题"（K）和"内容"（V）。先看你的问题和每个标题有多像（点积），越像的越值得读；把相似度归一化（softmax）成一组"该读多少"的权重；最后按权重把所有条目的内容加权混合起来，就得到了"答案"。这就是注意力。
+  </div>
+
+  <h3>4.3 多头注意力（Multi-Head Attention）</h3>
+  <p>单头注意力有个隐含问题：它做的是"加权平均"，必然会把信息<em>抹平</em>。论文用一个非常巧妙的办法解决——把 Q/K/V 投影到多个低维子空间，让模型同时从多个角度"看"，最后把结果拼回来。</p>
+
+  <div class="formula-block">
+    $$ \text{head}_i = \text{Attention}(QW_i^Q,\ KW_i^K,\ VW_i^V) $$
+    <span class="eqn mono">(2)</span>
+  </div>
+  <div class="formula-block">
+    $$ \text{MultiHead}(Q,K,V) = \text{Concat}(\text{head}_1,\dots,\text{head}_h)\, W^O $$
+    <span class="eqn mono">(3)</span>
+  </div>
+
+  <p>默认配置 <span class="mono">h = 8</span> 个头，每个头维度 <span class="mono">d_k = d_v = 64</span>，拼回来正好是 <span class="mono">8 × 64 = 512 = d_model</span>。这一招让模型既能关注语法关系（比如"它"指代谁），又能关注语义关系（比如同义词），还能关注长距离依赖——同时进行，互不打架。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 320" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowMHA" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 输入 Q/K/V -->
+        <rect x="20" y="130" width="60" height="34" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="50" y="151" text-anchor="middle">Q</text>
+        <rect x="20" y="170" width="60" height="34" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="50" y="191" text-anchor="middle">K</text>
+        <rect x="20" y="210" width="60" height="34" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="50" y="231" text-anchor="middle">V</text>
+
+        <!-- 投影矩阵 -->
+        <text x="100" y="120" text-anchor="middle" font-size="9" fill="#96897A">线性投影</text>
+        <line x1="80" y1="147" x2="135" y2="55" stroke="#96897A" marker-end="url(#arrowMHA)"/>
+        <line x1="80" y1="147" x2="135" y2="115" stroke="#96897A" marker-end="url(#arrowMHA)"/>
+        <line x1="80" y1="147" x2="135" y2="265" stroke="#96897A" marker-end="url(#arrowMHA)"/>
+        <line x1="80" y1="187" x2="135" y2="55" stroke="#96897A" marker-end="url(#arrowMHA)"/>
+        <line x1="80" y1="187" x2="135" y2="115" stroke="#96897A" marker-end="url(#arrowMHA)"/>
+        <line x1="80" y1="187" x2="135" y2="265" stroke="#96897A" marker-end="url(#arrowMHA)"/>
+        <line x1="80" y1="227" x2="135" y2="55" stroke="#96897A" marker-end="url(#arrowMHA)"/>
+        <line x1="80" y1="227" x2="135" y2="115" stroke="#96897A" marker-end="url(#arrowMHA)"/>
+        <line x1="80" y1="227" x2="135" y2="265" stroke="#96897A" marker-end="url(#arrowMHA)"/>
+
+        <!-- 8 个注意力头（图示画 3 个） -->
+        <g>
+          <rect x="140" y="40" width="170" height="34" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+          <text x="225" y="61" text-anchor="middle" fill="#24555A">Head 1 · 语法关系</text>
+          <rect x="140" y="100" width="170" height="34" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+          <text x="225" y="121" text-anchor="middle" fill="#24555A">Head 2 · 语义相似</text>
+          <text x="225" y="160" text-anchor="middle" font-size="11" fill="#96897A">⋮</text>
+          <rect x="140" y="250" width="170" height="34" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+          <text x="225" y="271" text-anchor="middle" fill="#24555A">Head 8 · 长距离依赖</text>
+        </g>
+
+        <!-- Concat -->
+        <line x1="310" y1="57" x2="370" y2="160" stroke="#96897A" marker-end="url(#arrowMHA)"/>
+        <line x1="310" y1="117" x2="370" y2="160" stroke="#96897A" marker-end="url(#arrowMHA)"/>
+        <line x1="310" y1="267" x2="370" y2="160" stroke="#96897A" marker-end="url(#arrowMHA)"/>
+        <rect x="375" y="140" width="100" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="425" y="165" text-anchor="middle">Concat</text>
+
+        <!-- 线性投影 W^O -->
+        <line x1="475" y1="160" x2="520" y2="160" stroke="#96897A" marker-end="url(#arrowMHA)"/>
+        <rect x="525" y="140" width="100" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="575" y="165" text-anchor="middle">Linear W^O</text>
+
+        <line x1="625" y1="160" x2="670" y2="160" stroke="#96897A" marker-end="url(#arrowMHA)"/>
+        <rect x="675" y="140" width="40" height="40" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="695" y="165" text-anchor="middle" fill="#B54A2C" font-weight="600">Z</text>
+
+        <!-- 注释 -->
+        <text x="360" y="295" text-anchor="middle" font-size="10" fill="#96897A">8 个头并行计算，各自关注不同方面，最后拼接投影回 d_model 维度</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 多头注意力机制示意。每个头学到不同的关注模式（语法、语义、长距离等），最终拼接并线性投影回 d_model = 512 维。</figcaption>
+  </figure>
+
+  <h3>4.4 位置编码（Positional Encoding）</h3>
+  <p>到这里我们回到了开头的悬念：模型没有循环，怎么知道词的顺序？答案是<em>显式注入位置信息</em>。论文给每个位置 <span class="mono">pos</span>、每个维度 <span class="mono">i</span> 算一组正余弦信号，加到词向量里：</p>
+
+  <div class="formula-block">
+    $$ PE_{(pos,\ 2i)} = \sin\!\left(\frac{pos}{10000^{2i/d_{model}}}\right),\quad PE_{(pos,\ 2i+1)} = \cos\!\left(\frac{pos}{10000^{2i/d_{model}}}\right) $$
+    <span class="eqn mono">(4)</span>
+  </div>
+
+  <p>为什么用正余弦而不是直接给位置编号？因为正余弦有个漂亮的性质：<span class="mono">sin(pos + k)</span> 可以由 <span class="mono">sin(pos)</span> 和 <span class="mono">cos(pos)</span> 线性表出。这意味着模型只要学会"相对偏移"，就能<em>外推到训练时没见过的更长序列</em>——这是一个非常优雅的归纳偏置。</p>
+
+  <h3>4.5 位置前馈网络（Position-wise Feed-Forward）</h3>
+  <p>每个位置独立地经过一个两层 MLP：</p>
+  <div class="formula-block">
+    $$ \text{FFN}(x) = \max(0,\ xW_1 + b_1)\, W_2 + b_2 $$
+    <span class="eqn mono">(5)</span>
+  </div>
+  <p>中间维度 <span class="mono">d_ff = 2048</span>，比 <span class="mono">d_model</span> 大 4 倍。注意力本身没有非线性，FFN 提供了逐位置的非线性变换能力。换句话说，<em>注意力负责"看哪里"，FFN 负责"想什么"</em>。</p>
+
+  <h3>4.6 残差连接与层归一化</h3>
+  <p>每个子层外面都套一层：<em class="latin">LayerNorm(x + Sublayer(x))</em>。残差连接让梯度能"抄近路"传回去，方便堆深；层归一化稳定训练。这两件事看似平凡，却是 Transformer 能堆到几十上百层的基础。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>论文在两个机器翻译基准上跑了实验：</p>
+  <ul>
+    <li><em class="latin">WMT 2014 English-to-German</em>（英译德）</li>
+    <li><em class="latin">WMT 2014 English-to-French</em>（英译法）</li>
+  </ul>
+
+  <table>
+    <thead>
+      <tr><th>任务</th><th>此前最佳</th><th>本文 Transformer (big)</th><th>训练成本</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">WMT'14 英→德</td><td>26.30</td><td>28.4</td><td>+2.1 BLEU</td></tr>
+      <tr><td class="text">WMT'14 英→法</td><td>41.16</td><td>41.8</td><td>+0.7 BLEU</td></tr>
+    </tbody>
+  </table>
+
+  <p>最让人惊讶的不是 BLEU 数字本身，而是<em>训练成本</em>。当时最强的模型基本都要训练数周到一个月，而 Transformer（big）在 <span class="mono">8 张 P100 GPU</span> 上只跑了 <span class="mono">3.5 天</span>，就把单模型 SOTA 拿下了——这在当时是一个数量级的效率提升。</p>
+
+  <p>更令人意外的是，论文还顺手在<em>英语成分句法分析</em>（constituency parsing）任务上跑了一下，无论数据多还是少，Transformer 都拿到了接近或超越专门设计的模型的好成绩。这预示着这套架构<em>不挑任务</em>——一个通用骨架，可以挂到任何序列任务上。</p>
+
+  <div class="callout">
+    <span class="label">作者的"自暴自弃"小段子</span>
+    在论文发表前的内部交流中，团队一度不太确定"这么简单的模型"能不能跑得动。Noam Shazeer 后来在公开访谈里回忆，他们最初的假设是"肯定会差点意思，但应该能验证注意力这条路走得通"。结果跑完一发现——不仅走得通，<em>还把所有对手甩在了身后</em>。这种"超预期"，让团队自己都笑了。
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="175" y="22" text-anchor="middle" font-weight="600">旧方法（RNN + Attention）</text>
+        <text x="525" y="22" text-anchor="middle" font-weight="600" fill="#B54A2C">本文方法（纯 Attention）</text>
+        <line x1="350" y1="14" x2="350" y2="270" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <!-- 左：RNN -->
+        <rect x="60" y="50" width="230" height="32" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="71" text-anchor="middle">必须逐步计算：h_t 依赖 h_{t-1}</text>
+        <rect x="60" y="92" width="230" height="32" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="113" text-anchor="middle">长距离路径 O(n)，信息衰减</text>
+        <rect x="60" y="134" width="230" height="32" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="155" text-anchor="middle">GPU 大量时间在"等"</text>
+        <rect x="60" y="176" width="230" height="32" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="197" text-anchor="middle">训练周期：数周</text>
+        <rect x="60" y="218" width="230" height="32" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="239" text-anchor="middle">BLEU (英→德): 26.30</text>
+
+        <!-- 右：Transformer -->
+        <rect x="410" y="50" width="230" height="32" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="71" text-anchor="middle" fill="#B54A2C">所有位置一次并行计算</text>
+        <rect x="410" y="92" width="230" height="32" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="113" text-anchor="middle" fill="#B54A2C">任意两词路径 O(1)</text>
+        <rect x="410" y="134" width="230" height="32" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="155" text-anchor="middle" fill="#B54A2C">GPU 满载并行</text>
+        <rect x="410" y="176" width="230" height="32" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="197" text-anchor="middle" fill="#B54A2C">训练周期：3.5 天 / 8 P100</text>
+        <rect x="410" y="218" width="230" height="32" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="239" text-anchor="middle" fill="#B54A2C" font-weight="600">BLEU (英→德): 28.4</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · RNN+Attention 与 Transformer 在五个关键维度上的对比。</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>论文发表后，影响力远超作者们最初的预期。一些直接受其启发的后续工作：</p>
+  <ul>
+    <li><em class="latin">GPT 系列 (2018–至今)</em>：OpenAI 用 Transformer 的解码器部分做自回归语言模型，逐步放大到 GPT-3、GPT-4，引爆了"通用助手"概念。</li>
+    <li><em class="latin">BERT (2018)</em>：Google 用 Transformer 的编码器部分做双向预训练，刷新了 11 项 NLP 任务的 SOTA。</li>
+    <li><em class="latin">T5 / BART (2019)</em>：把所有 NLP 任务统一成"文本到文本"格式，仍是 Transformer 一统江湖。</li>
+    <li><em class="latin">Vision Transformer (2020)</em>：把图像切成 patch 当成序列喂给 Transformer，在视觉领域也打赢了 CNN。</li>
+    <li><em class="latin">AlphaFold 2 (2020)</em>：蛋白质结构预测，核心仍是注意力机制。</li>
+    <li><em class="latin">Diffusion Transformer / DiT (2022)</em>：连图像生成都开始用 Transformer 做主干。</li>
+  </ul>
+  <p>截至 2025 年初，这篇论文已被引用超过 <em class="latin">173,000 次</em>，进入 Nature 统计的本世纪最被引用的十大科学论文之列，是 AI 历史上影响力最大的论文之一。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>Transformer 不是没有短板，事实上它的几个关键局限，正是后续几乎所有改进工作的起点：</p>
+  <ul>
+    <li><em>自注意力的 O(n²) 复杂度</em>：序列长度翻倍，计算量和内存需求翻四倍。这正是后来 <em class="latin">Longformer</em>、<em class="latin">Reformer</em>、<em class="latin">Linear Attention</em>、<em class="latin">FlashAttention</em> 等一长串工作的发力点。</li>
+    <li><em>位置编码较弱</em>：正余弦编码对长序列外推只是"勉强能用"。后来者提出了<em class="latin">相对位置编码</em>、<em class="latin">ALiBi</em>、<em class="latin">RoPE</em>（旋转位置编码）等更优雅的方案。</li>
+    <li><em>层归一化位置</em>：原始论文是 Post-LN（先算再归一化），训练深层时不够稳定；后来 <em class="latin">Pre-LN</em> 与 <em class="latin">RMSNorm</em> 成为新标配。</li>
+    <li><em>激活函数</em>：ReLU 后来被 <em class="latin">GELU</em>、<em class="latin">SwiGLU</em> 取代，后者正是论文作者 Noam Shazeer 自己后来提出的。</li>
+    <li><em>推理效率</em>：自回归生成需要逐步解码，KV cache 占用大。这是 <em class="latin">vLLM</em>、<em class="latin">PagedAttention</em>、<em class="latin">Speculative Decoding</em> 等推理优化的战场。</li>
+  </ul>
+  <p>这些不足并不削弱论文的价值——恰恰相反，它们为后续七八年的研究提供了清晰的"待办清单"。一篇好论文，往往不仅自己回答了问题，更留下了一堆值得追下去的问题。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把镜头拉远，可以看到大模型领域大致沿着这样一条线索演进：</p>
+  <ol>
+    <li><em>2014 前后</em>：Seq2Seq + LSTM 范式成熟，Bahdanau 把注意力机制引入翻译系统，缓解长距离信息瓶颈。</li>
+    <li><em>2017</em>：本篇 Transformer 出场，把循环彻底拿掉，开启了"纯注意力"路线。</li>
+    <li><em>2018</em>：GPT、BERT 几乎同时出现，前者走"自回归生成"路线，后者走"双向理解"路线，把 Transformer 推上预训练王座。</li>
+    <li><em>2020 前后</em>：GPT-3 把模型规模推到 1750 亿参数，"prompt 即接口"成真；Vision Transformer 把注意力带进视觉。</li>
+    <li><em>2022–至今</em>：ChatGPT 引爆"对话即产品"，对齐技术（RLHF 等）成为关键，Transformer 在多模态、推理、Agent 等方向继续扩张。</li>
+  </ol>
+  <p>本系列开篇选 Transformer，正是因为它站在所有这些后续工作的<em>分叉点</em>上——理解了它，就拿到了读懂今天所有大模型的钥匙。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+
+  <h3>9.1 论文标题致敬 Beatles</h3>
+  <p>《Attention Is All You Need》这个名字，其实是在致敬披头士 1967 年的名曲 <em class="latin">All You Need Is Love</em>。在 NeurIPS 同期的论文里，这个标题算得上一种"叛逆"——大多数论文标题都长而克制，而它短、口号化、甚至有点傲慢。后来这个梗被无数次致敬与戏仿：<em class="latin">Convolution Is All You Need</em>、<em class="latin">All You Need Is LoRA</em>、<em class="latin">RLHF Is All You Need</em>……一个标题能成为一个学派的开场白，本身就是传奇。</p>
+
+  <h3>9.2 八位作者，八种人生</h3>
+  <p>论文的八位署名作者在脚注里特别声明"<em>等贡献，列表顺序随机</em>"——这在学术界相当罕见。更有意思的是他们之后各自的人生轨迹：</p>
+  <ul>
+    <li><em class="latin">Noam Shazeer</em>：论文里的"注意力大师"，后来又独立提出了 <em class="latin">SwiGLU</em> 激活函数和稀疏 MoE 架构。2021 年离开 Google 联合创办 <em class="latin">Character.AI</em>，2024 年又回归 Google 并加入 Gemini 团队。</li>
+    <li><em class="latin">Illia Polosukhin</em>：离开 Google 后创办了区块链项目 <em class="latin">NEAR Protocol</em>，成为加密世界里最知名的"前 AI 人"之一。</li>
+    <li><em class="latin">Llion Jones</em>：返回日本，2023 年在东京创办了 <em class="latin">Sakana AI</em>，主打"自然启发的 AI"。</li>
+    <li><em class="latin">Aidan N. Gomez</em>：当时还是多伦多大学访问 Google Brain 的博士生，后来联合创办了 <em class="latin">Cohere</em>，成为企业级大模型的重要玩家。</li>
+    <li><em class="latin">Ashish Vaswani</em>：论文的第一通讯作者，后来转向创办 <em class="latin">Adept AI</em> 等公司。</li>
+  </ul>
+  <p>一篇论文，散落出 Google、OpenAI 风格之外的多个创业方向，这本身就说明 Transformer 的影响力早已溢出学术圈。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 中心圆：2017 论文 -->
+        <circle cx="350" cy="110" r="48" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="350" y="106" text-anchor="middle" fill="#B54A2C" font-weight="600">2017</text>
+        <text x="350" y="122" text-anchor="middle" fill="#B54A2C" font-weight="600">Transformer</text>
+
+        <!-- 八位作者节点，环绕中心 -->
+        <g>
+          <circle cx="350" cy="30" r="22" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="350" y="34" text-anchor="middle" font-size="10">Shazeer</text>
+          <line x1="350" y1="52" x2="350" y2="62" stroke="#96897A"/>
+
+          <circle cx="490" cy="60" r="22" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="490" y="64" text-anchor="middle" font-size="10">Polosukhin</text>
+          <line x1="470" y1="74" x2="396" y2="92" stroke="#96897A"/>
+
+          <circle cx="560" cy="110" r="22" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="560" y="114" text-anchor="middle" font-size="10">Jones</text>
+          <line x1="538" y1="110" x2="398" y2="110" stroke="#96897A"/>
+
+          <circle cx="490" cy="160" r="22" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="490" y="164" text-anchor="middle" font-size="10">Gomez</text>
+          <line x1="470" y1="148" x2="396" y2="130" stroke="#96897A"/>
+
+          <circle cx="350" cy="190" r="22" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="350" y="194" text-anchor="middle" font-size="10">Vaswani</text>
+          <line x1="350" y1="168" x2="350" y2="158" stroke="#96897A"/>
+
+          <circle cx="210" cy="160" r="22" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="210" y="164" text-anchor="middle" font-size="10">Kaiser</text>
+          <line x1="232" y1="148" x2="304" y2="130" stroke="#96897A"/>
+
+          <circle cx="140" cy="110" r="22" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="140" y="114" text-anchor="middle" font-size="10">Parmar</text>
+          <line x1="162" y1="110" x2="302" y2="110" stroke="#96897A"/>
+
+          <circle cx="210" cy="60" r="22" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="210" y="64" text-anchor="middle" font-size="10">Uszkoreit</text>
+          <line x1="232" y1="74" x2="304" y2="92" stroke="#96897A"/>
+        </g>
+        <text x="350" y="210" text-anchor="middle" font-size="10" fill="#96897A">"等贡献，列表顺序随机" —— 论文脚注</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 八位作者环绕 Transformer 论文的"等贡献随机排序"示意，他们在论文发表后分别走向创业、学术、加密世界等不同方向。</figcaption>
+  </figure>
+
+  <h3>9.3 一个被低估的细节</h3>
+  <p>论文的脚注里有一句不起眼的话：<em class="latin">"Jakob proposed replacing RNNs with self-attention and started the effort to evaluate this idea."</em> 也就是说，<em>最早提议把 RNN 整个扔掉</em>的是 Jakob Uszkoreit——一位在 Google 工作了多年的老牌 NLP 工程师，他的父亲 Hans Uszkoreit 同样是 NLP 学界的知名学者。这种"两代人接力做 NLP"的背景，让这个看似激进的提议带上了一点历史厚度。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读这篇论文时，我最大的感触是：<em>真正改变世界的，往往不是最复杂的设计，而是最勇敢的"减法"</em>。Transformer 的每一个组件——注意力、多头、位置编码、残差——单独拿出来都不是首创，但把它们组合在一起、<em>同时把循环和卷积拿掉</em>，需要的不是技术突破，而是判断力与勇气。</p>
+  <p>这种"减法创新"在科学史上反复出现：相对论去掉了以太，深度学习去掉了手工特征工程，Transformer 去掉了循环结构。它们的共同点不是"加了什么新东西"，而是<em>"意识到了什么是多余的"</em>。</p>
+  <p>放到今天的语境里，这个启示依然有效：当我们试图把模型做大、做复杂时，不妨先问一句——<em>这层结构真的有必要吗？去掉它会发生什么？</em></p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果 Transformer 的核心是"去掉循环、只留注意力"，那么今天大模型里那些<em>又重新引入循环</em>的设计（比如 <em class="latin">Recurrent Memory</em>、<em class="latin">Mamba/SSM</em>、<em class="latin">RWKV</em>），是在开历史倒车，还是抓住了 Transformer 当年没看清的某个盲点？欢迎带着这个问题继续追读本系列。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding</h3>
+    <p style="margin:0;">Transformer 提出后仅仅一年，Google 就把它从"翻译工具"升级成"通用语言理解引擎"——预训练一次，下游十几个任务都刷新 SOTA。下一篇我们就来读 BERT，看双向注意力如何让机器第一次真正"读懂"人类语言，又如何与同期出现的 GPT 走上两条截然不同的路线。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 001 篇</span>
+    <span>2026-07-30</span>
+  </footer>
+
+</div>
+</body>
+</html>
