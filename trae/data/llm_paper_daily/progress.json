@@ -1,6 +1,6 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 1,
+  "last_index": 2,
   "last_run_date": "2026-07-30",
   "papers_covered": [
     {
@@ -10,10 +10,18 @@
       "date": "2017-06-12",
       "era": "奠基期 2014–2017",
       "filename": "1_20260730_Attention_Is_All_You_Need.html"
+    },
+    {
+      "index": 2,
+      "title_en": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+      "title_zh": "BERT：让机器双向读懂人类语言的预训练革命",
+      "date": "2018-10-11",
+      "era": "预训练范式期 2018–2020",
+      "filename": "2_20260730_BERT.html"
     }
   ],
   "next_preview": {
-    "title_en": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
-    "title_zh": "BERT：让机器双向读懂人类语言的预训练革命"
+    "title_en": "Language Models are Unsupervised Multitask Learners",
+    "title_zh": "GPT-2：语言模型本身就是无监督多任务学习器"
   }
 }

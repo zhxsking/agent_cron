@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BERT 论文精读 · 大模型经典论文系列 #002</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#002</span>
+  </div>
+
+  <h1 class="title">
+    BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding
+    <span class="en">BERT：让机器双向读懂人类语言的预训练革命</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova</span>
+    <span>机构：Google AI Language</span>
+    <span>发表：2018-10 / arXiv · NAACL 2019</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/1810.04805" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/google-research/bert" target="_blank" rel="noopener">GitHub</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">上篇我们读到，2017 年的 Transformer 用"纯注意力"一脚踹开了序列建模的新大门。但它当时还只是个翻译匠—— Encoder 负责读懂源语言，Decoder 负责生成目标语言，两半各司其职，离"通用语言大脑"还差着十万八千里。</p>
+
+  <p class="lead">仅仅一年后，Google AI Language 的四位研究员提出了一个看似朴素的主意：把 Transformer 的 Encoder 单拎出来，让它做一种我们从小做到大的语文题——<em>完形填空</em>。预训练一次，下游十几个任务统统刷新纪录。这篇论文，就是今天的主角 BERT。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    BERT 用"完形填空"式的掩码语言模型，让 Transformer 第一次真正<em>双向</em>地读懂上下文，预训练一次就能在 11 项 NLP 任务上刷新世界纪录，开启了"预训练 + 微调"的黄金时代。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>如果说 Transformer 是一把锻造好的利刃，那么 BERT 就是第一个把它从"翻译工具房"请进"通用语言兵器库"的人。在 BERT 之前，做一个情感分析模型要专门搭一套网络，做一个问答模型又要另搭一套，工程师们疲于为每个任务定制架构；在 BERT 之后，NLP 圈忽然达成了一个心照不宣的共识——<em>几乎所有任务都可以共享同一个预训练好的"语言理解基座"</em>，只需在顶上接一个小小的输出层微调即可。</p>
+  <p>它承接了 Transformer 的架构红利，又开启了延续至今的"预训练范式期"。下图中，我们把已解析的 Transformer 和本篇 BERT 一起放进大模型的发展长河，看看它站在哪个分叉点上。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowT1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="130" x2="660" y2="130" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 2013 word2vec -->
+        <circle cx="80" cy="130" r="5" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="80" y="108" text-anchor="middle">2013</text>
+        <text x="80" y="158" text-anchor="middle" fill="#2E2A22">word2vec</text>
+
+        <!-- 2014 Seq2Seq+Attn -->
+        <circle cx="200" cy="130" r="5" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="200" y="108" text-anchor="middle">2014</text>
+        <text x="200" y="158" text-anchor="middle" fill="#2E2A22">Seq2Seq+Attn</text>
+
+        <!-- 2017 Transformer 已解析 -->
+        <circle cx="320" cy="130" r="7" fill="#24555A" stroke="#24555A"/>
+        <text x="320" y="104" text-anchor="middle" fill="#24555A" font-weight="600">2017</text>
+        <text x="320" y="160" text-anchor="middle" fill="#24555A" font-weight="600">Transformer ✓</text>
+
+        <!-- 2018 BERT 本篇 -->
+        <circle cx="420" cy="130" r="9" fill="#B54A2C" stroke="#B54A2C"/>
+        <text x="420" y="98" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="420" y="164" text-anchor="middle" fill="#2E2A22" font-weight="600">BERT (2018)</text>
+
+        <!-- 2019 GPT-2 / RoBERTa / T5 -->
+        <circle cx="520" cy="130" r="5" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="520" y="108" text-anchor="middle">2019</text>
+        <text x="520" y="158" text-anchor="middle" fill="#2E2A22">GPT-2 / RoBERTa</text>
+
+        <!-- 2020 GPT-3 -->
+        <circle cx="620" cy="130" r="5" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="620" y="108" text-anchor="middle">2020</text>
+        <text x="620" y="158" text-anchor="middle" fill="#2E2A22">GPT-3</text>
+
+        <!-- 时代带 -->
+        <rect x="40" y="195" width="280" height="34" fill="#24555A" fill-opacity="0.06"/>
+        <text x="180" y="216" text-anchor="middle" fill="#24555A">奠基期 2014–2017</text>
+        <rect x="340" y="195" width="300" height="34" fill="#B54A2C" fill-opacity="0.07"/>
+        <text x="490" y="216" text-anchor="middle" fill="#B54A2C">预训练范式期 2018–2020</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的位置：BERT 站在"奠基期"与"预训练范式期"的交界，是通用语言理解基座的开端</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要理解 BERT 为什么重要，得先回到 2018 年 NLP 圈的"两条路线之争"。彼时，"预训练一个语言模型，再迁移到下游任务"的思想已经流行起来，但具体怎么用，分成了两个流派：</p>
+  <ul>
+    <li><em>基于特征（feature-based）</em>：代表是 ELMo。它先用双向 LSTM 训练好语言模型，再把隐藏状态当作"特征"拼接到下游任务的模型里。问题是下游任务还得自己搭一套复杂架构，工程量大。</li>
+    <li><em>基于微调（fine-tuning）</em>：代表是 OpenAI 的 GPT。它用 Transformer 解码器做单向语言模型，下游任务只需在顶上接一个小输出层，连同预训练参数一起微调。简单优雅——但有个致命伤：<em>它是单向的</em>。</li>
+  </ul>
+  <p>所谓单向，是说 GPT 在预测下一个词时，每个位置只能"看见"它左边的词，看不见右边的词。这听起来像语言模型的天经地义（毕竟生成文本确实是从左到右），但用来做"理解"就别扭了。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象你在读一句被挖掉一个字的完形填空题："今天天气真好，我们去公园[MASK]风筝。" 要填出"放"字，你<em>必然</em>要同时看左边（"我们去公园"）和右边（"风筝"）。如果只准你从左往右读、绝不许偷瞄右边，这道题就难得多——尤其在句子更长、更歧义的时候。GPT 当年就被这条规则捆住了手脚。
+  </div>
+
+  <p>ELMo 虽然号称"双向"，但它的做法是<em>分别</em>训练一个从左到右、一个从右到左的语言模型，再把两者的特征拼接起来。这就像两个人各看半边天、事后对笔记，每一层都只是"浅层拼接"，做不到让模型在每一层都真正同时融合左右上下文。</p>
+  <p>核心矛盾就摆在这儿：<em>标准语言模型天生单向，而语言理解天生需要双向</em>。BERT 要破解的，正是这个困局。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>一句话：<em>如何让预训练语言模型在每一层都真正"双向"地融合左右上下文，同时还能用上高效的 Transformer 微调范式？</em></p>
+  <p>难点在于，传统语言模型的目标函数是"给定上文预测下一个词"，从结构上就强制了单向。如果你直接让模型同时看到左右两边再去预测某个词，那就相当于"开着卷子考试"——模型可以作弊，直接把答案抄过来，学不到任何表示。BERT 必须发明一个新的预训练目标，既允许双向，又不让模型作弊。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果是你，会怎么设计一个"既能看左右两边、又不许直接抄答案"的训练任务？提示：想想小学语文卷子上的那道经典题型。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>BERT 的回答干脆利落——<em>把答案藏起来</em>。它把完形填空（学术上叫 Cloze task）搬进了预训练，发明了"掩码语言模型"。下面我们分四步拆解它的全貌。</p>
+
+  <h3>4.1 模型架构：只取 Encoder</h3>
+  <p>BERT 的全称是 <em class="latin">Bidirectional Encoder Representations from Transformers</em>。注意"Encoder"这个词——它只用了 Transformer 的编码器部分，把解码器整个扔掉了。这跟 GPT 恰好相反：GPT 只用 Decoder，做从左到右的生成；BERT 只用 Encoder，做双向的理解。同一套 Transformer 架构，被两家切成了不同的两半，走向两条截然不同的路。</p>
+  <p>论文给出了两个尺寸的模型：</p>
+
+  <table>
+    <thead>
+      <tr><th>模型</th><th>层数</th><th>隐藏维度</th><th>注意力头</th><th>参数量</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">BERT-Base</td><td>12</td><td>768</td><td>12</td><td>110M</td></tr>
+      <tr><td class="text">BERT-Large</td><td>24</td><td>1024</td><td>16</td><td>340M</td></tr>
+    </tbody>
+  </table>
+
+  <p>有意思的是，BERT-Base 的规模刻意设定得和 GPT 一模一样，目的就是<em>在同等参数量下公平对比</em>，证明"双向"本身带来的增益。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 360" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowM1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 左：输入表示 -->
+        <text x="140" y="32" text-anchor="middle" font-weight="600" fill="#24555A">输入表示（三者相加）</text>
+        <rect x="40" y="48" width="200" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="140" y="73" text-anchor="middle">Token Embedding</text>
+        <rect x="40" y="96" width="200" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="140" y="121" text-anchor="middle">Segment Embedding</text>
+        <rect x="40" y="144" width="200" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="140" y="169" text-anchor="middle">Position Embedding</text>
+        <text x="140" y="206" text-anchor="middle" fill="#96897A">＋</text>
+
+        <!-- 中：Encoder 堆叠 -->
+        <text x="350" y="32" text-anchor="middle" font-weight="600" fill="#B54A2C">BERT 编码器堆叠</text>
+        <rect x="270" y="48" width="160" height="44" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="350" y="75" text-anchor="middle" fill="#B54A2C">Transformer Block ×N</text>
+        <rect x="270" y="100" width="160" height="44" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="350" y="127" text-anchor="middle" fill="#B54A2C">多头自注意力</text>
+        <rect x="270" y="152" width="160" height="44" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="350" y="179" text-anchor="middle" fill="#B54A2C">前馈网络 + 残差归一</text>
+        <text x="350" y="216" text-anchor="middle" fill="#96897A">⋮ (N 层堆叠)</text>
+
+        <!-- 右：微调输出 -->
+        <text x="560" y="32" text-anchor="middle" font-weight="600" fill="#24555A">下游任务输出层</text>
+        <rect x="470" y="48" width="180" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="560" y="75" text-anchor="middle">[CLS] 分类头</text>
+        <rect x="470" y="100" width="180" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="560" y="127" text-anchor="middle">逐 token 输出</text>
+        <rect x="470" y="152" width="180" height="44" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="560" y="179" text-anchor="middle" fill="#24555A">微调即可适配任务</text>
+
+        <!-- 箭头 -->
+        <line x1="240" y1="124" x2="270" y2="124" stroke="#96897A" stroke-width="1" marker-end="url(#arrowM1)"/>
+        <line x1="430" y1="124" x2="470" y2="124" stroke="#96897A" stroke-width="1" marker-end="url(#arrowM1)"/>
+
+        <!-- 双向箭头说明 -->
+        <text x="350" y="270" text-anchor="middle" fill="#B54A2C" font-weight="600">每一层都同时融合左右上下文</text>
+        <path d="M210 290 Q 350 250 490 290" stroke="#B54A2C" stroke-width="1.2" fill="none" stroke-dasharray="4 3"/>
+        <path d="M210 300 Q 350 340 490 300" stroke="#B54A2C" stroke-width="1.2" fill="none" stroke-dasharray="4 3"/>
+        <text x="200" y="296" text-anchor="end" fill="#96897A">←左</text>
+        <text x="500" y="296" text-anchor="start" fill="#96897A">右→</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · BERT 架构：输入三 embedding 相加 → 多层 Transformer Encoder → 顶部接任务输出层，全链路双向</figcaption>
+  </figure>
+
+  <h3>4.2 输入表示：三种 Embedding 相加</h3>
+  <p>BERT 的输入是一个 token 序列，每个 token 的最终表示由三部分相加而成：</p>
+  <ul>
+    <li><em>Token Embedding</em>：用 WordPiece 分词（词表约 3 万），每个子词学一个向量。序列首部固定加一个特殊符号 <span class="mono">[CLS]</span>，它最终会汇聚整句语义，用于分类任务。</li>
+    <li><em>Segment Embedding</em>：因为 BERT 常处理"句子对"（如判断两句话是否相邻），用 A、B 两种向量区分不同句子。</li>
+    <li><em>Position Embedding</em>：学习式的位置编码，最长支持 512 个 token。</li>
+  </ul>
+  <p>三者直接逐元素相加，就得到送入 Encoder 的输入。简单粗暴，却很管用。</p>
+
+  <h3>4.3 预训练任务一：掩码语言模型（MLM）</h3>
+  <p>这是 BERT 的灵魂。做法是：随机选输入中 15% 的 token，把它们"挖掉"，让模型根据上下文预测被挖掉的原始词。具体到这 15% 的处理还有讲究：</p>
+
+  <table>
+    <thead>
+      <tr><th>占比</th><th>处理方式</th><th>为什么这么做</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>80%</td><td class="text">替换为 <span class="mono">[MASK]</span></td><td class="text">正经的完形填空</td></tr>
+      <tr><td>10%</td><td class="text">替换为随机词</td><td class="text">迫使模型不能只盯着 [MASK] 符号</td></tr>
+      <tr><td>10%</td><td class="text">保持原词不变</td><td class="text">让表示偏向"忠实原貌"，缓和预训练与微调的差异</td></tr>
+    </tbody>
+  </table>
+
+  <p>这个 80/10/10 的配方不是随便定的，而是为了缓解一个尴尬：<em>[MASK] 这个符号在下游真实任务里根本不会出现</em>。如果 100% 都用 [MASK]，模型会过度依赖这个"作弊标记"，到了微调阶段反而水土不服。掺一点随机词和原词，等于给模型打了一针"现实世界的疫苗"。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="13" fill="#2E2A22">
+        <!-- MLM 任务 -->
+        <text x="350" y="28" text-anchor="middle" font-weight="600" fill="#B54A2C">任务一：掩码语言模型 MLM（完形填空）</text>
+        <rect x="40" y="50" width="620" height="60" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="60" y="88" font-size="13">今天</text>
+        <text x="150" y="88" font-size="13" fill="#B54A2C" font-weight="600">[MASK]</text>
+        <text x="260" y="88" font-size="13">真好</text>
+        <text x="350" y="88" font-size="13">，</text>
+        <text x="400" y="88" font-size="13">我们</text>
+        <text x="480" y="88" font-size="13" fill="#B54A2C" font-weight="600">[MASK]</text>
+        <text x="590" y="88" font-size="13">公园</text>
+        <text x="60" y="70" font-size="10" fill="#96897A">输入</text>
+
+        <line x1="350" y1="120" x2="350" y2="150" stroke="#96897A" stroke-width="1" marker-end="url(#arrowM1)"/>
+
+        <rect x="120" y="160" width="460" height="50" rx="2" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <text x="350" y="192" text-anchor="middle" fill="#B54A2C" font-weight="600">模型据左右上下文预测：天气 / 去</text>
+
+        <!-- NSP 任务 -->
+        <text x="350" y="248" text-anchor="middle" font-weight="600" fill="#24555A">任务二：下一句预测 NSP</text>
+        <rect x="40" y="262" width="300" height="30" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="190" y="283" text-anchor="middle" font-size="12">句A：今天天气真好。</text>
+        <rect x="360" y="262" width="300" height="30" rx="2" fill="#24555A" fill-opacity="0.10" stroke="#24555A"/>
+        <text x="510" y="283" text-anchor="middle" font-size="12" fill="#24555A">句B：我们去放风筝。→ 是下一句</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 两个预训练任务：MLM 让模型学会"双向填空"，NSP 让模型学会"句间关系"</figcaption>
+  </figure>
+
+  <h3>4.4 预训练任务二：下一句预测（NSP）</h3>
+  <p>光会填空还不够，很多任务（如问答、自然语言推断）需要理解<em>两句话之间的关系</em>。于是 BERT 又加了个任务：给模型看两句话 A 和 B，让它判断 B 是不是真的跟在 A 后面。训练时一半样本取真实相邻句（正例），一半随机拼一句（负例）。这个 [CLS] 符号的最终表示，就被用来做这个二分类。</p>
+
+  <h3>4.5 微调：一个输出层搞定一切</h3>
+  <p>预训练完成后，面对具体下游任务，BERT 的做法极其省心：把预训练好的 Encoder 原封不动拿来，顶上接一个轻量输出层（通常就是一个线性分类器），连同所有参数一起在下游数据上微调几个 epoch 即可。无论是情感分类、问答还是命名实体识别，<em>模型主体几乎不用改</em>，改的只是顶上那一小撮参数和输入拼法。</p>
+
+  <div class="formula-block">
+    $$ \mathcal{L}_{\text{MLM}} = -\sum_{i \in \mathcal{M}} \log P(x_i \mid \tilde{x}), \quad P(x_i \mid \tilde{x}) = \text{softmax}(W h_i + b) $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>其中 $\mathcal{M}$ 是被掩码的位置集合，$\tilde{x}$ 是掩码后的序列，$h_i$ 是 Encoder 输出的第 $i$ 个位置的隐状态。整个目标函数朴素得像一道课后习题——但配上双向 Transformer，威力惊人。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowM2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 预训练阶段 -->
+        <rect x="20" y="60" width="150" height="120" rx="2" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <text x="95" y="85" text-anchor="middle" font-weight="600" fill="#B54A2C">预训练</text>
+        <text x="95" y="110" text-anchor="middle">BooksCorpus</text>
+        <text x="95" y="130" text-anchor="middle">+ Wikipedia</text>
+        <text x="95" y="150" text-anchor="middle">MLM + NSP</text>
+        <text x="95" y="170" text-anchor="middle">约 33 亿词</text>
+
+        <!-- 一个基座 -->
+        <rect x="200" y="95" width="120" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="260" y="125" text-anchor="middle" fill="#24555A" font-weight="600">BERT 基座</text>
+
+        <!-- 下游任务 -->
+        <text x="510" y="40" text-anchor="middle" fill="#96897A">微调即可适配</text>
+        <rect x="400" y="50" width="120" height="34" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="460" y="72" text-anchor="middle">情感分析</text>
+        <rect x="540" y="50" width="120" height="34" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="600" y="72" text-anchor="middle">问答 SQuAD</text>
+        <rect x="400" y="100" width="120" height="34" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="460" y="122" text-anchor="middle">命名实体</text>
+        <rect x="540" y="100" width="120" height="34" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="600" y="122" text-anchor="middle">自然语言推断</text>
+        <rect x="470" y="155" width="120" height="34" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="530" y="177" text-anchor="middle">……11 项任务</text>
+
+        <!-- 箭头 -->
+        <line x1="170" y1="120" x2="200" y2="120" stroke="#96897A" stroke-width="1" marker-end="url(#arrowM2)"/>
+        <line x1="320" y1="110" x2="400" y2="67" stroke="#96897A" stroke-width="1" marker-end="url(#arrowM2)"/>
+        <line x1="320" y1="120" x2="540" y2="67" stroke="#96897A" stroke-width="1" marker-end="url(#arrowM2)"/>
+        <line x1="320" y1="120" x2="400" y2="117" stroke="#96897A" stroke-width="1" marker-end="url(#arrowM2)"/>
+        <line x1="320" y1="125" x2="540" y2="117" stroke="#96897A" stroke-width="1" marker-end="url(#arrowM2)"/>
+        <line x1="320" y1="130" x2="470" y2="172" stroke="#96897A" stroke-width="1" marker-end="url(#arrowM2)"/>
+
+        <text x="185" y="112" font-size="10" fill="#96897A">一次</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · "预训练一次，微调万物"范式：一个 BERT 基座适配几乎所有 NLP 任务</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>结果可以用四个字形容——<em>横扫千军</em>。BERT 在 11 项 NLP 任务上刷新了世界纪录，几项最亮眼的如下：</p>
+
+  <table>
+    <thead>
+      <tr><th>任务 / 指标</th><th>此前 SOTA</th><th>BERT</th><th>提升</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">GLUE（综合分）</td><td>72.8</td><td>80.4</td><td>+7.6</td></tr>
+      <tr><td class="text">MultiNLI 准确率</td><td>81.1</td><td>86.7</td><td>+5.6</td></tr>
+      <tr><td class="text">SQuAD v1.1 测试 F1</td><td>91.7</td><td>93.2</td><td>+1.5</td></tr>
+      <tr><td class="text">SQuAD v2.0 测试 F1</td><td>78.0</td><td>83.1</td><td>+5.1</td></tr>
+      <tr><td class="text">SWAG（常识）准确率</td><td>58.6</td><td>86.3</td><td>+27.7</td></tr>
+    </tbody>
+  </table>
+
+  <p>其中最戏剧性的一幕发生在 SQuAD v1.1：BERT 的 F1 达到 93.2，而<em>人类标注者的表现只有 91.2</em>——机器在读理解这件事上，第一次反超了人类。虽然只是在这个特定基准上，但象征意义巨大。</p>
+  <p>更值得玩味的是消融实验。作者分别去掉了 MLM（改回单向语言模型）和 NSP，结果性能都明显掉档。尤其是把双向换成单向后，几项任务直接掉了好几个点。这从反面坐实了论文的核心论断：<em>双向，是 BERT 战胜 GPT 的关键所在</em>。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="120" y="30" text-anchor="middle" font-weight="600">ELMo（特征拼接）</text>
+        <text x="350" y="30" text-anchor="middle" font-weight="600">GPT（单向微调）</text>
+        <text x="580" y="30" text-anchor="middle" font-weight="600" fill="#B54A2C">BERT（双向微调）</text>
+        <line x1="235" y1="20" x2="235" y2="240" stroke="#96897A" stroke-dasharray="4 4"/>
+        <line x1="465" y1="20" x2="465" y2="240" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <!-- ELMo：左右分别训练 -->
+        <rect x="50" y="55" width="140" height="30" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="75" text-anchor="middle">左→右 LSTM</text>
+        <rect x="50" y="95" width="140" height="30" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="115" text-anchor="middle">右→左 LSTM</text>
+        <text x="120" y="150" text-anchor="middle" fill="#96897A">浅层拼接特征</text>
+        <text x="120" y="200" text-anchor="middle" fill="#96897A">每层不真正融合</text>
+
+        <!-- GPT：单向 -->
+        <rect x="280" y="70" width="140" height="80" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="105" text-anchor="middle">Transformer Decoder</text>
+        <text x="350" y="128" text-anchor="middle">仅看左侧</text>
+        <text x="350" y="200" text-anchor="middle" fill="#96897A">每层只能看左</text>
+
+        <!-- BERT：双向 -->
+        <rect x="510" y="70" width="140" height="80" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="580" y="105" text-anchor="middle" fill="#B54A2C" font-weight="600">Transformer Encoder</text>
+        <text x="580" y="128" text-anchor="middle" fill="#B54A2C">同时看左右</text>
+        <text x="580" y="200" text-anchor="middle" fill="#B54A2C" font-weight="600">每层都双向融合</text>
+
+        <!-- 底部说明 -->
+        <text x="120" y="232" text-anchor="middle" font-size="11" fill="#96897A">需自建下游架构</text>
+        <text x="350" y="232" text-anchor="middle" font-size="11" fill="#96897A">微调但单向</text>
+        <text x="580" y="232" text-anchor="middle" font-size="11" fill="#B54A2C" font-weight="600">微调且双向 ✓</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · ELMo / GPT / BERT 三者对比：同样是预训练，BERT 是唯一做到"每层都双向"的</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>BERT 的影响怎么强调都不过分，它至少重塑了三件事：</p>
+  <ul>
+    <li><em>确立了"预训练 + 微调"范式</em>：此后数年，NLP 几乎所有任务的 SOTA 都建立在一个预训练语言模型之上，工程师不再为每个任务从零搭架构，而是"换个输出层微调几天"。这种"一基座、多任务"的工程模式，正是今天大模型生态的雏形。</li>
+    <li><em>证明了架构趋同的可行性</em>：BERT 之后，问答、分类、序列标注这些原本形态各异的任务，都用同一套 Transformer Encoder 解决。任务间的差异被压缩到"输入怎么拼、输出头怎么接"的层面。这为后来 GPT-3"用 prompt 统一一切"埋下了伏笔。</li>
+    <li><em>引爆了一波"BERT 系"衍生模型</em>：RoBERTa（更猛地调参）、ALBERT（轻量化）、ELECTRA（换更高效的预训练目标）、SpanBERT、Chinese-BERT-WWM……一时间"XX-BERT"满天飞，预训练模型成了 NLP 论文的标配起点。</li>
+  </ul>
+  <p>可以说，从 BERT 开始，"先在海量无标注文本上预训练，再迁移到下游"不再是一个 trick，而成了 NLP 的<em>默认地基</em>。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>BERT 当然不是完美的，论文自己也埋了几颗"地雷"，后来者一个个拆掉了：</p>
+  <ul>
+    <li><em>预训练-微调不一致</em>：[MASK] 符号在下游任务中不存在，那个 80/10/10 配方只是缓解、没根除。ELECTRA 后来用"替换检测"目标更优雅地解决了这个问题。</li>
+    <li><em>NSP 其实没啥用</em>：RoBERTa 的复现实验发现，去掉 NSP 任务反而更好——这个精心设计的"第二任务"被证伪了。</li>
+    <li><em>静态、封闭的预训练</em>：BERT 训完就定型了，知识不会更新，最长只能处理 512 个 token。后来的连续预训练、长文本建模（Longformer、BigBird）都在补这个短板。</li>
+    <li><em>只懂理解、不善生成</em>：纯 Encoder 架构天生不擅长自回归生成，所以 BERT 系在"写文章"这件事上一直打不过 GPT 系。这也是两条路线分道扬镳的根源。</li>
+    <li><em>算力门槛</em>：当年复现 BERT-Large 预训练要烧掉大量 TPU，普通实验室望而却步，间接催生了后来"开源预训练模型 + 微调"的共享生态。</li>
+  </ul>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把镜头拉远，大模型的"语言理解"这条线是这样一路走来的：</p>
+  <ol>
+    <li><em>2013 前后</em>：word2vec 等静态词向量登场，让词第一次有了"语义坐标"，但一个词只有一个固定向量，无视上下文。</li>
+    <li><em>2018 上半年</em>：ELMo 用双向 LSTM 做上下文词向量，但仍是浅层拼接；同期 GPT-1 用 Transformer Decoder 做单向微调，开了 fine-tuning 范式先河。</li>
+    <li><em>2018 下半年（本篇）</em>：BERT 用掩码语言模型实现真正的双向预训练，一举刷新 11 项任务，确立"预训练 + 微调"主流范式。</li>
+    <li><em>2019</em>：RoBERTa 优化训练配方、T5 把所有任务统一成"文本到文本"、GPT-2 展示 zero-shot 生成能力——Encoder 路线和 Decoder 路线各自狂奔。</li>
+    <li><em>2020 及之后</em>：GPT-3 用 1750 亿参数把"prompt 即接口"推上台面，理解与生成两条线在"超大规模 + 少样本"中重新汇流，最终通向今天的对话大模型。</li>
+  </ol>
+  <p>本系列开篇的 Transformer 给了利刃，本篇 BERT 则是把利刃磨成了通用工具。理解了它，你就理解了 2018–2020 年间 NLP 几乎所有故事的起点。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>BERT 这个名字其实是个"谐音梗 + 童年回忆"。它全称 <em class="latin">Bidirectional Encoder Representations from Transformers</em>，首字母拼出来正好是 BERT——而 Bert 恰好是美国经典儿童节目《芝麻街》里一个角色的名字。这个不经意的巧合，无意间开启了 NLP 圈长达数年的"芝麻街命名风潮"：ELMo、BERT、ERNIE、Big BIRD、Kermit、Grover、ELMO……一时间顶级会议的论文标题像在点芝麻街角色名册，让人忍俊不禁。</p>
+  <p>更逗的是，百度的中文预训练模型干脆取名 <em class="latin">ERNIE</em>（芝麻街里 Bert 的室友），而 RoBERTa 的名字则是在 BERT 前面加了负责训练它的研究员 Roberts 的名字——"Robert + BERT"，一个模型名里塞进了一个人的吐槽和致敬。</p>
+
+  <div class="callout">
+    <span class="label">小八卦</span>
+    BERT 发布后，NLP 圈掀起了一场空前的"刷榜狂欢"。GLUE 排行榜上的分数一周一变，研究者们戏称"BERT 之后再发论文，都得先解释自己为什么没拿 BERT 当基座"。这场狂欢热闹到 GLUE 基准很快就被刷到"超人类"而不得不升级成 SuperGLUE——某种意义上，是 BERT 把基准"卷"没的。
+  </div>
+
+  <p>还有个有意思的反差：BERT 论文在 2018 年 10 月挂上 arXiv 时，距它大量对比的 GPT-1 发布才几个月。Google 这篇论文几乎处处拿 GPT 当靶子，连 BERT-Base 的参数量都刻意对齐 GPT，就为了说一句"在同等规模下，双向就是比单向强"。而 OpenAI 这边，GPT 路线没有回头争辩，转头闷头放大模型，一年后用 GPT-2 的 zero-shot 给了世界另一个震撼——这条"理解 vs 生成"的暗暗较劲，正是下一篇要讲的故事。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 两个角色对望 -->
+        <circle cx="180" cy="100" r="45" fill="#ECE4D4" stroke="#B54A2C" stroke-width="1.5"/>
+        <circle cx="168" cy="92" r="4" fill="#2E2A22"/>
+        <circle cx="192" cy="92" r="4" fill="#2E2A22"/>
+        <path d="M165 112 Q180 122 195 112" stroke="#2E2A22" stroke-width="1.5" fill="none"/>
+        <text x="180" y="165" text-anchor="middle" fill="#B54A2C" font-weight="600">BERT</text>
+        <text x="180" y="182" text-anchor="middle" fill="#96897A">双向 · 理解</text>
+
+        <text x="350" y="95" text-anchor="middle" fill="#96897A" font-size="14">vs</text>
+        <text x="350" y="120" text-anchor="middle" fill="#96897A" font-size="10">同门不同路</text>
+
+        <circle cx="520" cy="100" r="45" fill="#ECE4D4" stroke="#24555A" stroke-width="1.5"/>
+        <circle cx="508" cy="92" r="4" fill="#2E2A22"/>
+        <circle cx="532" cy="92" r="4" fill="#2E2A22"/>
+        <path d="M505 115 L535 115" stroke="#2E2A22" stroke-width="1.5"/>
+        <text x="520" y="165" text-anchor="middle" fill="#24555A" font-weight="600">GPT</text>
+        <text x="520" y="182" text-anchor="middle" fill="#96897A">单向 · 生成</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 6</span> · 同一年诞生的两条路线：BERT 双向理解，GPT 单向生成，多年后在"超大规模"处重逢</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读 BERT，最让我感慨的不是某个精巧的技巧，而是它体现的一种研究哲学：<em>把约束当成突破口</em>。语言模型单向的"先天约束"曾被视为理所当然，BERT 偏偏要问一句"凭什么"，然后用一个小学语文题（完形填空）就翻过了这座山。很多时候，领域里最大的进步不来自更复杂的模型，而来自敢对一个"常识"较真。</p>
+  <p>另一个值得玩味的点是 BERT 的"半衰期"。它在 2018–2020 年是 NLP 当之无愧的王者，可当 GPT-3 把规模推到极致、ChatGPT 把对话推成产品后，纯 Encoder 的 BERT 系在大众视野里渐渐退场。但如果你去看今天搜索引擎的排序、企业里的文本分类、生物信息学里的蛋白质序列建模，BERT 家族依然在大量"理解类"任务上默默服役——它没有死，只是从"聚光灯下"退到了"基础设施里"。这恰恰是伟大技术的归宿：<em>重要到无人察觉</em>。</p>
+  <p>如果今天要重做 BERT，我会更关心一个问题：在 LLM 已经能"一口气回答一切"的时代，那种"小而专、可微调"的轻量理解模型，还有多少不可替代的价值？答案也许藏在成本、隐私、延迟这些工程现实里——而这，正是 BERT 留给我们的另一笔遗产。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果让你为一句话里的每个词选一个"理解代表"，你会让它只看左边、只看右边、还是左右都看？再想想：为什么"生成"任务几乎只能从左到右，而"理解"任务却强烈渴望双向？这两种不对称，背后是同一个原因吗？
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Language Models are Unsupervised Multitask Learners (GPT-2)</h3>
+    <p style="margin:0;">BERT 用双向微调称霸"理解"战场的同时，OpenAI 却在另一条路上闷头放大招。2019 年，他们丢出一篇没有正式会议、只有博客的论文，用一句"语言模型本身就是无监督多任务学习器"震撼全场——GPT-2 不仅不微调，连任务特定的输出层都不要，靠 zero-shot 直接做翻译、问答、摘要。下一篇，我们就来看 BERT 的"对门邻居"如何用一个简单到离谱的主意，把 NLP 的游戏规则又改写了一遍。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 002 篇</span>
+    <span>2026-07-30</span>
+  </footer>
+
+</div>
+</body>
+</html>
