@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chinchilla 论文精读 · 大模型经典论文系列 #005</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:38px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:28px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#005</span>
+  </div>
+
+  <h1 class="title">
+    Training Compute-Optimal Large Language Models
+    <span class="en">Chinchilla：算力最优训练法——更小的模型、更多的数据，如何反杀 1750 亿的 GPT-3</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Jordan Hoffmann, Sebastian Borgeaud, Arthur Mensch 等 22 位作者</span>
+    <span>机构：DeepMind</span>
+    <span>发表：2022-03 / NeurIPS 2022</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2203.15556" target="_blank" rel="noopener">arXiv</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">上篇我们读完 GPT-3，它把算力几乎全砸在堆参数上——1750 亿参数，喂的数据却只有约 3000 亿 token。OpenAI 用 Scaling Laws 给"大力出奇迹"背了书，整个行业跟着一路狂奔：Gopher 上到 2800 亿、Megatron-Turing NLG 上到 5300 亿，参数越堆越大，数据却几乎都冻在 3000 亿上下。所有人都觉得，这就是通向更强模型的唯一正道。</p>
+
+  <p class="lead">然后 2022 年 3 月底，DeepMind 丢出了一份让人后背发凉的论文。他们问了一个看似简单、却没人认真回答过的问题：<em>同样多的算力，到底是该堆参数、还是该喂数据？</em>为了回答它，他们训练了四百多个模型，最后造出一个只有 700 亿参数的"小家伙"——Chinchilla。这个小家伙用和 2800 亿的 Gopher 完全相同的算力、多四倍的数据，在几乎所有任务上把 Gopher、GPT-3 一起按在地上摩擦。一句话：<em>过去两年，大家可能都把力气使错了方向</em>。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    Chinchilla 用四百多次小模型实验证明：在固定算力下，<em>模型参数和训练数据应当等比例增长</em>（约每多一个参数配 20 个 token），而 GPT-3、Gopher 这些"巨无霸"普遍<em>参数过剩、数据严重不足</em>——于是 700 亿的 Chinchilla 用同样算力、四倍数据，反杀了 1750 亿的 GPT-3，从此改写大模型的训练配方。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>如果把大模型的发展比作一条奔涌的河，Transformer 是源头，BERT 与 GPT-2 是初分叉的支流，GPT-3 则是那道把河道撑宽十倍的洪峰。它验证了"大力出奇迹"——但同时也固化了一个共识：<em>要更强，就把参数堆得更大</em>。这条共识的"理论执照"，来自 2020 年 1 月 OpenAI 自己发表的 Scaling Laws：算力每涨十倍，模型该大五倍半，数据只要多不到两倍。</p>
+  <p>Chinchilla 站在这条河的<em>纠偏位</em>上。它没有发明新架构、没有换新目标函数，甚至没有换数据集——它只是把同一个算力预算，<em>从"堆参数"重新分配到"喂数据"</em>，然后冷静地展示：这样训练出来的小模型，反而更强。它是连接"Kaplan 时代（2020–2022）"与"后 Chinchilla 时代（2023 至今）"的关键拐点：之后几乎所有开源模型——LLaMA、Falcon、Mistral、Llama 3——的训练配方，都直接建立在它给出的"20:1"法则之上。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowT1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="135" x2="660" y2="135" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 2017 Transformer 已解析 -->
+        <circle cx="70" cy="135" r="7" fill="#24555A" stroke="#24555A"/>
+        <text x="70" y="109" text-anchor="middle" fill="#24555A" font-weight="600">2017</text>
+        <text x="70" y="165" text-anchor="middle" fill="#24555A" font-weight="600">Transformer ✓</text>
+
+        <!-- 2018-2019 BERT/GPT-2 已解析 -->
+        <circle cx="200" cy="135" r="7" fill="#24555A" stroke="#24555A"/>
+        <text x="200" y="109" text-anchor="middle" fill="#24555A" font-weight="600">2018–19</text>
+        <text x="200" y="165" text-anchor="middle" fill="#24555A" font-weight="600">BERT ✓ / GPT-2 ✓</text>
+
+        <!-- 2020 GPT-3 已解析 -->
+        <circle cx="330" cy="135" r="7" fill="#24555A" stroke="#24555A"/>
+        <text x="330" y="109" text-anchor="middle" fill="#24555A" font-weight="600">2020</text>
+        <text x="330" y="165" text-anchor="middle" fill="#24555A" font-weight="600">GPT-3 ✓</text>
+
+        <!-- 2021 Gopher (Kaplan 路线极端化) -->
+        <circle cx="410" cy="135" r="5" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="410" y="113" text-anchor="middle">2021.12</text>
+        <text x="410" y="163" text-anchor="middle" fill="#2E2A22">Gopher 280B</text>
+
+        <!-- 2022 Chinchilla 本篇 -->
+        <circle cx="490" cy="135" r="9" fill="#B54A2C" stroke="#B54A2C"/>
+        <text x="490" y="101" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="490" y="169" text-anchor="middle" fill="#2E2A22" font-weight="600">Chinchilla (2022.03)</text>
+
+        <!-- 2022 InstructGPT -->
+        <circle cx="560" cy="135" r="5" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="560" y="113" text-anchor="middle">2022</text>
+        <text x="560" y="163" text-anchor="middle" fill="#2E2A22">InstructGPT / RLHF</text>
+
+        <!-- 2023+ LLaMA -->
+        <circle cx="650" cy="135" r="5" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="650" y="113" text-anchor="middle">2023+</text>
+        <text x="650" y="163" text-anchor="middle" fill="#2E2A22">LLaMA 开源潮</text>
+
+        <!-- 时代带 -->
+        <rect x="40" y="210" width="190" height="34" fill="#24555A" fill-opacity="0.06"/>
+        <text x="135" y="231" text-anchor="middle" fill="#24555A">奠基期 2014–2017</text>
+        <rect x="240" y="210" width="170" height="34" fill="#24555A" fill-opacity="0.10"/>
+        <text x="325" y="231" text-anchor="middle" fill="#24555A">预训练范式期 2018–2020</text>
+        <rect x="420" y="210" width="230" height="34" fill="#B54A2C" fill-opacity="0.07"/>
+        <text x="535" y="231" text-anchor="middle" fill="#B54A2C">规模化探索期 2020–2022</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络：Chinchilla 站在"规模化探索期"的纠偏位上——前承 GPT-3 的"大力出奇迹"，后启 LLaMA 的"小模型多数据"开源潮</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要看懂 Chinchilla 为什么是一记重锤，得先回到 2020 年初那篇被业内当作"圣经"的论文——OpenAI 的 <em class="latin">Scaling Laws for Neural Language Models</em>（缩放定律）。Kaplan 等人发现了一件极其优雅的事：语言模型的损失 L，和参数量 N、数据量 D、算力 C 之间，各自呈跨越七个数量级仍然成立的<em>幂律关系</em>。也就是说，"再加 scale 还能继续涨"不是玄学，是可预测的数学规律。</p>
+  <p>但真正塑造了行业行为的，是这套定律里关于"算力怎么分配"的结论。Kaplan 拟合出来的最优配比是：</p>
+
+  <div class="formula-block">
+    $$ N_{\text{opt}} \propto C^{0.73}, \qquad D_{\text{opt}} \propto C^{0.27} $$
+    <span class="eqn mono">(Kaplan)</span>
+  </div>
+
+  <p>翻译成人话：<em>算力每增长十倍，模型参数该增大约 5.5 倍，而训练 token 数只需增大 1.8 倍</em>。言下之意——加参数的"性价比"远高于加数据。这套配方被 GPT-3 严格执行：1750 亿参数配 3000 亿 token，比值约 1.7。之后两年，几乎所有追赶者都照抄了这套思路，把"额外的算力"几乎全砸在把模型撑大上，数据则大致冻在 3000 亿上下。</p>
+
+  <table>
+    <thead>
+      <tr><th>模型（年份）</th><th>参数量</th><th>训练 token</th><th>token : param</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">GPT-3（2020）</td><td>175B</td><td>~300B</td><td>~1.7</td></tr>
+      <tr><td class="text">Jurassic-1（2021）</td><td>178B</td><td>~300B</td><td>~1.7</td></tr>
+      <tr><td class="text">Gopher（2021）</td><td>280B</td><td>300B</td><td>~1.1</td></tr>
+      <tr><td class="text">Megatron-Turing NLG（2021）</td><td>530B</td><td>270B</td><td>~0.5</td></tr>
+      <tr><td class="text">LaMDA（2021）</td><td>137B</td><td>168B</td><td>~1.2</td></tr>
+    </tbody>
+  </table>
+
+  <p>看这张表你会发现一个隐秘的共同点：<em>参数越堆越大，token:param 比却一路走低</em>。到 MT-NLG 530B 时，每个参数只配了半个 token 的训练量——模型脑容量越来越大，喂进来的"教材"却没怎么变。可没人觉得这有问题，因为 Kaplan 定律说了，参数比数据值钱。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    把训练一个大模型想象成培养一个学生。Kaplan 路线相当于说：同样的学费预算，<em>把学生送进更大的学校、让他拥有更聪明的大脑</em>，比让他多读书更划算。于是各家拼命盖"超级学校"——参数从 1750 亿盖到 5300 亿——但发给学生的课本却一直只有那 3000 亿页。Chinchilla 要质疑的，正是这句"课本不重要"。
+  </div>
+
+  <p>Hoffmann 等人注意到了一个被所有人忽略的细节：Kaplan 的拟合，是在<em>没有训练到收敛</em>的模型上做的，而且不少实验点本身偏小。换句话说，那条被奉为圭臬的"N∝C^0.73"曲线，可能<em>根本没回答"算力最优"这个问题</em>——它回答的是"早期停止时谁占便宜"，而不是"把算力花到极致时该怎么分配"。于是他们决定，把这个问题正正经经地重做一遍。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>一句话：<em>给定一个固定的训练算力预算 C（FLOPs），应如何在模型大小 N 与训练 token 数 D 之间分配，才能让最终的预训练损失 L 达到最小？</em></p>
+  <p>这是一个被 Kaplan 论文"顺手回答过、但可能答错了"的问题。它写成约束优化就是：</p>
+
+  <div class="formula-block">
+    $$ N_{\text{opt}}(C),\ D_{\text{opt}}(C) = \arg\min_{N,\,D \ \text{s.t.}\ \text{FLOPs}(N,D)=C}\ L(N, D) $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>这里的 FLOPs 大致满足 <span class="mono">C ≈ 6ND</span>（参数乘以 token，再乘个常数）。论文里反复强调这件事的工程意义：<em>大模型通常只能训练一次</em>，几百万美元砸下去，事前必须估准"这个预算该用多大的模型配多少数据"——估错了，要么浪费算力，要么训出个"大而无当"的欠拟合模型。所以这不是一个理论洁癖问题，是几千万美元的账本问题。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    假设你有固定的 1000 万美元算力预算。按 Kaplan 的配方，你应该训一个超大模型、只看少量数据；按 Chinchilla 的配方，你应该训一个中等模型、看海量数据。从"学生培养"的类比想：<em>到底是更聪明的大脑重要，还是更广的阅读量重要？</em>在你下结论之前，先想想——一个天赋极高但只读过三本书的神童，和一个天赋平平但读了三百本书的普通人，谁面对没见过的新问题时更稳？
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>Chinchilla 的方法可以用三个词概括：<em>穷举、拟合、验证</em>。它不靠灵感，靠的是一组冷峻、互相印证的实验。论文最让人服气的地方也在这里——它没有只用一种方法就下结论，而是<em>用三种完全独立的方法</em>去逼近同一个问题，最后三者结论一致，结论才无可辩驳。</p>
+
+  <h3>4.1 穷举：四百多个模型，画出"等算力地形图"</h3>
+  <p>团队训练了 <em>400 多个</em>不同配置的语言模型，参数规模从 7000 万一路到超过 160 亿（70M–16B+），训练 token 数从 50 亿到 5000 亿（5B–500B）。每个配置还跑了多个训练时长。把这 400 多个数据点画在"模型大小 × 数据量"的平面上，每个点染上它的最终损失——一张立体的"等算力地形图"就浮现出来。然后他们再从这片小模型的地形，<em>外推</em>到 Gopher 量级（280B / 数千亿 FLOPs）的算力预算。</p>
+
+  <h3>4.2 三条互相印证的路线</h3>
+  <p>论文设计了三种独立方法来估计最优配比，任何一种单独拿出来都不算铁证，但三者一叠加，结论就硬了：</p>
+
+  <figure>
+    <svg viewBox="0 0 700 360" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowM1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 三栏标题 -->
+        <text x="130" y="30" text-anchor="middle" font-weight="600" fill="#24555A">Approach 1</text>
+        <text x="130" y="48" text-anchor="middle" fill="#24555A" font-size="11">固定参数，变 token</text>
+        <text x="370" y="30" text-anchor="middle" font-weight="600" fill="#24555A">Approach 2</text>
+        <text x="370" y="48" text-anchor="middle" fill="#24555A" font-size="11">IsoFLOP 等算力曲线</text>
+        <text x="610" y="30" text-anchor="middle" font-weight="600" fill="#24555A">Approach 3</text>
+        <text x="610" y="48" text-anchor="middle" fill="#24555A" font-size="11">参数化损失拟合</text>
+
+        <!-- Approach 1: 固定 N, 不同 D 的 loss 曲线 -->
+        <line x1="60" y1="220" x2="200" y2="220" stroke="#96897A"/>
+        <line x1="60" y1="80" x2="60" y2="220" stroke="#96897A"/>
+        <text x="50" y="150" text-anchor="end" fill="#96897A" font-size="10">loss</text>
+        <text x="130" y="240" text-anchor="middle" fill="#96897A" font-size="10">token 数 →</text>
+        <polyline points="70,200 90,170 115,150 140,140 170,135 195,133" fill="none" stroke="#96897A" stroke-width="1.5"/>
+        <circle cx="140" cy="140" r="3" fill="#B54A2C"/>
+        <text x="148" y="135" fill="#B54A2C" font-size="10">最优 D</text>
+        <text x="130" y="260" text-anchor="middle" fill="#96897A" font-size="10">每个 N 找最优 D</text>
+        <text x="130" y="275" text-anchor="middle" fill="#96897A" font-size="10">→ N 与 D 大致线性</text>
+
+        <!-- Approach 2: IsoFLOP U 形曲线 -->
+        <line x1="300" y1="220" x2="440" y2="220" stroke="#96897A"/>
+        <line x1="300" y1="80" x2="300" y2="220" stroke="#96897A"/>
+        <text x="290" y="150" text-anchor="end" fill="#96897A" font-size="10">loss</text>
+        <text x="370" y="240" text-anchor="middle" fill="#96897A" font-size="10">模型大小 →</text>
+        <!-- U 形曲线 -->
+        <polyline points="310,110 330,100 350,98 370,99 390,105 410,118 430,140" fill="none" stroke="#24555A" stroke-width="1.8"/>
+        <circle cx="358" cy="98" r="3.5" fill="#B54A2C"/>
+        <text x="358" y="88" text-anchor="middle" fill="#B54A2C" font-size="10">最低点</text>
+        <text x="370" y="260" text-anchor="middle" fill="#96897A" font-size="10">固定算力 C 下</text>
+        <text x="370" y="275" text-anchor="middle" fill="#96897A" font-size="10">找 U 形谷底 → 最优 N</text>
+
+        <!-- Approach 3: 拟合公式 -->
+        <rect x="525" y="85" width="170" height="100" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="610" y="115" text-anchor="middle" fill="#2E2A22" font-size="13">L̂(N,D) =</text>
+        <text x="610" y="138" text-anchor="middle" fill="#2E2A22" font-size="12">E + A/N^α + B/D^β</text>
+        <text x="610" y="165" text-anchor="middle" fill="#96897A" font-size="10">400+ 点回归 5 参数</text>
+        <text x="610" y="178" text-anchor="middle" fill="#96897A" font-size="10">→ 解析求极值</text>
+        <text x="610" y="260" text-anchor="middle" fill="#96897A" font-size="10">假设损失可分解为</text>
+        <text x="610" y="275" text-anchor="middle" fill="#96897A" font-size="10">参数项 + 数据项 + 熵下界</text>
+
+        <!-- 汇聚箭头 -->
+        <line x1="130" y1="295" x2="350" y2="320" stroke="#96897A" stroke-width="1" marker-end="url(#arrowM1)"/>
+        <line x1="370" y1="295" x2="370" y2="315" stroke="#96897A" stroke-width="1" marker-end="url(#arrowM1)"/>
+        <line x1="610" y1="295" x2="390" y2="320" stroke="#96897A" stroke-width="1" marker-end="url(#arrowM1)"/>
+
+        <rect x="225" y="320" width="290" height="34" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="370" y="342" text-anchor="middle" fill="#B54A2C" font-weight="600">三法结论一致：N ∝ C^0.5, D ∝ C^0.5</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · 三种独立方法殊途同归：固定参数变 token、IsoFLOP 等算力 U 形曲线、参数化损失拟合——三者都指向"参数与数据等比例缩放"</figcaption>
+  </figure>
+
+  <ul>
+    <li><em>Approach 1：固定模型大小，变化 token 数</em>。选定若干固定参数量（如 1B、10B），各自训练到不同 token 数，找出每个参数量下损失最低的 token 数。结论：最优 token 数大致随参数量<em>线性</em>增长。</li>
+    <li><em>Approach 2：IsoFLOP 曲线（等算力剖面）</em>。固定几个总 FLOPs 预算，在每个预算下训练不同 (N, D) 组合，画出 loss–model size 的"U 形"曲线，找最低点。这是对"算力最优"问题最直接的回答。</li>
+    <li><em>Approach 3：参数化损失函数拟合</em>。假设损失可写成下面这个可分解的形式，用 400+ 个点回归出 5 个参数——这是 Chinchilla 用作外推的主要依据。</li>
+  </ul>
+
+  <div class="formula-block">
+    $$ \hat{L}(N, D) \triangleq E + \frac{A}{N^{\alpha}} + \frac{B}{D^{\beta}} $$
+    <span class="eqn mono">(2)</span>
+  </div>
+
+  <p>这个公式干净得像一个三段论：$E$ 是<em>不可约损失</em>——数据本身的信息熵下界，再怎么训也降不下去；$A/N^{\alpha}$ 是<em>参数不足</em>带来的损失（脑容量不够）；$B/D^{\beta}$ 是<em>数据不足</em>带来的损失（书读得太少）。三者各自独立、互不耦合，加起来就是总损失。论文拟合出的参数是：</p>
+
+  <table>
+    <thead>
+      <tr><th>参数</th><th>拟合值</th><th>含义</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>E</td><td>1.69</td><td class="text">不可约损失（自然语言熵下界）</td></tr>
+      <tr><td>A</td><td>406.4</td><td class="text">参数项系数</td></tr>
+      <tr><td>B</td><td>410.7</td><td class="text">数据项系数</td></tr>
+      <tr><td>α</td><td>0.34</td><td class="text">参数幂指数</td></tr>
+      <tr><td>β</td><td>0.28</td><td class="text">数据幂指数</td></tr>
+    </tbody>
+  </table>
+
+  <p>用 Lagrange 乘数法对这个损失在约束 $C\approx 6ND$ 下求极值，就能解析地推出最优配比。结论和 Kaplan 截然相反：</p>
+
+  <div class="formula-block">
+    $$ N_{\text{opt}} \propto C^{0.50}, \qquad D_{\text{opt}} \propto C^{0.50} $$
+    <span class="eqn mono">(Chinchilla)</span>
+  </div>
+
+  <div class="callout">
+    <span class="label">核心翻转</span>
+    Kaplan 说算力十倍，参数大 5.5 倍、数据只多 1.8 倍——<em>参数优先</em>。Chinchilla 说算力十倍，参数和数据<em>都该大三倍多</em>——<em>等比例</em>。这一翻转的直接推论是个极其好记的经验法则：<em>最优训练 token 数 ≈ 20 × 参数量</em>。一个 70 亿参数的模型，该喂约 1400 亿 token；一个 700 亿参数的模型，该喂约 1.4 万亿 token。
+  </div>
+
+  <h3>4.3 验证：造一只 Chinchilla，正面硬刚 Gopher</h3>
+  <p>光有拟合曲线还不够——外推总是危险的，谁能保证 16B 上的规律到 70B 还成立？于是团队做了最漂亮的一步：<em>用预测的最优配比造一个真模型，和 Gopher 正面打一架</em>。</p>
+  <p>这就是 Chinchilla 本体。它的设计是一次教科书级的"控制变量实验"——和 Gopher <em>用完全相同的数据集（MassiveText）、完全相同的算力预算、几乎相同的架构</em>，唯一改动的只有两个数字：</p>
+
+  <table>
+    <thead>
+      <tr><th></th><th>Gopher（对照）</th><th>Chinchilla（实验）</th><th>变化</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">参数量</td><td>280B</td><td>70B</td><td>缩到 1/4</td></tr>
+      <tr><td class="text">训练 token</td><td>300B</td><td>1.4T</td><td>扩到 4 倍</td></tr>
+      <tr><td class="text">训练算力</td><td>相同</td><td>相同</td><td>不变</td></tr>
+      <tr><td class="text">token : param</td><td>~1.1</td><td>~20</td><td>符合新法则</td></tr>
+      <tr><td class="text">数据集</td><td>MassiveText</td><td>MassiveText</td><td>同源</td></tr>
+    </tbody>
+  </table>
+
+  <figure>
+    <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowM2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="350" y="28" text-anchor="middle" font-weight="600" fill="#24555A">控制变量：同算力、同数据、同架构，只换 N : D 配比</text>
+
+        <!-- Gopher 路径 -->
+        <text x="130" y="62" text-anchor="middle" fill="#96897A" font-weight="600">Gopher 路径（Kaplan）</text>
+        <rect x="40" y="78" width="180" height="34" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="130" y="100" text-anchor="middle">算力预算 C（固定）</text>
+        <rect x="40" y="122" width="180" height="34" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="130" y="144" text-anchor="middle">堆参数 → 280B</text>
+        <rect x="40" y="166" width="180" height="34" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="130" y="188" text-anchor="middle">数据 300B（省着用）</text>
+        <rect x="40" y="210" width="180" height="34" rx="2" fill="#96897A" fill-opacity="0.18" stroke="#96897A"/>
+        <text x="130" y="232" text-anchor="middle" fill="#2E2A22">欠训练</text>
+
+        <line x1="130" y1="112" x2="130" y2="122" stroke="#96897A" marker-end="url(#arrowM2)"/>
+        <line x1="130" y1="156" x2="130" y2="166" stroke="#96897A" marker-end="url(#arrowM2)"/>
+        <line x1="130" y1="200" x2="130" y2="210" stroke="#96897A" marker-end="url(#arrowM2)"/>
+
+        <!-- Chinchilla 路径 -->
+        <text x="570" y="62" text-anchor="middle" fill="#B54A2C" font-weight="600">Chinchilla 路径（新法则）</text>
+        <rect x="480" y="78" width="180" height="34" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="570" y="100" text-anchor="middle">算力预算 C（固定）</text>
+        <rect x="480" y="122" width="180" height="34" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="570" y="144" text-anchor="middle" fill="#B54A2C">缩参数 → 70B</text>
+        <rect x="480" y="166" width="180" height="34" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="570" y="188" text-anchor="middle" fill="#B54A2C">数据 1.4T（喂足）</text>
+        <rect x="480" y="210" width="180" height="34" rx="2" fill="#24555A" fill-opacity="0.18" stroke="#24555A"/>
+        <text x="570" y="232" text-anchor="middle" fill="#24555A">算力最优</text>
+
+        <line x1="570" y1="112" x2="570" y2="122" stroke="#96897A" marker-end="url(#arrowM2)"/>
+        <line x1="570" y1="156" x2="570" y2="166" stroke="#96897A" marker-end="url(#arrowM2)"/>
+        <line x1="570" y1="200" x2="570" y2="210" stroke="#96897A" marker-end="url(#arrowM2)"/>
+
+        <!-- 中间分隔 -->
+        <line x1="350" y1="60" x2="350" y2="250" stroke="#96897A" stroke-dasharray="4 4"/>
+        <text x="350" y="275" text-anchor="middle" fill="#96897A" font-size="11">唯一变量：N 与 D 的配比 — 结果 Chinchilla 全面反超</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · Chinchilla vs Gopher 的控制变量设计：算力、数据集、架构全不变，只把"参数"和"数据"的配比从 1:1.1 换成 1:20——70B 反杀 280B</figcaption>
+  </figure>
+
+  <p>这个设计的精妙之处在于<em>它把所有变量都钉死了，只留下一个</em>。如果 Chinchilla 赢了，那赢的原因就只能是 N:D 配比——你没法用"数据集更好""架构更新""算力更多"来狡辩。这是一记干净利落的直拳。</p>
+
+  <div class="callout">
+    <span class="label">关键洞察</span>
+    Chinchilla 揭示的本质，是"模型大小"和"训练充分程度"是<em>两件事</em>。Gopher 拥有 2800 亿参数的"大脑"，但只喂了 3000 亿 token——它的脑容量远没用满，是个<em>天赋过人却严重营养不良</em>的巨人。Chinchilla 把脑容量缩到 1/4，把"教材"扩到 4 倍——一个脑容量适中但书读得透彻的学生，反而学得更好。Undertrained（欠训练）这个词，从此成为大模型训练里最刺眼的诊断。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>结果一句话概括：<em>Chinchilla 在几乎所有下游任务上，显著且全面地超越了 Gopher（280B）、GPT-3（175B）、Jurassic-1（178B）和 Megatron-Turing NLG（530B）</em>——尽管它的参数只有其中最小的几分之一。论文摘要里反复强调的那个"金句数字"是 MMLU：</p>
+
+  <table>
+    <thead>
+      <tr><th>任务 / 基准</th><th>Gopher 280B</th><th>GPT-3 175B</th><th>MT-NLG 530B</th><th>Chinchilla 70B</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">MMLU（5-shot，57 任务均）↑</td><td>60.0%</td><td>—</td><td>—</td><td>67.5%</td></tr>
+      <tr><td class="text">HellaSwag（常识推理）↑</td><td>79.2%</td><td>78.9%</td><td>80.2%</td><td>80.8%</td></tr>
+      <tr><td class="text">Winogrande ↑</td><td>70.1%</td><td>70.2%</td><td>73.0%</td><td>74.9%</td></tr>
+      <tr><td class="text">BoolQ ↑</td><td>79.3%</td><td>60.5%</td><td>78.2%</td><td>83.7%</td></tr>
+      <tr><td class="text">LAMBADA（末词预测）↑</td><td>74.5%</td><td>76.6%</td><td>76.6%</td><td>77.4%</td></tr>
+    </tbody>
+  </table>
+
+  <p>几个最戏剧性的发现：</p>
+  <ul>
+    <li><em>MMLU 上 67.5%，比 Gopher 高出整整 7.5 个百分点</em>，且当时是新的 SOTA。要知道 MMLU 横跨 57 个学科、考的是"知识广度 + 推理"，不是死记硬背能刷的——这个提升说明 Chinchilla 真的"学得更透"，不只是格式模仿。</li>
+    <li><em>它反超的不止是同算力的 Gopher</em>，还包括算力可能更多的 GPT-3（175B）和 MT-NLG（530B）。530B 的 MT-NLG 参数是它的 7.5 倍，却在 HellaSwag、Winogrande 上输给它。</li>
+    <li><em>附带好处：微调与推理更便宜</em>。因为参数只有 70B，下游微调和推理的算力大幅下降——论文专门强调这一点"greatly facilitating downstream usage"。这把"更强"和"更省"第一次同时实现了。</li>
+    <li>论文也诚实记录了边界：在<em>数学推理</em>（如 GSM8K）这类需要真正多步逻辑的任务上，Chinchilla 提升相对有限（约 16.6%）。loss 在降，不等于推理能力同步涨——这个裂缝后来会被专门的推理模型补上。</li>
+  </ul>
+
+  <figure>
+    <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="350" y="28" text-anchor="middle" font-weight="600" fill="#B54A2C">MMLU 基准：70B 的 Chinchilla 全面反超</text>
+
+        <!-- 坐标轴 -->
+        <line x1="120" y1="250" x2="660" y2="250" stroke="#96897A"/>
+        <line x1="120" y1="60" x2="120" y2="250" stroke="#96897A"/>
+        <text x="390" y="278" text-anchor="middle" fill="#96897A">→ MMLU 5-shot 准确率</text>
+        <text x="80" y="155" text-anchor="middle" fill="#96897A" transform="rotate(-90 80 155)">模型</text>
+
+        <!-- GPT-3 -->
+        <text x="110" y="90" text-anchor="end" fill="#96897A" font-size="11">GPT-3 175B</text>
+        <rect x="120" y="80" width="0" height="20" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="120" y="80" width="240" height="20" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="368" y="95" fill="#96897A" font-size="11">~43.9*</text>
+
+        <!-- Gopher -->
+        <text x="110" y="130" text-anchor="end" fill="#96897A" font-size="11">Gopher 280B</text>
+        <rect x="120" y="120" width="328" height="20" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="456" y="135" fill="#96897A" font-size="11">60.0%</text>
+
+        <!-- MT-NLG 530B -->
+        <text x="110" y="170" text-anchor="end" fill="#96897A" font-size="11">MT-NLG 530B</text>
+        <rect x="120" y="160" width="0" height="20" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="120" y="160" width="338" height="20" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="466" y="175" fill="#96897A" font-size="11">~62.0*</text>
+
+        <!-- Chinchilla -->
+        <text x="110" y="210" text-anchor="end" fill="#B54A2C" font-size="11" font-weight="600">Chinchilla 70B</text>
+        <rect x="120" y="200" width="369" height="20" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C"/>
+        <text x="497" y="215" fill="#B54A2C" font-size="11" font-weight="600">67.5%</text>
+
+        <!-- 参数量标注 -->
+        <text x="610" y="95" fill="#96897A" font-size="10">参数 175B</text>
+        <text x="610" y="135" fill="#96897A" font-size="10">参数 280B</text>
+        <text x="610" y="175" fill="#96897A" font-size="10">参数 530B</text>
+        <text x="610" y="215" fill="#B54A2C" font-size="10" font-weight="600">参数 70B（最小）</text>
+
+        <text x="350" y="232" text-anchor="middle" fill="#96897A" font-size="10">* GPT-3 / MT-NLG 的 MMLU 为社区/相近报告估值，论文未直接列出</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · MMLU 基准对比：参数最小的 Chinchilla（70B）拿到最高分 67.5%，比 4 倍参数的 Gopher 高 7.5 个百分点——"更小更聪明"的视觉证据</figcaption>
+  </figure>
+
+  <figure>
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="350" y="28" text-anchor="middle" font-weight="600" fill="#B54A2C">关键诊断：那些"巨无霸"其实都欠训练</text>
+        <text x="350" y="48" text-anchor="middle" fill="#96897A" font-size="11">实际 token:param 比 vs Chinchilla 建议的 ~20:1</text>
+
+        <!-- 基准线 20:1 -->
+        <line x1="80" y1="230" x2="660" y2="230" stroke="#96897A"/>
+        <line x1="80" y1="80" x2="80" y2="230" stroke="#96897A"/>
+        <text x="370" y="258" text-anchor="middle" fill="#96897A">模型（按参数量排序）→</text>
+        <text x="40" y="155" text-anchor="middle" fill="#96897A" transform="rotate(-90 40 155)">token : param 比</text>
+
+        <!-- Chinchilla 建议线 20 -->
+        <line x1="80" y1="120" x2="660" y2="120" stroke="#24555A" stroke-dasharray="5 4" stroke-width="1.5"/>
+        <text x="665" y="124" fill="#24555A" font-size="11" font-weight="600">最优 ~20</text>
+
+        <!-- 各模型柱（实际比值，远低于 20） -->
+        <!-- MT-NLG 0.5 -->
+        <rect x="120" y="226" width="60" height="4" fill="#96897A"/>
+        <text x="150" y="220" text-anchor="middle" fill="#96897A" font-size="10">0.5</text>
+        <text x="150" y="246" text-anchor="middle" fill="#96897A" font-size="10">MT-NLG 530B</text>
+
+        <!-- Gopher 1.1 -->
+        <rect x="220" y="224" width="60" height="6" fill="#96897A"/>
+        <text x="250" y="218" text-anchor="middle" fill="#96897A" font-size="10">1.1</text>
+        <text x="250" y="246" text-anchor="middle" fill="#96897A" font-size="10">Gopher 280B</text>
+
+        <!-- LaMDA 1.2 -->
+        <rect x="320" y="224" width="60" height="6" fill="#96897A"/>
+        <text x="350" y="218" text-anchor="middle" fill="#96897A" font-size="10">1.2</text>
+        <text x="350" y="246" text-anchor="middle" fill="#96897A" font-size="10">LaMDA 137B</text>
+
+        <!-- GPT-3 1.7 -->
+        <rect x="420" y="222" width="60" height="8" fill="#96897A"/>
+        <text x="450" y="216" text-anchor="middle" fill="#96897A" font-size="10">1.7</text>
+        <text x="450" y="246" text-anchor="middle" fill="#96897A" font-size="10">GPT-3 175B</text>
+
+        <!-- Chinchilla 20 -->
+        <rect x="540" y="120" width="60" height="110" fill="#B54A2C" fill-opacity="0.20" stroke="#B54A2C"/>
+        <text x="570" y="114" text-anchor="middle" fill="#B54A2C" font-size="10" font-weight="600">20</text>
+        <text x="570" y="246" text-anchor="middle" fill="#B54A2C" font-size="10" font-weight="600">Chinchilla 70B</text>
+
+        <text x="350" y="78" text-anchor="middle" fill="#B54A2C" font-size="11" font-weight="600">差距高达 10–40 倍：巨人普遍营养不良</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 欠训练诊断图：所有"巨无霸"的 token:param 比都贴在 1 附近，而 Chinchilla 建议的最优值是 20——它们都把算力花在了"长个子"而非"读书"上</figcaption>
+  </figure>
+
+  <div class="callout">
+    <span class="label">最反直觉的一击</span>
+    真正让业内坐不住的，不是 Chinchilla 赢了——而是<em>它赢的方式</em>。它没有用更多算力、没有用更好数据、没有用更新架构，它只是<em>把同样的算力重新分配了一下</em>。这意味着 GPT-3、Gopher、MT-NLG 那几千万美元的训练预算里，相当一部分其实<em>被浪费在了堆参数上</em>。这不是"对手更强"，这是"我们一直在犯错"。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>Chinchilla 的影响几乎是立竿见影的，它至少改写了四件事：</p>
+  <ul>
+    <li><em>把"数据是新瓶颈"推上了共识</em>。之前大家拼参数，Chinchilla 之后开始拼数据管线、去重、质量过滤。"token:param = 20"和"undertrained"成了行业词典里的新词，每次发布新模型都得报一下这个比值。</li>
+    <li><em>训练配方整体逆转</em>。从"大模型 + 少数据"转向"小模型 + 多数据"。最直接的受益者是 Meta——2023 年 2 月的 LLaMA 论文开篇就明说"受 Chinchilla scaling laws 启发"，7B 模型训了 1 万亿+ token，65B 训了 1.4 万亿 token，结果 LLaMA-13B 就超过了 GPT-3，65B 与 Chinchilla 持平。</li>
+    <li><em>开启了"过度训练"（over-training）时代</em>。既然小模型 + 多数据更划算，那为了<em>推理便宜</em>，干脆把小模型训得比 20:1 还狠。LLaMA 2 的 7B 训了 2 万亿 token，Llama 3 的 8B 训了 15 万亿 token——比值高达约 1875，远超 Chinchilla 比例。这是 Chinchilla 法则的"工程延伸"：训练算力是一次性的，推理算力是持续的，所以宁可在训练上多花钱，换一个推理更便宜的小模型。</li>
+    <li><em>对 OpenAI"大力出奇迹"叙事的一次反向冲击</em>。2020–2022 年，Kaplan 定律是行业"圣经"，GPT-3 的 175B 是"大力"的胜利。Chinchilla 之后，业内一度出现"DeepMind 在理论上打赢了 OpenAI"的说法——它证明 OpenAI 的训练配方是低效的。有意思的反讽是：<em>Chinchilla 自己没开源权重，反而是借用其理论的 LLaMA，把开源大模型生态点燃了</em>。</li>
+  </ul>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>Chinchilla 不是终点，它自己也被后人挑剔。几个最关键的局限：</p>
+  <ul>
+    <li><em>外推的可靠性被质疑</em>。它的核心结论是从 70M–16B 的小模型外推到 70B 量级，跨度三四个数量级。2024 年 Epoch AI 的 Besiroglu 等人（arXiv:2404.10102）尝试复现，发现论文 Approach 3 报告的拟合参数与其 Approach 1/2 的结论其实<em>对不上</em>，报告的置信区间窄到要跑 60 万次实验才能得到——而他们实际只跑了不到 500 次。重新拟合后（α≈0.339, β≈0.285）三者才吻合。好在<em>"参数与数据等比例增长"这个定性结论是稳健的</em>，被多个团队独立复现。所以"20:1"是个带不确定性的经验法则，不是精确公式。</li>
+    <li><em>它把所有 token 视为等价，完全没建模数据质量</em>。损失函数里的 $B/D^{\beta}$ 假设"多读一页书就多一份收获"，但大家都知道：一页维基百科和一页论坛灌水，含金量天差地别。后来 Bi et al. 2024 发现，token:param 比对<em>数据质量高度敏感</em>——在更高质量数据上，更低的比值反而最优。这催生了"Data Scaling Laws"这条新研究线，也让 Microsoft 的 Phi 系列敢用"教科书级质量数据"、以远少于 Chinchilla 建议的 token 数达到同等效果。</li>
+    <li><em>数据墙（Data Wall）问题</em>。Chinchilla 建议 70B 训 1.4T token、175B 训 3.5T token——但<em>高质量网络数据的可用上限估计就在 1–10T token 量级</em>，去重后更少。1.4T 已经接近天花板。所以 Llama 3 之后大家开始大量用合成数据、代码、多轮对话数据来"造"新教材——这是后 Chinchilla 时代最头疼的工程难题。</li>
+    <li><em>没考虑推理成本</em>。Chinchilla 优化的只是"训练算力最优"，但模型部署后，<em>推理算力是持续开销</em>。Sardana et al. 2024（"Beyond Chinchilla-Optimal"）把推理也纳入成本函数，证明考虑推理后最优模型应该更小、训得更久——这恰恰解释了 Llama 3 为什么故意把 8B 训到 15T token。</li>
+  </ul>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把镜头拉远，"规模化"这条线是一路这样走过来的：</p>
+  <ol>
+    <li><em>2017（系列第 1 篇）</em>：Transformer 用纯注意力替换 RNN/CNN，奠定所有后续大模型的架构基础。</li>
+    <li><em>2018–2019（系列第 2、3 篇）</em>：BERT 与 GPT-2 把"预训练 + 微调 / zero-shot"范式立起来，规模尚在十亿级。</li>
+    <li><em>2020.01</em>：Kaplan Scaling Laws 给出"规模与损失的幂律"，主张<em>参数优先</em>（N∝C^0.73, D∝C^0.27），为"再加参数还能涨"提供理论执照。</li>
+    <li><em>2020.05（系列第 4 篇）</em>：GPT-3 严格执行 Kaplan 配方，1750 亿参数配 3000 亿 token，开启"大力出奇迹"时代。</li>
+    <li><em>2021.12</em>：Gopher（280B）与 MT-NLG（530B）把 Kaplan 路线推到极致，token:param 比跌到 1 以下。</li>
+    <li><em>2022.03（本篇）</em>：Chinchilla 用四百多个实验推翻 Kaplan，主张<em>参数与数据等比例</em>，70B 反杀 280B——规模化路线的"纠偏拐点"。</li>
+    <li><em>2022.03</em>：几乎同期，InstructGPT 用 RLHF 解决"大模型不会对话"的问题，开启对齐时代。</li>
+    <li><em>2023+</em>：LLaMA 借 Chinchilla 法则点燃开源潮，进入"小模型 + 多数据 + 过度训练"时代；Phi、Mistral、Llama 3 一路把 token:param 比推到上千。</li>
+  </ol>
+  <p>本系列到这里，架构（Transformer）、范式（BERT/GPT-2）、规模（GPT-3）、配比（Chinchilla）四块基石都已就位。但有一个 GPT-3 留下的洞，Chinchilla 没碰——<em>这些模型都不会"对话"</em>。你问它问题，它可能接着续写一个问题而不是回答。这个洞，要等下一篇的 RLHF 来补。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>Chinchilla 这个名字，比论文本身更有故事。DeepMind 长期有<em>用动物命名模型</em>的传统——更早有 Gopher（地鼠/囊鼠），后面还有 RETRO 等等。Gopher 是北美一种穴居啮齿动物，体型不大；而 Chinchilla（毛丝鼠，中文俗称"龙猫"）是南美安第斯山脉的一种啮齿动物，<em>体型比 gopher 更小，但毛皮极为致密、柔软、保温效率极高</em>。业界普遍解读：Chinchilla 这个名字暗合了论文的核心结论——<em>更小（70B vs 280B）但更"致密高效"（数据更密、训练更充分）</em>的模型反而更强。同属啮齿类，命名上一脉相承，是个漂亮的"小而精"隐喻。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="350" y="30" text-anchor="middle" font-weight="600" fill="#B54A2C">动物命名学：从 Gopher 到 Chinchilla</text>
+
+        <!-- Gopher 大圈 -->
+        <circle cx="200" cy="120" r="62" fill="#ECE4D4" stroke="#96897A" stroke-width="1.5"/>
+        <text x="200" y="115" text-anchor="middle" font-weight="600" fill="#96897A">Gopher</text>
+        <text x="200" y="133" text-anchor="middle" fill="#96897A" font-size="11">280B · 300B token</text>
+        <text x="200" y="148" text-anchor="middle" fill="#96897A" font-size="10">体型大，毛皮稀疏</text>
+
+        <!-- Chinchilla 小圈 -->
+        <circle cx="500" cy="120" r="38" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C" stroke-width="1.5"/>
+        <text x="500" y="117" text-anchor="middle" font-weight="600" fill="#B54A2C">Chinchilla</text>
+        <text x="500" y="133" text-anchor="middle" fill="#B54A2C" font-size="11">70B · 1.4T token</text>
+        <text x="500" y="146" text-anchor="middle" fill="#B54A2C" font-size="10">体型小，毛皮致密</text>
+
+        <!-- 箭头 -->
+        <line x1="262" y1="120" x2="462" y2="120" stroke="#96897A" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arrowFun1)"/>
+        <defs>
+          <marker id="arrowFun1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+          </marker>
+        </defs>
+        <text x="362" y="112" text-anchor="middle" fill="#96897A" font-size="11">同算力 · 同数据集</text>
+        <text x="362" y="135" text-anchor="middle" fill="#B54A2C" font-size="11" font-weight="600">小而密 → 反杀</text>
+
+        <text x="350" y="195" text-anchor="middle" fill="#96897A" font-size="11">命名即隐喻：啮齿类家族里，更小、更"致密"的那只赢了</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 6</span> · Gopher vs Chinchilla：动物命名学上的"小而密"隐喻，恰好就是论文的核心结论</figcaption>
+  </figure>
+
+  <div class="callout">
+    <span class="label">小八卦</span>
+    Chinchilla 和 Gopher 出自<em>同一支 DeepMind 团队</em>（Jack Rae、Borgeaud、Hoffmann、Sifre 等大量作者重叠）。换句话说，DeepMind 是<em>自己推翻自己</em>——自家一年多前刚发的 280B Gopher，被自家的新研究证明"训错了"。这种"左手打右手"的学术诚实，在商业公司里相当罕见，也让结论更有说服力：连造 Gopher 的人都说它欠训练，那你还能怎么辩？
+  </div>
+
+  <p>还有一层戏剧性。2020–2022 年，OpenAI 的 Kaplan 定律几乎是行业"圣经"，GPT-3 的 1750 亿参数被视作"大力出奇迹"的标杆。Chinchilla 一出，业内一度出现"DeepMind 在<em>理论上打赢了 OpenAI</em>"的叙事——你 OpenAI 把钱都砸在堆参数上，结果被证明是低效的。据多方反映，这促使 OpenAI 在 GPT-3.5/GPT-4 的训练中重新评估数据策略。但最讽刺的反转是：Chinchilla 自己<em>没开源权重</em>，反而是借用其理论的 Meta LLaMA，把开源大模型生态点燃了——理论是 DeepMind 提的，红利却被 Meta 拿走了。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读 Chinchilla，最让我感慨的不是那个 20:1 的数字，而是它揭示的一种<em>研究美德</em>：在所有人都朝一个方向狂奔时，停下来问一句"我们是不是从一开始就搞错了"。Kaplan 定律不是错的——幂律关系确实成立——但它<em>顺手回答的那个子问题</em>（算力怎么分配）却带着偏差，而这个偏差藏了整整两年，因为大家都在忙着用它的结论去抢发更大的模型。Chinchilla 的贡献，是把一个被默认接受的假设重新拎出来、用四百次实验重新检验。这是典型的<em>"重要的不是新发现，而是重新提问"</em>。</p>
+  <p>另一个值得玩味的是它和 GPT-3 的对照。GPT-3 证明了"<em>规模能解锁能力</em>"，Chinchilla 证明了"<em>但规模的分配方式同样重要</em>"。两者合在一起，才是完整的"规模化哲学"：要大力，但要会用力。这恰恰是工程思维和科学思维的分野——GPT-3 是工程师式的"把它推到极致看会怎样"，Chinchilla 是科学家式的"在极致里找出可预测的规律"。这两种姿态在大模型发展里始终交替出现，缺一不可。</p>
+  <p>最后一点个人判断：Chinchilla 法则的"保质期"可能比想象中短。它优化的只是<em>训练算力</em>，但今天的成本结构里，<em>推理算力</em>才是大头——一个部署出去的模型，推理算力是持续烧的。所以 Llama 3 们故意把 8B 训到 15T token（比值 1875，远超 20），就是用"训练多花钱"换"推理更便宜"。再加上数据墙、数据质量法则的崛起，"20:1"正在从一个<em>最优解</em>退化为一个<em>下限参考</em>。但它的历史地位不会变：它是第一次让全行业意识到"数据是真正的瓶颈"的那篇论文。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    Chinchilla 说"参数和数据等比例增长"。但仔细想：如果一个模型把<em>全部高质量人类文本</em>都读完了（数据墙），它还能继续变强吗？这时是该停下来等新数据，还是该用合成数据"自己教自己"？再想一步——人类学习的"教材"也是有限的，为什么人类不会因为"读完所有书"就停止变强？这中间，是不是藏着"数据"和"学习"之间某种我们还没理解的东西？
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Training language models to follow instructions with human feedback (InstructGPT)</h3>
+    <p style="margin:0;">Chinchilla 解决了"怎么训得更划算"，却没碰 GPT-3 留下的另一个洞——这些大模型<em>不会对话</em>。你问它问题，它可能接着续写一个问题；你让它"用三句话总结"，它可能给你写一整篇。它们是续写机器，不是助手。2022 年 3 月，几乎和 Chinchilla 同期，OpenAI 丢出了另一篇论文：用人类反馈强化学习（RLHF）把 GPT-3 调教成一个<em>听懂人话、按指令行事</em>的助手。这个叫 InstructGPT 的小模型（仅 1.3B），在人类评分上反杀了 1750 亿的 GPT-3 本体。它是 ChatGPT 的真正前身，也是"对齐"这个词进入大众视野的起点。下一篇，我们来看这场让大模型从"会说话"变成"会听话"的革命。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 005 篇</span>
+    <span>2026-08-02</span>
+  </footer>
+
+</div>
+</body>
+</html>

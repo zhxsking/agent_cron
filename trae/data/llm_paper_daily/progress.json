@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 4,
-  "last_run_date": "2026-08-01",
+  "last_index": 5,
+  "last_run_date": "2026-08-02",
   "papers_covered": [
     {
       "index": 1,
@@ -34,10 +34,18 @@
       "date": "2020-05-28",
       "era": "规模化探索期 2020–2022",
       "filename": "4_20260801_GPT-3.html"
+    },
+    {
+      "index": 5,
+      "title_en": "Training Compute-Optimal Large Language Models",
+      "title_zh": "Chinchilla：算力最优训练法——更小的模型、更多的数据，如何反杀 1750 亿的 GPT-3",
+      "date": "2022-03-29",
+      "era": "规模化探索期 2020–2022",
+      "filename": "5_20260802_Chinchilla.html"
     }
   ],
   "next_preview": {
-    "title_en": "Training Compute-Optimal Large Language Models",
-    "title_zh": "Chinchilla：算力最优的大模型训练法"
+    "title_en": "Training language models to follow instructions with human feedback",
+    "title_zh": "InstructGPT：用人类反馈教 GPT-3 听懂人话，ChatGPT 的真正前身"
   }
 }
