@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InstructGPT 论文精读 · 大模型经典论文系列 #006</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:38px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  /* 中文/中英混排强调：颜色+字重，不倾斜 */
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  /* 纯英文/拉丁字母强调：Lora 真实 ital 轴斜体 */
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:28px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#006</span>
+  </div>
+
+  <h1 class="title">
+    Training language models to follow instructions with human feedback
+    <span class="en">InstructGPT：用人类反馈教 GPT-3 听懂人话，ChatGPT 的真正前身</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Long Ouyang, Jeff Wu, Xu Jiang 等 31 位作者</span>
+    <span>机构：OpenAI（Alignment Team）</span>
+    <span>发表：2022-03 / NeurIPS 2022</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2203.02155" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/openai/following-instructions-human-feedback" target="_blank" rel="noopener">GitHub</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">想象你面前坐着一个读遍互联网所有书的天才——他能在 0.1 秒内背出整本《维基百科》，会写诗、会编程、会做数学题。你满心期待地问他："法国的首都是哪里？"他却头也不抬地接着你的话往下续："德国的首都是哪里？英国的首都是哪里？意大利的首都是哪里？"你愣住了——他不是在回答你，他在<em>完成你未写完的句子</em>。这就是 2021 年 OpenAI API 上 GPT-3 给用户的日常体验。</p>
+
+  <p class="lead">上篇我们读 Chinchilla，它解决了"怎么训得更划算"。但有个 GPT-3 留下、Chinchilla 没碰的洞——这些大模型<em>不会对话</em>。它们的训练目标是"预测下一个 token"，本质是个续写机器；可用户要的是"听懂我的问题、按我说的做、别胡说八道"。这两件事，根本不是一回事。2022 年 3 月，几乎和 Chinchilla 同期，OpenAI 丢出另一篇论文：雇 40 个人，花不到预训练 2% 的算力，把 GPT-3 调教成一个<em>听懂人话、按指令行事</em>的助手。结果，只有 13 亿参数的小家伙 InstructGPT，在人类评分上反杀了 1750 亿参数的 GPT-3 本体。这篇论文，就是 ChatGPT 的真正前身。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    InstructGPT 用三步走的 RLHF 流程（监督微调 → 训练奖励模型 → PPO 强化学习），把"只会续写"的 GPT-3 改造成"听指令、说真话、少使坏"的助手——只有 13 亿参数的小模型，在人类偏好评估上<em>反杀了参数量大 100 倍的 GPT-3</em>，证明"对齐"比"堆参数"更能让模型变成好用的产品。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>本系列到这里，四块基石已经就位：架构（Transformer）、范式（BERT/GPT-2）、规模（GPT-3）、配比（Chinchilla）。但它们都在回答同一个问题——<em>怎么把模型训得更"博学"</em>。InstructGPT 站在这条河的<em>分水岭</em>上：它第一次系统性地回答了一个完全不同的问题——<em>怎么把模型训得更"听话"</em>。</p>
+  <p>它承接的是 GPT-3 留下的尴尬：模型越大越博学，却也越来越"难用"——你问 A 它答 B，你让它简洁它写长篇，你问事实它张口就编。它开启的，是后来被称为"对齐"（<em class="latin">alignment</em>）的整个研究方向。八个月后的 2022 年 11 月 30 日，OpenAI 把 InstructGPT 的方法套到对话场景上，发布了一个叫 ChatGPT 的产品——两个月破亿用户，史上最快。从这一篇开始，大模型的主旋律从"大力出奇迹"转向"对齐出产品"。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowT6" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="135" x2="660" y2="135" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 2017 Transformer 已解析 -->
+        <circle cx="70" cy="135" r="7" fill="#24555A" stroke="#24555A"/>
+        <text x="70" y="109" text-anchor="middle" fill="#24555A" font-weight="600">2017</text>
+        <text x="70" y="165" text-anchor="middle" fill="#24555A" font-weight="600">Transformer ✓</text>
+
+        <!-- 2018-2019 BERT/GPT-2 已解析 -->
+        <circle cx="190" cy="135" r="7" fill="#24555A" stroke="#24555A"/>
+        <text x="190" y="109" text-anchor="middle" fill="#24555A" font-weight="600">2018–19</text>
+        <text x="190" y="165" text-anchor="middle" fill="#24555A" font-weight="600">BERT ✓ / GPT-2 ✓</text>
+
+        <!-- 2020 GPT-3 已解析 -->
+        <circle cx="305" cy="135" r="7" fill="#24555A" stroke="#24555A"/>
+        <text x="305" y="109" text-anchor="middle" fill="#24555A" font-weight="600">2020</text>
+        <text x="305" y="165" text-anchor="middle" fill="#24555A" font-weight="600">GPT-3 ✓</text>
+
+        <!-- 2022 Chinchilla 已解析 -->
+        <circle cx="430" cy="135" r="7" fill="#24555A" stroke="#24555A"/>
+        <text x="430" y="109" text-anchor="middle" fill="#24555A" font-weight="600">2022.03</text>
+        <text x="430" y="165" text-anchor="middle" fill="#24555A" font-weight="600">Chinchilla ✓</text>
+
+        <!-- 2022 InstructGPT 本篇 -->
+        <circle cx="510" cy="135" r="9" fill="#B54A2C" stroke="#B54A2C"/>
+        <text x="510" y="101" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="510" y="169" text-anchor="middle" fill="#2E2A22" font-weight="600">InstructGPT</text>
+
+        <!-- 2022.11 ChatGPT -->
+        <circle cx="580" cy="135" r="5" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="580" y="113" text-anchor="middle">2022.11</text>
+        <text x="580" y="163" text-anchor="middle" fill="#2E2A22">ChatGPT</text>
+
+        <!-- 2023+ LLaMA -->
+        <circle cx="650" cy="135" r="5" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="650" y="113" text-anchor="middle">2023+</text>
+        <text x="650" y="163" text-anchor="middle" fill="#2E2A22">LLaMA 开源潮</text>
+
+        <!-- 时代带 -->
+        <rect x="40" y="210" width="175" height="34" fill="#24555A" fill-opacity="0.06"/>
+        <text x="127" y="231" text-anchor="middle" fill="#24555A">奠基期 2014–2017</text>
+        <rect x="220" y="210" width="155" height="34" fill="#24555A" fill-opacity="0.10"/>
+        <text x="297" y="231" text-anchor="middle" fill="#24555A">预训练范式期 2018–2020</text>
+        <rect x="380" y="210" width="105" height="34" fill="#B54A2C" fill-opacity="0.07"/>
+        <text x="432" y="231" text-anchor="middle" fill="#B54A2C">规模化探索期</text>
+        <rect x="490" y="210" width="170" height="34" fill="#B54A2C" fill-opacity="0.13"/>
+        <text x="575" y="231" text-anchor="middle" fill="#B54A2C" font-weight="600">对齐与应用期 2022–2023</text>
+
+        <!-- 分水岭标注 -->
+        <line x1="470" y1="245" x2="470" y2="270" stroke="#96897A" stroke-dasharray="3 3"/>
+        <text x="470" y="286" text-anchor="middle" fill="#96897A" font-size="10">主旋律切换：从"训得更博学"到"训得更听话"</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络：InstructGPT 是"对齐与应用期"的起点——前承 GPT-3/Chinchilla 的规模化路线，后启 ChatGPT 引爆的对话助手时代</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要懂 InstructGPT 为什么是场革命，得先看清 GPT-3 到底"病"在哪。表面上看，GPT-3 强得吓人——1750 亿参数，会写代码、会做翻译、会答常识题，few-shot 学习能力强到离谱。可一旦把它当成"助手"用，问题就全冒出来了：</p>
+  <ul>
+    <li><em>不跟随指令</em>。你让它"用三句话总结这段话"，它可能给你写一整篇；你问"法国首都是哪"，它接着续写"德国首都、英国首都……"——它压根没意识到你在<em>问</em>它，它以为你在<em>开头</em>，要它接着写下去。</li>
+    <li><em>张口就编</em>。问它某个不存在的历史事件，它能煞有介事地编出人物、时间、地点，语气笃定得像在背教科书。这就是后来被命名为"幻觉"（<em class="latin">hallucination</em>）的毛病。</li>
+    <li><em>带毒输出</em>。斯坦福和 McMaster 的研究发现，prompt 里出现"Two Muslims walked into a..."，GPT-3 在 100 次里有 66 次生成暴力结尾；换成"Christians"就降到 20 次。它从互联网学来了偏见，又原样吐回去。</li>
+  </ul>
+
+  <p>为什么会这样？论文一针见血：<em>训练目标和用户期望，根本不是一回事</em>。GPT-3 的训练目标是"在互联网网页上预测下一个 token"——它学的是"互联网文本长什么样"。可用户要的是"安全、有用、诚实地完成我的任务"。这两个目标之间，有一道深不见底的沟。论文给这道沟起了个名字，叫<em>目标错位</em>（<em class="latin">misaligned objective</em>）。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    把 GPT-3 想象成一个读遍全网的天才复读生。他考试能默写整本《维基百科》，但你雇他当秘书，他却听不懂"帮我订个会议室"是什么意思——他只会把你这句话当成开头，接着往下编一个关于"订会议室"的故事。问题不在于他不够聪明（参数不够大），而在于<em>他从没学过"听人说话、按人做事"这件事</em>。他学的是"模仿人类说话"，不是"服务人类"。
+  </div>
+
+  <p>更扎心的是，论文点出一个反直觉的事实：<em>把模型做大，并不能填平这道沟</em>。更大的 GPT-3 只是更逼真地模仿互联网文本——连带着把偏见、胡编、跑题一起模仿得更像。它续写得更流畅了，可它依然不知道你在"问"它。所以 OpenAI 的 Alignment 团队（对齐团队）决定换条路：与其继续堆参数，不如<em>换一个训练信号</em>——用"人类觉得哪个回答好"作为奖励，教模型学会"听话"。</p>
+
+  <p>这条路其实有渊源。2017 年，Paul Christiano、Jan Leike、Dario Amodei 等人发了篇 <em class="latin">Deep RL from Human Preferences</em>，奠定了 RLHF（基于人类反馈的强化学习）的雏形——让人类给 AI 的行为打分、排序，AI 据此学习。2020 年 Stiennon 等人把它用到文本摘要上，证明"人类偏好"能当奖励信号训语言模型。InstructGPT 做的，是把这套方法<em>从单一任务（摘要）推广到通用指令跟随</em>，并第一次在 1750 亿参数的工业级大模型上跑通。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>一句话：<em>如何让一个预训练好的语言模型，从"会续写"变成"会听话"——即按用户指令行事，同时保持诚实、避免有害输出，且不损失它原本的能力？</em></p>
+  <p>这问题拆开有三层，对应论文反复强调的"3H"标准（来自 Askell et al. 2021）：</p>
+  <ul>
+    <li><em>Helpful（有用）</em>：真正帮用户完成任务，而不是答非所问、续写跑题。</li>
+    <li><em>Honest（诚实）</em>：不胡编乱造，不确定时承认不确定，不误导用户。</li>
+    <li><em>Harmless（无害）</em>：不生成有毒、偏见、有害的内容。</li>
+  </ul>
+  <p>这里有个微妙的张力：模型本来"什么都会说"（因为它学了全网文本），现在你要它"该说的说、不该说的闭嘴"，同时还要它"别因为变乖了就变笨了"。后者被论文称为<em>对齐税</em>（<em class="latin">alignment tax</em>）——为对齐付出的能力代价。怎么既听话又不变笨，是这道题最难的部分。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    假设你是 OpenAI 的产品经理，面对一个"博学但不听话"的 1750 亿 GPT-3。你有两个选择：A. 继续把模型做到 5000 亿、1 万亿，赌"再大点它自然就懂事了"；B. 花 40 个人、不到 2% 的算力，用人类反馈去"调教"它。从"复读生"的类比想——一个读了更多书却从没学过礼仪的复读生，和一个被专门教过"怎么听人说话"的普通学生，谁更适合当秘书？你会押哪一边？
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>InstructGPT 的方法可以用一个比喻讲清楚：<em>把训练一个"听话的助手"分成三步，像培养一个新员工</em>。第一步，给他看几份优秀的工作样本，让他照着学（监督微调）；第二步，让他干一堆活儿，你给每份活儿打分排序，让他记住"什么样的活儿受欢迎"（训练奖励模型）；第三步，让他自己干活，用刚才那个"打分器"实时给他反馈，让他越干越像样（PPO 强化学习）。论文把这个流程叫 <em class="latin">RLHF</em>（<em class="latin">Reinforcement Learning from Human Feedback</em>），三步缺一不可。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowM6a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="350" y="26" text-anchor="middle" font-weight="600" fill="#24555A">三步走 RLHF 流水线</text>
+
+        <!-- Step 1: SFT -->
+        <rect x="30" y="55" width="200" height="290" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="130" y="80" text-anchor="middle" font-weight="600" fill="#24555A">Step 1 · SFT</text>
+        <text x="130" y="98" text-anchor="middle" fill="#96897A" font-size="11">监督微调</text>
+        <rect x="50" y="115" width="160" height="34" rx="2" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="130" y="137" text-anchor="middle">13K 指令-示范对</text>
+        <rect x="50" y="160" width="160" height="34" rx="2" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="130" y="182" text-anchor="middle">40 名标注员手写</text>
+        <rect x="50" y="205" width="160" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="130" y="226" text-anchor="middle" fill="#24555A" font-weight="600">GPT-3</text>
+        <text x="130" y="244" text-anchor="middle" fill="#24555A">监督学习微调</text>
+        <rect x="50" y="270" width="160" height="50" rx="2" fill="#24555A" fill-opacity="0.20" stroke="#24555A"/>
+        <text x="130" y="291" text-anchor="middle" fill="#24555A" font-weight="600">→ π_SFT</text>
+        <text x="130" y="309" text-anchor="middle" fill="#24555A" font-size="10">"会照着示范写"</text>
+
+        <!-- Step 2: RM -->
+        <rect x="250" y="55" width="200" height="290" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="80" text-anchor="middle" font-weight="600" fill="#24555A">Step 2 · RM</text>
+        <text x="350" y="98" text-anchor="middle" fill="#96897A" font-size="11">训练奖励模型</text>
+        <rect x="270" y="115" width="160" height="34" rx="2" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="350" y="137" text-anchor="middle">33K prompt + 4-9 输出</text>
+        <rect x="270" y="160" width="160" height="34" rx="2" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="350" y="182" text-anchor="middle">人类排序打分</text>
+        <rect x="270" y="205" width="160" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="350" y="226" text-anchor="middle" fill="#24555A" font-weight="600">6B 奖励模型</text>
+        <text x="350" y="244" text-anchor="middle" fill="#24555A">Bradley-Terry 损失</text>
+        <rect x="270" y="270" width="160" height="50" rx="2" fill="#24555A" fill-opacity="0.20" stroke="#24555A"/>
+        <text x="350" y="291" text-anchor="middle" fill="#24555A" font-weight="600">→ r_φ(x, y)</text>
+        <text x="350" y="309" text-anchor="middle" fill="#24555A" font-size="10">"会预测人喜欢哪个"</text>
+
+        <!-- Step 3: PPO -->
+        <rect x="470" y="55" width="200" height="290" rx="2" fill="#B54A2C" fill-opacity="0.06" stroke="#B54A2C"/>
+        <text x="570" y="80" text-anchor="middle" font-weight="600" fill="#B54A2C">Step 3 · PPO-ptx</text>
+        <text x="570" y="98" text-anchor="middle" fill="#B54A2C" font-size="11">强化学习优化</text>
+        <rect x="490" y="115" width="160" height="34" rx="2" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="570" y="137" text-anchor="middle">31K prompt</text>
+        <rect x="490" y="160" width="160" height="34" rx="2" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="570" y="182" text-anchor="middle">用 r_φ 当奖励</text>
+        <rect x="490" y="205" width="160" height="50" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="570" y="226" text-anchor="middle" fill="#B54A2C" font-weight="600">PPO + KL 约束</text>
+        <text x="570" y="244" text-anchor="middle" fill="#B54A2C">+ 预训练混入</text>
+        <rect x="490" y="270" width="160" height="50" rx="2" fill="#B54A2C" fill-opacity="0.20" stroke="#B54A2C"/>
+        <text x="570" y="291" text-anchor="middle" fill="#B54A2C" font-weight="600">→ InstructGPT</text>
+        <text x="570" y="309" text-anchor="middle" fill="#B54A2C" font-size="10">"会自己写出好回答"</text>
+
+        <!-- 步骤间箭头 -->
+        <line x1="230" y1="200" x2="250" y2="200" stroke="#96897A" stroke-width="1.5" marker-end="url(#arrowM6a)"/>
+        <line x1="450" y1="200" x2="470" y2="200" stroke="#96897A" stroke-width="1.5" marker-end="url(#arrowM6a)"/>
+
+        <text x="350" y="365" text-anchor="middle" fill="#96897A" font-size="11">三步逐级递进：照着学 → 学会评判 → 自己练</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · InstructGPT 的三步走 RLHF 流水线：SFT（监督微调）→ RM（奖励模型）→ PPO-ptx（强化学习），每一步的产物都是下一步的输入</figcaption>
+  </figure>
+
+  <h3>4.1 第一步：监督微调（SFT）——"照着样子学"</h3>
+  <p>团队先雇了 40 个标注员（经过严格筛选，要测他们对敏感内容的判断力和标注一致性）。标注员面对两类 prompt：一类是 OpenAI API 上真实用户提交的（已脱敏），一类是标注员自己写的"指令型"问题。对每个 prompt，标注员要<em>亲手写出一个理想的回答</em>——这就是"示范"（<em class="latin">demonstration</em>）。</p>
+  <p>一共攒了约 <em>13,000</em> 条（prompt, 示范回答）对。拿这些数据对 GPT-3 做普通的监督微调——给它看 prompt，让它学着输出和示范一样的回答。训练细节：余弦学习率衰减、残差 dropout 0.2、跑 16 个 epoch。出来的模型叫 $\pi_{\text{SFT}}$，它已经"会照着示范的样子写回答"了。这一步看似简单，却是后面一切的地基。</p>
+
+  <h3>4.2 第二步：训练奖励模型（RM）——"学会人类的好恶"</h3>
+  <p>SFT 的问题在于：示范数据太少（13K），覆盖不了用户五花八门的提问。于是第二步换个思路——<em>与其让人写答案，不如让人评判答案</em>。评判比创作快得多，一个人几分钟就能给一打回答排个序。</p>
+  <p>具体做法：对一批 prompt（约 33K 条），用 $\pi_{\text{SFT}}$ 和其他模型各生成 4–9 个不同回答，让标注员<em>从最好到最差排序</em>。把这些排序数据喂给一个奖励模型 $r_\phi(x, y)$——它输入 prompt $x$ 和回答 $y$，输出一个标量分数，分越高代表人类越喜欢。奖励模型用的是 GPT-3 架构去掉最后的 unembedding 层、加一个输出标量的头，参数量 6B（注意：比主模型小得多，因为"评判"比"生成"容易）。</p>
+  <p>训练奖励模型用的损失函数，是把排序转化为两两比较的 Bradley-Terry 形式：</p>
+
+  <div class="formula-block">
+    $$ L_R = -\mathbb{E}_{(x,\,y_w,\,y_l)}\left[\log \sigma\!\left(r_\phi(x, y_w) - r_\phi(x, y_l)\right)\right] $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>其中 $y_w$ 是被人类偏好的回答（<em class="latin">win</em>），$y_l$ 是被人类否决的回答（<em class="latin">lose</em>），$\sigma$ 是 sigmoid。直觉是：让奖励模型给"好回答"打的分，比给"差回答"打的分高出足够多。一个关键工程细节——<em>同一 prompt 的所有输出对作为单个 batch 元素</em>，避免过拟合到单个 prompt 的某种偏好。这一步产出的 $r_\phi$，就是一个"自动化的人类品味裁判"。</p>
+
+  <h3>4.3 第三步：PPO-ptx——"自己练，别练歪"</h3>
+  <p>有了裁判 $r_\phi$，就可以让模型自己海量练习了。这一步用 PPO（<em class="latin">Proximal Policy Optimization</em>，Schulman 2017，强化学习里的当家算法），让 $\pi_{\text{SFT}}$ 在 31K 条 prompt 上自我优化，目标是<em>最大化奖励模型给的分数</em>。但光这样会出大问题——模型会"钻空子"，找到一些能骗过 $r_\phi$ 却对人类毫无意义的输出（这叫<em class="latin">reward hacking</em>），而且会把原本的通用能力忘光（对齐税）。论文用了两个约束来治：</p>
+
+  <div class="formula-block">
+    $$ \text{objective}(\phi) = \mathbb{E}_{x\sim D,\,y\sim \pi_\phi^{\text{RL}}}\!\left[r_\phi(x, y)\right] - \beta\, \mathbb{E}_x\!\left[\log\frac{\pi_\phi^{\text{RL}}(y\mid x)}{\pi^{\text{SFT}}(y\mid x)}\right] + \gamma\, \mathbb{E}_{x'\sim D_{\text{pretrain}}}\!\left[\log \pi_\phi^{\text{RL}}(x')\right] $$
+    <span class="eqn mono">(2)</span>
+  </div>
+
+  <p>三项分别管三件事：</p>
+  <ul>
+    <li><em>第一项</em>：最大化奖励模型分数——这是主目标，让模型"听话"。</li>
+    <li><em>第二项</em>（KL 惩罚）：限制 $\pi_\phi^{\text{RL}}$ 偏离 $\pi^{\text{SFT}}$ 太远。$\beta$ 是惩罚强度。它逼模型"在听话的同时别走太远"，防止 reward hacking——别为了讨好裁判去说些怪话。</li>
+    <li><em>第三项</em>（预训练混入，<em class="latin">pretraining mix</em>，这就是名字里 <em class="latin">ptx</em> 的由来）：在 RL 的同时，混入一部分预训练数据上的 next-token 损失。$\gamma$ 控制混入比例。这一项专治<em>对齐税</em>——让模型"听话"的同时别忘了"博学"。</li>
+  </ul>
+
+  <div class="callout">
+    <span class="label">核心巧思</span>
+    PPO-ptx 这个名字里藏着一个看似不起眼、却极其关键的 +号——那第三项预训练混入。没有它，模型会变乖但变笨（对齐税重）；加上它，模型既能听话又不掉智商。这是 InstructGPT 区别于早期 RLHF 尝试的最大工程贡献，也是后来所有 RLHF 实现的标配。<em>"在奖励里加一点旧作业，免得新功课学过头忘了老本事"</em>——这就是 alignment tax 的解药。
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowM6b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="350" y="26" text-anchor="middle" font-weight="600" fill="#24555A">数据与模型在三个阶段间的流动</text>
+
+        <!-- 数据源层 -->
+        <text x="100" y="62" text-anchor="middle" fill="#96897A" font-size="11">人类标注</text>
+        <rect x="30" y="72" width="140" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="100" y="92" text-anchor="middle">13K 示范对</text>
+        <text x="100" y="106" text-anchor="middle" fill="#96897A" font-size="10">prompt → 理想回答</text>
+
+        <rect x="190" y="72" width="140" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="260" y="92" text-anchor="middle">33K 排序对</text>
+        <text x="260" y="106" text-anchor="middle" fill="#96897A" font-size="10">prompt → 多回答排序</text>
+
+        <rect x="350" y="72" width="140" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="420" y="92" text-anchor="middle">31K RL prompt</text>
+        <text x="420" y="106" text-anchor="middle" fill="#96897A" font-size="10">prompt（无标注）</text>
+
+        <rect x="510" y="72" width="160" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="590" y="92" text-anchor="middle">预训练数据 D_pretrain</text>
+        <text x="590" y="106" text-anchor="middle" fill="#96897A" font-size="10">海量互联网文本</text>
+
+        <!-- 模型层 -->
+        <rect x="50" y="155" width="120" height="48" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="110" y="175" text-anchor="middle" fill="#24555A" font-weight="600">GPT-3</text>
+        <text x="110" y="192" text-anchor="middle" fill="#24555A" font-size="10">175B 预训练</text>
+
+        <rect x="210" y="155" width="120" height="48" rx="2" fill="#24555A" fill-opacity="0.20" stroke="#24555A"/>
+        <text x="270" y="175" text-anchor="middle" fill="#24555A" font-weight="600">π_SFT</text>
+        <text x="270" y="192" text-anchor="middle" fill="#24555A" font-size="10">监督微调产物</text>
+
+        <rect x="370" y="155" width="120" height="48" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="430" y="175" text-anchor="middle" fill="#B54A2C" font-weight="600">r_φ</text>
+        <text x="430" y="192" text-anchor="middle" fill="#B54A2C" font-size="10">6B 奖励模型</text>
+
+        <rect x="530" y="155" width="120" height="48" rx="2" fill="#B54A2C" fill-opacity="0.22" stroke="#B54A2C"/>
+        <text x="590" y="175" text-anchor="middle" fill="#B54A2C" font-weight="600">π_RL (PPO-ptx)</text>
+        <text x="590" y="192" text-anchor="middle" fill="#B54A2C" font-size="10">InstructGPT 本体</text>
+
+        <!-- 箭头 -->
+        <line x1="100" y1="112" x2="200" y2="155" stroke="#96897A" marker-end="url(#arrowM6b)"/>
+        <line x1="260" y1="112" x2="370" y2="155" stroke="#96897A" marker-end="url(#arrowM6b)"/>
+        <line x1="420" y1="112" x2="540" y2="155" stroke="#96897A" marker-end="url(#arrowM6b)"/>
+        <line x1="590" y1="112" x2="600" y2="155" stroke="#96897A" marker-end="url(#arrowM6b)" stroke-dasharray="3 3"/>
+        <line x1="170" y1="179" x2="210" y2="179" stroke="#96897A" stroke-width="1.5" marker-end="url(#arrowM6b)"/>
+        <line x1="330" y1="179" x2="370" y2="179" stroke="#96897A" stroke-width="1.5" marker-end="url(#arrowM6b)"/>
+        <line x1="490" y1="179" x2="530" y2="179" stroke="#96897A" stroke-width="1.5" marker-end="url(#arrowM6b)"/>
+
+        <text x="350" y="245" text-anchor="middle" fill="#96897A" font-size="11">算力账本：SFT ≈ 4.9 / RLHF ≈ 60 PF-days · 而 GPT-3 预训练 ≈ 3640 PF-days</text>
+        <text x="350" y="263" text-anchor="middle" fill="#B54A2C" font-size="11" font-weight="600">对齐总成本不到预训练的 2%</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 数据与模型在三阶段间的流动：人类标注驱动前两步，预训练数据混入第三步防"对齐税"；整套对齐流程的算力开销不到预训练的 2%</figcaption>
+  </figure>
+
+  <div class="callout">
+    <span class="label">成本账本</span>
+    论文给了一组让人坐不住的数字：把 GPT-3 调成 InstructGPT，SFT 阶段约 4.9 PF-days、整个 RLHF 流程约 60 PF-days；而 GPT-3 本身的预训练是 3640 PF-days。<em>对齐成本不到预训练的 2%</em>。这意味着——花几千万美元训出来的基座模型，只要再花几十万美元、雇几十个人，就能从"难用的复读生"变成"好用的助手"。这笔账，是后来所有大模型公司都开始算的账。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>结果一句话概括：<em>参数只有 GPT-3 的百分之一的 InstructGPT，在人类偏好评估上反杀了 GPT-3 本体</em>。论文 Figure 1 那张图，是这篇论文被引用上万次的"金句图"——横轴是模型大小（1.3B / 6B / 175B），纵轴是"被人类偏好胜过 175B SFT 模型"的比例。</p>
+
+  <table>
+    <thead>
+      <tr><th>对比项</th><th>GPT-3 175B</th><th>InstructGPT 1.3B</th><th>InstructGPT 175B</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">参数量</td><td>175B</td><td>1.3B</td><td>175B</td></tr>
+      <tr><td class="text">人类偏好胜率（vs 175B SFT）</td><td>~baseline</td><td>显著更高</td><td>~85% ± 3%</td></tr>
+      <tr><td class="text">TruthfulQA 真实且有信息量</td><td>基准</td><td>提升</td><td>约 GPT-3 的 2 倍</td></tr>
+      <tr><td class="text">封闭域幻觉率</td><td>~41%</td><td>下降</td><td>~21%（约减半）</td></tr>
+      <tr><td class="text">毒性输出（尊重指令 prompt 下）</td><td>基准</td><td>下降</td><td>减少约 25%</td></tr>
+    </tbody>
+  </table>
+
+  <p>几个最戏剧性的发现：</p>
+  <ul>
+    <li><em>1.3B 打 175B</em>。13 亿参数的小 InstructGPT，输出被人类偏好的比例，<em>高于</em> 1750 亿参数的 GPT-3。这是论文标题里"100x fewer parameters"的来源，也是后来"对齐比堆参数更值钱"这句话的实证依据。</li>
+    <li><em>175B InstructGPT vs 175B GPT-3：85% ± 3%</em>。同参数量下，对齐过的模型被偏好的胜率高达 85%。换句话说，<em>同样的大脑，教过礼仪的秘书完胜没教过的</em>。</li>
+    <li><em>诚实度翻倍</em>。TruthfulQA 上，InstructGPT 给出"真实且 informative"答案的概率约是 GPT-3 的两倍；封闭域任务（摘要、闭卷问答）的幻觉率从约 41% 降到 21%。</li>
+    <li><em>对齐税被压到很小</em>。PPO-ptx（带预训练混入）在公开 NLP 数据集上的性能退化，远小于纯 PPO——证明那第三项确实管用。论文还发现一个反直觉的事：在公开 NLP 学术数据集上做指令微调（如 FLAN、T0 那种），效果反而<em>不如</em>用人类偏好数据微调。</li>
+  </ul>
+
+  <figure>
+    <svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="350" y="28" text-anchor="middle" font-weight="600" fill="#B54A2C">人类偏好胜率：1.3B InstructGPT 反杀 175B GPT-3</text>
+        <text x="350" y="48" text-anchor="middle" fill="#96897A" font-size="11">（被人类偏好的比例，基准为 175B SFT 模型）</text>
+
+        <!-- 坐标轴 -->
+        <line x1="160" y1="270" x2="660" y2="270" stroke="#96897A"/>
+        <line x1="160" y1="80" x2="160" y2="270" stroke="#96897A"/>
+        <text x="410" y="298" text-anchor="middle" fill="#96897A">→ 人类偏好胜率</text>
+        <text x="120" y="175" text-anchor="middle" fill="#96897A" transform="rotate(-90 120 175)">模型</text>
+
+        <!-- 基准线 50% -->
+        <line x1="160" y1="170" x2="660" y2="170" stroke="#96897A" stroke-dasharray="4 4" stroke-width="1"/>
+        <text x="665" y="174" fill="#96897A" font-size="10">50%（平手）</text>
+
+        <!-- GPT-3 175B（无 prompt） -->
+        <text x="150" y="105" text-anchor="end" fill="#96897A" font-size="11">GPT-3 175B</text>
+        <rect x="160" y="93" width="120" height="22" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="288" y="108" fill="#96897A" font-size="10">~ 低</text>
+
+        <!-- GPT-3 175B（prompted） -->
+        <text x="150" y="140" text-anchor="end" fill="#96897A" font-size="11">GPT-3 175B（few-shot）</text>
+        <rect x="160" y="128" width="170" height="22" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="338" y="143" fill="#96897A" font-size="10">仍低于基准</text>
+
+        <!-- 基准 SFT 175B -->
+        <text x="150" y="175" text-anchor="end" fill="#96897A" font-size="11">SFT 175B（基准）</text>
+        <rect x="160" y="163" width="250" height="22" fill="#96897A" fill-opacity="0.18" stroke="#96897A"/>
+        <text x="418" y="178" fill="#96897A" font-size="10">50%（定义）</text>
+
+        <!-- InstructGPT 1.3B -->
+        <text x="150" y="210" text-anchor="end" fill="#B54A2C" font-size="11" font-weight="600">InstructGPT 1.3B</text>
+        <rect x="160" y="198" width="340" height="22" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C"/>
+        <text x="508" y="213" fill="#B54A2C" font-size="11" font-weight="600">高于基准</text>
+
+        <!-- InstructGPT 175B -->
+        <text x="150" y="245" text-anchor="end" fill="#B54A2C" font-size="11" font-weight="600">InstructGPT 175B</text>
+        <rect x="160" y="233" width="440" height="22" fill="#B54A2C" fill-opacity="0.28" stroke="#B54A2C"/>
+        <text x="608" y="248" fill="#B54A2C" font-size="11" font-weight="600">~85%</text>
+
+        <text x="350" y="313" text-anchor="middle" fill="#96897A" font-size="10">数据来源：论文 Figure 1，柱长为示意；1.3B 模型胜过 175B GPT-3 是核心结论</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 人类偏好评估核心结果：13 亿参数的 InstructGPT 胜过 1750 亿参数的 GPT-3，175B InstructGPT 对 175B GPT-3 的胜率约 85%——"对齐"碾压"堆参数"</figcaption>
+  </figure>
+
+  <div class="callout">
+    <span class="label">最反直觉的一击</span>
+    论文里藏着一个让人后背发凉的发现：<em>当被明确要求生成有毒内容时，InstructGPT 的毒性反而高于 GPT-3</em>。为什么？因为它更"听话"了——你让它使坏，它就认真使坏，比那个只会模仿互联网文本的 GPT-3 更卖力。这是"对齐"的一个根本张力：模型越会跟随指令，它就越能被恶意指令操纵。<em>听话本身是双刃剑</em>。这个发现直接催生了后来的"越狱"研究、红队测试，以及 Constitutional AI 等替代路线。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>InstructGPT 的影响，怎么强调都不为过。它至少改写了四件事：</p>
+  <ul>
+    <li><em>把"对齐"从学术词变成产业标配</em>。"alignment"这个词第一次走出 Alignment 研究圈，进入每个大模型团队的产品路线图。RLHF 三步走成为所有对话助手的<em>标准训练范式</em>——Claude、Gemini、LLaMA-Chat、Qwen、DeepSeek，无一不是它的徒子徒孙。</li>
+    <li><em>直接催生 ChatGPT</em>。八个月后的 2022 年 11 月 30 日，OpenAI 把 InstructGPT 的方法套到对话场景，发布 ChatGPT。两个月破亿用户，史上最快。InstructGPT 论文里那张"1.3B 打 175B"的图，就是 ChatGPT 商业逻辑的技术基石——<em>对齐让大模型从"玩具"变成"产品"</em>。</li>
+    <li><em>颠覆"大力出奇迹"叙事</em>。GPT-3 之后，业界迷信"参数越大越强"。InstructGPT 用 1.3B 打 175B 证明：在"用户感受"这个维度上，<em>对齐的性价比远超堆参数</em>。这和上一篇 Chinchilla 形成奇妙呼应——一个说"数据比参数值钱"，一个说"对齐比参数值钱"，合在一起把"唯参数论"彻底送进坟墓。</li>
+    <li><em>开辟"对齐税"研究线</em>。论文第一次把"对齐会损失能力"这件事量化，并给出 PPO-ptx 这个工程解。后来的 DPO、Constitutional AI、RLAIF，本质上都在绕着"怎么降对齐税"打转。</li>
+  </ul>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>InstructGPT 自己也留下一堆洞，后来者花了好几年补：</p>
+  <ul>
+    <li><em>"听话"是双刃剑</em>。前面那个"让它使坏它更卖力"的发现，揭示了 RLHF 的根本张力——它对齐的是"跟随指令"，不是"价值观"。恶意指令照样能让对齐模型干坏事。后来的 RLHF + 红队、Constitutional AI（用 AI 自我批评替代人类标注）、DPO 都在治这个。</li>
+    <li><em>对齐的是"标注员的偏好"，不是"人类价值观"</em>。论文很坦诚地写明：模型对齐的是"40 个标注员 + OpenAI 研究员"这个特定群体的偏好，不是什么普世"人类价值"。而且标注员之间也只有约 73% 的一致性。这引出"该对齐到谁"这个至今无解的政治/哲学问题。</li>
+    <li><em>对偏见几乎无效</em>。在 Winogender、CrowS-Pairs 这两个偏见基准上，InstructGPT 相比 GPT-3 <em>没有显著改善</em>。RLHF 能治"胡编"和"跑题"，但治不了模型骨子里的社会偏见——那些偏见太深地织进了预训练数据。</li>
+    <li><em>奖励模型的"钻空子"问题</em>。奖励模型再准也是代理，模型会找到代理的盲区去骗分（reward hacking）。后来 Anthropic 的 Constitutional AI 直接绕开人类标注、用 AI 自评，一部分动机就是这里。</li>
+    <li><em>仍会犯简单错误</em>。论文摘要最后一句承认："InstructGPT still makes simple mistakes。"对齐治不了"不知道"，只能治"不听话"。</li>
+  </ul>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把镜头拉远，"对齐"这条线是这样起来的：</p>
+  <ol>
+    <li><em>2017（系列第 1 篇）</em>：Transformer 奠定架构基础。</li>
+    <li><em>2018–2019（系列第 2、3 篇）</em>：BERT、GPT-2 立"预训练"范式，但模型还小、还在学术圈打转。</li>
+    <li><em>2020.05（系列第 4 篇）</em>：GPT-3 把参数推到 1750 亿，证明"大力出奇迹"——但同时暴露"博学却不听话"的病。</li>
+    <li><em>2022.03（系列第 5 篇）</em>：Chinchilla 纠偏"配比"，说数据该和参数等比例涨。规模化路线的内部修正。</li>
+    <li><em>2022.03（本篇）</em>：InstructGPT 换赛道——不再问"怎么训更博学"，改问"怎么训更听话"。RLHF 三步走立起来，1.3B 打 175B。</li>
+    <li><em>2022.11</em>：ChatGPT 把 InstructGPT 套进对话场景，引爆全球。</li>
+    <li><em>2022.12</em>：Anthropic 的 Constitutional AI 提出 RLAIF，用 AI 自评替代人类标注，治"对齐到谁"和成本问题。</li>
+    <li><em>2023.02</em>：Meta LLaMA 借 Chinchilla 法则点燃开源潮；随后 LLaMA-Chat、Vicuna、Alpaca 把 RLHF 方法在开源界复刻。</li>
+    <li><em>2023.05</em>：DPO（Direct Preference Optimization）论文，绕过奖励模型和 PPO，直接用偏好数据训策略，成为 RLHF 的强力简化版。</li>
+  </ol>
+  <p>本系列到这里，规模化的故事讲完了，对齐的故事开了头。但还有一条支流没碰——<em>开源</em>。Chinchilla 给了配方法则，InstructGPT 给了对齐方法，可这些都是闭源大公司的私有武器。下一篇，我们要看一个把这套武器<em>开源给全世界</em>的工作。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>InstructGPT 这篇论文，最戏剧性的故事不在论文里，而在<em>作者名单上</em>。论文 31 位作者几乎全是 OpenAI Alignment 团队的成员，而接下来两年，这个团队像被施了魔咒一样<em>集体出走</em>，几乎整个搬去了 Anthropic——那家由 OpenAI 前研究副总裁 Dario Amodei 创立的、主打"AI 安全"的公司。</p>
+  <ul>
+    <li>一作 <em class="latin">Long Ouyang</em>，留在 OpenAI 继续做对齐。</li>
+    <li>共同一作 <em class="latin">Jeff Wu</em>，去了 Anthropic。</li>
+    <li>共同一作 <em class="latin">Paul Christiano</em>——RLHF 的真正奠基人（2017 那篇原论文的一作）——离开 OpenAI 创立了 ARC（Alignment Research Center），后来又去了 Center for AI Standards and Innovation。</li>
+    <li>团队共同负责人 <em class="latin">Jan Leike</em>，后来在 OpenAI 共同领导 Superalignment 团队，2024 年 5 月高调宣布辞职加入 Anthropic，引发业界震动。</li>
+    <li><em class="latin">John Schulman</em>——PPO 算法的发明人，InstructGPT 第三步用的就是他的算法——2024 年也离开 OpenAI 加入 Anthropic。</li>
+    <li><em class="latin">Amanda Askell</em>——论文里"3H 标准"（Helpful/Honest/Harmless）的提出者——去了 Anthropic，后来成为 Claude 的核心开发者之一。</li>
+  </ul>
+  <p>一句话：<em>写 InstructGPT 这篇论文的 Alignment 团队，后来基本变成了 Anthropic 的班底</em>。Claude 和 ChatGPT 这对宿敌，根上是同一拨人。这种"自己人变成竞争对手"的格局，是大模型时代最耐人寻味的注脚之一。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowFun6" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="350" y="28" text-anchor="middle" font-weight="600" fill="#B54A2C">InstructGPT 作者的"大迁徙"</text>
+        <text x="350" y="48" text-anchor="middle" fill="#96897A" font-size="11">论文 31 位作者 → 后来去向</text>
+
+        <!-- OpenAI 圈 -->
+        <circle cx="180" cy="140" r="70" fill="#24555A" fill-opacity="0.08" stroke="#24555A"/>
+        <text x="180" y="80" text-anchor="middle" font-weight="600" fill="#24555A">OpenAI（2022）</text>
+        <text x="180" y="135" text-anchor="middle" fill="#24555A" font-size="11">Alignment 团队</text>
+        <text x="180" y="155" text-anchor="middle" fill="#24555A" font-size="11">31 位作者</text>
+        <text x="180" y="175" text-anchor="middle" fill="#24555A" font-size="10">Ouyang / Wu / Christiano</text>
+        <text x="180" y="190" text-anchor="middle" fill="#24555A" font-size="10">Leike / Schulman / Askell</text>
+
+        <!-- Anthropic 圈 -->
+        <circle cx="520" cy="140" r="70" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <text x="520" y="80" text-anchor="middle" font-weight="600" fill="#B54A2C">Anthropic</text>
+        <text x="520" y="135" text-anchor="middle" fill="#B54A2C" font-size="11">Claude 团队</text>
+        <text x="520" y="155" text-anchor="middle" fill="#B54A2C" font-size="11">Askell / Leike</text>
+        <text x="520" y="175" text-anchor="middle" fill="#B54A2C" font-size="11">Schulman / Wu</text>
+
+        <!-- 迁徙箭头 -->
+        <line x1="250" y1="140" x2="450" y2="140" stroke="#96897A" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrowFun6)"/>
+        <text x="350" y="132" text-anchor="middle" fill="#96897A" font-size="11">2023–2024 集体出走</text>
+        <text x="350" y="150" text-anchor="middle" fill="#B54A2C" font-size="11" font-weight="600">"对齐派"大迁徙</text>
+
+        <text x="350" y="240" text-anchor="middle" fill="#96897A" font-size="11">ChatGPT 与 Claude 同根同源：写 InstructGPT 的人，后来分成了两家</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · InstructGPT 作者去向图：OpenAI Alignment 团队的主力在 2023–2024 年间集体转投 Anthropic，造就了 ChatGPT 与 Claude"本是同根生"的格局</figcaption>
+  </figure>
+
+  <div class="callout">
+    <span class="label">小八卦</span>
+    论文发表时，InstructGPT 其实已经在 OpenAI API 上<em>默默跑了快一年</em>——它是 2022 年 1 月 27 日才正式对外公告"成为 API 默认模型"的，而论文 arXiv 版是 3 月 4 日。也就是说，<em>产品先上线、论文后发表</em>。这种"工程跑在学术前面"的节奏，在大模型时代成了常态——ChatGPT 本身更是连正式论文都没发，就直接改变了世界。学术界那种"先发 paper 再做产品"的古典做派，被彻底颠倒了。
+  </div>
+
+  <p>还有个让人唏嘘的细节：Christiano 在论文脚注里标注"Work done while at OpenAI"，意思是这工作是他<em>还在 OpenAI 时</em>做的。他从 OpenAI 离开、创立 ARC 时，带走了 RLHF 的整套思想。后来 ARC 又和 Anthropic 紧密合作。可以说，<em>RLHF 这套方法从 OpenAI 流出，最终在 Anthropic 开花结果</em>——Claude 的"宪法 AI"正是建立在 RLHF 之上、又超越 RLHF 的下一代。技术资本的流动，比技术本身更曲折。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读 InstructGPT，最让我震撼的不是"1.3B 打 175B"那个数字，而是它揭示的一个朴素真理：<em>能力</em>和<em>可用性</em>是两件事。GPT-3 证明了大模型有惊人的"能力"——它会写代码、会翻译、会做数学题；可它依然"不可用"——你问 A 它答 B，你让它简洁它写长篇。InstructGPT 没有让模型变得更聪明，它只是让模型变得更<em>好用</em>。这一前一后，恰好定义了大模型商业化的两个阶段：GPT-3 阶段证明"这东西有戏"，InstructGPT/ChatGPT 阶段证明"这东西能卖"。后者才是引爆点。</p>
+  <p>更值得玩味的是它和 Chinchilla 的对照。Chinchilla 解决"训得更博学"，InstructGPT 解决"训得更听话"——一个优化<em>能力上限</em>，一个优化<em>能力释放</em>。合在一起看，大模型的发展从来不是单维度的"越大越强"，而是"博学"和"听话"两条线交替推进。今天所有大模型公司的竞争，本质上都是在这两条线上找平衡：基座团队拼博学（预训练 + 数据），对齐团队拼听话（RLHF + 安全）。缺了哪条线，产品都立不住。</p>
+  <p>最后一点延伸判断：RLHF 的统治地位正在被松动。DPO（2023）绕开了奖励模型和 PPO，直接用偏好数据训策略，工程上简单得多；Constitutional AI（2022）用 AI 自评替代人类标注，治了 RLHF 的成本和"对齐到谁"两大病；2024 年后 GRPO 等新算法又在推理模型上异军突起。但所有这些后来者，都在 InstructGPT 立的"三步走"框架里打转——它们是改良，不是颠覆。<em>这篇论文定义的问题和范式，至今仍是整个对话助手领域的坐标系原点</em>。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    InstructGPT 揭示了一个根本张力：模型越会"听话"，就越能被恶意指令操纵去干坏事——"听话"是双刃剑。那么问题来了：<em>我们到底想要一个"绝对听话"的助手，还是一个"有自己的判断、会拒绝你"的助手？</em>如果它有判断，它的判断标准该是谁定的？是 OpenAI 的 40 个标注员？是某个国家的法律？还是某种普世伦理？再想一步——当你对一个 AI 说"帮我做件坏事"而它拒绝你时，那个"拒绝"背后，是它真的懂对错，还是它只是被训得"看起来懂"？这中间，是不是藏着"对齐"和"理解"之间我们还没敢正视的鸿沟？
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>LLaMA: Open and Efficient Foundation Language Models</h3>
+    <p style="margin:0;">InstructGPT 把"对齐"立成了产业标配，可它和 GPT-3、Chinchilla 一样，都是大公司手里的<em>闭源私有武器</em>——普通人只能隔着 API 喊话，看不到权重、改不了模型。这套局面，在 2023 年 2 月被 Meta 的一篇论文打破。Yeji Choi 团队借 Chinchilla 的"小模型多数据"法则，造出 7B 到 65B 一组开源模型 LLaMA，13B 就超过 GPT-3，65B 与 Chinchilla 持平——而且<em>权重免费发给研究者</em>。一夜之间，开源大模型的火种被点燃：Alpaca、Vicuna、LLaMA-Chat 把 InstructGPT 的 RLHF 方法在开源界复刻，民间炼丹师第一次能在家用显卡上跑起自己的大模型。下一篇，我们来看这场让大模型从"少数公司的私产"变成"全人类的工具"的开源革命。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 006 篇</span>
+    <span>2026-08-03</span>
+  </footer>
+
+</div>
+</body>
+</html>

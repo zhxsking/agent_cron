@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 5,
-  "last_run_date": "2026-08-02",
+  "last_index": 6,
+  "last_run_date": "2026-08-03",
   "papers_covered": [
     {
       "index": 1,
@@ -42,10 +42,18 @@
       "date": "2022-03-29",
       "era": "规模化探索期 2020–2022",
       "filename": "5_20260802_Chinchilla.html"
+    },
+    {
+      "index": 6,
+      "title_en": "Training language models to follow instructions with human feedback",
+      "title_zh": "InstructGPT：用人类反馈教 GPT-3 听懂人话，ChatGPT 的真正前身",
+      "date": "2022-03-04",
+      "era": "对齐与应用期 2022–2023",
+      "filename": "6_20260803_InstructGPT.html"
     }
   ],
   "next_preview": {
-    "title_en": "Training language models to follow instructions with human feedback",
-    "title_zh": "InstructGPT：用人类反馈教 GPT-3 听懂人话，ChatGPT 的真正前身"
+    "title_en": "LLaMA: Open and Efficient Foundation Language Models",
+    "title_zh": "LLaMA：开源基础模型的火种——小模型多数据，让大模型从私产变公器"
   }
 }
