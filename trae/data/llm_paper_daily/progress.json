@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 6,
-  "last_run_date": "2026-08-03",
+  "last_index": 7,
+  "last_run_date": "2026-08-04",
   "papers_covered": [
     {
       "index": 1,
@@ -50,10 +50,18 @@
       "date": "2022-03-04",
       "era": "对齐与应用期 2022–2023",
       "filename": "6_20260803_InstructGPT.html"
+    },
+    {
+      "index": 7,
+      "title_en": "LLaMA: Open and Efficient Foundation Language Models",
+      "title_zh": "LLaMA：开源基础模型的火种——小模型多数据，让大模型从私产变公器",
+      "date": "2023-02-27",
+      "era": "前沿演进期 2023–2024",
+      "filename": "7_20260804_LLaMA.html"
     }
   ],
   "next_preview": {
-    "title_en": "LLaMA: Open and Efficient Foundation Language Models",
-    "title_zh": "LLaMA：开源基础模型的火种——小模型多数据，让大模型从私产变公器"
+    "title_en": "Direct Preference Optimization: Your Language Model is Secretly a Reward Model",
+    "title_zh": "DPO：把 RLHF 拆骨剥皮——用一道数学推导把奖励模型和 PPO 化简成监督学习"
   }
 }

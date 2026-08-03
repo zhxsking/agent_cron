@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLaMA 论文精读 · 大模型经典论文系列 #007</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:38px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#007</span>
+  </div>
+
+  <h1 class="title">
+    LLaMA: Open and Efficient Foundation Language Models
+    <span class="en">LLaMA：开源基础模型的火种——小模型多数据，让大模型从私产变公器</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Hugo Touvron, Thibaut Lavril, Gautier Izacard, Xavier Martinet, Marie-Anne Lachaux, Timothée Lacroix, Baptiste Rozière, Naman Goyal, Eric Hambro, Faisal Azhar, Aurelien Rodriguez, Armand Joulin, Edouard Grave, Guillaume Lample</span>
+    <span>机构：Meta AI</span>
+    <span>发表：2023-02 / arXiv</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2302.13971" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/facebookresearch/llama" target="_blank" rel="noopener">GitHub</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">2023 年 3 月 3 日，一个普通得不能再普通的周五。4chan 的 /g/ 技术版上，匿名用户 "llamanon" 贴出了一个 magnet 链接——LLaMA-65B 的全部权重，免费下载，谁要谁拿。</p>
+
+  <p class="lead">这是 Meta AI 在六天前刚发布的、声称"仅供研究、需申请审核"的大模型。Meta 法务部连夜发邮件要求撤链，可 torrent 一旦上链就像种子落地，几小时内就被镜像到 GitHub、Hugging Face、网盘，甚至有人刻进光盘寄到世界各地的实验室。一位匿名网友在 4chan 上留下那句注定要被载入 AI 史册的吐槽："<em>你们藏什么藏，权重一旦训出来，就属于全人类</em>。"LLaMA 这把火，就在这场"反向开源"中被点燃了。短短三个月内，Alpaca、Vicuna、Code LLaMA、WizardLM 排着队出生，开源大模型从一个口号变成了一场运动。</p>
+
+  <p class="lead">而这一切的起点，正是 Meta AI 那篇看上去克制得不能再克制的论文——<em class="latin">LLaMA: Open and Efficient Foundation Language Models</em>。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    LLaMA 用<em>纯公开数据</em>训出一组 7B–65B 的基础模型，13B 就在大多数 benchmark 上超过 175B 的 GPT-3，65B 与 Chinchilla-70B、PaLM-540B 同台较量——而且权重对研究者免费发放，从此<em>大模型不再是少数公司的私产，而成了全人类的公器</em>。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>把 LLaMA 放进大模型的发展史，它处在一个奇妙的<em>枢纽点</em>：往前看，它把 Chinchilla 的"小模型多数据"法则从理论变成产品；往后看，它把 GPT-3 以来"少数公司垄断权重"的格局撕开一道口子。</p>
+  <p>本系列前几篇的故事是这样推进的：GPT-3 证明"大力出奇迹"，Chinchilla 修正了"怎么大力"——同样的算力下，<em>小模型训更久</em>比大模型训一轮更划算；InstructGPT 把"对齐"立成产业标配，让大模型从"会答题"变成"会听话"。可这三件大事都是闭源大公司的私有武器——普通人隔着 API 喊话，看不到权重，改不了模型，更别提自己复现。<em>LLaMA 撕开的就是这道墙</em>。</p>
+  <p>更重要的是，LLaMA 顺手把"开源大模型能不能打"这个问题永久地送进了历史垃圾堆。在它之前，Meta 自己的 OPT-175B、BigScience 的 BLOOM 都试过开源，但质量都打不过 PaLM、Chinchilla。LLaMA 之后，开源再也不是"次品"的代名词——它直接催生了 LLaMA 2、Llama 3、Mistral、Qwen、DeepSeek 这一连串名字，今天开源大模型的能力已经无限逼近、某些维度甚至超过闭源旗舰。</p>
+
+  <figure>
+    <!-- 图 1：大模型发展时间线，标注 LLaMA 位置 -->
+    <svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="130" x2="660" y2="130" stroke="#96897A" stroke-width="1"/>
+      <defs>
+        <marker id="arrowT" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 已解析里程碑（实心圆，accent2） -->
+        <circle cx="80" cy="130" r="5" fill="#24555A"/>
+        <text x="80" y="108" text-anchor="middle" fill="#24555A">2017.06</text>
+        <text x="80" y="156" text-anchor="middle" fill="#2E2A22">Transformer</text>
+
+        <circle cx="180" cy="130" r="5" fill="#24555A"/>
+        <text x="180" y="108" text-anchor="middle" fill="#24555A">2018.10</text>
+        <text x="180" y="156" text-anchor="middle" fill="#2E2A22">BERT</text>
+
+        <circle cx="260" cy="130" r="5" fill="#24555A"/>
+        <text x="260" y="108" text-anchor="middle" fill="#24555A">2019.02</text>
+        <text x="260" y="156" text-anchor="middle" fill="#2E2A22">GPT-2</text>
+
+        <circle cx="340" cy="130" r="5" fill="#24555A"/>
+        <text x="340" y="108" text-anchor="middle" fill="#24555A">2020.05</text>
+        <text x="340" y="156" text-anchor="middle" fill="#2E2A22">GPT-3</text>
+
+        <circle cx="430" cy="130" r="5" fill="#24555A"/>
+        <text x="430" y="108" text-anchor="middle" fill="#24555A">2022.03</text>
+        <text x="430" y="156" text-anchor="middle" fill="#2E2A22">Chinchilla</text>
+
+        <circle cx="500" cy="130" r="5" fill="#24555A"/>
+        <text x="500" y="108" text-anchor="middle" fill="#24555A">2022.03</text>
+        <text x="500" y="156" text-anchor="middle" fill="#2E2A22">InstructGPT</text>
+
+        <!-- 本篇位置：放大高亮 -->
+        <circle cx="570" cy="130" r="9" fill="#B54A2C"/>
+        <circle cx="570" cy="130" r="14" fill="none" stroke="#B54A2C" stroke-opacity="0.3" stroke-width="2"/>
+        <text x="570" y="100" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇 2023.02</text>
+        <text x="570" y="156" text-anchor="middle" fill="#B54A2C" font-weight="600">LLaMA</text>
+
+        <!-- 后续未解析 -->
+        <circle cx="640" cy="130" r="5" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="640" y="108" text-anchor="middle">2023.07</text>
+        <text x="640" y="156" text-anchor="middle" fill="#2E2A22">LLaMA 2</text>
+
+        <!-- 时代带 -->
+        <rect x="40" y="200" width="160" height="20" fill="#24555A" fill-opacity="0.06"/>
+        <text x="120" y="214" text-anchor="middle" fill="#96897A" font-size="10">奠基期</text>
+
+        <rect x="200" y="200" width="180" height="20" fill="#24555A" fill-opacity="0.06"/>
+        <text x="290" y="214" text-anchor="middle" fill="#96897A" font-size="10">预训练 / 规模化探索</text>
+
+        <rect x="380" y="200" width="180" height="20" fill="#24555A" fill-opacity="0.06"/>
+        <text x="470" y="214" text-anchor="middle" fill="#96897A" font-size="10">对齐与应用</text>
+
+        <rect x="560" y="200" width="100" height="20" fill="#B54A2C" fill-opacity="0.10"/>
+        <text x="610" y="214" text-anchor="middle" fill="#B54A2C" font-size="10">前沿演进 · 开源潮</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的 LLaMA：已解析的 6 篇文章（深青色实心点）一路从 Transformer 推进到对齐期，LLaMA 站在"开源潮"的起点。</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>2022 年底到 2023 年初的格局是这样：能力上，GPT-3、PaLM、Chinchilla 这些闭源旗舰瓜分了所有 SOTA；开放性上，<em>几乎没有一个能打的</em>。Meta 自己 2022 年 5 月开源的 OPT-175B 算是诚意之举，可质量实在拿不出手——训练后期不稳定、能力远落后于 GPT-3。BigScience 的 BLOOM 176B 也是开源的，但偏多语言、英文任务表现平平。GPT-NeoX 20B 太小，能力天花板摆在那。</p>
+  <p>问题在哪儿？两条线：</p>
+  <ul>
+    <li><em>数据不透明</em>。GPT-3 的训练数据 OpenAI 一笔带过，PaLM 数据描述模糊，Chinchilla 也没全开。这意味着<em>即使你想复现，根本不知道从哪起手</em>。"Books – 2TB"、"Social media conversations" 这种描述，等于啥也没说。</li>
+    <li><em>scaling law 的解释偏了</em>。Kaplan 2020 年的原始 scaling law 主张"模型越大越好"，导致大家拼命往参数里塞。但 Chinchilla 2022 年 3 月的工作已经证明——给定算力预算，最优解是<em>更小模型训更多数据</em>，GPT-3 那种 175B 训 300B tokens 的配比严重"参数过剩"。可 Chinchilla 的目标是"训练算力最优"，没考虑<em>推理算力</em>。如果模型要上线服务，推理成本才是大头。</li>
+  </ul>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    假设你要开一辆送货车。<em>训练算力</em>是造车的成本，<em>推理算力</em>是每趟送货烧的油。Chinchilla 帮你算"怎么造最划算"，可造出来一辆 18 轮大卡车，每次送货烧一箱油——烧不起。Meta 团队问的问题是：能不能造一辆<em>车小、油省、装得还不少</em>的车？答案是：宁可多花点钱造车（多训几个 epoch），也要让送货时省油。
+  </div>
+
+  <p>换句话说，Chinchilla 说"用 10B 模型训 200B tokens 最划算"，LLaMA 团队却发现——7B 模型训到 1T tokens，性能<em>还在涨</em>。这意味着 Chinchilla 的"算力最优"是局部最优，把训练算力多花一倍，换来的不只是"训练时更好"，更重要的是"推理时更便宜"。<em>这是个被忽略的工程视角</em>。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>把背景压缩成一句话，LLaMA 要解决的问题是：</p>
+  <div class="callout question">
+    <span class="label">研究问题</span>
+    在<em>给定的推理算力预算</em>下（而不是训练算力预算），能不能用<em>纯公开数据</em>训练出一组模型，既能在性能上对标 GPT-3 / Chinchilla / PaLM，又能完整开源给研究社区？
+  </div>
+  <p>这句话里有两层意思，一层是工程，一层是政治。工程层：训得更小、更省油、更耐用；政治层：所有数据要可追溯、可复现，权重<em>可以</em>公开发给研究者——这两条加起来，等于把"开源大模型"从口号变成可执行方案。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    Chinchilla 已经说过"小模型多数据"了，为什么 LLaMA 还要做这件事？换个角度想：如果 Chinchilla 的法则是普适的，为什么 OPT、BLOOM 这些更早的开源尝试都失败了？——提示：法则只是必要条件，不是充分条件。<em>真正难的是数据质量、训练稳定性、推理效率的工程协同</em>。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>LLaMA 的"方法"读起来平淡得像一份菜谱——但这份平淡，恰恰是它最大的杀伤力。论文里没有提出任何新架构、没有设计任何新损失函数、没有发明任何新优化器。它就是把已有的零件攒在一起，攒得极其<em>克制、可复现、可工程化</em>。</p>
+
+  <h3>4.1 数据：只用公开数据，配比七合一</h3>
+  <p>训练数据是 LLaMA 最被低估的创新。论文反复强调"only publicly available data"，这一句话把 GPT-3、PaLM、Chinchilla 全部隔开——后三者都用了不可追溯的私有数据，所以没法开源。LLaMA 的数据全部来自公开来源，任何人都可以下载、审计、复现。</p>
+
+  <figure>
+    <!-- 图 2：LLaMA 训练数据组成饼图 -->
+    <svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- 饼图配色 -->
+      </defs>
+      <g transform="translate(200,160)">
+        <!-- CommonCrawl 67% -->
+        <path d="M 0,0 L 0,-130 A 130,130 0 1,1 -119.6,51.7 Z" fill="#B54A2C" fill-opacity="0.85"/>
+        <!-- C4 15% -->
+        <path d="M 0,0 L -119.6,51.7 A 130,130 0 0,1 -129.4,-16.6 Z" fill="#24555A" fill-opacity="0.85"/>
+        <!-- Github 4.5% -->
+        <path d="M 0,0 L -129.4,-16.6 A 130,130 0 0,1 -119.6,-51.7 Z" fill="#96897A" fill-opacity="0.7"/>
+        <!-- Wikipedia 4.5% -->
+        <path d="M 0,0 L -119.6,-51.7 A 130,130 0 0,1 -100.3,-82.6 Z" fill="#B54A2C" fill-opacity="0.5"/>
+        <!-- Books 4.5% -->
+        <path d="M 0,0 L -100.3,-82.6 A 130,130 0 0,1 -75.1,-105.7 Z" fill="#24555A" fill-opacity="0.5"/>
+        <!-- ArXiv 2.5% -->
+        <path d="M 0,0 L -75.1,-105.7 A 130,130 0 0,1 -50.4,-119.8 Z" fill="#96897A" fill-opacity="0.4"/>
+        <!-- StackExchange 2% -->
+        <path d="M 0,0 L -50.4,-119.8 A 130,130 0 0,1 0,-130 Z" fill="#B54A2C" fill-opacity="0.25"/>
+
+        <circle cx="0" cy="0" r="50" fill="#F4EFE4"/>
+      </g>
+      <text x="200" y="160" text-anchor="middle" font-family="Lora" font-size="16" fill="#2E2A22" font-weight="600">1.4T tokens</text>
+      <text x="200" y="180" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#96897A">全部公开</text>
+
+      <!-- 图例 -->
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <rect x="400" y="40" width="14" height="14" fill="#B54A2C" fill-opacity="0.85"/>
+        <text x="422" y="51">CommonCrawl  67.0%</text>
+        <text x="600" y="51" fill="#96897A">3.3 TB</text>
+
+        <rect x="400" y="70" width="14" height="14" fill="#24555A" fill-opacity="0.85"/>
+        <text x="422" y="81">C4            15.0%</text>
+        <text x="600" y="81" fill="#96897A">783 GB</text>
+
+        <rect x="400" y="100" width="14" height="14" fill="#96897A" fill-opacity="0.7"/>
+        <text x="422" y="111">Github         4.5%</text>
+        <text x="600" y="111" fill="#96897A">328 GB</text>
+
+        <rect x="400" y="130" width="14" height="14" fill="#B54A2C" fill-opacity="0.5"/>
+        <text x="422" y="141">Wikipedia      4.5%</text>
+        <text x="600" y="141" fill="#96897A">83 GB</text>
+
+        <rect x="400" y="160" width="14" height="14" fill="#24555A" fill-opacity="0.5"/>
+        <text x="422" y="171">Gutenberg+Books3 4.5%</text>
+        <text x="600" y="171" fill="#96897A">85 GB</text>
+
+        <rect x="400" y="190" width="14" height="14" fill="#96897A" fill-opacity="0.4"/>
+        <text x="422" y="201">ArXiv          2.5%</text>
+        <text x="600" y="201" fill="#96897A">92 GB</text>
+
+        <rect x="400" y="220" width="14" height="14" fill="#B54A2C" fill-opacity="0.25"/>
+        <text x="422" y="231">StackExchange  2.0%</text>
+        <text x="600" y="231" fill="#96897A">78 GB</text>
+
+        <text x="400" y="280" font-size="11" fill="#96897A">注：占比为采样比例；磁盘大小为原始数据规模</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · LLaMA 训练数据七合一：CommonCrawl 占近七成，剩余六种来源补齐代码、百科、书籍、论文、问答等不同知识形态。</figcaption>
+  </figure>
+
+  <p>七种来源每个都有讲究：</p>
+  <ul>
+    <li><em>CommonCrawl (67%)</em>：网页爬虫主体，2017–2020 五个 dump，用 CCNet pipeline 做行级去重、语言识别、n-gram 质量过滤。亮点是训了一个线性分类器，区分"被 Wikipedia 引用的页面"和"随机页面"，前者保留——相当于让 Wikipedia 当"<em>质量裁判</em>"。</li>
+    <li><em>C4 (15%)</em>：另一份预处理过的 CommonCrawl，过滤逻辑偏启发式（看标点、看句子数）。作者发现 C4 和 CCNet 同时用反而比单独用更好——<em>同一个源、两套过滤逻辑</em>等于数据多样性。</li>
+    <li><em>Github (4.5%)</em>：只保留 Apache/BSD/MIT 协议项目，按行长、字母数字比例过滤，正则表达式剥掉样板文件。</li>
+    <li><em>Wikipedia (4.5%)</em>：2022 年 6–8 月 dump，覆盖 20 种拉丁/西里尔字母语言。去超链接、去注释。</li>
+    <li><em>Gutenberg + Books3 (4.5%)</em>：两个书籍语料合并，按"90% 内容重叠"做书级去重。</li>
+    <li><em>ArXiv (2.5%)</em>：处理 LaTeX 源码，去掉参考文献前的部分、去掉 .tex 注释、内联展开宏定义——为的是让不同论文之间格式一致。</li>
+    <li><em>StackExchange (2%)</em>：保留最大的 28 个子站，按答案分数排序——<em>让模型先学到最被认可的答案</em>。</li>
+  </ul>
+  <p>这七种合起来约 4.7 TB 原始数据，tokenize 之后约 1.4T tokens。tokenizer 用 SentencePiece 实现的 BPE，词表 32K。LLaMA-7B 和 13B 训 1.0T tokens，33B 和 65B 训 1.4T tokens。</p>
+
+  <h3>4.2 架构：标准 Transformer 加三味调料</h3>
+  <p>LLaMA 没有发明新架构，就是 decoder-only Transformer（和 GPT 系列同源），但在三个细节上做了替换。这三个替换不是 LLaMA 首创，但 LLaMA 是第一个把它们<em>组合在一起、规模化验证</em>的工作。</p>
+
+  <figure>
+    <!-- 图 3：LLaMA 架构改进示意图 -->
+    <svg viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowA" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 左侧：标准 GPT 风格 Transformer block -->
+        <text x="170" y="30" text-anchor="middle" font-weight="600" fill="#96897A">标准 GPT block</text>
+        <rect x="80" y="50" width="180" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="170" y="74" text-anchor="middle">LayerNorm</text>
+        <rect x="80" y="100" width="180" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="170" y="124" text-anchor="middle">Multi-Head Attention</text>
+        <rect x="80" y="150" width="180" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="170" y="174" text-anchor="middle">LayerNorm</text>
+        <rect x="80" y="200" width="180" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="170" y="224" text-anchor="middle">FFN (ReLU)</text>
+        <rect x="80" y="250" width="180" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="170" y="274" text-anchor="middle">绝对位置编码</text>
+        <text x="170" y="320" text-anchor="middle" font-size="10" fill="#96897A">归一化在子层输出之后</text>
+
+        <!-- 中间箭头 -->
+        <line x1="270" y1="170" x2="370" y2="170" stroke="#B54A2C" stroke-width="1.5" marker-end="url(#arrowA)"/>
+        <text x="320" y="160" text-anchor="middle" fill="#B54A2C" font-size="11">三味调料</text>
+
+        <!-- 右侧：LLaMA block -->
+        <text x="520" y="30" text-anchor="middle" font-weight="600" fill="#B54A2C">LLaMA block</text>
+        <rect x="430" y="50" width="180" height="40" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="520" y="74" text-anchor="middle" fill="#B54A2C" font-weight="600">RMSNorm (Pre-Norm)</text>
+        <rect x="430" y="100" width="180" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="520" y="124" text-anchor="middle">Multi-Head Attention</text>
+        <rect x="430" y="150" width="180" height="40" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="520" y="174" text-anchor="middle" fill="#B54A2C" font-weight="600">RMSNorm (Pre-Norm)</text>
+        <rect x="430" y="200" width="180" height="40" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="520" y="224" text-anchor="middle" fill="#B54A2C" font-weight="600">FFN (SwiGLU)</text>
+        <rect x="430" y="250" width="180" height="40" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="520" y="274" text-anchor="middle" fill="#B54A2C" font-weight="600">RoPE 旋转位置编码</text>
+        <text x="520" y="320" text-anchor="middle" font-size="10" fill="#96897A">归一化前置 + 三项替换</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · LLaMA 相对标准 GPT 架构的三味调料：RMSNorm 替换 LayerNorm 并前置，SwiGLU 替换 ReLU，RoPE 替换绝对位置编码。</figcaption>
+  </figure>
+
+  <p>三味调料分别是什么？</p>
+
+  <h3>4.3 调料一：Pre-normalization + RMSNorm</h3>
+  <p>先说人话：原本的 Transformer 在每个子层<em>输出之后</em>做归一化（post-norm），但深层网络训练时梯度容易爆炸或消失。GPT-2 之后大家改成<em>输入之前</em>归一化（pre-norm），训练更稳。</p>
+  <p>LLaMA 在此基础上更进一步，把归一化用的 LayerNorm 换成 <em class="latin">RMSNorm</em>（Root Mean Square Normalization）。RMSNorm 的核心改动是<em>去掉了 LayerNorm 里的"减均值"步骤</em>，只做"除以 RMS"。算式上是这样的：</p>
+
+  <div class="formula-block">
+    $$ \text{RMSNorm}(x) = \frac{x}{\sqrt{\frac{1}{d}\sum_{i=1}^{d} x_i^2 + \epsilon}} \cdot \gamma $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>相比 LayerNorm，少一个均值计算，速度更快、内存更省，效果几乎不差。这是个"省钱不丢分"的工程选择。</p>
+
+  <h3>4.4 调料二：SwiGLU 激活函数</h3>
+  <p>传统 FFN 是 <em class="latin">FFN(x) = ReLU(Wx + b)</em>。LLaMA 用了 Shazeer 2020 年提出的 <em class="latin">SwiGLU</em>，结构是"两个线性层 + 一个门控"：</p>
+
+  <div class="formula-block">
+    $$ \text{FFN}_{\text{SwiGLU}}(x) = \text{Swish}(W_1 x) \otimes (W_2 x) $$
+    <span class="eqn mono">(2)</span>
+  </div>
+
+  <p>说人话：传统 FFN 让所有信息都过 ReLU；SwiGLU 把信息分成两路，一路过 Swish（一种平滑的 ReLU 变体）当"内容"，另一路不过激活当"门"——<em>门决定内容能过多少</em>。这种"门控"机制让模型学会"什么时候该激活、什么时候该闭嘴"，效果比 ReLU 好。代价是 FFN 多了一个权重矩阵，参数变多 1/3，但论文测算下来"性能提升值这个钱"。</p>
+
+  <h3>4.5 调料三：RoPE 旋转位置编码</h3>
+  <p>这部分最容易让初学者头大，但其实是几何直觉很美的设计。先说问题：原始 Transformer 用<em>绝对位置编码</em>——给每个位置加一个固定的向量，告诉模型"这是第 5 个词"。问题是模型只学到"位置 5"长什么样，对"位置 5 和位置 10 相对距离 5"这种关系不敏感。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    绝对位置编码像给教室里每个座位贴编号——"3 排 5 号"。模型只学到"3 排 5 号"是个具体位置。RoPE 改成"<em>相对方向</em>"：把每个词表示成一个二维平面上的向量，位置信息编码成<em>旋转角度</em>。两个词的注意力分数，只取决于它们<em>之间的角度差</em>，不取决于具体在哪个位置。这就像告诉模型"我和你相差 5 步"，而不是"我在 5 号位你在 10 号位"。
+  </div>
+
+  <p>数学上，RoPE 把 query 和 key 的每一对维度当成一个复数，乘以一个和位置 <em class="latin">m</em> 相关的旋转 <em class="latin">e<sup>imθ</sup></em>。因为旋转是相对的，两个位置的内积就只取决于位置差 <em class="latin">m − n</em>，从而天然捕捉相对位置关系。RoPE 还有一个额外红利：<em>外推性好</em>——训练时上下文 2048，推理时可以扩到更长（虽然 LLaMA 1 没主动验证，但后来的 LongRoPE、YaRN 都把这条路走到了 100k+）。</p>
+
+  <h3>4.6 训练：突破 Chinchilla 的"算力最优"</h3>
+  <p>把这三味调料组装起来，配 1.0T–1.4T tokens 训练，就成了 LLaMA。具体规模如下：</p>
+
+  <table>
+    <thead>
+      <tr><th>模型</th><th>参数量</th><th>训练 tokens</th><th>层数</th><th>注意力头</th><th>维度</th><th>A100 GPU 小时</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">LLaMA-7B</td><td>6.7B</td><td>1.0T</td><td>32</td><td>32</td><td>4096</td><td>82,432</td></tr>
+      <tr><td class="text">LLaMA-13B</td><td>13B</td><td>1.0T</td><td>40</td><td>40</td><td>5120</td><td>135,168</td></tr>
+      <tr><td class="text">LLaMA-33B</td><td>32.5B</td><td>1.4T</td><td>60</td><td>52</td><td>6656</td><td>530,432</td></tr>
+      <tr><td class="text">LLaMA-65B</td><td>65.2B</td><td>1.4T</td><td>80</td><td>64</td><td>8192</td><td>1,022,362</td></tr>
+    </tbody>
+  </table>
+
+  <p>关键观察：<em>1.0T tokens 远远超过 Chinchilla 推荐的 200B</em>。按 Chinchilla 法则，7B 模型训 200B tokens 就该"算力最优"——再训收益递减。LLaMA 团队直接训到 1T，多花了 5 倍算力，换来的不只是训练时更强的模型，更重要的是<em>推理时同样快、能力却强得多</em>的模型。这是个根本性的范式转换：训练算力是"一次性投资"，推理算力是"持续支出"，把投资放在训练端是划算的。</p>
+
+  <p>工程上还有几个值得提的优化：</p>
+  <ul>
+    <li><em>因果多头注意力</em>（causal multi-head attention）的优化实现，减少内存读写；</li>
+    <li><em>激活检查点</em>（activation checkpointing）：用算力换内存，训练更大模型；</li>
+    <li><em>模型并行 + 优化器状态分片</em>：65B 在 2048 张 A100 80GB 上训练，约 21 天。</li>
+  </ul>
+
+  <figure>
+    <!-- 图 4：训练策略对比 -->
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="350" y="30" text-anchor="middle" font-weight="600">同样的"目标性能"，两种思路</text>
+
+        <!-- 左：Chinchilla 思路 -->
+        <text x="170" y="65" text-anchor="middle" font-weight="600" fill="#96897A">Chinchilla 思路</text>
+        <rect x="60" y="80" width="220" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="170" y="103" text-anchor="middle" font-size="11">大模型 + 短数据</text>
+        <text x="170" y="120" text-anchor="middle" font-size="11" fill="#96897A">10B / 200B tokens</text>
+
+        <rect x="60" y="140" width="220" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="170" y="163" text-anchor="middle" font-size="11" fill="#96897A">训练算力最优 ✓</text>
+
+        <rect x="60" y="190" width="220" height="40" rx="2" fill="#B54A2C" fill-opacity="0.08" stroke="#B54A2C"/>
+        <text x="170" y="213" text-anchor="middle" font-size="11" fill="#B54A2C">推理算力昂贵 ✗</text>
+
+        <!-- 右：LLaMA 思路 -->
+        <text x="520" y="65" text-anchor="middle" font-weight="600" fill="#B54A2C">LLaMA 思路</text>
+        <rect x="410" y="80" width="220" height="50" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="520" y="103" text-anchor="middle" font-size="11" fill="#B54A2C" font-weight="600">小模型 + 长数据</text>
+        <text x="520" y="120" text-anchor="middle" font-size="11" fill="#96897A">7B / 1.0T tokens</text>
+
+        <rect x="410" y="140" width="220" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="520" y="163" text-anchor="middle" font-size="11" fill="#96897A">训练算力超额 ✗</text>
+
+        <rect x="410" y="190" width="220" height="40" rx="2" fill="#B54A2C" fill-opacity="0.08" stroke="#B54A2C"/>
+        <text x="520" y="213" text-anchor="middle" font-size="11" fill="#B54A2C">推理算力友好 ✓</text>
+
+        <!-- 中间对比 -->
+        <line x1="350" y1="60" x2="350" y2="240" stroke="#96897A" stroke-dasharray="4 4"/>
+        <text x="170" y="260" text-anchor="middle" font-size="10" fill="#96897A">训练时省钱</text>
+        <text x="520" y="260" text-anchor="middle" font-size="10" fill="#B54A2C">推理时省钱</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · Chinchilla vs LLaMA 的训练哲学：前者优化训练算力，后者优化推理算力——后者更贴近"上线服务"的真实成本结构。</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>论文报告了 8 大类共 20 个 benchmark 的结果，结论非常硬：LLaMA-13B 在大多数 benchmark 上<em>超过 175B 的 GPT-3</em>，参数量只有 1/13；LLaMA-65B 与 Chinchilla-70B 持平，部分指标超过 PaLM-540B（虽然参数只有 1/8）。下面挑几个最关键的数字：</p>
+
+  <table>
+    <thead>
+      <tr><th>Benchmark</th><th>GPT-3 (175B)</th><th>Chinchilla (70B)</th><th>PaLM (540B)</th><th>LLaMA-13B</th><th>LLaMA-65B</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">MMLU (5-shot)</td><td>43.9</td><td>67.6</td><td>69.3</td><td>53.4</td><td><strong>63.4</strong></td></tr>
+      <tr><td class="text">TriviaQA (1-shot)</td><td>64.3</td><td>72.3</td><td>81.4</td><td>52.7</td><td><strong>73.8</strong></td></tr>
+      <tr><td class="text">NaturalQuestions</td><td>28.5</td><td>33.2</td><td>29.9</td><td>24.8</td><td><strong>34.1</strong></td></tr>
+      <tr><td class="text">HumanEval (0-shot)</td><td>—</td><td>—</td><td>26.2</td><td><strong>10.4</strong></td><td><strong>23.7</strong></td></tr>
+      <tr><td class="text">GSM8K (8-shot)</td><td>14.1</td><td>60.0</td><td>58.1</td><td>17.7</td><td><strong>50.9</strong></td></tr>
+      <tr><td class="text">BoolQ</td><td>76.4</td><td>83.4</td><td>84.8</td><td>75.6</td><td><strong>82.3</strong></td></tr>
+    </tbody>
+  </table>
+
+  <p>把数字读出味道来：</p>
+  <ul>
+    <li><em>13B 打 175B</em>。LLaMA-13B 在 TriviaQA、BoolQ、HellaSwag、PIQA 等多个 benchmark 上超过 GPT-3。这意味着<em>参数量从 175B 砍到 13B，性能不掉反升</em>——只要数据够多、配方对，小模型就能反杀。</li>
+    <li><em>65B 与 70B Chinchilla 持平</em>。在 MMLU、NaturalQuestions 上 LLaMA-65B 略胜，在 GSM8K 上略输。但要注意：Chinchilla 用了<em>私有数据</em>，LLaMA 全部公开数据。</li>
+    <li><em>65B 逼近 540B PaLM</em>。MMLU 上 63.4 vs 69.3，差 6 个点，但参数只有 1/8。这是"<em>小模型多数据</em>"策略的硬证明。</li>
+    <li><em>毒性 / 偏见</em>。论文诚实地报告了模型在 RealToxicityPrompts、CrowS-Pairs 等偏见/毒性 benchmark 上的表现——和 PaLM、GPT-3 同水平甚至更糟。这是开源带来的副产品：<em>问题摆到台面上，比藏着掖着更有价值</em>。</li>
+  </ul>
+
+  <figure>
+    <!-- 图 5：性能 vs 参数规模对比 -->
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 坐标轴 -->
+        <line x1="60" y1="240" x2="660" y2="240" stroke="#96897A"/>
+        <line x1="60" y1="40" x2="60" y2="240" stroke="#96897A"/>
+        <text x="360" y="270" text-anchor="middle" fill="#96897A">参数量（B，对数轴）</text>
+        <text x="30" y="140" text-anchor="middle" fill="#96897A" transform="rotate(-90 30 140)">MMLU 分数</text>
+
+        <!-- X 轴刻度 -->
+        <text x="100" y="255" text-anchor="middle" fill="#96897A">7</text>
+        <text x="180" y="255" text-anchor="middle" fill="#96897A">13</text>
+        <text x="290" y="255" text-anchor="middle" fill="#96897A">70</text>
+        <text x="370" y="255" text-anchor="middle" fill="#96897A">175</text>
+        <text x="540" y="255" text-anchor="middle" fill="#96897A">540</text>
+
+        <!-- 网格 -->
+        <line x1="60" y1="80" x2="660" y2="80" stroke="#96897A" stroke-opacity="0.2" stroke-dasharray="2 3"/>
+        <line x1="60" y1="130" x2="660" y2="130" stroke="#96897A" stroke-opacity="0.2" stroke-dasharray="2 3"/>
+        <line x1="60" y1="180" x2="660" y2="180" stroke="#96897A" stroke-opacity="0.2" stroke-dasharray="2 3"/>
+
+        <!-- 数据点 -->
+        <!-- LLaMA 系列（accent，实心） -->
+        <circle cx="100" cy="200" r="6" fill="#B54A2C"/>
+        <text x="100" y="222" text-anchor="middle" fill="#B54A2C" font-size="10">LLaMA-7B</text>
+        <text x="100" y="195" text-anchor="middle" fill="#B54A2C" font-size="10">35.1</text>
+
+        <circle cx="180" cy="170" r="6" fill="#B54A2C"/>
+        <text x="180" y="162" text-anchor="middle" fill="#B54A2C" font-size="10">53.4</text>
+        <text x="180" y="222" text-anchor="middle" fill="#B54A2C" font-size="10">LLaMA-13B</text>
+
+        <circle cx="245" cy="105" r="6" fill="#B54A2C"/>
+        <text x="245" y="97" text-anchor="middle" fill="#B54A2C" font-size="10">63.4</text>
+        <text x="245" y="222" text-anchor="middle" fill="#B54A2C" font-size="10">LLaMA-65B</text>
+
+        <!-- GPT-3（参考点） -->
+        <circle cx="370" cy="135" r="5" fill="#96897A"/>
+        <text x="370" y="127" text-anchor="middle" fill="#96897A" font-size="10">43.9</text>
+        <text x="370" y="222" text-anchor="middle" fill="#96897A" font-size="10">GPT-3</text>
+
+        <!-- Chinchilla -->
+        <circle cx="290" cy="85" r="5" fill="#24555A"/>
+        <text x="290" y="77" text-anchor="middle" fill="#24555A" font-size="10">67.6</text>
+        <text x="290" y="222" text-anchor="middle" fill="#24555A" font-size="10">Chinchilla</text>
+
+        <!-- PaLM -->
+        <circle cx="540" cy="80" r="5" fill="#96897A"/>
+        <text x="540" y="72" text-anchor="middle" fill="#96897A" font-size="10">69.3</text>
+        <text x="540" y="222" text-anchor="middle" fill="#96897A" font-size="10">PaLM</text>
+
+        <!-- 关键箭头：LLaMA-13B 超过 GPT-3 -->
+        <line x1="180" y1="170" x2="370" y2="135" stroke="#B54A2C" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#arrowB)"/>
+        <text x="275" y="140" text-anchor="middle" fill="#B54A2C" font-size="10" font-weight="600">13B &gt; 175B</text>
+
+        <defs>
+          <marker id="arrowB" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+          </marker>
+        </defs>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · MMLU 分数 vs 参数量：LLaMA-13B（53.4）在参数量仅 GPT-3 (43.9) 的 7.4% 时已超越后者；LLaMA-65B 用 65B 摸到了 Chinchilla-70B 的下沿。</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>LLaMA 的影响，<em>怎么夸张都不过分</em>。它至少改写了三件事：</p>
+  <ul>
+    <li><em>把开源大模型从"次品"变成"主流"</em>。LLaMA 之前，OPT、BLOOM 都被认为"开源但能力差一截"。LLaMA 之后，开源再不是次品代名词——它用 13B 打 175B 这个硬数字证明：开源也能打。后面 Mistral 7B、Llama 3、Qwen、DeepSeek 一路把这条线推到了和闭源旗舰掰手腕的程度。</li>
+    <li><em>点燃整个开源生态</em>。论文发布后三个月内：斯坦福 Alpaca 用 600 美元在 LLaMA-7B 上微调出"GPT-3.5 平替"；UC 伯克利等机构的 Vicuna 用 7 万条对话把 LLaMA 训成"达到 ChatGPT 90% 质量"；WizardLM、Code LLaMA、LongLLaMA 排着队出生；中文社区出现 ChatLLaMA、Chinese-LLaMA、Linly、Atom 等本土化版本。<em>整个开源大模型生态，就是从 LLaMA 这把火种长出来的</em>。</li>
+    <li><em>改变了 Meta 在 AI 圈的话语权</em>。Meta 在 LLaMA 之前在大模型竞赛中是落后的——OPT 不如 GPT-3，BLenderBot 不如 ChatGPT。LLaMA 一出，Meta 直接跳到了开源旗舰的位置。Yann LeCun 多年倡导的"开源才是 AI 的未来"，第一次有了硬通货背书。后来 LLaMA 2 商业开源、Llama 3 开源对标 GPT-4，Meta 在开源赛道上彻底坐稳了。</li>
+  </ul>
+  <p>更深一层的意义是<em>认知层面的</em>：LLaMA 之前，业界普遍认为"大模型是 OpenAI、Google 这种巨头的游戏，普通人只能用 API"；LLaMA 之后，研究者和中小公司发现"原来我也能上手"。<em>从『能不能』到『敢敢敢』</em>，这是 LLaMA 给社区最大的礼物。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>论文本身写得很克制，局限也写得清楚：</p>
+  <ul>
+    <li><em>不是 instruction-tuned</em>。LLaMA 是 base model，直接对话体验很差——你问它"今天天气怎么样"，它可能续写一个"今天天气怎么样，明天天气怎么样"的列表。后来 Alpaca、Vicuna 都是给它做指令微调才让"LLaMA-Chat"能聊天。</li>
+    <li><em>上下文只有 2048 tokens</em>。GPT-3.5 已经 4k，Claude 1 已经 9k，LLaMA 的 2048 在长文档场景明显不够。后来 LongLLaMA、Together 的 LongChat 把它扩到了 16k+，但那都是后话。</li>
+    <li><em>多语言能力有限</em>。训练数据里非英文占比极低，中文、阿拉伯文、日文任务表现明显弱于英文。这直接催生了 Chinese-LLaMA、Linly、Atom 等中文增强版本。</li>
+    <li><em>许可证限制商业使用</em>。LLaMA 1 是 research-only，需要申请。这一条直接导致了 4chan 泄露事件，也促使 Meta 五个月后在 LLaMA 2 上完全放开商业许可。</li>
+    <li><em>毒性 / 偏见问题</em>。论文诚实承认 LLaMA 在 RealToxicityPrompts、CrowS-Pairs 上的表现并不比 GPT-3 好。开源让问题<em>可见</em>，但也让<em>问题可以被滥用</em>——这是开源的代价。</li>
+  </ul>
+  <p>这些局限后来都被一一解决：LLaMA 2 商业开源 + RLHF 对齐 + 4k 上下文；Llama 3 把上下文推到 8k 起步、引入 GQA；中文社区补足了中文能力。但<em>这些后续故事的起点，都在 LLaMA 1 这篇论文里</em>。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把 LLaMA 放进系列时间线，整个大模型的发展可以划成五个时代：</p>
+  <ol>
+    <li><em>奠基期 2014–2017</em>：Seq2Seq + Attention 让位给纯 Transformer。第 1 篇 <em class="latin">Attention Is All You Need</em> 把"注意力"立成主角。</li>
+    <li><em>预训练范式期 2018–2020</em>：BERT 把双向预训练做成主流，GPT-2 把"无监督多任务"的火种点起来。第 2、3 篇。</li>
+    <li><em>规模化探索期 2020–2022</em>：GPT-3 175B 把"大力出奇迹"推到极致，Chinchilla 修正了"怎么大力"——小模型多数据。第 4、5 篇。</li>
+    <li><em>对齐与应用期 2022–2023</em>：InstructGPT 把 RLHF 立成产业标配，ChatGPT 引爆全球。第 6 篇。</li>
+    <li><em>前沿演进期 2023–2024</em>：开源浪潮 + 算法创新 + 多模态。LLaMA 点燃开源，LLaMA 2 把商业闭环跑通，Mistral、Qwen、DeepSeek 接力——而同时 DPO 简化了 RLHF，RLAIF 摆脱了人类标注，Constitutional AI 引入了价值对齐。这一时期大模型从"少数公司的私产"变成"全人类的工具"。本篇 LLaMA，就是这一时代的<em>起点</em>。</li>
+  </ol>
+  <p>本系列到这里，闭源的故事讲完了——Transformer、BERT、GPT-2、GPT-3、Chinchilla、InstructGPT 一路推到对齐。从这一篇开始，<em>开源的故事开张了</em>。下一篇我们要看的，是把 LLaMA 当基座、把 InstructGPT 的 RLHF 方法在开源界"简化复刻"的工作——它绕过了奖励模型和 PPO，直接用偏好数据训策略，让开源对齐变成几行代码的事。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>LLaMA 这篇论文背后的故事，比论文本身更有戏。</p>
+
+  <p><em>故事一：4chan 的"反向开源"</em>。Meta 发布 LLaMA 时，规定权重只能通过<em>申请审核</em>给学术研究者。这个本意是"控制风险"的决定，在开源社区眼里就是"装什么装"。3 月 3 日，匿名用户 "llamanon" 在 4chan /g/ 板贴出 magnet 链接，附言："你们藏什么藏，权重一旦训出来，就属于全人类。"几小时内，权重被镜像到 GitHub、Hugging Face、磁力站，Meta 法务的撤链邮件像撒网一样发出去——可 torrent 一旦上链，就像种子落地。最讽刺的是，这次"泄露"<em>反而帮 Meta 完成了它本来想做的事</em>：让 LLaMA 真正进入每一间实验室。后来 Meta 内部总结这次事件，得出的结论之一就是——LLaMA 2 干脆放开商业许可。</p>
+
+  <p><em>故事二：LLaMA 这个名字的梗</em>。LLaMA 是 <em class="latin">Large Language Model Meta AI</em> 的缩写，听起来像草泥马。Meta 内部一开始有人提反对意见："这名字会不会太不严肃？"Yann LeCun 据说力排众议保留了这个名字——他后来在 Twitter 上经常发羊驼表情包。Llama 2 发布时，Meta 干脆把"LLaMA"改成"Llama"，去掉了那两个大写字母，更加松弛。Llama 3 的发布会场，Meta 直接摆了几只真羊驼。</p>
+
+  <p><em>故事三：Yann LeCun 的开源执念</em>。Meta 首席 AI 科学家 Yann LeCun 多年来一直在 Twitter 上"嘴炮" OpenAI 的闭源路线——"<em>闭源大模型就是新时代的封闭花园</em>"。LLaMA 之前他说这话底气不足，因为 OPT 不争气。LLaMA 一出，LeCun 在 Twitter 上发了一连串胜利表情，被网友戏称"<em>图灵奖得主终于松了一口气</em>"。后来 OpenAI 发布 GPT-4，LeCun 又开始怼"GPT-4 没有任何根本性创新"，被 Sam Altman 回怼"你开心就好"——这场隔空骂战，是 2023 年 AI 圈最热闹的连续剧之一。</p>
+
+  <p><em>故事四：Alpaca 的 600 美元</em>。LLaMA 发布后两周，斯坦福的 Rohan Taori 等人做了个惊人实验：用 OpenAI 的 text-davinci-003 自动生成 5.2 万条指令数据，花 600 美元微调 LLaMA-7B，得到的 Alpaca 在多数对话任务上和 GPT-3.5 持平。600 美元造一个 ChatGPT 平替——这个数字震动了整个硅谷。一个月内，Vicuna、WizardLM、Code LLaMA 排队出生。Meta 自己的工程师开玩笑说：<em>我们花了 1022k GPU 小时训出来的模型，被斯坦福一个博士用 600 美元就玩出了花</em>。</p>
+
+  <figure>
+    <!-- 图 6：4chan 反向开源插图 -->
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- Meta 实验室 -->
+        <rect x="30" y="80" width="120" height="60" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="90" y="105" text-anchor="middle">Meta AI</text>
+        <text x="90" y="125" text-anchor="middle" font-size="10" fill="#96897A">"仅供研究"</text>
+
+        <!-- 申请审核闸门 -->
+        <rect x="190" y="80" width="100" height="60" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="240" y="105" text-anchor="middle">申请审核</text>
+        <text x="240" y="125" text-anchor="middle" font-size="10" fill="#96897A">慢 · 限学术</text>
+
+        <!-- 4chan -->
+        <rect x="340" y="60" width="120" height="100" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="400" y="90" text-anchor="middle" fill="#B54A2C" font-weight="600">4chan /g/</text>
+        <text x="400" y="115" text-anchor="middle" font-size="10" fill="#B54A2C">magnet:?xt=urn:btih:</text>
+        <text x="400" y="135" text-anchor="middle" font-size="10" fill="#B54A2C">"权重属于全人类"</text>
+
+        <!-- 全世界实验室 -->
+        <rect x="510" y="40" width="140" height="40" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="580" y="65" text-anchor="middle" fill="#24555A">斯坦福</text>
+
+        <rect x="510" y="90" width="140" height="40" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="580" y="115" text-anchor="middle" fill="#24555A">伯克利</text>
+
+        <rect x="510" y="140" width="140" height="40" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="580" y="165" text-anchor="middle" fill="#24555A">全球研究者</text>
+
+        <!-- 箭头流 -->
+        <defs>
+          <marker id="arrowF" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+          </marker>
+          <marker id="arrowR" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+          </marker>
+        </defs>
+        <line x1="150" y1="110" x2="190" y2="110" stroke="#96897A" marker-end="url(#arrowF)"/>
+        <line x1="290" y1="110" x2="340" y2="110" stroke="#96897A" marker-end="url(#arrowF)"/>
+        <line x1="460" y1="80" x2="510" y2="60" stroke="#B54A2C" stroke-dasharray="3 3" marker-end="url(#arrowR)"/>
+        <line x1="460" y1="110" x2="510" y2="110" stroke="#B54A2C" stroke-dasharray="3 3" marker-end="url(#arrowR)"/>
+        <line x1="460" y1="140" x2="510" y2="160" stroke="#B54A2C" stroke-dasharray="3 3" marker-end="url(#arrowR)"/>
+
+        <text x="350" y="200" text-anchor="middle" font-size="11" fill="#96897A">原本设计的"线性分发" → 实际发生的"病毒式扩散"</text>
+        <text x="350" y="218" text-anchor="middle" font-size="10" fill="#B54A2C">Meta 法务连夜撤链 · 镜像早已遍地开花</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 6</span> · LLaMA 的"反向开源"路线图：Meta 设计的是申请审核的线性分发，4chan 一发 magnet 链接，整个分发链被改写成病毒式扩散——开源社区称之为"被迫的开源"。</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读 LLaMA，最让我感慨的不是"13B 打 175B"这个数字，而是它揭示的两个被忽略的事实。</p>
+  <p>第一，<em>科学进步常常不是"新发现"，而是"已有发现的诚实组合"</em>。LLaMA 没有提出任何新架构——RMSNorm 是 2019 年的，SwiGLU 是 2020 年的，RoPE 是 2021 年的，pre-norm 是 2019 年的，BPE 是 90 年代的，SentencePiece 是 2018 年的。LLaMA 做的事情是<em>把这些零件攒在一起，用足够的算力验证它们能 work</em>。这件事 OpenAI、Google 都能做，但他们没做——OpenAI 忙着卖 API，Google 忙着保护 PaLM。Meta 做了，原因之一是<em>他们在闭源竞赛里落后了，开源是弯道超车</em>。这不是道德选择，是商业选择。但恰恰是这种商业选择，让全行业受益。</p>
+  <p>第二，<em>开源 vs 闭源的根本张力，不是技术问题，是治理问题</em>。LLaMA 1 用 research-only 许可证，是因为 Meta 担心被滥用；4chan 泄露打破了这个控制；LLaMA 2 放开商业许可，是因为 Meta 发现"开源反而是更优策略"——你开放得越多，社区为你做的免费工作越多，你的生态越强。今天 Meta 用 Llama 系列在开源赛道上一骑绝尘，而 OpenAI 的闭源策略正在被越来越多研究者质疑。这场路线之争，最终比拼的不是"谁能藏得更好"，而是<em>"谁能把生态做得更大"</em>。</p>
+  <p>还有一层更深的思考：LLaMA 让"训大模型"这件事从"魔法"变成"工程"。这种工程化的扩散效应，远超论文本身。当斯坦福博士生用 600 美元就能玩出 Alpaca，当中小公司能在 8 张 A100 上微调自己的 LLaMA-Chat，当任何人都能下载权重审计模型偏见——<em>大模型从『神坛』走下『民间』</em>。这件事的政治意义，远大于技术意义。它意味着 AI 不再是少数公司的私有魔法，而成了全社会可以参与、可以审计、可以塑造的公共基础设施。</p>
+  <p>当然，硬币的另一面是<em>风险也被开源了</em>。LLaMA 让钓鱼邮件、虚假信息、自动化黑客攻击的门槛大幅降低。后来 Llama 2 的发布报告里专门有一章讲红队测试和滥用防护，正是对这种风险的回应。开源不是万能药——它是<em>加速器</em>，加速好事也加速坏事。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果你是 Meta 的 CEO，你会选择 LLaMA 1 的"申请审核"模式，还是 LLaMA 2 的"完全开放商业"模式？前者控制风险但限制了生态；后者扩张生态但放大了滥用。再想一步：<em>开源 AI 的"红线"应该画在哪里</em>？是模型权重？是训练数据？是训练算力？还是模型能力本身？今天的答案和五年后还会一样吗？
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Direct Preference Optimization: Your Language Model is Secretly a Reward Model</h3>
+    <p style="margin:0;">LLaMA 把开源基座的火种点了起来，可它是个 base model，不会聊天——要让它"听话"，还得套上 InstructGPT 那套 RLHF 流程。问题是 RLHF 太重：要训奖励模型、要跑 PPO、要调 KL 系数，工程复杂到只有大公司玩得起。2023 年 5 月，斯坦福的 Rafailov 等人抛出一篇论文，标题就一句话——"<em class="latin">Your Language Model is Secretly a Reward Model</em>"（你的语言模型其实偷偷就是个奖励模型）。他们用一道优雅的数学推导证明：RLHF 那套奖励模型 + PPO 的复杂流程，可以<em>等价地化简成在偏好数据上直接做监督学习</em>。这个方法叫 DPO（Direct Preference Optimization），它让开源 LLaMA 上的对齐从"重武器"变成"几行代码"。下一篇，我们来看这场把 RLHF 拆骨剥皮的优雅简化——它如何让"对齐"第一次走进普通开发者的工具箱。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 007 篇</span>
+    <span>2026-08-04</span>
+  </footer>
+
+</div>
+</body>
+</html>
