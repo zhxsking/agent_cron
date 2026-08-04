@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DPO 论文精读 · 大模型经典论文系列 #008</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:38px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#008</span>
+  </div>
+
+  <h1 class="title">
+    Direct Preference Optimization: Your Language Model is Secretly a Reward Model
+    <span class="en">DPO：把 RLHF 拆骨剥皮——用一道数学推导把奖励模型和 PPO 化简成监督学习</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Rafael Rafailov*, Archit Sharma*, Eric Mitchell*, Stefano Ermon, Christopher D. Manning, Chelsea Finn</span>
+    <span>机构：Stanford University, CZ Biohub</span>
+    <span>发表：2023-05 / NeurIPS 2023 Outstanding Paper</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2305.18290" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/eric-mitchell/dpo" target="_blank" rel="noopener">GitHub</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">2023 年初的某个深夜，斯坦福 NLP 实验室里，Eric Mitchell 盯着屏幕上一行公式发愣。他的导师 Chelsea Finn——一位研究机器人强化学习的专家——几天前丢给他一个问题："<em>RLHF 那套奖励模型加 PPO，是不是有点像把简单问题搞复杂了？</em>"Eric 顺手在草稿纸上把 RLHF 的目标函数倒着推了一遍，把"最优策略"那一项解出来，又反手把奖励函数用策略表达出来——他突然愣住了：奖励函数竟然可以写成<em>策略自己除以参考策略</em>的形式。</p>
+
+  <p class="lead">"那我们为什么还要单独训一个奖励模型？"他把这句话敲进群聊。几个小时后，Rafael Rafailov 回了一个表情。三周后，这篇标题听上去像侦探小说的论文挂在 arXiv 上——<em class="latin">Your Language Model is Secretly a Reward Model</em>（你的语言模型其实偷偷就是个奖励模型）。它把 OpenAI 在 InstructGPT 里那套"奖励模型 + PPO"的复杂流水线，化简成一行监督学习的损失函数。开源社区一夜之间沸腾：原来对齐大模型，可以不用 PPO，不用奖励模型，甚至不用在线采样——只要你会算交叉熵。</p>
+
+  <p class="lead">这就是 DPO。它没有发明新架构，没有堆新数据，只是用一道优雅的数学推导，把 RLHF 这头"工程巨兽"按在地上摩擦了一遍。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    DPO 证明：RLHF 那套"奖励模型 + PPO"的复杂流程，可以<em>等价地化简成在偏好数据上直接做监督学习</em>——因为最优策略和奖励函数之间存在闭式对应关系，你的语言模型其实偷偷就是个奖励模型，只需用一个简单的二分类损失就能把偏好"焊"进策略里。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>把 DPO 放进大模型的发展史，它处在一个微妙的<em>简化枢纽</em>上：往前看，它继承了 InstructGPT / ChatGPT 的对齐目标，但嫌那套 RLHF 流水线太重；往后看，它直接开启了"开源对齐"的洪荒时代——没有 DPO，就不会有后来满地跑的 Zephyr、Mistral-Instruct、Llama 2-Chat 这些开源对话模型。</p>
+  <p>本系列前几篇的故事是这样推进的：GPT-3 证明"大力出奇迹"，Chinchilla 修正了"怎么大力"，InstructGPT 把"对齐"立成产业标配，LLaMA 把开源基座的火种点起来。可 LLaMA 是个 base model，不会聊天——要让它"听话"，还得套上 InstructGPT 那套 RLHF。问题是 RLHF 太重：要训奖励模型、要跑 PPO、要调 KL 系数，工程复杂到只有 OpenAI、Anthropic 这种巨头玩得起。<em>DPO 撬开的就是这道工程门槛</em>。</p>
+  <p>它的位置很特殊——不是新架构，不是新数据，而是<em>把已有方法的数学结构看清后做的一次化简</em>。这种"用数学换工程"的胜利，在整个大模型发展史里都属于罕见品种。</p>
+
+  <figure>
+    <!-- 图 1：大模型发展时间线，标注 DPO 位置 -->
+    <svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="130" x2="660" y2="130" stroke="#96897A" stroke-width="1"/>
+      <defs>
+        <marker id="arrowT" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 已解析里程碑（实心圆，accent2） -->
+        <circle cx="70" cy="130" r="5" fill="#24555A"/>
+        <text x="70" y="108" text-anchor="middle" fill="#24555A">2017.06</text>
+        <text x="70" y="156" text-anchor="middle" fill="#2E2A22">Transformer</text>
+
+        <circle cx="160" cy="130" r="5" fill="#24555A"/>
+        <text x="160" y="108" text-anchor="middle" fill="#24555A">2018.10</text>
+        <text x="160" y="156" text-anchor="middle" fill="#2E2A22">BERT</text>
+
+        <circle cx="235" cy="130" r="5" fill="#24555A"/>
+        <text x="235" y="108" text-anchor="middle" fill="#24555A">2019.02</text>
+        <text x="235" y="156" text-anchor="middle" fill="#2E2A22">GPT-2</text>
+
+        <circle cx="310" cy="130" r="5" fill="#24555A"/>
+        <text x="310" y="108" text-anchor="middle" fill="#24555A">2020.05</text>
+        <text x="310" y="156" text-anchor="middle" fill="#2E2A22">GPT-3</text>
+
+        <circle cx="395" cy="130" r="5" fill="#24555A"/>
+        <text x="395" y="108" text-anchor="middle" fill="#24555A">2022.03</text>
+        <text x="395" y="156" text-anchor="middle" fill="#2E2A22">Chinchilla</text>
+
+        <circle cx="465" cy="130" r="5" fill="#24555A"/>
+        <text x="465" y="108" text-anchor="middle" fill="#24555A">2022.03</text>
+        <text x="465" y="156" text-anchor="middle" fill="#2E2A22">InstructGPT</text>
+
+        <circle cx="535" cy="130" r="5" fill="#24555A"/>
+        <text x="535" y="108" text-anchor="middle" fill="#24555A">2023.02</text>
+        <text x="535" y="156" text-anchor="middle" fill="#2E2A22">LLaMA</text>
+
+        <!-- 本篇位置：放大高亮 -->
+        <circle cx="585" cy="130" r="9" fill="#B54A2C"/>
+        <circle cx="585" cy="130" r="14" fill="none" stroke="#B54A2C" stroke-opacity="0.3" stroke-width="2"/>
+        <text x="585" y="100" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇 2023.05</text>
+        <text x="585" y="156" text-anchor="middle" fill="#B54A2C" font-weight="600">DPO</text>
+
+        <!-- 后续未解析 -->
+        <circle cx="640" cy="130" r="5" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="640" y="108" text-anchor="middle">2023.09</text>
+        <text x="640" y="156" text-anchor="middle" fill="#2E2A22">Mistral</text>
+
+        <!-- 时代带 -->
+        <rect x="40" y="200" width="160" height="20" fill="#24555A" fill-opacity="0.06"/>
+        <text x="120" y="214" text-anchor="middle" fill="#96897A" font-size="10">奠基期</text>
+
+        <rect x="200" y="200" width="180" height="20" fill="#24555A" fill-opacity="0.06"/>
+        <text x="290" y="214" text-anchor="middle" fill="#96897A" font-size="10">预训练 / 规模化探索</text>
+
+        <rect x="380" y="200" width="200" height="20" fill="#B54A2C" fill-opacity="0.10"/>
+        <text x="480" y="214" text-anchor="middle" fill="#B54A2C" font-size="10">对齐与应用 · 本篇</text>
+
+        <rect x="580" y="200" width="80" height="20" fill="#24555A" fill-opacity="0.06"/>
+        <text x="620" y="214" text-anchor="middle" fill="#96897A" font-size="10">前沿演进</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的 DPO：已解析的 7 篇文章（深青色实心点）一路从 Transformer 推进到开源潮，DPO 站在"对齐与应用"的中央，承接 InstructGPT 的 RLHF，开启开源对齐的浪潮。</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要理解 DPO 的革命性，得先看清它要革命的对象——RLHF——到底有多重。本系列第 6 篇 InstructGPT 已经详细讲过 RLHF 的"三段式"流程，这里换个角度，从工程门槛再讲一遍：</p>
+  <ul>
+    <li><em>阶段一：SFT</em>。先用高质量对话数据微调 base model，得到 $\pi_{\text{SFT}}$。这一步所有方法都一样，DPO 也不例外。</li>
+    <li><em>阶段二：训奖励模型</em>。让 $\pi_{\text{SFT}}$ 对同一个 prompt 生成两个回答 $y_1, y_2$，请人类标注员二选一，得到偏好对 $(y_w, y_l)$。再用 Bradley-Terry 模型训一个奖励模型 $r_\phi(x,y)$，让它学会预测偏好。</li>
+    <li><em>阶段三：PPO 强化学习</em>。让策略 $\pi_\theta$ 不断生成回答，用 $r_\phi$ 打分，用 PPO 算法最大化奖励——同时加一个 KL 约束，防止策略跑偏到"奖励黑客"的歪路上。</li>
+  </ul>
+  <p>听起来是不是已经够复杂了？更扎心的是<em>实际工程</em>：PPO 训练时要同时在显存里塞 <em>四个模型</em>——当前策略 $\pi_\theta$、参考策略 $\pi_{\text{ref}}$、奖励模型 $r_\phi$、还有 PPO 必需的价值网络（critic）。一张 80GB 的 A100 跑 7B 模型都吃力，更别说 70B。再加上 PPO 那一堆超参（clip ratio、value coefficient、KL coefficient、learning rate、batch size、rollout 数量……），调参调到怀疑人生是常态。</p>
+
+  <figure>
+    <!-- 图 2：RLHF 流水线 vs DPO 流水线 -->
+    <svg viewBox="0 0 700 360" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowP" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrowD" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 上半：RLHF 流水线 -->
+        <text x="350" y="25" text-anchor="middle" font-weight="600" fill="#96897A">RLHF（InstructGPT 路线）</text>
+
+        <rect x="30" y="50" width="120" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="90" y="70" text-anchor="middle">SFT 模型</text>
+        <text x="90" y="86" text-anchor="middle" font-size="10" fill="#96897A">π_SFT</text>
+
+        <rect x="180" y="50" width="120" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="240" y="70" text-anchor="middle">偏好数据</text>
+        <text x="240" y="86" text-anchor="middle" font-size="10" fill="#96897A">(x, y_w, y_l)</text>
+
+        <rect x="330" y="50" width="120" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="390" y="70" text-anchor="middle">奖励模型</text>
+        <text x="390" y="86" text-anchor="middle" font-size="10" fill="#96897A">r_φ(x,y)</text>
+
+        <rect x="480" y="50" width="180" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="570" y="70" text-anchor="middle">PPO 在线 RL 训练</text>
+        <text x="570" y="86" text-anchor="middle" font-size="10" fill="#96897A">policy + ref + reward + critic</text>
+
+        <line x1="150" y1="72" x2="180" y2="72" stroke="#96897A" marker-end="url(#arrowP)"/>
+        <line x1="300" y1="72" x2="330" y2="72" stroke="#96897A" marker-end="url(#arrowP)"/>
+        <line x1="450" y1="72" x2="480" y2="72" stroke="#96897A" marker-end="url(#arrowP)"/>
+
+        <text x="350" y="125" text-anchor="middle" font-size="10" fill="#96897A">四阶段 · 四个模型同时在显存 · 超参敏感 · 在线采样</text>
+
+        <!-- 中间分隔 -->
+        <line x1="40" y1="160" x2="660" y2="160" stroke="#96897A" stroke-dasharray="3 4" stroke-opacity="0.5"/>
+
+        <!-- 下半：DPO 流水线 -->
+        <text x="350" y="190" text-anchor="middle" font-weight="600" fill="#B54A2C">DPO（本篇）</text>
+
+        <rect x="120" y="215" width="140" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="190" y="235" text-anchor="middle">SFT 模型（冻一份做 ref）</text>
+        <text x="190" y="251" text-anchor="middle" font-size="10" fill="#96897A">π_ref = π_SFT</text>
+
+        <rect x="300" y="215" width="140" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="370" y="235" text-anchor="middle">偏好数据</text>
+        <text x="370" y="251" text-anchor="middle" font-size="10" fill="#96897A">(x, y_w, y_l)</text>
+
+        <rect x="480" y="200" width="160" height="74" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="560" y="225" text-anchor="middle" fill="#B54A2C" font-weight="600">一个交叉熵损失</text>
+        <text x="560" y="243" text-anchor="middle" font-size="10" fill="#B54A2C">直接优化 π_θ</text>
+        <text x="560" y="259" text-anchor="middle" font-size="10" fill="#96897A">无 reward model</text>
+        <text x="560" y="271" text-anchor="middle" font-size="10" fill="#96897A">无 PPO · 无在线采样</text>
+
+        <line x1="260" y1="237" x2="300" y2="237" stroke="#B54A2C" marker-end="url(#arrowD)"/>
+        <line x1="440" y1="237" x2="480" y2="237" stroke="#B54A2C" marker-end="url(#arrowD)"/>
+
+        <text x="350" y="305" text-anchor="middle" font-size="10" fill="#B54A2C">两阶段 · 两个模型（policy + frozen ref）· 几乎无超参 · 离线训练</text>
+
+        <text x="350" y="335" text-anchor="middle" font-size="11" fill="#96897A">同样的偏好数据 → 一个简单损失 → 等价的最优策略</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · RLHF 与 DPO 流水线对比：上图四阶段、四个模型同时在显存；下图两阶段、两个模型、一个损失——DPO 把"奖励模型 + PPO"整条链路折叠成一个交叉熵。</figcaption>
+  </figure>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    假设你要训练一个厨师。RLHF 的做法是：先让厨师照菜谱练（SFT），再单独培养一个<em>美食评委</em>（reward model）学会打分，然后让厨师不断做菜、评委不断打分、厨师根据评分调整（PPO）——评委和厨师是两个人，要养两套班子，评委还会被厨师"贿赂"（reward hacking）。DPO 的洞见是：<em>厨师本人其实就会打分</em>——只要让他直接看"这道菜比那道菜好"的对比，他自己就能学会调整。评委这个岗位，可以裁掉了。
+  </div>
+
+  <p>这个"裁掉评委"的洞见听起来像省事，但背后藏着一个数学事实——评委（奖励函数）和厨师（策略）在 RLHF 的最优解下<em>本来就是同一个东西的两面</em>。只是 InstructGPT 那一代人没把这个对应关系看穿，于是走了"先训评委、再训厨师"的弯路。DPO 把这层窗户纸捅破了。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>把背景压缩成一句话，DPO 要解决的问题是：</p>
+  <div class="callout question">
+    <span class="label">研究问题</span>
+    能不能<em>跳过显式的奖励模型训练和 PPO 强化学习</em>，直接用偏好数据 $(x, y_w, y_l)$ 通过一个简单的损失函数，把语言模型对齐到人类偏好上——而且效果不输甚至超过 RLHF？
+  </div>
+  <p>这个问题里有两层挑战。第一层是<em>理论</em>：RLHF 的目标是"最大化奖励 + KL 约束"，这是个强化学习问题，本质上需要在线采样和策略迭代。要把它变成监督学习，得先证明这两个形式之间存在<em>等价变换</em>。第二层是<em>工程</em>：就算理论上等价，实际训练时稳定性、收敛速度、显存占用能不能真的比 PPO 好？这两个问题，DPO 用一道推导 + 一组实验给出了答案。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    在看推导之前，先想想：如果奖励函数 $r(x,y)$ 和策略 $\pi(y|x)$ 之间存在一一对应，那这个对应关系<em>应该长什么样</em>？提示——RLHF 的目标里有个 KL 约束 $\beta \cdot \text{KL}(\pi \| \pi_{\text{ref}})$，它会让最优策略<em>偏向</em>参考策略。这个"偏向"在数学上通常用什么形式表达？想清楚这点，推导就顺了。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>DPO 的方法部分像一道精心设计的数学题——前面几步铺垫，最后一步"咔哒"一声，所有零件咬合在一起。我们分四步来看。</p>
+
+  <h3>4.1 第一步：写出 RLHF 的目标函数</h3>
+  <p>RLHF 想做的事，用一句话说就是：在<em>不偏离参考策略太远</em>的前提下，<em>最大化奖励</em>。数学上写成：</p>
+
+  <div class="formula-block">
+    $$ \max_{\pi_\theta}\; \mathbb{E}_{x \sim \mathcal{D},\, y \sim \pi_\theta(\cdot|x)}\big[r(x,y)\big] - \beta\, \mathbb{D}_{\text{KL}}\big[\pi_\theta(\cdot|x) \,\|\, \pi_{\text{ref}}(\cdot|x)\big] $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>这里 $r(x,y)$ 是奖励函数（来自奖励模型），$\pi_{\text{ref}}$ 通常是 SFT 模型，$\beta$ 控制"偏离参考策略的代价"。$\beta$ 越大，策略越被拴在 $\pi_{\text{ref}}$ 旁边；$\beta$ 越小，策略越敢往高奖励方向跑（也越容易 reward hacking）。</p>
+
+  <h3>4.2 第二步：求出最优策略的闭式解</h3>
+  <p>这是 DPO 推导里最关键、也最漂亮的一步。把 KL 散度展开、把两项合并、配方，会发现这个目标函数<em>有解析解</em>——最优策略长这样：</p>
+
+  <div class="formula-block">
+    $$ \pi^*(y|x) = \frac{1}{Z(x)}\, \pi_{\text{ref}}(y|x)\, \exp\!\left(\frac{1}{\beta}\, r(x,y)\right) $$
+    <span class="eqn mono">(2)</span>
+  </div>
+
+  <p>这里 $Z(x) = \sum_y \pi_{\text{ref}}(y|x) \exp(r(x,y)/\beta)$ 是个归一化常数（partition function），保证 $\pi^*$ 是个合法的概率分布。<em>这个式子说人话</em>：最优策略就是把参考策略按"奖励的指数"重新加权——奖励高的 $y$ 概率被放大，奖励低的被压缩，然后归一化。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象 $\pi_{\text{ref}}$ 是一份"原始菜单"，每道菜有一个基础销量。奖励 $r(x,y)$ 是"加辣度"——辣的菜（奖励高的回答）销量被指数级放大，不辣的被压缩。$Z(x)$ 是个"总销量调节器"，保证最后销量加起来等于 100%。最优策略就是按这个规则重新分配销量后的菜单。
+  </div>
+
+  <p>关键观察：这个闭式解<em>早就被最大熵 RL 文献知道</em>了，不是 DPO 首创。InstructGPT 也隐含地用了它——只不过 InstructGPT 没把这个解"用透"。DPO 的洞见在下一步。</p>
+
+  <h3>4.3 第三步：反转——用策略表达奖励</h3>
+  <p>这是 DPO 标题"Your Language Model is Secretly a Reward Model"的来源。既然式 (2) 把 $\pi^*$ 写成了 $r$ 的函数，那<em>反过来</em>，能不能把 $r$ 写成 $\pi^*$ 的函数？对式 (2) 两边取对数、移项：</p>
+
+  <div class="formula-block">
+    $$ r(x,y) = \beta \log \frac{\pi^*(y|x)}{\pi_{\text{ref}}(y|x)} + \beta \log Z(x) $$
+    <span class="eqn mono">(3)</span>
+  </div>
+
+  <p>这一步是整篇论文的"啊哈时刻"。<em>奖励函数居然可以写成策略自己除以参考策略的对数</em>——加一个跟 $y$ 无关的常数 $\beta \log Z(x)$。这意味着：任何策略 $\pi$ 都隐含地定义了一个奖励函数 $r$，只要按式 (3) 算就行。<em>语言模型本身就是个奖励模型</em>，只是我们之前没意识到。</p>
+
+  <figure>
+    <!-- 图 3：数学推导流程图 -->
+    <svg viewBox="0 0 700 340" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowM" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 步骤 1：RLHF 目标 -->
+        <rect x="40" y="30" width="200" height="56" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="140" y="52" text-anchor="middle" font-weight="600">① RLHF 目标</text>
+        <text x="140" y="70" text-anchor="middle" font-size="11" fill="#96897A">max E[r] − β·KL</text>
+
+        <!-- 步骤 2：闭式解 -->
+        <rect x="290" y="30" width="200" height="56" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="390" y="52" text-anchor="middle" font-weight="600">② 最优策略闭式解</text>
+        <text x="390" y="70" text-anchor="middle" font-size="10" fill="#96897A">π* ∝ π_ref · exp(r/β)</text>
+
+        <line x1="240" y1="58" x2="290" y2="58" stroke="#96897A" marker-end="url(#arrowM)"/>
+        <text x="265" y="50" text-anchor="middle" font-size="10" fill="#96897A">配方</text>
+
+        <!-- 步骤 3：反转 -->
+        <rect x="290" y="130" width="200" height="56" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="390" y="152" text-anchor="middle" font-weight="600" fill="#B54A2C">③ 反转：用 π 表达 r</text>
+        <text x="390" y="170" text-anchor="middle" font-size="10" fill="#B54A2C">r = β·log(π*/π_ref) + β·log Z</text>
+
+        <line x1="390" y1="86" x2="390" y2="130" stroke="#B54A2C" stroke-width="1.5" marker-end="url(#arrowM)"/>
+        <text x="410" y="112" font-size="10" fill="#B54A2C">移项取对数</text>
+
+        <!-- 步骤 4：代入 Bradley-Terry -->
+        <rect x="40" y="230" width="200" height="56" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="140" y="252" text-anchor="middle" font-weight="600">④ Bradley-Terry 偏好模型</text>
+        <text x="140" y="270" text-anchor="middle" font-size="10" fill="#96897A">P(y_w≻y_l) = σ(r_w − r_l)</text>
+
+        <line x1="290" y1="186" x2="240" y2="240" stroke="#96897A" marker-end="url(#arrowM)"/>
+        <text x="240" y="215" text-anchor="middle" font-size="10" fill="#96897A">代入</text>
+
+        <!-- 步骤 5：Z 消去，DPO 损失 -->
+        <rect x="380" y="230" width="280" height="56" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="520" y="252" text-anchor="middle" font-weight="600" fill="#24555A">⑤ Z(x) 消去，得 DPO 损失</text>
+        <text x="520" y="270" text-anchor="middle" font-size="10" fill="#24555A">−log σ(β·log π(y_w)/π_ref(y_w) − ...)</text>
+
+        <line x1="240" y1="266" x2="380" y2="266" stroke="#24555A" stroke-width="1.5" marker-end="url(#arrowM)"/>
+        <text x="310" y="258" text-anchor="middle" font-size="10" fill="#24555A">Z 相减消去</text>
+
+        <!-- 底部说明 -->
+        <text x="350" y="318" text-anchor="middle" font-size="11" fill="#96897A">五步推导 · 把"奖励模型 + PPO"折叠成一个二分类损失</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · DPO 的推导链条：从 RLHF 目标到闭式解，反转得到"策略即奖励"，代入 Bradley-Terry 后配分函数 $Z(x)$ 相减消去，最后落在一个简单的交叉熵损失上。</figcaption>
+  </figure>
+
+  <h3>4.4 第四步：代入 Bradley-Terry，$Z(x)$ 消去</h3>
+  <p>奖励模型训练时用的是 Bradley-Terry 模型——人类偏好 $y_w \succ y_l$ 的概率等于两个奖励差的 sigmoid：</p>
+
+  <div class="formula-block">
+    $$ P(y_w \succ y_l \mid x) = \sigma\big(r(x, y_w) - r(x, y_l)\big) $$
+    <span class="eqn mono">(4)</span>
+  </div>
+
+  <p>把式 (3) 代进去：</p>
+
+  <div class="formula-block">
+    $$ P(y_w \succ y_l \mid x) = \sigma\!\left(\beta \log \frac{\pi^*(y_w|x)}{\pi_{\text{ref}}(y_w|x)} - \beta \log \frac{\pi^*(y_l|x)}{\pi_{\text{ref}}(y_l|x)}\right) $$
+    <span class="eqn mono">(5)</span>
+  </div>
+
+  <p>注意那个 $\beta \log Z(x)$——它只跟 $x$ 有关，跟 $y$ 无关。所以在 $r(x,y_w) - r(x,y_l)$ 相减时，<em>两个 $Z(x)$ 互相抵消了</em>。这一刻整个推导的优雅之处显形：配分函数 $Z(x)$ 本来是 RLHF 里最头疼的东西（它要求对所有 $y$ 求和，无法计算），但在偏好对比里它<em>自动消失</em>。这是 DPO 能跳过 RL 的数学根本原因。</p>
+
+  <h3>4.5 第五步：写出 DPO 损失</h3>
+  <p>把式 (5) 取负对数似然，就得到 DPO 的损失函数：</p>
+
+  <div class="formula-block">
+    $$ \mathcal{L}_{\text{DPO}}(\pi_\theta;\, \pi_{\text{ref}}) = -\,\mathbb{E}_{(x, y_w, y_l) \sim \mathcal{D}}\!\left[\log \sigma\!\left(\beta \log \frac{\pi_\theta(y_w|x)}{\pi_{\text{ref}}(y_w|x)} - \beta \log \frac{\pi_\theta(y_l|x)}{\pi_{\text{ref}}(y_l|x)}\right)\right] $$
+    <span class="eqn mono">(6)</span>
+  </div>
+
+  <p>就这一行。这就是 DPO 的全部。<em>没有奖励模型，没有 PPO，没有在线采样，没有价值网络</em>。只要对每个偏好三元组 $(x, y_w, y_l)$，分别用当前策略 $\pi_\theta$ 和冻结的参考策略 $\pi_{\text{ref}}$ 算出 $y_w$ 和 $y_l$ 的对数概率，做四个 log、两个相减、一个 sigmoid、一个负对数——梯度就出来了。标准的 PyTorch 交叉熵，几行代码搞定。</p>
+
+  <p>这个损失在<em>做什么</em>？直觉上：它让 $\pi_\theta$ 相对 $\pi_{\text{ref}}$，<em>提升</em>偏好回答 $y_w$ 的对数概率比，<em>压低</em>不偏好回答 $y_l$ 的对数概率比。而且这个提升/压低是<em>相对的</em>——不是绝对地把 $y_w$ 的概率拉高（那样会让模型崩坏），而是让"偏好回答相对参考策略的提升"大于"不偏好回答相对参考策略的提升"。这种"相对"特性，正是 KL 约束的隐式体现。</p>
+
+  <h3>4.6 梯度的直觉：模型在学什么</h3>
+  <p>对式 (6) 求梯度，能得到一个很有解释力的式子：</p>
+
+  <div class="formula-block">
+    $$ \nabla_\theta \mathcal{L}_{\text{DPO}} \propto -\beta\, \underbrace{\sigma(\hat{r}_l - \hat{r}_w)}_{\text{权重}}\, \Big[\underbrace{\nabla_\theta \log \pi_\theta(y_w|x)}_{\text{提升 } y_w} - \underbrace{\nabla_\theta \log \pi_\theta(y_l|x)}_{\text{压低 } y_l}\Big] $$
+    <span class="eqn mono">(7)</span>
+  </div>
+
+  <p>这里 $\hat{r} = \beta \log(\pi_\theta / \pi_{\text{ref}})$ 是"隐式奖励"。这个梯度公式说了三件事：</p>
+  <ul>
+    <li><em>方向</em>：提升 $y_w$ 的对数概率，压低 $y_l$ 的对数概率——和直觉一致。</li>
+    <li><em>权重</em>：$\sigma(\hat{r}_l - \hat{r}_w)$ 是个"还差多少"的权重。如果模型已经把 $y_w$ 排在 $y_l$ 之上很多（$\hat{r}_w \gg \hat{r}_l$），这个权重趋近 0，梯度趋近 0——<em>已经学好的样本就不再用力</em>。如果模型还把 $y_l$ 排在 $y_w$ 之上，权重趋近 1，梯度全力推进。这很像一种自适应的"难样本挖掘"。</li>
+    <li><em>参考</em>：所有提升和压低都是相对 $\pi_{\text{ref}}$ 的，KL 约束被自动织进了损失里。</li>
+  </ul>
+
+  <figure>
+    <!-- 图 4：DPO 训练数据流 -->
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowF" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 偏好数据 -->
+        <rect x="20" y="40" width="130" height="80" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="85" y="62" text-anchor="middle" font-weight="600">偏好数据</text>
+        <text x="85" y="80" text-anchor="middle" font-size="10" fill="#96897A">prompt x</text>
+        <text x="85" y="96" text-anchor="middle" font-size="10" fill="#24555A">y_w (偏好)</text>
+        <text x="85" y="112" text-anchor="middle" font-size="10" fill="#B54A2C">y_l (不偏好)</text>
+
+        <!-- 当前策略 -->
+        <rect x="200" y="20" width="140" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="270" y="42" text-anchor="middle" font-weight="600" fill="#24555A">当前策略 π_θ</text>
+        <text x="270" y="58" text-anchor="middle" font-size="10" fill="#96897A">log π_θ(y_w), log π_θ(y_l)</text>
+
+        <!-- 参考策略（冻结） -->
+        <rect x="200" y="90" width="140" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="270" y="112" text-anchor="middle" font-weight="600">参考 π_ref (冻结)</text>
+        <text x="270" y="128" text-anchor="middle" font-size="10" fill="#96897A">log π_ref(y_w), log π_ref(y_l)</text>
+
+        <!-- 隐式奖励 -->
+        <rect x="390" y="55" width="140" height="50" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="460" y="77" text-anchor="middle" font-weight="600" fill="#B54A2C">隐式奖励 r̂</text>
+        <text x="460" y="93" text-anchor="middle" font-size="10" fill="#B54A2C">β·log(π_θ/π_ref)</text>
+
+        <!-- DPO 损失 -->
+        <rect x="580" y="55" width="100" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="630" y="77" text-anchor="middle" font-weight="600" fill="#24555A">DPO 损失</text>
+        <text x="630" y="93" text-anchor="middle" font-size="10" fill="#24555A">−log σ(r̂_w − r̂_l)</text>
+
+        <line x1="150" y1="60" x2="200" y2="45" stroke="#96897A" marker-end="url(#arrowF)"/>
+        <line x1="150" y1="100" x2="200" y2="115" stroke="#96897A" marker-end="url(#arrowF)"/>
+        <line x1="340" y1="45" x2="390" y2="70" stroke="#96897A" marker-end="url(#arrowF)"/>
+        <line x1="340" y1="115" x2="390" y2="90" stroke="#96897A" marker-end="url(#arrowF)"/>
+        <line x1="530" y1="80" x2="580" y2="80" stroke="#24555A" marker-end="url(#arrowF)"/>
+
+        <!-- 反向传播 -->
+        <line x1="630" y1="105" x2="630" y2="180" stroke="#B54A2C" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <line x1="630" y1="180" x2="270" y2="180" stroke="#B54A2C" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <line x1="270" y1="180" x2="270" y2="70" stroke="#B54A2C" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrowF)"/>
+        <text x="450" y="172" text-anchor="middle" font-size="10" fill="#B54A2C">反向传播 · 更新 π_θ</text>
+
+        <!-- 底部说明 -->
+        <text x="350" y="225" text-anchor="middle" font-size="11" fill="#96897A">一次前向：算 4 个 log 概率 → 2 个隐式奖励 → 1 个 sigmoid 损失 → 反向传播</text>
+        <text x="350" y="245" text-anchor="middle" font-size="11" fill="#96897A">没有 reward model · 没有 PPO · 没有在线采样 · 标准监督学习流程</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · DPO 训练数据流：偏好三元组 → 两个策略各算两个 log 概率 → 相减得隐式奖励 → sigmoid 损失 → 反向传播更新当前策略。整个流程是标准的监督学习。</figcaption>
+  </figure>
+
+  <h3>4.7 训练流程：比 SFT 还简单</h3>
+  <p>把上面的损失函数落到训练流程上，DPO 的步骤比 SFT 还短：</p>
+  <ol>
+    <li>拿一个 SFT 模型 $\pi_{\text{SFT}}$，<em>复制一份冻住</em>当 $\pi_{\text{ref}}$，另一份当可训练的 $\pi_\theta$。</li>
+    <li>准备偏好数据 $\{(x, y_w, y_l)\}$——和 RLHF 第二阶段用的偏好数据<em>完全一样</em>，可以直接复用。</li>
+    <li>对每个 batch，算 $\pi_\theta$ 和 $\pi_{\text{ref}}$ 对 $y_w$、$y_l$ 的对数概率，代入式 (6)，用 Adam 优化。</li>
+    <li>训 1–3 个 epoch 即可，过拟合容易发生，需要早停。</li>
+  </ol>
+  <p>就这些。整个训练过程<em>不需要</em>：训奖励模型、跑 PPO、维护价值网络、在线采样、调 clip ratio、调 GAE 参数……显存里只坐两个模型（policy + frozen ref），如果用 LoRA 微调，ref 可以是同一个底座，实际显存占用接近一份模型。这就是为什么 DPO 出来之后，开源社区一夜之间人人都能跑对齐——<em>门槛从"大公司专属"降到"单卡可玩"</em>。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>论文在三个任务上验证 DPO：情感控制（IMDb）、摘要（TL;DR）、单轮对话（Anthropic HH）。结论非常硬：DPO 在所有任务上<em>至少打平 PPO，多数情况下超过</em>，而且训练成本只有 PPO 的一半不到。</p>
+
+  <table>
+    <thead>
+      <tr><th>任务</th><th>评估方式</th><th>PPO (RLHF)</th><th>DPO</th><th>结论</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">IMDb 情感</td><td>奖励（越高越正面）</td><td>−0.16</td><td><strong>+0.62</strong></td><td>DPO 大幅领先</td></tr>
+      <tr><td class="text">TL;DR 摘要</td><td>GPT-4 胜率 vs 人工摘要</td><td>57%</td><td><strong>61%</strong></td><td>DPO 略胜</td></tr>
+      <tr><td class="text">单轮对话</td><td>GPT-4 胜率 vs SFT</td><td>−</td><td><strong>明显提升</strong></td><td>DPO 改善质量</td></tr>
+      <tr><td class="text">训练成本</td><td>GPU 时间</td><td>1.0×</td><td><strong>~0.5×</strong></td><td>DPO 省一半</td></tr>
+      <tr><td class="text">显存占用</td><td>同尺寸模型</td><td>4 个模型</td><td><strong>2 个模型</strong></td><td>DPO 省一半</td></tr>
+    </tbody>
+  </table>
+
+  <p>几个值得品味的发现：</p>
+  <ul>
+    <li><em>情感控制任务上 DPO 大幅领先 PPO</em>。这是个反直觉的结果——PPO 是专门为 RL 设计的算法，在"最大化奖励"这个目标上理应更强。但实验显示 DPO 在情感控制上的奖励分数远高于 PPO。论文分析原因：PPO 在这个任务上<em>不稳定</em>，常常 reward hacking 后崩盘；DPO 因为是监督学习，训练曲线平稳如直线。</li>
+    <li><em>摘要任务上 DPO 略胜 PPO</em>。GPT-4 评判下，DPO 训出的摘要胜率 61%，PPO 是 57%。差距不大，但考虑到 DPO 工程量是 PPO 的几分之一，性价比碾压。</li>
+    <li><em>$\beta$ 几乎不用调</em>。论文里 DPO 的 $\beta$ 设了 0.1 就直接 work，没怎么调。对比 PPO 那一长串超参清单，这种"开箱即用"的体验是工程师的福音。</li>
+    <li><em>能学到的能力</em>。论文还做了个有意思的实验：让 DPO 和 PPO 在不同温度下生成，发现 DPO 即使在温度 0（贪心解码）下也能产生高质量输出，而 PPO 需要调到最优温度才行——说明 DPO 学到的偏好<em>更"硬"</em>，不依赖采样随机性。</li>
+  </ul>
+
+  <figure>
+    <!-- 图 5：DPO vs PPO 关键指标对比 -->
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <text x="350" y="25" text-anchor="middle" font-weight="600">DPO vs PPO：四维对比</text>
+
+        <!-- 维度 1：稳定性 -->
+        <text x="100" y="65" text-anchor="middle" font-size="11" fill="#96897A">训练稳定性</text>
+        <rect x="40" y="75" width="160" height="20" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="40" y="75" width="60" height="20" fill="#96897A" fill-opacity="0.5"/>
+        <text x="120" y="89" text-anchor="middle" font-size="10" fill="#2E2A22">PPO</text>
+        <rect x="40" y="100" width="160" height="20" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <rect x="40" y="100" width="155" height="20" fill="#B54A2C" fill-opacity="0.5"/>
+        <text x="120" y="114" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">DPO</text>
+
+        <!-- 维度 2：训练成本 -->
+        <text x="280" y="65" text-anchor="middle" font-size="11" fill="#96897A">训练成本</text>
+        <rect x="220" y="75" width="160" height="20" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="220" y="75" width="155" height="20" fill="#96897A" fill-opacity="0.5"/>
+        <text x="300" y="89" text-anchor="middle" font-size="10" fill="#2E2A22">PPO (1.0×)</text>
+        <rect x="220" y="100" width="160" height="20" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <rect x="220" y="100" width="78" height="20" fill="#B54A2C" fill-opacity="0.5"/>
+        <text x="300" y="114" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">DPO (~0.5×)</text>
+
+        <!-- 维度 3：显存占用 -->
+        <text x="460" y="65" text-anchor="middle" font-size="11" fill="#96897A">显存模型数</text>
+        <rect x="400" y="75" width="160" height="20" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="400" y="75" width="155" height="20" fill="#96897A" fill-opacity="0.5"/>
+        <text x="480" y="89" text-anchor="middle" font-size="10" fill="#2E2A22">PPO (4 个)</text>
+        <rect x="400" y="100" width="160" height="20" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <rect x="400" y="100" width="78" height="20" fill="#B54A2C" fill-opacity="0.5"/>
+        <text x="480" y="114" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">DPO (2 个)</text>
+
+        <!-- 维度 4：超参数 -->
+        <text x="620" y="65" text-anchor="middle" font-size="11" fill="#96897A">关键超参</text>
+        <rect x="560" y="75" width="120" height="20" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="560" y="75" width="115" height="20" fill="#96897A" fill-opacity="0.5"/>
+        <text x="620" y="89" text-anchor="middle" font-size="10" fill="#2E2A22">PPO (~10+)</text>
+        <rect x="560" y="100" width="120" height="20" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <rect x="560" y="100" width="20" height="20" fill="#B54A2C" fill-opacity="0.5"/>
+        <text x="620" y="114" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">DPO (β 一个)</text>
+
+        <!-- 摘要胜率柱状图 -->
+        <text x="350" y="170" text-anchor="middle" font-weight="600">TL;DR 摘要胜率（GPT-4 评判）</text>
+        <line x1="100" y1="240" x2="600" y2="240" stroke="#96897A"/>
+        <line x1="100" y1="180" x2="600" y2="180" stroke="#96897A" stroke-opacity="0.2" stroke-dasharray="2 3"/>
+        <text x="90" y="184" text-anchor="end" font-size="10" fill="#96897A">60%</text>
+        <text x="90" y="244" text-anchor="end" font-size="10" fill="#96897A">50%</text>
+
+        <rect x="200" y="195" width="80" height="45" fill="#96897A" fill-opacity="0.5"/>
+        <text x="240" y="190" text-anchor="middle" font-size="11" fill="#2E2A22">PPO 57%</text>
+        <text x="240" y="258" text-anchor="middle" font-size="10" fill="#96897A">PPO</text>
+
+        <rect x="380" y="184" width="80" height="56" fill="#B54A2C" fill-opacity="0.6"/>
+        <text x="420" y="178" text-anchor="middle" font-size="11" fill="#B54A2C" font-weight="600">DPO 61%</text>
+        <text x="420" y="258" text-anchor="middle" font-size="10" fill="#B54A2C">DPO</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · DPO vs PPO 的四维对比 + 摘要胜率：DPO 在稳定性、成本、显存、超参数量上全面占优，效果还略胜——这种"又便宜又好"的组合在算法论文里罕见。</figcaption>
+  </figure>
+
+  <p>还有一个隐藏的彩蛋：论文做了个人类评估，验证 GPT-4 当裁判和人类当裁判的一致性。结果发现 GPT-4 的判断和人类<em>高度一致</em>——这侧面为后来"LLM-as-a-judge"成为开源社区主流评估方式铺了路。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>DPO 的影响，怎么夸张都不过分。它至少改写了三件事：</p>
+  <ul>
+    <li><em>把对齐从"重武器"变成"几行代码"</em>。RLHF 时代，对齐是 OpenAI、Anthropic 这种巨头的专利——PPO 工程复杂到只有他们玩得起。DPO 出来后，任何一个会用 PyTorch 的人，拿一份偏好数据，几行代码就能在单卡上跑对齐。HuggingFace 的 TRL 库直接内置了 <em class="latin">DPOTrainer</em>，Axolotl、LLaMA-Factory、Unsloth 等主流微调框架全部跟进。<em>对齐的工程门槛，从"大公司专属"降到"个人开发者可玩"</em>。</li>
+    <li><em>点燃整个开源对齐生态</em>。DPO 发布后六个月内：HuggingFace 的 H4 团队用 DPO + UltraFeedback 训出 Zephyr-7B，在 MT-Bench 上接近 GPT-3.5；Mistral AI 用 DPO 把 Mistral-7B 训成 Mistral-7B-Instruct，7B 模型打 Llama 2 13B；Meta 在 Llama 2-Chat 的 RLHF 流程里<em>同时跑 PPO 和 DPO 做对比</em>，公开承认 DPO 是可行替代方案。今天几乎所有开源对话模型的对齐阶段，都默认走 DPO 路线。</li>
+    <li><em>开启"对齐算法爆发期"</em>。DPO 之后，学术界突然意识到"对齐算法本身"是个富矿——短短一年内冒出 IPO、KTO、ORPO、SimPO、Cal-DPO 一大批变体，每个都在 DPO 基础上改一点：IPO 用 Identity loss 替代 sigmoid，KTO 直接用单条反馈（不用配对），ORPO 把 SFT 和偏好优化合二为一，SimPO 去掉参考模型。这种"一个简洁公式催生一片变体"的现象，本身就是 DPO 影响力的证明。</li>
+  </ul>
+  <p>更深一层的意义是<em>方法论层面的</em>：DPO 证明了一件事——<em>很多看似必须用 RL 的问题，其实有监督学习的等价形式</em>，只是需要找到正确的数学变换。这个思想后来被用到很多地方：RLAIF 把人类反馈换成 AI 反馈，Direct Alignment Algorithms 把在线 RL 化成离线监督，甚至 DeepSeek 的 GRPO 也是顺着这条思路把 PPO 化简（去掉价值网络，用组内相对奖励）。<em>DPO 是这条"RL 监督化"路线的起点</em>。</p>
+
+  <p>荣誉方面，DPO 拿下了 NeurIPS 2023 Outstanding Main Track Paper Award（不到 1% 的录用论文能拿），引用量一年破 4000，是 2023 年下半年被引用最多的 LLM 论文之一。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>DPO 不是万能药，论文本身也写得很克制。它的局限主要有：</p>
+  <ul>
+    <li><em>严重依赖偏好数据质量</em>。DPO 是离线监督学习，所有信号都来自 $(x, y_w, y_l)$ 三元组。如果偏好标签噪声大、矛盾多，DPO 学到的就是噪声。对比之下，PPO 在线采样能不断生成新数据，对噪声更鲁棒。实操中，DPO 对数据清洗的要求<em>比 PPO 高得多</em>。</li>
+    <li><em>无法在线学习</em>。DPO 用固定数据集训练，不能像 PPO 那样边生成边收集反馈。这让 DPO 在"持续学习"和"探索"场景下不占优。</li>
+    <li><em>长度利用（length exploitation）</em>。后续工作（Park et al. 2024）发现 DPO 有个隐蔽的毛病：它倾向于让回答<em>越变越长</em>。因为人类偏好数据里往往偏好更详细的回答，DPO 会把这个偏差放大——训出来的模型回答平均长度比 SFT 长一倍，但质量没真正提升。这是后来 SimPO、length-regularized DPO 等变体要解决的核心问题。</li>
+    <li><em>分布外泛化弱</em>。Tsinghua 的 Xu et al. (2024) 在 <em class="latin">Is DPO Superior to PPO?</em> 里证明：当偏好数据和模型生成分布<em>不一致</em>时，DPO 会找到"利用分布外回答"的偏倚解。在代码生成等需要精确推理的任务上，调好的 PPO 反而能超过 DPO。这篇文章结论很反共识：在 CodeContest 上 PPO 22.4% vs DPO 16.4%。</li>
+    <li><em>多轮对话不天然</em>。DPO 默认处理单轮偏好，多轮对话需要额外工程（把整段对话当一个 $y$，或者改成 step-wise 偏好）。PPO 在多轮场景更自然。</li>
+  </ul>
+  <p>这些局限后来都被一一回应：Online DPO 把 DPO 改成在线版本；SimPO 去掉参考模型省显存；GRPO 把 PPO 化简但保留在线特性，成了 DeepSeek-R1 的训练算法。但<em>所有这些后续故事的起点，都在 DPO 这篇论文里</em>。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把 DPO 放进系列时间线，整个大模型的发展可以划成五个时代：</p>
+  <ol>
+    <li><em>奠基期 2014–2017</em>：Seq2Seq + Attention 让位给纯 Transformer。第 1 篇 <em class="latin">Attention Is All You Need</em> 把"注意力"立成主角。</li>
+    <li><em>预训练范式期 2018–2020</em>：BERT 把双向预训练做成主流，GPT-2 把"无监督多任务"的火种点起来。第 2、3 篇。</li>
+    <li><em>规模化探索期 2020–2022</em>：GPT-3 175B 把"大力出奇迹"推到极致，Chinchilla 修正了"怎么大力"——小模型多数据。第 4、5 篇。</li>
+    <li><em>对齐与应用期 2022–2023</em>：InstructGPT 把 RLHF 立成产业标配，ChatGPT 引爆全球，DPO 把 RLHF 拆骨剥皮、化简成监督学习，让对齐走入民间。第 6、8 篇。</li>
+    <li><em>前沿演进期 2023–2024</em>：开源浪潮 + 算法创新 + 多模态。LLaMA 点燃开源，Mistral、Qwen、DeepSeek 接力，DPO 变体（KTO/ORPO/SimPO）百花齐放，GRPO 走向推理模型。本篇 DPO 是对齐算法爆发的<em>引信</em>。</li>
+  </ol>
+  <p>本系列到这里，对齐的故事讲了三段：InstructGPT 立 RLHF 为标杆，LLaMA 把开源基座的火种点起来，DPO 把对齐从"重武器"变成"几行代码"。下一篇我们要看的，是 DPO 的"工程化高潮"——一支法国创业团队 Mistral AI，用 7B 参数的小模型 + DPO 对齐，在几乎所有 benchmark 上<em>超越 LLaMA 2 13B</em>，证明开源小模型 + 高效对齐，可以吊打大公司的旗舰。这就是 Mistral 7B，一个用一周时间就改变欧洲 AI 地位的传奇模型。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>DPO 这篇论文背后的故事，比论文本身更有戏。</p>
+
+  <p><em>故事一：标题的"侦探小说"味</em>。<em class="latin">Your Language Model is Secretly a Reward Model</em>——这标题听起来不像 NeurIPS 论文，倒像阿加莎·克里斯蒂的小说。据 Eric Mitchell 后来在采访里说，这个标题是团队 brainstorm 时半开玩笑想出来的，原本只想表达"奖励模型其实藏在策略里"这个数学事实。但越念越上头，最后大家决定保留——"学术圈太闷了，标题好玩一点没人会反对"。结果这标题成了论文最好的广告，朋友圈刷到的人几乎都会点进去看一眼。</p>
+
+  <p><em>故事二：Chelsea Finn 的"跨界"</em>。资深作者 Chelsea Finn 是斯坦福的助理教授，本是<em>机器人强化学习</em>专家——她博士论文做的是 MAML（Model-Agnostic Meta-Learning），是 meta-learning 领域的奠基性工作。她招 Eric Mitchell 进组时，原本以为这学生会做机器人。结果 Eric 进组后"叛变"去做 NLP 了，Chelsea 在 Eric 的博士论文致谢里写："<em>我特别感谢 Chelsea 愿意指导一个语言方向的博士——尽管我是用一份完全机器人方向的申请把她骗进组的</em>。"这个"骗局"催生了 DPO。值得一提的是，Chelsea 的 NLP 知识几乎全靠自学——但她对 RL 的深刻理解，恰恰是 DPO 推导能成立的关键。<em>跨界有时不是劣势，是优势</em>。</p>
+
+  <p><em>故事三：Chris Manning 的"老炮儿"背书</em>。Christopher Manning 是斯坦福 NLP 的元老级人物，GloVe 词向量的发明者之一，stanfordnlp/glove 在 GitHub 上有 1 万多 star。Manning 平时不太掺和年轻人的"对齐热潮"，但 DPO 这篇他署名了资深作者。圈内人戏称："<em>Manning 署名，等于给 DPO 盖了个 NLP 圈的认证章</em>。"后来 NeurIPS 颁 Outstanding Paper，Manning 在推特上只发了一句："数学赢了工程。"——这话既是夸 DPO，也是隐讽 PPO 那套重工程路线。</p>
+
+  <p><em>故事四：Eric Mitchell 的双面人生</em>。Eric Mitchell 在斯坦福读博期间是 DPO 的核心贡献者之一，但他还有个身份——<em>普林斯顿大学 NCAA 一级高尔夫校队队员</em>。他在普林斯顿本科时一边打高尔夫一边学 CS，还拿过全美学业明星运动员奖。在斯坦福读博期间，他上午推公式写 DPO，下午去球场练推杆。同事开玩笑说："<em>DPO 那个 sigmoid 损失，灵感是不是来自推杆的入洞轨迹？</em>"Eric 博士毕业后去了斯坦福当访问教授，又跳到 DeepMind，研究方向从对齐扩展到模型编辑和事实性——但高尔夫还在打。</p>
+
+  <figure>
+    <!-- 图 6：跨界团队插图 -->
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 三个圈：RL、NLP、对齐 -->
+        <circle cx="200" cy="130" r="80" fill="#24555A" fill-opacity="0.10" stroke="#24555A"/>
+        <text x="200" y="120" text-anchor="middle" fill="#24555A" font-weight="600">强化学习</text>
+        <text x="200" y="138" text-anchor="middle" font-size="11" fill="#96897A">Chelsea Finn</text>
+        <text x="200" y="155" text-anchor="middle" font-size="10" fill="#96897A">MAML · 元学习</text>
+
+        <circle cx="500" cy="130" r="80" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <text x="500" y="120" text-anchor="middle" fill="#B54A2C" font-weight="600">NLP</text>
+        <text x="500" y="138" text-anchor="middle" font-size="11" fill="#96897A">Chris Manning</text>
+        <text x="500" y="155" text-anchor="middle" font-size="10" fill="#96897A">GloVe · Stanford NLP</text>
+
+        <!-- 交集：DPO -->
+        <ellipse cx="350" cy="130" rx="50" ry="40" fill="#F4EFE4" stroke="#2E2A22" stroke-width="1.5"/>
+        <text x="350" y="125" text-anchor="middle" font-weight="600">DPO</text>
+        <text x="350" y="142" text-anchor="middle" font-size="10" fill="#96897A">对齐算法</text>
+
+        <!-- 年轻人 -->
+        <rect x="120" y="210" width="460" height="36" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="232" text-anchor="middle" font-size="11" fill="#2E2A22">Rafailov · Sharma · Mitchell（三位共一作，年轻人署前）</text>
+
+        <text x="350" y="60" text-anchor="middle" font-size="11" fill="#96897A">RL 视角（看穿闭式解） × NLP 视角（看穿偏好数据） = DPO</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 6</span> · DPO 的跨界团队：Chelsea Finn 的 RL 背景（看穿最优策略的闭式解）和 Chris Manning 的 NLP 背景（看穿 Bradley-Terry 与策略的关系）相加，催生了对齐算法 DPO。三位共一作都是年轻人。</figcaption>
+  </figure>
+
+  <p><em>故事五：开源社区的"狂欢"</em>。DPO 论文挂上 arXiv 当晚，HuggingFace 的 Lewis Tunstall 就在推特上喊："<em>这就是我们等了一年的东西</em>。"两周内，TRL 库合并了 DPOTrainer；一个月内，开源社区出现了上百个"DPO + LLaMA"的复现 repo；三个月内，Zephyr-7B 用 DPO 训出来，在 MT-Bench 上逼近 GPT-3.5——而 Zephyr 的训练成本，据 HuggingFace 公开的数据，<em>不到 1000 美元</em>。对比 OpenAI 训 InstructGPT 动辄百万美元级的 RLHF 流水线，这个数字让整个开源圈沸腾。一位网友在 Reddit 上留言："<em>DPO 之前，对齐是 OpenAI 的黑魔法；DPO 之后，对齐是高中生的周末项目</em>。"这话夸张了，但情绪是真的。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读 DPO，最让我感慨的不是"又便宜又好"这个结果，而是它揭示的两个被忽略的事实。</p>
+  <p>第一，<em>很多复杂工程，其实是没看清数学结构的副产品</em>。InstructGPT 的 RLHF 流水线——奖励模型 + PPO + 价值网络 + 在线采样 + KL 系数 + clip ratio + GAE——这套东西复杂到让 OpenAI 写了 30 多页技术报告。但 DPO 用五步推导证明：这套复杂流水线等价于一个交叉熵损失。这意味着 InstructGPT 那一代人<em>不是不会做监督学习</em>，而是<em>没把 RLHF 的数学结构看穿</em>。这种"复杂工程掩盖数学盲区"的现象，在 AI 领域并不罕见——很多看起来必须用 RL 的问题，其实有更简单的等价形式。<em>DPO 是这种"数学换工程"思维的胜利样本</em>。</p>
+  <p>第二，<em>"等价"不等于"等好"</em>。DPO 在数学上和 RLHF 等价——优化的是同一个目标。但工程上，DPO 和 PPO 表现差异巨大：DPO 稳定、便宜、易用，但在分布外泛化和复杂推理上不如调好的 PPO；PPO 不稳定、昂贵、难调，但天花板可能更高。这种"理论上等价、实践上各有千秋"的张力，是算法研究里最迷人的部分。<em>没有银弹</em>——DPO 不是 PPO 的终结者，它给了社区一个新选项，让大家在不同场景下能做权衡。后来 GRPO（DeepSeek-R1）把 PPO 化简但保留在线特性，本质上是在 DPO 和 PPO 之间找新的平衡点。</p>
+  <p>还有一层更深的思考：DPO 让"对齐"从"少数公司的黑魔法"变成"全社会的公共技能"。这件事的意义，远超论文本身。当任何开发者都能在单卡上跑对齐，当任何研究者都能复现和改进对齐算法，当任何中小公司都能定制自己的对话模型——<em>对齐不再是 OpenAI 的护城河，而成了整个 AI 生态的水电煤</em>。这件事的政治意义，远大于技术意义。它意味着"AI 对齐"这件事，从"几家公司的内部工程"变成了"全社会的公共议题"——这件事的长期影响，可能比 DPO 论文本身大得多。</p>
+  <p>当然，硬币的另一面是<em>风险也被民主化了</em>。DPO 让任何人都能训出"听话"的模型——包括让模型听"坏话"。一个恶意开发者用 DPO 把开源模型对齐到"如何制造危险物品"，工程难度几乎为零。这是 DPO 这类"民主化对齐"技术的<em>固有代价</em>——你没法只把好处给好人，不给坏人。后来开源社区讨论"是否应该限制 DPO 这种技术的传播"，争论至今未决。这是个没有简单答案的问题——但至少，<em>这个问题被摆到了台面上</em>，比藏着掖着更有价值。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    DPO 证明：RLHF 的目标可以等价化简成监督学习。那<em>还有哪些"看似必须用 RL"的 AI 问题，其实有监督学习的等价形式</em>？比如——机器人控制的轨迹优化？推荐系统的探索与利用？甚至——<em>科学发现本身的探索过程</em>？如果有一天，有人把"探索"这件事也化简成监督学习，会发生什么？再想一步：如果"等价化简"这条路走到极致，RL 这门学科还会存在吗？还是说，它会变成"监督学习的一个特殊分支"？
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Mistral 7B</h3>
+    <p style="margin:0;">DPO 把对齐的门槛降到了"几行代码"，可它需要一个好的基座。LLaMA 1 是 2023 年初的开源标杆，但很快就有挑战者——一支刚成立三个月的法国创业团队 Mistral AI，在 2023 年 9 月抛出一个 7B 参数的小模型，<em>在几乎所有 benchmark 上超越 LLaMA 2 13B</em>，代码、数学、推理全面碾压。它用了两个 LLaMA 没有的"小魔法"：分组查询注意力（GQA）省显存，滑动窗口注意力（SWA）扩上下文。再叠一层 DPO 对齐，Mistral 7B Instruct 成了 2023 年下半年开源圈的"国民模型"。下一篇，我们来看这场"欧洲小团队撬动全球开源格局"的传奇——以及它如何证明：<em>7B 不是终点，是新的起点</em>。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 008 篇</span>
+    <span>2026-08-05</span>
+  </footer>
+
+</div>
+</body>
+</html>
