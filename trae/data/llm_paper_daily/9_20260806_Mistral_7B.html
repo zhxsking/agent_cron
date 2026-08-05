@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mistral 7B 论文精读 · 大模型经典论文系列 #009</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:38px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  th.num-col, td.num-col{ text-align:right; }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+  td.win{ color:var(--accent); font-weight:600; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#009</span>
+  </div>
+
+  <h1 class="title">
+    Mistral 7B
+    <span class="en">Mistral 7B：欧洲小团队的 7B 黑马——GQA + SWA，全面反杀 LLaMA 2 13B</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Albert Q. Jiang, Alexandre Sablayrolles, Arthur Mensch, Guillaume Lample, Timothée Lacroix 等 17 人</span>
+    <span>机构：Mistral AI（巴黎）</span>
+    <span>发表：2023-10 / arXiv 2310.06825</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2310.06825" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/mistralai/mistral-src" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://mistral.ai/news/announcing-mistral-7b/" target="_blank" rel="noopener">Project</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">2023 年 4 月，巴黎第九区一间借来的办公室里，三个三十岁出头的年轻人注册了一家公司。他们一个多月前还在大厂里打工：Arthur Mensch 写过 Chinchilla 的 scaling law，Guillaume Lample 和 Timothée Lacroix 是 Meta LLaMA 论文的共同作者。三人凑在一起，给公司起了个名字叫 Mistral——法国南部那股凛冽的西北风。</p>
+  <p class="lead">同年 6 月，这家还没有任何产品的公司拿下了欧洲史上最大的 AI 种子轮：1.05 亿欧元。所有人都在问：他们到底要做什么？五个月后，答案落下来——一个 70 亿参数的小模型，在所有公开基准上把 Meta 自己的 130 亿参数 LLaMA 2 按在地上摩擦。<em>一个更小、更快、还能跑更长的模型，凭什么赢？</em>这篇论文，就是 Mistral 给出的回答。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    与其无脑堆参数，不如在注意力机制上动手术：GQA 让推理时 KV 缓存瘦身 4 倍，SWA 让注意力只看最近一段窗口却仍能"接力"看到远处——这套组合让 7B 的 Mistral 全面反杀 LLaMA 2 13B。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>把本系列已经讲过的八篇论文排成一条线，你会看到一个清晰的"加法逻辑"：Transformer 打地基 → BERT/GPT-2 走预训练 → GPT-3 验证规模化 → Chinchilla 校准数据配比 → InstructGPT 解决对齐 → LLaMA 把权重开源出来 → DPO 把对齐的数学简化。</p>
+  <p>走到 2023 年下半年，开源社区手里已经有了一切原料：架构、数据配方、对齐方法、可用的权重。但还差最后一公里——<em>这些模型能不能在一张消费级显卡上跑得动、跑得快、还能读长文？</em> Mistral 7B 正是卡在这个转折点上的论文。它没有提出全新的训练范式，也没有刷新 scaling law，而是用两把"手术刀"修整 Transformer 的注意力机制，把"高效推理"第一次摆到和"刷榜"同等重要的位置。</p>
+  <p>它承接了 LLaMA 的开源精神，开启了后续 Mixtral、Llama 3、Qwen 2.5 一系列"小而强"模型的高效架构竞赛。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 230" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="120" x2="690" y2="120" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="10.5" fill="#96897A">
+        <!-- 已解析节点 -->
+        <circle cx="60" cy="120" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="60" y="100" text-anchor="middle" fill="#2E2A22">2017</text>
+        <text x="60" y="148" text-anchor="middle">Transformer</text>
+
+        <circle cx="135" cy="120" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="135" y="100" text-anchor="middle" fill="#2E2A22">2018</text>
+        <text x="135" y="148" text-anchor="middle">BERT</text>
+
+        <circle cx="205" cy="120" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="205" y="100" text-anchor="middle" fill="#2E2A22">2019</text>
+        <text x="205" y="148" text-anchor="middle">GPT-2</text>
+
+        <circle cx="270" cy="120" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="270" y="100" text-anchor="middle" fill="#2E2A22">2020</text>
+        <text x="270" y="148" text-anchor="middle">GPT-3</text>
+
+        <circle cx="350" cy="120" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="100" text-anchor="middle" fill="#2E2A22">2022</text>
+        <text x="350" y="148" text-anchor="middle">Chinchilla</text>
+
+        <circle cx="350" cy="120" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+
+        <circle cx="420" cy="120" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="420" y="100" text-anchor="middle" fill="#2E2A22">2022</text>
+        <text x="420" y="148" text-anchor="middle">InstructGPT</text>
+
+        <circle cx="495" cy="120" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="495" y="100" text-anchor="middle" fill="#2E2A22">2023</text>
+        <text x="495" y="148" text-anchor="middle">LLaMA</text>
+
+        <circle cx="570" cy="120" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="570" y="100" text-anchor="middle" fill="#2E2A22">2023</text>
+        <text x="570" y="148" text-anchor="middle">DPO</text>
+
+        <!-- 本篇 -->
+        <circle cx="635" cy="120" r="8" fill="#B54A2C"/>
+        <text x="635" y="92" text-anchor="middle" fill="#B54A2C" font-weight="600">2023.10</text>
+        <text x="635" y="150" text-anchor="middle" fill="#2E2A22" font-weight="600">Mistral 7B</text>
+        <text x="635" y="164" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇</text>
+
+        <!-- 已解析区间标记 -->
+        <text x="40" y="200" font-size="10" fill="#24555A">↑ 已解析 1–8 篇（覆盖奠基期至对齐/应用期）</text>
+        <text x="690" y="200" font-size="10" fill="#B54A2C" text-anchor="end">本篇开启"高效开源模型"叙事 →</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的 Mistral 7B 位置（红色高亮为本篇，灰点为系列已解析论文）</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>LLaMA 在 2023 年初点燃了开源大模型的火种，但它留下两个尖锐的工程问题。第一，<em>注意力机制是 O(n²) 的</em>：序列长度翻倍，计算量变四倍，KV 缓存（推理时存的 key/value 张量）线性膨胀。第二，<em>多头注意力（MHA）每个头都自带一套 KV</em>：32 个 query 头就有 32 份 KV，长上下文下显存被 KV 缓存吃光，batch size 上不去，吞吐量上不去。</p>
+  <p>这两个问题在云端还好，一旦下沉到消费级显卡——比如一张 24G 的 RTX 4090——就立刻变成生死线。LLaMA 2 13B 在 4K 上下文下做 batch 推理已经捉襟见肘，更别说读长文档、跑代码补全这种动辄需要 8K、16K 上下文的场景。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    把标准注意力想象成一个"过目不忘"的图书管理员：你每说一句话，他都要把整本对话史从头到尾翻一遍才回答你。早期对话短，没问题；可一旦你跟他聊了十万字，他还在那儿翻第一页——而更糟的是，他手下的 32 个学徒（attention head）每个人都得各抄一份笔记（KV 缓存），抄一份就得占一格书架。书架塞满，就没法接待新客人（小 batch）了。
+  </div>
+
+  <p>更细的痛点在于：经验上，<em>预测下一个 token 的关键信息往往集中在最近的几千个词里</em>，让模型对一万词前的每个 token 都重算一遍注意力，本身就是巨大的浪费。可如果粗暴地把远处的 token 全砍掉，长文档又读不懂了——这是工程直觉和模型能力之间的死结。Mistral 团队要解的，正是这个结。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>能不能用一个 7B 的模型，在所有公开基准上击败 13B 的 LLaMA 2，同时推理更快、显存更省、还能轻松处理任意长度的序列？</p>
+  <p>这个目标自带矛盾：参数砍半意味着容量天然变小，怎么反而更强？答案不在"更大"，而在"更聪明"——把推理时被浪费的算力和显存省下来，让有限的参数专注做更有价值的事。Mistral 的解法是两把手术刀：<em>分组查询注意力 GQA</em> 和 <em>滑动窗口注意力 SWA</em>。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果让你设计一个"只看最近 W 个 token"的注意力，会不会担心模型彻底失忆——比如读到第 10 万个词时，已经忘了第 1 个词说了什么？先想想你会怎么补救，再往下看 Mistral 的答案。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>Mistral 7B 仍是标准的 decoder-only Transformer，继承了 LLaMA 系的 RoPE 旋转位置编码、RMSNorm、SwiGLU 前馈网络。它的"不同"集中在注意力层。下面分三步拆解。</p>
+
+  <h3>第一把刀：分组查询注意力（GQA）</h3>
+  <p>标准多头注意力（MHA）里，每个 query 头都配一对独立的 K、V 头。极端的另一头是<em class="latin">multi-query attention</em>（MQA），所有 query 头共享同一对 K、V——显存最省，但质量掉得明显。GQA 是个折中：把 query 头分成若干组，组内共享一对 K、V。Mistral 7B 用的是 32 个 query 头、8 个 KV 头，也就是<em>每 4 个 query 头共用一对 KV</em>，KV 缓存直接瘦到原来的 1/4。</p>
+
+  <p>关键洞察是：<em>不同 query 头学到的注意力模式高度重叠</em>，让它们各自存一份 KV 是种奢侈。共享之后省下来的显存，可以塞下更大 batch、更长上下文，而质量几乎不掉。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <text x="120" y="28" text-anchor="middle" font-weight="600">MHA · 多头注意力</text>
+        <text x="360" y="28" text-anchor="middle" font-weight="600">MQA · 多查询</text>
+        <text x="600" y="28" text-anchor="middle" font-weight="600" fill="#B54A2C">GQA · 分组查询（Mistral）</text>
+
+        <!-- MHA: 8 个 Q 各配自己的 KV -->
+        <g transform="translate(20,50)">
+          <text x="0" y="14" font-size="10" fill="#96897A">Q 头</text>
+          <g id="mha-q">
+            <rect x="22" y="0" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+            <rect x="44" y="0" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+            <rect x="66" y="0" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+            <rect x="88" y="0" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+            <rect x="110" y="0" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+            <rect x="132" y="0" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+            <rect x="154" y="0" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+            <rect x="176" y="0" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+          </g>
+          <text x="0" y="70" font-size="10" fill="#96897A">KV 头</text>
+          <g id="mha-kv">
+            <rect x="22" y="58" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+            <rect x="44" y="58" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+            <rect x="66" y="58" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+            <rect x="88" y="58" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+            <rect x="110" y="58" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+            <rect x="132" y="58" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+            <rect x="154" y="58" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+            <rect x="176" y="58" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+          </g>
+          <text x="108" y="115" text-anchor="middle" font-size="10" fill="#96897A">8 份 KV · 显存最大</text>
+        </g>
+
+        <!-- MQA: 8 个 Q 共享 1 份 -->
+        <g transform="translate(270,50)">
+          <text x="0" y="14" font-size="10" fill="#96897A">Q 头</text>
+          <rect x="22" y="0" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+          <rect x="44" y="0" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+          <rect x="66" y="0" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+          <rect x="88" y="0" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+          <rect x="110" y="0" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+          <rect x="132" y="0" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+          <rect x="154" y="0" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+          <rect x="176" y="0" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="0" y="70" font-size="10" fill="#96897A">KV 头</text>
+          <rect x="99" y="58" width="18" height="20" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="108" y="115" text-anchor="middle" font-size="10" fill="#96897A">1 份 KV · 省但质量掉</text>
+        </g>
+
+        <!-- GQA: 8 Q 分两组，每组 4 Q 共享 1 KV -->
+        <g transform="translate(510,50)">
+          <text x="0" y="14" font-size="10" fill="#96897A">Q 头</text>
+          <rect x="22" y="0" width="18" height="20" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C"/>
+          <rect x="44" y="0" width="18" height="20" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C"/>
+          <rect x="66" y="0" width="18" height="20" fill="#24555A" fill-opacity="0.15" stroke="#24555A"/>
+          <rect x="88" y="0" width="18" height="20" fill="#24555A" fill-opacity="0.15" stroke="#24555A"/>
+          <rect x="110" y="0" width="18" height="20" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C"/>
+          <rect x="132" y="0" width="18" height="20" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C"/>
+          <rect x="154" y="0" width="18" height="20" fill="#24555A" fill-opacity="0.15" stroke="#24555A"/>
+          <rect x="176" y="0" width="18" height="20" fill="#24555A" fill-opacity="0.15" stroke="#24555A"/>
+          <text x="0" y="70" font-size="10" fill="#96897A">KV 头</text>
+          <rect x="33" y="58" width="18" height="20" fill="#B54A2C" fill-opacity="0.3" stroke="#B54A2C"/>
+          <rect x="77" y="58" width="18" height="20" fill="#24555A" fill-opacity="0.3" stroke="#24555A"/>
+          <rect x="121" y="58" width="18" height="20" fill="#B54A2C" fill-opacity="0.3" stroke="#B54A2C"/>
+          <rect x="165" y="58" width="18" height="20" fill="#24555A" fill-opacity="0.3" stroke="#24555A"/>
+          <text x="108" y="115" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">2 份 KV · 省 4 倍，质量不掉</text>
+          <!-- 连线示意分组共享 -->
+          <line x1="33" y1="20" x2="42" y2="58" stroke="#B54A2C" stroke-width="0.8"/>
+          <line x1="55" y1="20" x2="46" y2="58" stroke="#B54A2C" stroke-width="0.8"/>
+          <line x1="77" y1="20" x2="86" y2="58" stroke="#24555A" stroke-width="0.8"/>
+          <line x1="99" y1="20" x2="90" y2="58" stroke="#24555A" stroke-width="0.8"/>
+          <line x1="121" y1="20" x2="130" y2="58" stroke="#B54A2C" stroke-width="0.8"/>
+          <line x1="143" y1="20" x2="134" y2="58" stroke="#B54A2C" stroke-width="0.8"/>
+          <line x1="165" y1="20" x2="174" y2="58" stroke="#24555A" stroke-width="0.8"/>
+          <line x1="187" y1="20" x2="178" y2="58" stroke="#24555A" stroke-width="0.8"/>
+        </g>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · MHA / MQA / GQA 三种注意力头共享方式对比（以 8 头简化示意，GQA 每 4 个 Q 共享 1 份 KV）</figcaption>
+  </figure>
+
+  <p>用公式说更清楚。注意力本身仍是熟悉的 softmax 形式，区别只在 K、V 的来源：</p>
+
+  <div class="formula-block">
+    $$ \text{Attn}(q_i)=\sum_{j} \text{softmax}\!\left(\frac{q_i k_j^{\top}}{\sqrt{d}}\right) v_j,\qquad k_j, v_j \text{ 来自所在组共享的 KV 头} $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <h3>第二把刀：滑动窗口注意力（SWA）</h3>
+  <p>标准因果注意力里，第 $i$ 个 token 要回头看 $0$ 到 $i-1$ 的所有 token，复杂度 $O(n^2)$。SWA 直接砍一刀：每个 token <em>只看最近 $W$ 个 token</em>（Mistral 取 $W=4096$），复杂度降到 $O(n\cdot W)$，与序列长度近乎线性。</p>
+
+  <p>但这正是前面思考题的答案所在——单层只看 $W$ 个 token，难道模型会"失忆"吗？Mistral 的关键观察是：<em>Transformer 的层是堆叠的，信息可以逐层"接力"</em>。第 $k$ 层的隐藏状态能"看到"上一层 $W$ 个 token，而上一层每个 token 又各自看过更早的 $W$ 个 token——所以经过 $k$ 层之后，信息可以向前传播 $k\times W$ 个位置。</p>
+
+  <div class="formula-block">
+    $$ \text{有效感受野} = L \times W = 32 \times 4096 = 131{,}072 \text{ 个 token} $$
+    <span class="eqn mono">(2)</span>
+  </div>
+
+  <p>也就是说，虽然每一层都只看 4096 个 token，但叠 32 层后，最后一层的某个 token 间接"够得着" 13 万 token 之前的信息。这是一个非常优雅的设计——<em>把"长程依赖"从单层注意力里挪到"层间残差"里去实现</em>，既保住了效率，又没真的失忆。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 270" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 左：vanilla attention 全连接 -->
+        <text x="90" y="22" text-anchor="middle" font-weight="600">vanilla 注意力</text>
+        <text x="90" y="38" text-anchor="middle" font-size="9.5" fill="#96897A">每个 token 看全部历史</text>
+        <g transform="translate(30,50)">
+          <line x1="0" y1="10" x2="120" y2="10" stroke="#96897A"/>
+          <line x1="0" y1="40" x2="120" y2="40" stroke="#96897A"/>
+          <line x1="0" y1="70" x2="120" y2="70" stroke="#96897A"/>
+          <line x1="0" y1="100" x2="120" y2="100" stroke="#96897A"/>
+          <line x1="0" y1="130" x2="120" y2="130" stroke="#96897A"/>
+          <!-- 全连接线 -->
+          <g stroke="#96897A" stroke-width="0.6" opacity="0.55">
+            <line x1="120" y1="10" x2="0" y2="10"/><line x1="120" y1="10" x2="0" y2="40"/><line x1="120" y1="10" x2="0" y2="70"/><line x1="120" y1="10" x2="0" y2="100"/><line x1="120" y1="10" x2="0" y2="130"/>
+            <line x1="120" y1="40" x2="0" y2="10"/><line x1="120" y1="40" x2="0" y2="40"/><line x1="120" y1="40" x2="0" y2="70"/><line x1="120" y1="40" x2="0" y2="100"/><line x1="120" y1="40" x2="0" y2="130"/>
+            <line x1="120" y1="70" x2="0" y2="40"/><line x1="120" y1="70" x2="0" y2="70"/><line x1="120" y1="70" x2="0" y2="100"/><line x1="120" y1="70" x2="0" y2="130"/>
+            <line x1="120" y1="100" x2="0" y2="70"/><line x1="120" y1="100" x2="0" y2="100"/><line x1="120" y1="100" x2="0" y2="130"/>
+            <line x1="120" y1="130" x2="0" y2="100"/><line x1="120" y1="130" x2="0" y2="130"/>
+          </g>
+          <circle cx="120" cy="10" r="4" fill="#2E2A22"/><circle cx="120" cy="40" r="4" fill="#2E2A22"/>
+          <circle cx="120" cy="70" r="4" fill="#2E2A22"/><circle cx="120" cy="100" r="4" fill="#2E2A22"/>
+          <circle cx="120" cy="130" r="4" fill="#2E2A22"/>
+          <circle cx="0" cy="10" r="4" fill="#96897A"/><circle cx="0" cy="40" r="4" fill="#96897A"/>
+          <circle cx="0" cy="70" r="4" fill="#96897A"/><circle cx="0" cy="100" r="4" fill="#96897A"/>
+          <circle cx="0" cy="130" r="4" fill="#96897A"/>
+          <text x="60" y="170" text-anchor="middle" font-size="9.5" fill="#96897A">O(n²) · 全连接</text>
+        </g>
+
+        <!-- 右：SWA 窗口 + 接力 -->
+        <text x="500" y="22" text-anchor="middle" font-weight="600" fill="#B54A2C">SWA · 窗口 W=3（示意）</text>
+        <text x="500" y="38" text-anchor="middle" font-size="9.5" fill="#96897A">每层只看 W 个，层间接力扩到 L×W</text>
+        <g transform="translate(420,50)">
+          <!-- 层标 -->
+          <text x="-10" y="14" text-anchor="end" font-size="9.5" fill="#96897A">层 3</text>
+          <text x="-10" y="64" text-anchor="end" font-size="9.5" fill="#96897A">层 2</text>
+          <text x="-10" y="114" text-anchor="end" font-size="9.5" fill="#96897A">层 1</text>
+
+          <!-- 层 1：最底，3 个 token 看 3 个 -->
+          <line x1="0" y1="110" x2="160" y2="110" stroke="#96897A"/>
+          <line x1="0" y1="120" x2="160" y2="120" stroke="#96897A"/>
+          <g stroke="#24555A" stroke-width="0.9">
+            <line x1="120" y1="115" x2="40" y2="115"/>
+            <line x1="120" y1="118" x2="80" y2="118"/>
+            <line x1="160" y1="115" x2="80" y2="115"/>
+            <line x1="160" y1="118" x2="120" y2="118"/>
+          </g>
+          <circle cx="40" cy="115" r="4" fill="#96897A"/><circle cx="80" cy="115" r="4" fill="#96897A"/>
+          <circle cx="120" cy="115" r="4" fill="#96897A"/><circle cx="160" cy="115" r="4" fill="#96897A"/>
+
+          <!-- 层 2：每个 token 仍只看 3 个 -->
+          <line x1="0" y1="60" x2="160" y2="60" stroke="#96897A"/>
+          <line x1="0" y1="70" x2="160" y2="70" stroke="#96897A"/>
+          <g stroke="#24555A" stroke-width="0.9">
+            <line x1="80" y1="65" x2="0" y2="65"/>
+            <line x1="80" y1="68" x2="40" y2="68"/>
+            <line x1="120" y1="65" x2="40" y2="65"/>
+            <line x1="120" y1="68" x2="80" y2="68"/>
+            <line x1="160" y1="65" x2="80" y2="65"/>
+            <line x1="160" y1="68" x2="120" y2="68"/>
+          </g>
+          <circle cx="0" cy="65" r="4" fill="#96897A"/><circle cx="40" cy="65" r="4" fill="#96897A"/>
+          <circle cx="80" cy="65" r="4" fill="#96897A"/><circle cx="120" cy="65" r="4" fill="#96897A"/>
+          <circle cx="160" cy="65" r="4" fill="#96897A"/>
+
+          <!-- 层 3：仍只看 3 个，但通过残差能触达层1最左 -->
+          <line x1="0" y1="10" x2="160" y2="10" stroke="#96897A"/>
+          <line x1="0" y1="20" x2="160" y2="20" stroke="#96897A"/>
+          <g stroke="#24555A" stroke-width="0.9">
+            <line x1="120" y1="15" x2="40" y2="15"/>
+            <line x1="120" y1="18" x2="80" y2="18"/>
+            <line x1="160" y1="15" x2="80" y2="15"/>
+            <line x1="160" y1="18" x2="120" y2="18"/>
+          </g>
+          <!-- 高亮接力路径 -->
+          <g stroke="#B54A2C" stroke-width="2" fill="none">
+            <line x1="160" y1="15" x2="80" y2="15"/>
+            <line x1="80" y1="65" x2="0" y2="65"/>
+          </g>
+          <circle cx="40" cy="15" r="4" fill="#96897A"/><circle cx="80" cy="15" r="4" fill="#96897A"/>
+          <circle cx="120" cy="15" r="4" fill="#96897A"/>
+          <circle cx="160" cy="15" r="5.5" fill="#B54A2C"/>
+          <circle cx="0" cy="65" r="5.5" fill="#B54A2C"/>
+          <circle cx="0" cy="115" r="5.5" fill="#B54A2C"/>
+
+          <text x="180" y="18" font-size="9.5" fill="#B54A2C">最终 token</text>
+          <text x="180" y="118" font-size="9.5" fill="#B54A2C">3 层后够得着</text>
+          <text x="180" y="130" font-size="9.5" fill="#B54A2C">最左 token</text>
+          <text x="80" y="200" text-anchor="middle" font-size="9.5" fill="#96897A">每层窗口 W，L 层后有效感受野 = L×W</text>
+        </g>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · SWA 的"接力"机制：单层只看 W 个 token（右图窗口=3 示意），但红色路径显示信息经残差逐层前传，3 层后最右 token 仍能"够到"最左 token</figcaption>
+  </figure>
+
+  <h3>第三把刀：滚动缓冲 KV 缓存（Rolling Buffer Cache）</h3>
+  <p>SWA 既然每层只看最近 $W$ 个 token，那 KV 缓存里存更老的 token 也是浪费。Mistral 把 KV 缓存做成一个长度为 $W$ 的环形缓冲区：第 $i$ 个 token 的 KV 写到位置 $i \bmod W$，旧的位置被自动覆盖。</p>
+
+  <div class="formula-block">
+    $$ \text{cache}[\,i \bmod W\,] \leftarrow (k_i, v_i) $$
+    <span class="eqn mono">(3)</span>
+  </div>
+
+  <p>无论序列多长，每层 KV 缓存的显存占用恒为 $W$，推理成本不再随上下文线性增长。配合 GQA 的 4 倍瘦身，最终 KV 缓存相比 LLaMA 2 13B 节省一个数量级。论文报告在 FlashAttention-2 与 xFormers 优化内核加持下，最后一层注意力相比 vanilla 注意力快 2 倍。</p>
+
+  <h3>架构参数一览</h3>
+  <table>
+    <thead>
+      <tr><th>参数</th><th>取值</th><th>说明</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">dim（隐藏维度）</td><td>4096</td><td class="text">与 LLaMA 7B 同级</td></tr>
+      <tr><td class="text">n_layers（层数 L）</td><td>32</td><td class="text">决定 SWA 有效感受野 L×W</td></tr>
+      <tr><td class="text">n_heads（query 头数）</td><td>32</td><td class="text">每头 head_dim=128</td></tr>
+      <tr><td class="text">n_kv_heads（KV 头数）</td><td>8</td><td class="text">GQA 分组比 4:1</td></tr>
+      <tr><td class="text">hidden_dim（FFN 维度）</td><td>14336</td><td class="text">SwiGLU 前馈</td></tr>
+      <tr><td class="text">sliding_window W</td><td>4096</td><td class="text">SWA 窗口大小</td></tr>
+      <tr><td class="text">context_length</td><td>8192</td><td class="text">训练上下文（SWA 可外推更长）</td></tr>
+      <tr><td class="text">vocab_size</td><td>32000</td><td class="text">沿用 LLaMA 词表</td></tr>
+      <tr><td class="text">总参数量</td><td>≈7.3B</td><td class="text">Apache 2.0 开源</td></tr>
+    </tbody>
+  </table>
+
+  <p>整体训练流程仍是经典的"在海量文本上做下一 token 预测"——论文没有披露具体数据配方，但提到训练在欧洲超算集群上完成，模型权重以 Apache 2.0 完全开源，并附带可在 AWS/GCP/Azure 上用 vLLM 一键部署的参考实现。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 150" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <rect x="20" y="50" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="80" text-anchor="middle">公开网络语料</text>
+
+        <rect x="180" y="50" width="140" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="250" y="74" text-anchor="middle">decoder-only</text>
+        <text x="250" y="90" text-anchor="middle" font-size="9.5" fill="#96897A">+GQA +SWA +RoPE</text>
+
+        <rect x="360" y="50" width="140" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="430" y="74" text-anchor="middle">下一 token 预测</text>
+        <text x="430" y="90" text-anchor="middle" font-size="9.5" fill="#96897A">欧洲超算集群</text>
+
+        <rect x="540" y="50" width="160" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="620" y="74" text-anchor="middle" fill="#24555A">Mistral 7B 基座</text>
+        <text x="620" y="90" text-anchor="middle" fill="#24555A" font-size="9.5">Apache 2.0 开源</text>
+
+        <line x1="140" y1="75" x2="180" y2="75" stroke="#96897A" marker-end="url(#arrow3)"/>
+        <line x1="320" y1="75" x2="360" y2="75" stroke="#96897A" marker-end="url(#arrow3)"/>
+        <line x1="500" y1="75" x2="540" y2="75" stroke="#96897A" marker-end="url(#arrow3)"/>
+
+        <text x="360" y="135" text-anchor="middle" font-size="9.5" fill="#96897A">↑ 基座之上再做指令微调 + DPO → Mistral 7B-Instruct</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · Mistral 7B 训练与对齐流程：基座开源，Instruct 版本在其上叠加指令微调与对齐</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>结果一句话：<em>7B 的 Mistral 在所有公开基准上击败 LLaMA 2 13B，并在推理、数学、代码上反超 LLaMA 1 34B</em>。更让人意外的是，在代码任务上它逼近了专门为代码训练的 Code-Llama 7B，且没有牺牲通用能力——这在当时几乎是反常识的，因为"代码专精"通常意味着"通用退化"。</p>
+
+  <table>
+    <thead>
+      <tr><th>基准（5-shot，越高越好）</th><th class="num-col">LLaMA 2 13B</th><th class="num-col">LLaMA 1 34B</th><th class="num-col">Mistral 7B</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">MMLU（综合知识）</td><td class="num-col">54.8</td><td class="num-col">57.7</td><td class="num-col win">60.1</td></tr>
+      <tr><td class="text">HellaSwag（常识推理）</td><td class="num-col">78.9</td><td class="num-col">76.5</td><td class="num-col win">81.3</td></tr>
+      <tr><td class="text">WinoGrande（指代推理）</td><td class="num-col">69.2</td><td class="num-col">70.2</td><td class="num-col win">71.1</td></tr>
+      <tr><td class="text">ARC-Challenge（科学问答）</td><td class="num-col">67.3</td><td class="num-col">65.0</td><td class="num-col win">69.3</td></tr>
+      <tr><td class="text">GSM8K（小学数学）</td><td class="num-col">28.7</td><td class="num-col">28.1</td><td class="num-col win">30.5</td></tr>
+      <tr><td class="text">HumanEval（代码生成，0-shot）</td><td class="num-col">18.3</td><td class="num-col">22.3</td><td class="num-col win">30.5</td></tr>
+    </tbody>
+  </table>
+  <p style="font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted); margin-top:-12px;">数据来源：Mistral 7B 论文 Table 2–5，数值经四舍五入；红色为本列最优。</p>
+
+  <p>指令微调版 Mistral 7B-Instruct 在人类评估与 MT-Bench 自动评估上同样击败 LLaMA 2 13B-Chat。论文还附了一个有趣的"系统提示护栏"实验：在系统提示里写"始终用 JSON 格式回答"，模型就真的会乖乖按 JSON 输出——证明小模型在工程化可控性上同样可用。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="10" fill="#2E2A22">
+        <!-- Y 轴 -->
+        <line x1="200" y1="20" x2="200" y2="240" stroke="#96897A"/>
+        <line x1="200" y1="240" x2="700" y2="240" stroke="#96897A"/>
+        <!-- 刻度 -->
+        <g stroke="#96897A" stroke-width="0.6" font-size="9" fill="#96897A">
+          <line x1="196" y1="240" x2="200" y2="240"/><text x="190" y="244" text-anchor="end">0</text>
+          <line x1="196" y1="184" x2="200" y2="184"/><text x="190" y="188" text-anchor="end">25</text>
+          <line x1="196" y1="128" x2="200" y2="128"/><text x="190" y="132" text-anchor="end">50</text>
+          <line x1="196" y1="72" x2="200" y2="72"/><text x="190" y="76" text-anchor="end">75</text>
+          <line x1="196" y1="20" x2="200" y2="20"/><text x="190" y="24" text-anchor="end">100</text>
+        </g>
+
+        <!-- 分组：每个基准三根柱 -->
+        <!-- MMLU: L2 54.8, L1 57.7, M 60.1 -->
+        <g transform="translate(230,0)">
+          <rect x="0" y="116" width="16" height="124" fill="#96897A" fill-opacity="0.5"/>
+          <rect x="18" y="109" width="16" height="131" fill="#96897A" fill-opacity="0.7"/>
+          <rect x="36" y="104" width="16" height="136" fill="#B54A2C"/>
+          <text x="28" y="258" text-anchor="middle" font-size="9">MMLU</text>
+        </g>
+        <!-- HellaSwag -->
+        <g transform="translate(310,0)">
+          <rect x="0" y="62" width="16" height="178" fill="#96897A" fill-opacity="0.5"/>
+          <rect x="18" y="68" width="16" height="172" fill="#96897A" fill-opacity="0.7"/>
+          <rect x="36" y="57" width="16" height="183" fill="#B54A2C"/>
+          <text x="28" y="258" text-anchor="middle" font-size="9">HellaSwag</text>
+        </g>
+        <!-- ARC-C -->
+        <g transform="translate(400,0)">
+          <rect x="0" y="89" width="16" height="151" fill="#96897A" fill-opacity="0.5"/>
+          <rect x="18" y="94" width="16" height="146" fill="#96897A" fill-opacity="0.7"/>
+          <rect x="36" y="85" width="16" height="155" fill="#B54A2C"/>
+          <text x="28" y="258" text-anchor="middle" font-size="9">ARC-C</text>
+        </g>
+        <!-- GSM8K -->
+        <g transform="translate(485,0)">
+          <rect x="0" y="176" width="16" height="64" fill="#96897A" fill-opacity="0.5"/>
+          <rect x="18" y="177" width="16" height="63" fill="#96897A" fill-opacity="0.7"/>
+          <rect x="36" y="171" width="16" height="69" fill="#B54A2C"/>
+          <text x="28" y="258" text-anchor="middle" font-size="9">GSM8K</text>
+        </g>
+        <!-- HumanEval -->
+        <g transform="translate(575,0)">
+          <rect x="0" y="199" width="16" height="41" fill="#96897A" fill-opacity="0.5"/>
+          <rect x="18" y="190" width="16" height="50" fill="#96897A" fill-opacity="0.7"/>
+          <rect x="36" y="171" width="16" height="69" fill="#B54A2C"/>
+          <text x="28" y="258" text-anchor="middle" font-size="9">HumanEval</text>
+        </g>
+
+        <!-- 图例 -->
+        <g transform="translate(560,30)">
+          <rect x="0" y="0" width="12" height="10" fill="#96897A" fill-opacity="0.5"/>
+          <text x="16" y="9" font-size="9">LLaMA 2 13B</text>
+          <rect x="0" y="16" width="12" height="10" fill="#96897A" fill-opacity="0.7"/>
+          <text x="16" y="25" font-size="9">LLaMA 1 34B</text>
+          <rect x="0" y="32" width="12" height="10" fill="#B54A2C"/>
+          <text x="16" y="41" font-size="9" fill="#B54A2C" font-weight="600">Mistral 7B</text>
+        </g>
+        <text x="200" y="14" font-size="9" fill="#96897A">分数（0–100）</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · Mistral 7B（红）对比 LLaMA 2 13B（浅灰）与 LLaMA 1 34B（深灰），六项基准全部领先</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>Mistral 7B 的影响远超它本身的分数，它在三个层面上重塑了开源社区的认知。</p>
+  <ul>
+    <li><em>"7B"成为新的默认尺寸</em>。此前大家默认"开源能跑=13B 起"，Mistral 把这条线压到 7B：消费级 24G 显卡就能跑，本地部署、微调、蒸馏全部打通，直接催生了之后 Qwen、Yi、DeepSeek 一系列 7B 主力型号。</li>
+    <li><em>GQA + SWA 成为行业标配</em>。Llama 3 8B/70B、Qwen 2.5 7B、Mistral 自家的 Mixtral，几乎全部沿用了 GQA；SWA 的"窗口 + 接力"思想也在长上下文方案里反复出现。一篇 9 页的技术报告直接定义了一代模型的注意力默认配置。</li>
+    <li><em>把"高效推理"抬到和"刷榜"同等的位置</em>。它把"省显存、高吞吐、长上下文"这些工程指标第一次和 SOTA 分数并列展示，让后续论文必须同时回答"你跑多快、占多少显存"。</li>
+  </ul>
+  <p>对公司本身，Mistral 7B 是一封写给资本市场的投名状——成立 5 个月就拿出超越 Meta 13B 的开源模型，直接换来 2023 年 12 月 a16z 领投的 3.85 亿欧元 A 轮，把 Mistral AI 推上"欧洲 OpenAI"的位置。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>论文相当坦诚：在<em>知识类基准</em>上，Mistral 7B 与 LLaMA 2 13B 基本持平——因为参数量摆在那，能压缩的世界知识确实有限。这是"小模型路线"的天然天花板，后来 Mixtral 8x7B 用稀疏 MoE 来"用激活参数换总参数"就是回应这条限制。</p>
+  <p>SWA 也有代价：<em>窗口 $W$ 在训练时固定为 4096，推理时无法改</em>。换窗口大小必须重训或微调，这让"动态上下文"这种需求还得另想办法。此外，Mistral 7B 训练上下文只有 8K，所谓"任意长度"主要靠 SWA 的推理成本可控，而非真正在 32K+ 上做过训练。它也没碰多模态，数据配方完全闭源。</p>
+  <p>这些缺口，恰好为后续工作铺好了路：更长上下文、多模态、稀疏激活，每一个都成了 2024 年的主战场。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把本系列九篇连起来看，大模型的发展其实是一条"不断把瓶颈搬走"的链：</p>
+  <ol>
+    <li>2017 Transformer（#001）——拿掉了 RNN 的串行瓶颈；</li>
+    <li>2018 BERT / 2019 GPT-2（#002–003）——拿掉了"每个任务单独训"的瓶颈；</li>
+    <li>2020 GPT-3（#004）——拿掉了"必须微调"的瓶颈；</li>
+    <li>2022 Chinchilla（#005）——拿掉了"只堆参数不看数据"的瓶颈；</li>
+    <li>2022 InstructGPT / 2023 DPO（#006–008）——拿掉了"模型懂语言但不懂人话"的瓶颈；</li>
+    <li>2023 LLaMA（#007）——拿掉了"权重不公开"的瓶颈；</li>
+    <li><em>2023 Mistral 7B（本篇 #009）——拿掉了"开源模型跑不动、读不长"的瓶颈</em>。</li>
+  </ol>
+  <p>每一次"拿掉"，都把瓶颈从算法推到工程、从云端推到本地。Mistral 之后，下一道要搬走的墙是"参数越多、推理越贵"——这正是 Mixtral 8x7B 用稀疏 MoE 接过的接力棒。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>Mistral 这个名字，来自法国南部那股又冷又快的西北风——传说它能在一夜之间把云吹散，露出澈蓝的天空。三位创始人挑这个名字，是希望自己也能像这股风一样，把 2023 年被 OpenAI、Meta、Google 三家笼罩的 AI 天空吹开一道口子。事后看，他们确实做到了。</p>
+  <p>最戏剧性的一点是团队血缘：Guillaume Lample 和 Timothée Lacroix 是 Meta LLaMA 论文的共同作者，相当于"亲手把 LLaMA 造出来又离开 Meta"的人。结果他们离开 Meta 不到半年，就拿一个 7B 模型把老东家的 13B 打到全面落后——这大概是 LLaMA 系列吃过最尴尬的一记"自己人背刺"。第三位创始人 Arthur Mensch 来自 Google DeepMind，是 Chinchilla scaling law 的共同作者（本系列第 5 篇正是这篇），所以 Mistral 7B 在数据配比上的功夫也并非无的放矢。</p>
+  <p>更"爽文"的是融资节奏：2023 年 4 月成立，6 月拿下 1.05 亿欧元种子轮（欧洲史上最大 AI 种子轮），9 月发 Mistral 7B，12 月发 Mixtral 8x7B + 3.85 亿欧元 A 轮——半年内从"三个人的借来的办公室"到估值 20 亿美元。到 2025 年 9 月 ASML 领投的 C 轮，估值已冲到 117 亿欧元，三位创始人都成了法国首批 AI 亿万美元富翁。论文里冷冰冰的 GQA 公式背后，是欧洲版"车库创业"的真实剧本。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 简笔西北风：几道斜线 + 风向箭头 -->
+        <g stroke="#24555A" stroke-width="2.5" fill="none" opacity="0.7">
+          <path d="M40,40 Q120,30 200,55 T360,45"/>
+          <path d="M40,80 Q140,70 220,95 T400,85"/>
+          <path d="M40,120 Q100,110 180,135 T340,125"/>
+        </g>
+        <!-- 风向箭头 -->
+        <g stroke="#B54A2C" stroke-width="2" fill="#B54A2C">
+          <path d="M360,45 l-12,-6 l0,12 z"/>
+          <path d="M400,85 l-12,-6 l0,12 z"/>
+          <path d="M340,125 l-12,-6 l0,12 z"/>
+        </g>
+        <text x="200" y="170" text-anchor="middle" fill="#24555A" font-weight="600">Mistral · 密史脱拉风</text>
+        <text x="200" y="186" text-anchor="middle" font-size="9.5" fill="#96897A">法国南部凛冽的西北风——公司名由此而来</text>
+
+        <!-- 右侧三创始人方块 -->
+        <g transform="translate(440,40)">
+          <rect x="0" y="0" width="80" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="40" y="18" text-anchor="middle" font-size="10" font-weight="600">Arthur Mensch</text>
+          <text x="40" y="32" text-anchor="middle" font-size="8.5" fill="#96897A">CEO · ex-DeepMind</text>
+
+          <rect x="90" y="0" width="80" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="130" y="18" text-anchor="middle" font-size="10" font-weight="600">G. Lample</text>
+          <text x="130" y="32" text-anchor="middle" font-size="8.5" fill="#96897A">CSO · ex-Meta LLaMA</text>
+
+          <rect x="180" y="0" width="80" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="220" y="18" text-anchor="middle" font-size="10" font-weight="600">T. Lacroix</text>
+          <text x="220" y="32" text-anchor="middle" font-size="8.5" fill="#96897A">CTO · ex-Meta LLaMA</text>
+
+          <text x="130" y="60" text-anchor="middle" font-size="9.5" fill="#B54A2C">2023.4 创立 → 2023.9 Mistral 7B</text>
+          <text x="130" y="76" text-anchor="middle" font-size="9.5" fill="#96897A">两位 LLaMA 作者 + 一位 Chinchilla 作者</text>
+        </g>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 6</span> · Mistral 之名与三人团队的"血缘"：DeepMind + Meta 双重背景</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读 Mistral 7B 最大的启发，不是某个具体技巧，而是<em>它对"瓶颈"的重新定义</em>。当所有人都在卷参数量、卷数据量、卷对齐方法时，它掉头去卷推理效率——而且只用两把很小的手术刀就撬动了行业默认配置。这背后是一种难得的判断力：在 2023 年下半年，"能不能跑得动"已经比"分数高一点"更影响模型的实际落地。</p>
+  <p>放到今天看，GQA + SWA 的组合几乎是"理所当然"的——但"理所当然"正是经典论文的特征：它把一个当时还显小众的取舍，做成了之后所有人都绕不开的默认值。这和 Transformer 当年"扔掉 RNN"的逻辑一脉相承：<em>真正的突破往往不是加东西，而是意识到有些东西可以拿掉</em>。</p>
+  <p>对正在追系列的读者，一个值得记在心里的判断是：Mistral 7B 之后，"模型大小"和"模型能力"之间的耦合被彻底松开了。参数量不再是实力的等价物，激活参数、注意力结构、KV 缓存策略、推理框架，每一个都可以是战场。下一篇要讲的 Mixtral 8x7B，正是把这场战争推到了"稀疏激活"这个新维度。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果 GQA 把 KV 缓存压到 1/4、SWA 把单层注意力窗口压到 W，那把这两者继续推到极端——KV 只留 1 份（MQA）、窗口只留 1 个 token——模型还能用吗？Mistral 为什么没走到底？欢迎带着这个问题进入下一篇。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Mixtral of Experts（Mixtral 8x7B）</h3>
+    <p style="margin:0;">Mistral 7B 把"小而强"做到了极致，但知识瓶颈还在。三个月后，同一批人把 8 个 Mistral 7B 并排塞进一层，每个 token 只激活其中 2 个——46.7B 总参数、12.9B 激活，匹敌 GPT-3.5。"稀疏专家混合（MoE）"就此从论文术语变成主流架构，下一篇我们就拆这头稀疏巨兽。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 009 篇</span>
+    <span>2026-08-06</span>
+  </footer>
+
+</div>
+</body>
+</html>
