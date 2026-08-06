@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mixtral 8x7B 论文精读 · 大模型经典论文系列 #010</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#010</span>
+  </div>
+
+  <h1 class="title">
+    Mixtral of Experts
+    <span class="en">Mixtral 8x7B：稀疏专家混合让 12.9B 激活参数匹敌 GPT-3.5，MoE 正式走向主流</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Albert Q. Jiang, Alexandre Sablayrolles, Antoine Roux, Arthur Mensch, Guillaume Lample, Timothée Lacroix 等 26 人</span>
+    <span>机构：Mistral AI（巴黎）</span>
+    <span>发表：2024-01 / arXiv 2401.04088</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2401.04088" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/mistralai/mistral-src" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://mistral.ai/news/mixtral-of-experts/" target="_blank" rel="noopener">Project</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">2023 年 12 月 11 日凌晨，Mistral AI 的官方账号发了一条推文。没有论文，没有博客，没有 benchmark，没有宣传图——只有一个磁力链接，配上一句轻描淡写的话："Pour vous faire plaisir ce week-end, on a release un nouveau modèle."（为了让你这个周末开心点，我们放出了一个新模型。）</p>
+  <p class="lead">整个开源社区炸了。人们一边下载一边逆向：几个小时内，Hugging Face 上就有人扒出这不是上一篇那个 7B 小模型，而是一个总参数 46.7B、却只激活 12.9B 的"怪物"——八个专家，每个 token 只请两位会诊。二十八天后，正式论文 <em class="latin">Mixtral of Experts</em> 落地：它全面超越 Llama 2 70B，匹敌 GPT-3.5，而且权重 Apache 2.0 全开放。<em>一个总参数不到 Llama 2 70B 七成、推理算力只有它零头的模型，凭什么全面反杀？</em>答案就藏在那八个"专家"里。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    把每个 token 的"计算预算"和"模型总容量"解耦——8 个专家共 47B 参数摆在那里当"知识库"，但每个 token 只挑 2 个专家（13B 算力）出来干活，于是用 13B 的算力打出了超越 70B 稠密模型的效果。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>上一篇我们讲 Mistral 7B，它的策略是"小而强"——用 GQA + SWA 把 7B 的参数用到极致。Mixtral 8x7B 是它的"同胞兄弟"，走的是另一条路：<em>大参数、小算力</em>。同一个团队、同一套基础架构（RoPE、RMSNorm、SwiGLU、GQA、SWA 一个没少），区别只在一个地方——把每一层的前馈网络（FFN）换成了"稀疏专家混合层"（MoE）。</p>
+  <p>在大模型发展脉络里，这篇论文的位置非常特殊。它之前，MoE（Mixture of Experts，专家混合）几乎是个"Google 专利"：2017 年 Shazeer 的 Sparsely-Gated MoE、2021 年 Switch Transformer、GShard、GLaM、ST-MoE——全是 Google 内部、权重不公开。开源界一直停留在"稠密模型"（dense model）的赛道上比拼参数量。Mixtral 是<em>第一个真正可用、权重开放、并被广泛部署的稀疏 MoE 大模型</em>，它一口气把 MoE 从实验室搬到了每个人的显卡上，直接开启了 2024 年之后 DeepSeek-MoE、Qwen-MoE、OLMoE 一系列开源 MoE 的爆发，也让人坚信：闭源旗舰模型（GPT-4、Claude、Gemini）几乎可以肯定都是 MoE。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 240" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="125" x2="690" y2="125" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="10.5" fill="#96897A">
+        <!-- 已解析节点 -->
+        <circle cx="60" cy="125" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="60" y="105" text-anchor="middle" fill="#2E2A22">2017</text>
+        <text x="60" y="153" text-anchor="middle">Transformer</text>
+
+        <circle cx="130" cy="125" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="130" y="105" text-anchor="middle" fill="#2E2A22">2018</text>
+        <text x="130" y="153" text-anchor="middle">BERT</text>
+
+        <circle cx="195" cy="125" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="195" y="105" text-anchor="middle" fill="#2E2A22">2019</text>
+        <text x="195" y="153" text-anchor="middle">GPT-2</text>
+
+        <circle cx="255" cy="125" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="255" y="105" text-anchor="middle" fill="#2E2A22">2020</text>
+        <text x="255" y="153" text-anchor="middle">GPT-3</text>
+
+        <circle cx="330" cy="125" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="330" y="105" text-anchor="middle" fill="#2E2A22">2022</text>
+        <text x="330" y="153" text-anchor="middle">Chinchilla</text>
+
+        <circle cx="395" cy="125" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="395" y="105" text-anchor="middle" fill="#2E2A22">2022</text>
+        <text x="395" y="153" text-anchor="middle">InstructGPT</text>
+
+        <circle cx="470" cy="125" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="470" y="105" text-anchor="middle" fill="#2E2A22">2023</text>
+        <text x="470" y="153" text-anchor="middle">LLaMA</text>
+
+        <circle cx="540" cy="125" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="540" y="105" text-anchor="middle" fill="#2E2A22">2023</text>
+        <text x="540" y="153" text-anchor="middle">DPO</text>
+
+        <circle cx="600" cy="125" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="600" y="105" text-anchor="middle" fill="#2E2A22">2023.10</text>
+        <text x="600" y="153" text-anchor="middle">Mistral 7B</text>
+
+        <!-- 本篇 -->
+        <circle cx="660" cy="125" r="8" fill="#B54A2C"/>
+        <text x="660" y="97" text-anchor="middle" fill="#B54A2C" font-weight="600">2024.01</text>
+        <text x="660" y="155" text-anchor="middle" fill="#2E2A22" font-weight="600">Mixtral 8x7B</text>
+        <text x="660" y="169" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇</text>
+
+        <!-- MoE 旁注线索 -->
+        <text x="255" y="200" font-size="9.5" fill="#24555A">↑ 闭源 MoE 暗线：Shazeer 2017 → Switch / GShard / GLaM（Google，未开放）</text>
+        <text x="690" y="218" font-size="10" fill="#B54A2C" text-anchor="end">本篇：开源 MoE 主流化起点 →</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的 Mixtral 8x7B 位置（红色高亮为本篇，灰点为系列已解析论文）</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要理解 Mixtral 为什么重要，得先看清楚 2023 年底开源大模型撞上的那堵墙。</p>
+  <p>稠密模型（dense model）的规则很简单粗暴：<em>每个 token 都要过一遍模型的所有参数</em>。一个 70B 的模型，预测一个 token 就要做 70B 次乘加。这让"更大模型"和"更贵推理"死死绑定在一起——想超越 GPT-3.5，就得把参数堆到 70B 量级，而 70B 的推理成本，对绝大多数开发者来说就是"租不起的 A100"。</p>
+  <p>Chinchilla 告诉我们"参数和数据要按比例涨"，但它的潜台词是<em>算力预算固定时，参数不能无限堆</em>。这就逼出一个尖锐的问题：能不能让模型"记住更多知识"（参数多），却"每次只动用一小部分"（算力省）？这正是 MoE 想干的事。</p>
+
+  <div class="callout">
+    <span class="label">类比 · 稠密模型 vs MoE</span>
+    把模型想象成一家大医院。稠密模型是"全科医生"——每个病人进来，全院所有医生都得放下手头的事一起会诊，哪怕只是个感冒。医生越多越权威，但每个病人都累垮整座医院。MoE 则是"分诊制"——医院里挂着 8 个专科诊室（专家），病人来了，前台护士（路由器）看一眼症状，只叫 2 个最对口的专科医生出来看病，其他人继续歇着。结果：医院的"知识储备"是 8 个专科的总和，但每个病人只消耗 2 个医生的精力。
+  </div>
+
+  <p>MoE 这个想法其实非常老。1991 年 Jacobs 和 Hinton 就提出了原始的"局部专家混合"，让不同专家学不同子任务。但真正让它在大模型里发光的是 2017 年 Shazeer 等人的 <em class="latin">Outrageously Large Neural Networks</em>——引入"稀疏门控"，每个 token 只激活 Top-K 个专家，把 LSTM 模型推到千亿参数。之后 Google 在 2020–2022 年间一路狂奔：GShard（万亿参数 MoE）、Switch Transformer（把 K 简化到 1）、GLaM、ST-MoE……</p>
+  <p>但有个尴尬的事实：<em>这些 MoE 模型一个都没开放权重</em>。开源社区想用 MoE，要么自己从头训（成本高到离谱），要么只能眼馋。Mixtral 横空出世的全部意义，就是把这个"贵族架构"第一次变成了"公共财产"。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>Mistral 团队要回答的问题只有一句话：<em>能不能用稀疏激活，让一个总参数接近 70B 稠密模型的 MoE 模型，在推理时只花 13B 的算力，却在所有基准上击败 Llama 2 70B、匹敌 GPT-3.5？</em></p>
+  <p>换句话说，把"参数容量"（决定模型能记多少知识）和"计算成本"（决定推理有多贵）这两件长期绑定的事<em>拆开</em>。容量往大了堆，成本按小的算。这件事 Google 的闭源 MoE 已经证明可行，但开源界还从没人用 Apache 2.0 的权重真刀真枪地验证过——而且得让普通开发者真能跑起来。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果每个 token 只用 2 个专家，8 个专家里剩下 6 个这个 token 完全没碰过——那这些"没被选中"的专家，到底在这个 token 上做出了什么贡献？先想想你的直觉答案，再往下看 MoE 的加法是怎么算的。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>Mixtral 8x7B 的架构用一句话就能说清：<em>它就是 Mistral 7B，只不过把每一层的 FFN 换成了 8 选 2 的 MoE 层</em>。注意力部分（GQA、SWA）、归一化（RMSNorm）、位置编码（RoPE）、激活函数（SwiGLU）一个没动，连上下文长度都直接拉到 32k。所以理解 Mixtral，只需要理解那个 MoE 层。</p>
+
+  <h3>第一步：把单个 FFN 复制成 8 份</h3>
+  <p>在标准 Transformer 里，每个 token 经过注意力层后，会进一个前馈网络（FFN）做"知识加工"。Mixtral 干的事是：把这个 FFN 复制成 8 份，记作 $E_0, E_1, \dots, E_7$，每一份都是一个独立的、参数不同的 SwiGLU 前馈块。这就是"8 个专家"——它们结构一样，但学到的"手艺"不同。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="m-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 输入 token -->
+        <rect x="20" y="120" width="80" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="60" y="145" text-anchor="middle">token x</text>
+
+        <!-- Router -->
+        <rect x="150" y="115" width="100" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="200" y="138" text-anchor="middle" fill="#24555A" font-weight="600">Router</text>
+        <text x="200" y="154" text-anchor="middle" font-size="9" fill="#24555A">线性层 + Top-2</text>
+
+        <line x1="100" y1="140" x2="150" y2="140" stroke="#96897A" marker-end="url(#m-arrow)"/>
+
+        <!-- 8 个专家 -->
+        <text x="470" y="30" text-anchor="middle" font-size="10" fill="#96897A">8 个专家（每个都是独立 SwiGLU FFN）</text>
+        <g>
+          <rect x="350" y="40" width="60" height="30" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="380" y="60" text-anchor="middle">E0</text>
+          <rect x="420" y="40" width="60" height="30" rx="2" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C" stroke-width="1.5"/>
+          <text x="450" y="60" text-anchor="middle" fill="#B54A2C" font-weight="600">E1 ✓</text>
+          <rect x="490" y="40" width="60" height="30" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="520" y="60" text-anchor="middle">E2</text>
+          <rect x="560" y="40" width="60" height="30" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="590" y="60" text-anchor="middle">E3</text>
+          <rect x="350" y="80" width="60" height="30" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="380" y="100" text-anchor="middle">E4</text>
+          <rect x="420" y="80" width="60" height="30" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="450" y="100" text-anchor="middle">E5</text>
+          <rect x="490" y="80" width="60" height="30" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="520" y="100" text-anchor="middle">E6</text>
+          <rect x="560" y="80" width="60" height="30" rx="2" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C" stroke-width="1.5"/>
+          <text x="590" y="100" text-anchor="middle" fill="#B54A2C" font-weight="600">E7 ✓</text>
+        </g>
+
+        <!-- 路由线（只到被选中的两个） -->
+        <path d="M 250 130 C 300 90, 330 70, 420 55" fill="none" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#m-arrow)"/>
+        <path d="M 250 150 C 300 110, 360 110, 560 95" fill="none" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#m-arrow)"/>
+
+        <!-- 加权求和 -->
+        <rect x="350" y="160" width="270" height="36" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="485" y="183" text-anchor="middle">y = w₁·E₁(x) + w₇·E₇(x)</text>
+        <line x1="450" y1="70" x2="450" y2="160" stroke="#B54A2C" stroke-width="0.8" stroke-dasharray="3 3"/>
+        <line x1="590" y1="110" x2="560" y2="160" stroke="#B54A2C" stroke-width="0.8" stroke-dasharray="3 3"/>
+
+        <!-- 输出 -->
+        <rect x="445" y="220" width="80" height="36" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="485" y="243" text-anchor="middle" fill="#24555A">输出 y</text>
+        <line x1="485" y1="196" x2="485" y2="220" stroke="#96897A" marker-end="url(#m-arrow)"/>
+
+        <text x="485" y="272" text-anchor="middle" font-size="10" fill="#96897A">只有被选中的 2 个专家参与计算，其余 6 个对这个 token 静默</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · Mixtral 的 MoE 层：Router 为每个 token 选出 Top-2 专家，输出是这两个专家结果的加权和</figcaption>
+  </figure>
+
+  <h3>第二步：路由器——只是一位"前台护士"</h3>
+  <p>决定请哪两位专家的，是一个极小的网络：<em>一个线性层 + 一个 Top-2 选择</em>。它把 token 的隐藏状态 $x$ 映射成 8 个分数，然后挑出分数最高的 2 个专家。</p>
+
+  <p>这里有个设计细节值得停下来想——Mixtral 用的是"先 Top-K、再 Softmax"的顺序，而不是"先 Softmax、再 Top-K"。先用 Softmax 把 8 个分数归一化成概率，再砍掉 6 个，会让被选中的 2 个专家的权重被那 6 个"陪跑专家"的概率稀释；而<em>先选 Top-2、再对这 2 个做 Softmax</em>，权重就只在被选中的两位之间重新分配，干净利落。</p>
+
+  <div class="formula-block">
+    $$ \text{Gate}(x)=\text{softmax}\!\left(\text{Top}_2\left(W_g\,x\right)\right),\qquad y=\sum_{i\in\text{Top}_2}\text{Gate}(x)_i\cdot E_i(x) $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>这就回答了前面的思考题：那 6 个没被选中的专家，对这个 token 的输出贡献是<em>零</em>——它们既不计算、也不加权。MoE 的"稀疏"就稀疏在这里：参数摆着，但每次只动一小撮。注意 $W_g$ 是所有 token 共享的同一个路由矩阵，它本身参数量极小（一个 $d \times 8$ 的矩阵），可以忽略不计。</p>
+
+  <h3>第三步：参数与算力的"错位"账本</h3>
+  <p>这是理解 Mixtral 全部魔力的关键。8 个专家、每个都和一个 7B 模型里的 FFN 差不多大，加起来总参数约 46.7B；但每个 token 只激活 2 个专家，加上注意力层和嵌入层（这些是"共享"的、每个 token 都走），实际算力只相当于约 12.9B 的稠密模型。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 稠密 70B -->
+        <text x="120" y="28" text-anchor="middle" font-weight="600">Llama 2 70B（稠密）</text>
+        <rect x="40" y="44" width="160" height="40" fill="#96897A" fill-opacity="0.55" stroke="#96897A"/>
+        <text x="120" y="69" text-anchor="middle" fill="#F4EFE4">参数 70B</text>
+        <rect x="40" y="92" width="160" height="40" fill="#96897A" fill-opacity="0.55" stroke="#96897A"/>
+        <text x="120" y="117" text-anchor="middle" fill="#F4EFE4">算力 70B</text>
+        <text x="120" y="160" text-anchor="middle" font-size="10" fill="#96897A">容量 = 算力 = 70B</text>
+        <text x="120" y="176" text-anchor="middle" font-size="10" fill="#96897A">（绑定，一起涨）</text>
+
+        <!-- Mixtral -->
+        <text x="430" y="28" text-anchor="middle" font-weight="600" fill="#B54A2C">Mixtral 8x7B（稀疏 MoE）</text>
+        <rect x="350" y="44" width="160" height="40" fill="#B54A2C" fill-opacity="0.5" stroke="#B54A2C"/>
+        <text x="430" y="69" text-anchor="middle" fill="#F4EFE4">总参数 46.7B</text>
+        <rect x="350" y="92" width="160" height="40" fill="#24555A" fill-opacity="0.32" stroke="#24555A"/>
+        <text x="430" y="117" text-anchor="middle" fill="#24555A" font-weight="600">激活算力 12.9B</text>
+        <text x="430" y="160" text-anchor="middle" font-size="10" fill="#B54A2C">容量 ≈ 47B，算力 ≈ 13B</text>
+        <text x="430" y="176" text-anchor="middle" font-size="10" fill="#B54A2C">（解耦！）</text>
+
+        <!-- 解耦箭头与说明 -->
+        <line x1="200" y1="112" x2="350" y2="64" stroke="#96897A" stroke-width="0.8" stroke-dasharray="4 3"/>
+        <line x1="200" y1="112" x2="350" y2="112" stroke="#96897A" stroke-width="0.8" stroke-dasharray="4 3"/>
+        <text x="430" y="210" text-anchor="middle" font-size="10" fill="#24555A">同样的算力，能养得起 ~3.6 倍的参数容量</text>
+
+        <!-- 右侧：单 token 视角 -->
+        <rect x="560" y="44" width="120" height="170" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="620" y="62" text-anchor="middle" font-size="10" fill="#96897A">单 token 视角</text>
+        <text x="620" y="88" text-anchor="middle" font-size="10" fill="#2E2A22">8 专家中</text>
+        <text x="620" y="108" text-anchor="middle" font-size="14" fill="#B54A2C" font-weight="600">只激活 2 个</text>
+        <text x="620" y="138" text-anchor="middle" font-size="10" fill="#2E2A22">共享层全开</text>
+        <text x="620" y="158" text-anchor="middle" font-size="10" fill="#2E2A22">（注意力/嵌入）</text>
+        <text x="620" y="190" text-anchor="middle" font-size="9.5" fill="#24555A">→ 算力 13B</text>
+        <text x="620" y="206" text-anchor="middle" font-size="9.5" fill="#24555A">→ 容量 47B</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 稠密模型与 Mixtral 的"参数容量 vs 计算成本"对比：MoE 把两者解耦</figcaption>
+  </figure>
+
+  <p>这背后还藏着一个常被忽略的工程红利：因为每个 token 只用 2 个专家，<em>在低 batch 推理时速度更快，高 batch 时吞吐更高</em>。论文报告 Mixtral 的推理速度比 Llama 2 70B 快约 6 倍——同样的效果，省钱省到离谱。</p>
+
+  <h3>第四步：训练——多语言、长上下文、再配上对齐</h3>
+  <p>预训练阶段，Mixtral 用了<em>多语言数据</em>（法语、德语、西班牙语、意大利语显著上采样），上下文窗口 32k，其余训练配方和 Mistral 7B 一脉相承。它还顺手训了一个指令微调版 <em>Mixtral 8x7B – Instruct</em>：先做监督微调（SFT），再用我们上一篇 DPO 里讲过的<em>直接偏好优化</em>做对齐——正好把本系列第 8 篇学的 DPO 用上了。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>结果可以用四个字概括：<em>全面反杀</em>。一个激活参数只有 12.9B 的模型，在几乎所有公开基准上追平甚至超过 70B 的 Llama 2，并匹敌 GPT-3.5。下表是第三方评测 OpenCompass 的一组数据，能很直观地看到差距。</p>
+
+  <table>
+    <thead>
+      <tr><th>数据集</th><th>Mistral 7B</th><th>Mixtral 8x7B</th><th>Llama 2 70B</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">MMLU（综合知识）</td><td>64.1</td><td>71.3</td><td>69.7</td></tr>
+      <tr><td class="text">GSM-8K（小学数学）</td><td>47.5</td><td>65.7</td><td>63.4</td></tr>
+      <tr><td class="text">MATH（竞赛数学）</td><td>11.3</td><td>22.7</td><td>12.0</td></tr>
+      <tr><td class="text">HumanEval（代码生成）</td><td>27.4</td><td>32.3</td><td>26.2</td></tr>
+      <tr><td class="text">MBPP（代码生成）</td><td>38.6</td><td>47.8</td><td>39.6</td></tr>
+      <tr><td class="text">ARC-c（科学推理）</td><td>74.2</td><td>85.1</td><td>78.3</td></tr>
+      <tr><td class="text">HellaSwag（常识）</td><td>78.9</td><td>82.0</td><td>82.3</td></tr>
+      <tr><td class="text">BIG-Bench-Hard（推理）</td><td>56.7</td><td>67.1</td><td>64.9</td></tr>
+    </tbody>
+  </table>
+
+  <p>最刺眼的几行在数学和代码上：<em>MATH 从 12.0 拉到 22.7，几乎翻倍</em>；GSM-8K、HumanEval、MBPP 也全面领先 Llama 2 70B。论文特别强调，Mixtral 在<em>数学、代码、多语言</em>这三类任务上"vastly outperforms"（大幅超越）Llama 2 70B——而这三类恰恰最吃"模型容量"。这从侧面印证了 MoE 的核心假设：参数容量大了，模型确实能记更多、算更难。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="10.5" fill="#2E2A22">
+        <text x="360" y="20" text-anchor="middle" font-size="11.5" font-weight="600">Mixtral 8x7B（13B 算力） vs Llama 2 70B（70B 算力）</text>
+        <!-- 基线轴 -->
+        <line x1="60" y1="220" x2="660" y2="220" stroke="#96897A"/>
+        <text x="60" y="240" font-size="9.5" fill="#96897A">0</text>
+        <text x="660" y="240" font-size="9.5" fill="#96897A" text-anchor="end">90</text>
+
+        <!-- 四组对比：每组两根柱，左 Llama2 灰，右 Mixtral 红 -->
+        <!-- MMLU -->
+        <g transform="translate(0,0)">
+          <text x="110" y="40" text-anchor="middle" font-size="10" fill="#96897A">MMLU</text>
+          <rect x="80" y="135" width="20" height="85" fill="#96897A" fill-opacity="0.45"/>
+          <text x="90" y="130" text-anchor="middle" font-size="9" fill="#96897A">69.7</text>
+          <rect x="120" y="128" width="20" height="92" fill="#B54A2C" fill-opacity="0.7"/>
+          <text x="130" y="123" text-anchor="middle" font-size="9" fill="#B54A2C" font-weight="600">71.3</text>
+        </g>
+        <!-- GSM8K -->
+        <g transform="translate(140,0)">
+          <text x="110" y="40" text-anchor="middle" font-size="10" fill="#96897A">GSM-8K</text>
+          <rect x="80" y="156" width="20" height="64" fill="#96897A" fill-opacity="0.45"/>
+          <text x="90" y="151" text-anchor="middle" font-size="9" fill="#96897A">63.4</text>
+          <rect x="120" y="148" width="20" height="72" fill="#B54A2C" fill-opacity="0.7"/>
+          <text x="130" y="143" text-anchor="middle" font-size="9" fill="#B54A2C" font-weight="600">65.7</text>
+        </g>
+        <!-- MATH -->
+        <g transform="translate(280,0)">
+          <text x="110" y="40" text-anchor="middle" font-size="10" fill="#96897A">MATH</text>
+          <rect x="80" y="206" width="20" height="14" fill="#96897A" fill-opacity="0.45"/>
+          <text x="90" y="201" text-anchor="middle" font-size="9" fill="#96897A">12.0</text>
+          <rect x="120" y="193" width="20" height="27" fill="#B54A2C" fill-opacity="0.7"/>
+          <text x="130" y="188" text-anchor="middle" font-size="9" fill="#B54A2C" font-weight="600">22.7</text>
+        </g>
+        <!-- MBPP -->
+        <g transform="translate(420,0)">
+          <text x="110" y="40" text-anchor="middle" font-size="10" fill="#96897A">MBPP</text>
+          <rect x="80" y="173" width="20" height="47" fill="#96897A" fill-opacity="0.45"/>
+          <text x="90" y="168" text-anchor="middle" font-size="9" fill="#96897A">39.6</text>
+          <rect x="120" y="163" width="20" height="57" fill="#B54A2C" fill-opacity="0.7"/>
+          <text x="130" y="158" text-anchor="middle" font-size="9" fill="#B54A2C" font-weight="600">47.8</text>
+        </g>
+        <!-- ARC-c -->
+        <g transform="translate(560,0)">
+          <text x="50" y="40" text-anchor="middle" font-size="10" fill="#96897A">ARC-c</text>
+          <rect x="20" y="127" width="20" height="93" fill="#96897A" fill-opacity="0.45"/>
+          <text x="30" y="122" text-anchor="middle" font-size="9" fill="#96897A">78.3</text>
+          <rect x="60" y="118" width="20" height="102" fill="#B54A2C" fill-opacity="0.7"/>
+          <text x="70" y="113" text-anchor="middle" font-size="9" fill="#B54A2C" font-weight="600">85.1</text>
+        </g>
+
+        <!-- 图例 -->
+        <rect x="60" y="252" width="14" height="10" fill="#96897A" fill-opacity="0.45"/>
+        <text x="80" y="261" font-size="10" fill="#96897A">Llama 2 70B</text>
+        <rect x="180" y="252" width="14" height="10" fill="#B54A2C" fill-opacity="0.7"/>
+        <text x="200" y="261" font-size="10" fill="#B54A2C">Mixtral 8x7B</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 关键基准对比（数据来源 OpenCompass，纵轴为分数 0–90）</figcaption>
+  </figure>
+
+  <p>还有两个让人意外的发现。其一是<em>长上下文真的能用</em>：在 32k 上下文的 passkey 检索任务上，Mixtral 无论信息藏在序列的哪个位置，准确率都接近 100%——"大海捞针"它真捞得着。其二是<em>指令版很强</em>：Mixtral 8x7B – Instruct 在 MT-Bench 拿到 8.30，超越了 GPT-3.5 Turbo、Claude-2.1、Gemini Pro 和 Llama 2 70B Chat——一个开源模型，把一票闭源旗舰挤在身后，这在 2024 年初是震撼性的。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>Mixtral 的意义远不止"又一个强模型"。它一次性改变了三件事。</p>
+  <p>第一，<em>把 MoE 从"Google 专利"变成"开源标配"</em>。在它之后，DeepSeek-MoE、Qwen-MoE、OLMoE、Phi-3.5-MoE 接连出现，开源界几乎一夜之间从"稠密模型内卷"切到"MoE 军备竞赛"。今天大家熟悉的 Qwen3-30B-A3B、DeepSeek-V2/V3 全是这条线上的后代。</p>
+  <p>第二，<em>坐实了"旗舰模型都是 MoE"的猜测</em>。OpenAI 从未承认 GPT-4 是 MoE，但 Mixtral 用开源权重证明了"稀疏 MoE 能在 13B 算力上打出 GPT-3.5 水平"是工程上完全可行的——这让大家更坚信，闭源旗舰的"恐怖能力/成本比"背后，几乎可以肯定藏着专家混合。</p>
+  <p>第三，<em>它给"参数-算力解耦"立了一根标杆</em>。从此 LLM 的规模化不再只是"把稠密模型做大"，而是"在固定算力下塞进更多参数容量"——这是 2024 年之后大模型架构演进的主旋律。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>MoE 不是免费午餐，Mixtral 把它的代价也一并暴露了出来。</p>
+  <p>最明显的是<em>显存占用</em>。虽然每个 token 只算 13B，但 46.7B 的参数<em>全都得常驻显存</em>——你没法只加载 2 个专家。这让 Mixtral 的部署门槛反而比 13B 稠密模型高得多，消费级显卡想单卡跑满血 Mixtral 基本无望，得上多卡或量化。算力省了，<em>显存却更贵了</em>。</p>
+  <p>其次是<em>专家负载不均</em>。如果路由器偏爱某几个专家，那几个专家会被"挤爆"而其余闲置，吞吐和训练稳定性都受影响。Mixtral 没有在论文里强调复杂的负载均衡损失，但后来的 MoE 工作（如 DeepSeek-V2 的偏置项微调）专门花大力气解决它。</p>
+  <p>还有一个有趣的"哲学问题"：论文的路由分析显示，<em>8 个专家并没有形成清晰的"领域分工"</em>（比如一个专写代码、一个专做数学）。相反，专家选择更多表现出"时序局部性"——同一个句子里的相邻 token 倾向于选同一批专家。这意味着"专家"更像是在做某种隐式的特征分工，而不是人类直觉中的"专科医生"。这是 MoE 可解释性上至今未解的谜。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把 MoE 这条暗线和本系列的主线拼起来，能看清 Mixtral 的全貌。</p>
+  <p>MoE 的源头是 1991 年 Jacobs 与 Hinton 的"局部专家混合"，想法是让不同专家学不同子任务。但它沉睡了二十多年，直到 2017 年 Shazeer 的 <em class="latin">Outrageously Large Neural Networks</em> 用"稀疏门控 + Top-K"把它唤醒，推到千亿参数 LSTM。随后 Google 在 2020–2022 年密集产出 GShard、Switch Transformer（K=1 极致稀疏）、GLaM、ST-MoE，把 MoE 推上万亿参数——但<em>全部闭源</em>。</p>
+  <p>与此同时，本系列的主线在另一条路上狂奔：Transformer（2017）→ BERT/GPT-2 预训练 → GPT-3 规模化 → Chinchilla 配比校准 → InstructGPT 对齐 → LLaMA 开源 → DPO 简化对齐 → Mistral 7B 高效推理。这两条线在 2024 年初的 Mixtral 这里<em>历史性交汇</em>：MoE 的稀疏架构 + 开源权重 + 已成熟的高效注意力（GQA/SWA）+ DPO 对齐，一次性凑齐。Mixtral 之后，MoE 不再是暗线，而成了主线本身——DeepSeek-V2、Qwen-MoE、Mixtral 8x22B 一路演进，直到 2025 年 DeepSeek-V3/R1 把开源 MoE 推到和闭源旗舰正面对抗的高度。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>Mixtral 最经典的故事，毫无疑问是<em>那条磁力链接</em>。2023 年 12 月 11 日，当全世界都在等 Mistral 发论文、发技术博客的时候，他们甩出一个 torrent 链接就下班过周末去了。没有 README，没有 benchmark，连模型架构都得社区自己逆向。这股"爱用不用"的傲娇劲儿，反倒把开源社区彻底点燃——几小时内 Hugging Face 上就出现了逆向分析帖，有人发现"卧槽这是 MoE"。这大概是 AI 史上最朋克的论文发布方式。</p>
+  <p>另一个有趣的细节是命名。<em class="latin">Mixtral</em> 这个名字是 <em class="latin">Mistral</em>（那股法国西北风）和 <em class="latin">Mixture</em>（混合）的拼贴——既保留了品牌，又点明了 MoE 的本质。而 "8x7B" 的写法也精准得可爱：8 个专家，每个约 7B 规模，<em>但不是 56B</em>——因为注意力层、嵌入层这些"共享部件"只算一份，所以总参数是 46.7B 而不是简单相乘。这个命名本身就在科普 MoE 的参数结构。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 医院 -->
+        <rect x="40" y="50" width="200" height="120" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="140" y="44" text-anchor="middle" font-size="10" fill="#96897A">Mixtral 总医院（46.7B 知识储备）</text>
+        <!-- 8 个诊室 -->
+        <g>
+          <rect x="55" y="70" width="40" height="28" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C"/>
+          <text x="75" y="88" text-anchor="middle" font-size="9" fill="#B54A2C">E1✓</text>
+          <rect x="100" y="70" width="40" height="28" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="120" y="88" text-anchor="middle" font-size="9">E2</text>
+          <rect x="145" y="70" width="40" height="28" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="165" y="88" text-anchor="middle" font-size="9">E3</text>
+          <rect x="190" y="70" width="40" height="28" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="210" y="88" text-anchor="middle" font-size="9">E4</text>
+          <rect x="55" y="108" width="40" height="28" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="75" y="126" text-anchor="middle" font-size="9">E5</text>
+          <rect x="100" y="108" width="40" height="28" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="120" y="126" text-anchor="middle" font-size="9">E6</text>
+          <rect x="145" y="108" width="40" height="28" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="165" y="126" text-anchor="middle" font-size="9">E7</text>
+          <rect x="190" y="108" width="40" height="28" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C"/>
+          <text x="210" y="126" text-anchor="middle" font-size="9" fill="#B54A2C">E8✓</text>
+        </g>
+        <text x="140" y="158" text-anchor="middle" font-size="9.5" fill="#96897A">前台 Router：只叫 2 位出诊</text>
+
+        <!-- 病人 token -->
+        <circle cx="320" cy="110" r="14" fill="#24555A" fill-opacity="0.25" stroke="#24555A"/>
+        <text x="320" y="114" text-anchor="middle" font-size="9" fill="#24555A">token</text>
+        <line x1="240" y1="110" x2="306" y2="110" stroke="#96897A" marker-end="url(#m-arrow2)"/>
+
+        <!-- 出诊 -->
+        <rect x="420" y="80" width="70" height="34" rx="2" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C"/>
+        <text x="455" y="101" text-anchor="middle" font-size="9.5" fill="#B54A2C">专家 E1</text>
+        <rect x="420" y="120" width="70" height="34" rx="2" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C"/>
+        <text x="455" y="141" text-anchor="middle" font-size="9.5" fill="#B54A2C">专家 E8</text>
+        <line x1="334" y1="105" x2="420" y2="97" stroke="#B54A2C" stroke-width="0.9"/>
+        <line x1="334" y1="115" x2="420" y2="137" stroke="#B54A2C" stroke-width="0.9"/>
+
+        <!-- 诊断书 -->
+        <rect x="540" y="90" width="120" height="44" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="600" y="108" text-anchor="middle" font-size="9.5" fill="#24555A">会诊结论</text>
+        <text x="600" y="124" text-anchor="middle" font-size="9" fill="#24555A">w₁·E1 + w₈·E8</text>
+        <line x1="490" y1="112" x2="540" y2="112" stroke="#96897A" marker-end="url(#m-arrow2)"/>
+
+        <text x="360" y="186" text-anchor="middle" font-size="9.5" fill="#96897A">每个 token 只消耗 2 位专家的精力，却用上了整座医院的知识</text>
+      </g>
+      <defs>
+        <marker id="m-arrow2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · "分诊制医院"类比：MoE 的稀疏激活，就是把全院会诊改成按需点名</figcaption>
+  </figure>
+
+  <p>顺便说一句团队去向：Mistral AI 这家 2023 年才成立的公司，靠 Mistral 7B 和 Mixtral 8x7B 两发"连环炮"在一年内估值飙升，成为欧洲 AI 的旗帜。而 Arthur Mensch（CEO）写过 Chinchilla、Guillaume Lample 和 Timothée Lacroix 写过 LLaMA——这群从大厂出来的年轻人，把"scaling law + 开源 + 高效架构"三件事拧成了一股绳，Mixtral 就是这股绳上最关键的那个结。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读 Mixtral，我最深的感受是它把一个哲学问题变成了工程现实：<em>智能的瓶颈，到底是"算力"还是"知识"？</em>稠密模型时代，这两者被强行绑定——你想要更多知识，就得为每个 token 付更多算力税。MoE 的洞察在于：大多数知识在大多数 token 上其实是"睡着的"，没必要每次都全量唤醒。把"知识容量"和"激活算力"解耦，本质上是在承认<em>智能是一种稀疏激活现象</em>。</p>
+  <p>这也解释了为什么 2024 年之后 MoE 几乎成了大模型的"默认架构"。当 Chinchilla 把"数据-参数"配比优化到极致后，继续在稠密模型上堆参数的边际收益越来越低，而 MoE 提供了一条"在不增加推理算力的前提下扩容"的新维度。可以断言：未来我们看到的绝大多数旗舰模型——无论开源闭源——都会是某种形式的 MoE，差别只在专家粒度、路由策略和负载均衡的精巧程度上。</p>
+  <p>但 Mixtral 也留下一个开放问题：如果专家之间没有清晰的领域分工，那"专家"这个名字是不是有点误导？它到底在分工什么？理解这一点，或许才是真正读懂 MoE 的钥匙。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果让你设计下一代 MoE，你会怎么让那 6 个"闲置专家"也派上用场——比如在训练时做点辅助计算、或者让专家之间共享一部分参数？想想看，这或许就是 2024 年之后 MoE 架构创新最热闹的战场。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model</h3>
+    <p style="margin:0;">Mixtral 把 MoE 的门踹开了，但 46.7B 参数全得塞进显存的"大胃病"还在。下一篇，来自中国的 DeepSeek 团队要动两把更狠的刀：用 MLA（多头潜在注意力）把 KV 缓存压到原来的 1/14，再用细粒度专家把 MoE 的性价比推向新极限。当开源 MoE 开始精打细算到每一个 bit，故事才刚刚热起来。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 010 篇</span>
+    <span>2026-08-07</span>
+  </footer>
+
+</div>
+</body>
+</html>

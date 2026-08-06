@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 9,
-  "last_run_date": "2026-08-06",
+  "last_index": 10,
+  "last_run_date": "2026-08-07",
   "papers_covered": [
     {
       "index": 1,
@@ -74,10 +74,18 @@
       "date": "2023-10-10",
       "era": "前沿演进期 2023–2024",
       "filename": "9_20260806_Mistral_7B.html"
+    },
+    {
+      "index": 10,
+      "title_en": "Mixtral of Experts",
+      "title_zh": "Mixtral 8x7B：稀疏专家混合让 12.9B 激活参数匹敌 GPT-3.5，MoE 正式走向主流",
+      "date": "2024-01-08",
+      "era": "前沿演进期 2023–2024",
+      "filename": "10_20260807_Mixtral_8x7B.html"
     }
   ],
   "next_preview": {
-    "title_en": "Mixtral of Experts",
-    "title_zh": "Mixtral 8x7B：稀疏专家混合让 12.9B 激活参数匹敌 GPT-3.5，MoE 正式走向主流"
+    "title_en": "DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model",
+    "title_zh": "DeepSeek-V2：MLA + 细粒度 MoE，把 KV 缓存压到 1/14，重新定义开源 MoE 的性价比"
   }
 }
