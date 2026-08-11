@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 11,
-  "last_run_date": "2026-08-11",
+  "last_index": 12,
+  "last_run_date": "2026-08-12",
   "papers_covered": [
     {
       "index": 1,
@@ -90,10 +90,18 @@
       "date": "2024-05-07",
       "era": "前沿演进期 2023–2024",
       "filename": "11_20260811_DeepSeek_V2.html"
+    },
+    {
+      "index": 12,
+      "title_en": "DeepSeek-V3 Technical Report",
+      "title_zh": "DeepSeek-V3：FP8 训练 + 无辅助损失 MoE，671B 模型只花 557.6 万美元，开源 MoE 走向极致性价比",
+      "date": "2024-12-26",
+      "era": "前沿演进期 2023–2024",
+      "filename": "12_20260812_DeepSeek_V3.html"
     }
   ],
   "next_preview": {
-    "title_en": "DeepSeek-V3 Technical Report",
-    "title_zh": "DeepSeek-V3：FP8 训练 + 无辅助损失 MoE，671B 模型只花 557.6 万美元，开源 MoE 走向极致性价比"
+    "title_en": "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning",
+    "title_zh": "DeepSeek-R1：纯强化学习让模型自己'顿悟'出思维链——当奖励只剩'答案对不对'，模型竟自发学会了反思与验证"
   }
 }
