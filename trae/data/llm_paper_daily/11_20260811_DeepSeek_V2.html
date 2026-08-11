@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeepSeek-V2 论文精读 · 大模型经典论文系列 #011</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#011</span>
+  </div>
+
+  <h1 class="title">
+    DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model
+    <span class="en">DeepSeek-V2：MLA + 细粒度 MoE，把 KV 缓存压到 1/14，重新定义开源 MoE 的性价比</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：DeepSeek-AI 团队（深度求索）</span>
+    <span>机构：DeepSeek-AI（杭州）</span>
+    <span>发表：2024-05 / arXiv 2405.04434</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2405.04434" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/deepseek-ai/DeepSeek-V2" target="_blank" rel="noopener">GitHub</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">2024 年 5 月初，中国大模型圈被一份 API 价格表惊醒。DeepSeek 把 <em class="latin">DeepSeek-V2</em> 的输入价格定在每百万 tokens <em>1 元人民币</em>，输出 <em>2 元</em>。同期同等量级的 GPT-4 Turbo 报价是它的近 <em>120 倍</em>，闭源旗舰们一夜之间显得格外昂贵。降价潮随即席卷整个国内市场——通义千问、智谱、Kimi 跟着砍价，新闻标题里第一次出现"大模型价格战"五个字。</p>
+  <p class="lead">所有人都想知道：这家一年前还籍籍无名的杭州团队，到底用了什么魔法？答案在一个月后揭晓的技术报告里。236B 总参数、只激活 21B，KV 缓存砍掉 93.3%，最大生成吞吐拉到 5.76 倍，效果却追平 Llama 3 70B、Mixtral 8x22B——这是一份把"经济"两个字写进标题的论文，也是中国开源大模型第一次在<em>架构层面</em>而不是工程层面，弯道超车的拐点。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    用 MLA（多头潜在注意力）把 KV 缓存压到原来的 1/14，用细粒度 DeepSeekMoE 把 236B 总参数压成 21B 激活算力，用 GRPO 拿掉强化学习里的价值网络——三刀齐下，让一个 21B 算力的模型打出 70B 稠密模型的效果，把开源 MoE 的性价比推到一个全新的高度。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>上一篇我们讲 Mixtral 8x7B，它把 MoE 从"Google 专利"变成了开源标配，把 8 个专家、每个 token 选 2 个的范式交到了所有人手里。但 Mixtral 也留下了两个"大胃病"：第一，<em>46.7B 参数全都得常驻显存</em>，部署门槛比 13B 稠密模型高得多；第二，<em>注意力层还是老式 MHA</em>，KV 缓存随上下文线性膨胀，128k 长上下文推理几乎不可承受。</p>
+  <p>DeepSeek-V2 正好踩在这两个痛点上动刀。它沿着 Mixtral 开的"开源 MoE"这条路继续走，但把刀伸向了之前所有人都没敢碰的地方——<em>注意力机制本身</em>。这是第一次有团队在主流开源 LLM 里用一种全新的注意力（MLA）替代 MHA/GQA，并把 MoE 的"专家粒度"做到了 Mixtral 的二十倍细。<em>推理成本</em>这个长期被忽视的维度，从此被写进了大模型架构设计的核心议程。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 240" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="125" x2="690" y2="125" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="10.5" fill="#96897A">
+        <circle cx="60" cy="125" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="60" y="105" text-anchor="middle" fill="#2E2A22">2017</text>
+        <text x="60" y="153" text-anchor="middle">Transformer</text>
+
+        <circle cx="130" cy="125" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="130" y="105" text-anchor="middle" fill="#2E2A22">2018</text>
+        <text x="130" y="153" text-anchor="middle">BERT</text>
+
+        <circle cx="195" cy="125" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="195" y="105" text-anchor="middle" fill="#2E2A22">2019</text>
+        <text x="195" y="153" text-anchor="middle">GPT-2</text>
+
+        <circle cx="255" cy="125" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="255" y="105" text-anchor="middle" fill="#2E2A22">2020</text>
+        <text x="255" y="153" text-anchor="middle">GPT-3</text>
+
+        <circle cx="330" cy="125" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="330" y="105" text-anchor="middle" fill="#2E2A22">2022</text>
+        <text x="330" y="153" text-anchor="middle">Chinchilla</text>
+
+        <circle cx="395" cy="125" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="395" y="105" text-anchor="middle" fill="#2E2A22">2022</text>
+        <text x="395" y="153" text-anchor="middle">InstructGPT</text>
+
+        <circle cx="470" cy="125" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="470" y="105" text-anchor="middle" fill="#2E2A22">2023</text>
+        <text x="470" y="153" text-anchor="middle">LLaMA</text>
+
+        <circle cx="540" cy="125" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="540" y="105" text-anchor="middle" fill="#2E2A22">2023</text>
+        <text x="540" y="153" text-anchor="middle">DPO</text>
+
+        <circle cx="600" cy="125" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="600" y="105" text-anchor="middle" fill="#2E2A22">2023.10</text>
+        <text x="600" y="153" text-anchor="middle">Mistral 7B</text>
+
+        <circle cx="640" cy="125" r="4.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="640" y="183" text-anchor="middle" fill="#2E2A22" font-size="9.5">24.01</text>
+        <text x="640" y="197" text-anchor="middle" fill="#2E2A22" font-size="9.5">Mixtral</text>
+
+        <!-- 本篇 -->
+        <circle cx="675" cy="125" r="8" fill="#B54A2C"/>
+        <text x="675" y="97" text-anchor="middle" fill="#B54A2C" font-weight="600">2024.05</text>
+        <text x="675" y="155" text-anchor="middle" fill="#2E2A22" font-weight="600">DeepSeek-V2</text>
+        <text x="675" y="169" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇</text>
+
+        <!-- 中国开源 MoE 暗线 -->
+        <text x="60" y="210" font-size="9.5" fill="#24555A">↑ 推理成本暗线：MQA(2019) → GQA(2023) → 本篇 MLA → 后续 Qwen3 / DeepSeek-V3 全员跟进</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的 DeepSeek-V2 位置（红色高亮为本篇，灰点为系列已解析论文）</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要理解 DeepSeek-V2 为什么必须动这两刀，得先看清楚 MoE 模型在 2024 年初撞上的那堵墙。</p>
+  <p>MoE 把"参数容量"和"激活算力"解耦之后，<em>推理算力</em>确实省了，但有两个东西没省下来——甚至更贵了。第一个是<em>显存</em>：所有专家的参数都得常驻显存，Mixtral 8x7B 虽然 13B 算力，但 46.7B 参数的"占地面积"让消费级显卡根本塞不下。第二个是 <em>KV 缓存</em>：这是 attention 机制特有的副产品。</p>
+
+  <div class="callout">
+    <span class="label">类比 · KV 缓存是什么</span>
+    把 attention 想象成一场大型会议。每个 token（参会者）发言前，都得把之前所有发言者的"会议笔记"翻一遍——这些笔记就是 KV 缓存。token 越多、笔记越厚，翻起来越慢。稠密 70B 模型在 128k 上下文下，KV 缓存能轻松吃掉几十 GB 显存；MoE 模型更惨——虽然 FFN 算力省了，但 attention 部分还是稠密的，KV 缓存一分都没省，反而因为长上下文需求被放大了。
+  </div>
+
+  <p>针对 KV 缓存，学界其实早有尝试。<em class="latin">Multi-Query Attention</em>（MQA，Shazeer 2019）让所有头共享同一对 K、V，缓存砍到 1/N，但性能明显掉。<em class="latin">Grouped-Query Attention</em>（GQA，Ainslie 2023，Mistral 7B 用的就是它）折中一下：把头分组、组内共享，缓存砍一半、性能几乎不掉。再往下走，似乎只有"用更少信息换更小缓存"这条路，代价都是性能损失。</p>
+  <p>DeepSeek 团队盯上了另一个被忽视的方向：<em>不减少缓存承载的信息量，而是换一种更紧凑的存储方式</em>。这是 MLA 的灵感来源——思路接近 LoRA（低秩适配），既然 K、V 可以由隐藏状态线性投影得到，那为什么不在中间插一个"瓶颈"，只缓存那个瓶颈向量？</p>
+  <p>MoE 这一侧也有类似问题。Mixtral 用 8 个粗粒度专家，每个专家都是一个完整的 FFN，"专业分工"听起来美好，但实际很难学得干净——一个大专家里同时混着代码、数学、语言知识，路由器选谁都差不多。DeepSeek-V2 沿用了团队自己之前提出的 <em class="latin">DeepSeekMoE</em>（Dai et al. 2024）方案：<em>把大专家拆成更小的细粒度专家，并保留几个所有 token 都走的"共享专家"</em>，让分工更精细。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>DeepSeek-V2 要回答的，是一个看似自相矛盾的问题：<em>能不能同时让 KV 缓存小到极致，又让 attention 性能不掉反升？能不能让 236B 参数的 MoE 模型，在数学、代码、中文这些"硬骨头"上追平甚至超过参数量更大的开源对手，同时把训练成本砍掉 42.5%、把推理吞吐拉到 5.76 倍？</em></p>
+  <p>换句话说——"省"和"强"传统上是 trade-off，这篇论文想证明：架构改对了，这两件事可以同时发生。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果你来设计一种新的 attention，目标是把 KV 缓存压到 MHA 的 1/10 以下，又不损失性能——你会怎么做？是减头（像 GQA）、还是换一种完全不同的存储方式？先想想你的直觉答案，再往下看 MLA 是怎么拆这个局的。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>DeepSeek-V2 的架构可以拆成两大块：<em>MLA 负责"省 KV 缓存"，DeepSeekMoE 负责"省算力"</em>。再加上对齐阶段使用的 GRPO，一共三处创新。我们一块一块拆。</p>
+
+  <h3>第一刀：MLA —— 用低秩压缩改写 KV 缓存</h3>
+  <p>标准 MHA 的做法是：每个 token 在每一层、每个注意力头上，都产生一对 $K$ 和 $V$ 向量，缓存里要把它们全部存下来。DeepSeek-V2 的 MLA 走了一条完全不同的路——<em>不存 K 和 V，只存一个更小的"潜在向量"</em>，用到时再把它"解压"回 K 和 V。</p>
+
+  <p>具体来说，对每个 token 的隐藏状态 $h_t$，先用一个<em>下投影矩阵</em> $W^{DKV}$ 把它压成一个紧凑向量 $c_t$：</p>
+
+  <div class="formula-block">
+    $$ c_t = W^{DKV}\, h_t \in \mathbb{R}^{d_c}, \quad d_c \ll n_h \cdot d_h $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>缓存里只存 $c_t$。当 attention 真正要算 K、V 时，再用两个<em>上投影矩阵</em>把它解压回来：</p>
+
+  <div class="formula-block">
+    $$ K_t = W^{UK}\, c_t, \qquad V_t = W^{UV}\, c_t $$
+    <span class="eqn mono">(2)</span>
+  </div>
+
+  <p>关键数字在这里：DeepSeek-V2 把 $d_c$ 压到 <em>512 维</em>，而原本每层每 token 要存的 K+V 维度是 $2 \cdot n_h \cdot d_h \approx 2 \cdot 128 \cdot 128 \approx 32768$ 维。<em>压缩比 1/14 都打不住</em>，论文里报告 KV 缓存总体减少 93.3%。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 290" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ds-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 输入 h_t -->
+        <rect x="20" y="130" width="80" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="60" y="155" text-anchor="middle">h_t (隐藏状态)</text>
+
+        <!-- 下投影 -->
+        <rect x="150" y="120" width="100" height="60" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="200" y="143" text-anchor="middle" fill="#24555A" font-weight="600">下投影 W^DKV</text>
+        <text x="200" y="160" text-anchor="middle" font-size="9" fill="#24555A">d → d_c (512)</text>
+        <line x1="100" y1="150" x2="150" y2="150" stroke="#96897A" marker-end="url(#ds-arrow)"/>
+
+        <!-- 潜在向量 c_t（缓存对象） -->
+        <rect x="300" y="120" width="100" height="60" rx="2" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C" stroke-width="1.5"/>
+        <text x="350" y="143" text-anchor="middle" fill="#B54A2C" font-weight="600">潜在向量 c_t</text>
+        <text x="350" y="160" text-anchor="middle" font-size="9" fill="#B54A2C">★ 只缓存这个</text>
+        <line x1="250" y1="150" x2="300" y2="150" stroke="#96897A" marker-end="url(#ds-arrow)"/>
+
+        <!-- 缓存符号 -->
+        <text x="350" y="200" text-anchor="middle" font-size="10" fill="#96897A">↕ 进入 KV 缓存</text>
+        <rect x="305" y="210" width="90" height="22" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="3 2"/>
+        <text x="350" y="225" text-anchor="middle" font-size="9" fill="#96897A">d_c = 512 维</text>
+
+        <!-- 上投影分支 -->
+        <rect x="470" y="80" width="100" height="40" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="520" y="105" text-anchor="middle" fill="#24555A" font-weight="600">上投影 W^UK</text>
+
+        <rect x="470" y="180" width="100" height="40" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="520" y="205" text-anchor="middle" fill="#24555A" font-weight="600">上投影 W^UV</text>
+
+        <path d="M 400 140 C 430 110, 440 100, 470 100" fill="none" stroke="#96897A" marker-end="url(#ds-arrow)"/>
+        <path d="M 400 160 C 430 190, 440 200, 470 200" fill="none" stroke="#96897A" marker-end="url(#ds-arrow)"/>
+
+        <!-- 重建出的 K, V -->
+        <rect x="610" y="80" width="80" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="650" y="105" text-anchor="middle">K_t（重建）</text>
+        <rect x="610" y="180" width="80" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="650" y="205" text-anchor="middle">V_t（重建）</text>
+        <line x1="570" y1="100" x2="610" y2="100" stroke="#96897A" marker-end="url(#ds-arrow)"/>
+        <line x1="570" y1="200" x2="610" y2="200" stroke="#96897A" marker-end="url(#ds-arrow)"/>
+
+        <!-- 标注对比 -->
+        <text x="360" y="40" text-anchor="middle" font-size="11" fill="#B54A2C" font-weight="600">MLA：缓存只存"潜在向量"，用到时再解压</text>
+        <text x="360" y="270" text-anchor="middle" font-size="10" fill="#96897A">缓存维度从 2·n_h·d_h ≈ 32768 压到 d_c = 512，约 1/14</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · MLA 工作流：下投影成潜在向量 → 缓存 → 上投影重建 K/V，缓存体积缩小到约 1/14</figcaption>
+  </figure>
+
+  <p>但这里有个看似无解的麻烦：<em>RoPE（旋转位置编码）和低秩压缩天然打架</em>。RoPE 是要对 K 做位置相关的旋转操作，可如果你在压缩前先旋转，重建出来的 K 就不再是 $W^{UK} c_t$ 这种干净的线性形式了——吸收技巧失效，缓存就得退化回存完整 K。</p>
+  <p>DeepSeek 的解法干脆利落，叫"<em>解耦 RoPE</em>"——把每个 query 和 key 都拆成两条并行通道：一条走纯内容（不带位置，享受低秩压缩红利），一条走位置信息（保留 RoPE，但不压缩，维度很小）。两条路算出来的 attention 分数加在一起，位置感知和缓存压缩两不误。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 四种注意力机制对比 -->
+        <text x="360" y="20" text-anchor="middle" font-size="12" font-weight="600">四种注意力机制的 KV 缓存对比（每层每 token）</text>
+
+        <!-- MHA -->
+        <g transform="translate(0,40)">
+          <text x="90" y="20" text-anchor="middle" font-weight="600">MHA</text>
+          <text x="90" y="38" text-anchor="middle" font-size="9.5" fill="#96897A">每头独立 K, V</text>
+          <rect x="20" y="50" width="140" height="50" fill="#96897A" fill-opacity="0.55" stroke="#96897A"/>
+          <text x="90" y="80" text-anchor="middle" fill="#F4EFE4" font-size="10">2·n_h·d_h 维</text>
+          <text x="90" y="120" text-anchor="middle" font-size="9.5" fill="#B54A2C">缓存最大 / 性能最佳</text>
+        </g>
+
+        <!-- GQA -->
+        <g transform="translate(180,40)">
+          <text x="90" y="20" text-anchor="middle" font-weight="600">GQA</text>
+          <text x="90" y="38" text-anchor="middle" font-size="9.5" fill="#96897A">分组共享 K, V</text>
+          <rect x="20" y="50" width="140" height="50" fill="#96897A" fill-opacity="0.32" stroke="#96897A"/>
+          <text x="90" y="80" text-anchor="middle" fill="#F4EFE4" font-size="10">~1/g · 缓存</text>
+          <text x="90" y="120" text-anchor="middle" font-size="9.5" fill="#24555A">缓存减半 / 性能略降</text>
+        </g>
+
+        <!-- MQA -->
+        <g transform="translate(360,40)">
+          <text x="90" y="20" text-anchor="middle" font-weight="600">MQA</text>
+          <text x="90" y="38" text-anchor="middle" font-size="9.5" fill="#96897A">全头共享 K, V</text>
+          <rect x="20" y="50" width="140" height="50" fill="#96897A" fill-opacity="0.18" stroke="#96897A"/>
+          <text x="90" y="80" text-anchor="middle" fill="#2E2A22" font-size="10">1·d_h 维（最小）</text>
+          <text x="90" y="120" text-anchor="middle" font-size="9.5" fill="#B54A2C">缓存最小 / 性能掉明显</text>
+        </g>
+
+        <!-- MLA -->
+        <g transform="translate(540,40)">
+          <text x="90" y="20" text-anchor="middle" font-weight="600" fill="#B54A2C">MLA（本篇）</text>
+          <text x="90" y="38" text-anchor="middle" font-size="9.5" fill="#96897A">低秩潜在向量</text>
+          <rect x="20" y="50" width="140" height="50" fill="#B54A2C" fill-opacity="0.35" stroke="#B54A2C" stroke-width="1.5"/>
+          <text x="90" y="80" text-anchor="middle" fill="#F4EFE4" font-size="10">d_c 维（极小）</text>
+          <text x="90" y="120" text-anchor="middle" font-size="9.5" fill="#B54A2C" font-weight="600">缓存最小 / 性能反超 MHA</text>
+        </g>
+
+        <!-- 缓存体积示意条 -->
+        <text x="20" y="160" font-size="10" fill="#96897A">缓存体积：</text>
+        <rect x="90"  y="155" width="120" height="14" fill="#96897A" fill-opacity="0.55"/>
+        <text x="216" y="166" font-size="9.5" fill="#96897A">MHA</text>
+        <rect x="260" y="155" width="60"  height="14" fill="#96897A" fill-opacity="0.32"/>
+        <text x="326" y="166" font-size="9.5" fill="#96897A">GQA</text>
+        <rect x="370" y="155" width="20"  height="14" fill="#96897A" fill-opacity="0.18"/>
+        <text x="396" y="166" font-size="9.5" fill="#96897A">MQA</text>
+        <rect x="430" y="155" width="14"  height="14" fill="#B54A2C" fill-opacity="0.7"/>
+        <text x="450" y="166" font-size="9.5" fill="#B54A2C" font-weight="600">MLA（最小）</text>
+
+        <!-- 性能示意条 -->
+        <text x="20" y="200" font-size="10" fill="#96897A">基准性能：</text>
+        <rect x="90"  y="195" width="100" height="14" fill="#24555A" fill-opacity="0.55"/>
+        <text x="196" y="206" font-size="9.5" fill="#24555A">MHA</text>
+        <rect x="260" y="195" width="92"  height="14" fill="#24555A" fill-opacity="0.45"/>
+        <text x="358" y="206" font-size="9.5" fill="#24555A">GQA</text>
+        <rect x="370" y="195" width="80"  height="14" fill="#24555A" fill-opacity="0.32"/>
+        <text x="456" y="206" font-size="9.5" fill="#24555A">MQA</text>
+        <rect x="490" y="195" width="105" height="14" fill="#B54A2C" fill-opacity="0.7"/>
+        <text x="601" y="206" font-size="9.5" fill="#B54A2C" font-weight="600">MLA（反超）</text>
+
+        <text x="360" y="240" text-anchor="middle" font-size="10" fill="#96897A">MLA 是唯一一个同时做到"缓存最小"和"性能不降反升"的方案</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · MHA / GQA / MQA / MLA 在 KV 缓存体积与基准性能上的对比（论文附录 C 消融实验数据）</figcaption>
+  </figure>
+
+  <p>更让人意外的是论文附录 C.2 的消融结果：<em>MLA 的性能不仅没掉，反而略高于标准 MHA</em>。这是个反直觉的发现——"压缩"通常意味着信息损失，但 MLA 的低秩瓶颈似乎起到了某种正则化作用，让注意力更聚焦。这也是为什么后来 Qwen3、DeepSeek-V3 全线跟进，MLA 几乎成了新一代中国开源 LLM 的"默认 attention"。</p>
+
+  <h3>第二刀：DeepSeekMoE —— 把专家拆得更细</h3>
+  <p>MoE 这边，DeepSeek 没有沿用 Mixtral 的"8 个大专家"路线，而是把<em>专家粒度做得非常细</em>。每一层有 <em>160 个路由专家 + 2 个共享专家</em>，每个 token 从 160 个里挑 <em>6 个</em>出来干活。</p>
+
+  <div class="callout">
+    <span class="label">类比 · 粗粒度 vs 细粒度 MoE</span>
+    Mixtral 像 8 个"全能主任医师"，每个主任什么病都能看，token 来了挑 2 个会诊——结果常常是 8 个主任之间能力高度重叠，分工不清晰。DeepSeekMoE 像 160 个"亚专科主治医师"：一个专攻 Python 语法、一个专攻微积分求导、一个专攻中文古文……token 来了挑 6 个最对口的。再加 2 个"全科医生"（共享专家）<em>所有 token 都过</em>，负责那些谁都需要的基础知识。这样知识分工精细得多，专家之间不打架。
+  </div>
+
+  <p>但这套设计立刻引出三个工程难题，DeepSeek 都给出了对应解法：</p>
+  <ul>
+    <li><em>负载不均</em>：如果路由器偏爱某几个专家，它们会被挤爆、其余闲置。论文引入<em>辅助损失</em>（auxiliary loss）惩罚专家选择概率与实际负载之间的偏差。</li>
+    <li><em>跨设备通信爆炸</em>：160 个专家分布在多张卡上，每个 token 都要跨卡取参数。论文设计了"<em>设备受限路由</em>"（device-limited routing）：每个 token 最多跨 4 台设备，把通信开销封顶。</li>
+    <li><em>计算溢出</em>：训练时如果某台设备被分配的 token 太多，会拖慢整批进度。论文设计了"<em>token 丢弃</em>"（token-dropping）策略：超载设备的低优先级 token 直接丢弃，保证训练吞吐。</li>
+  </ul>
+
+  <figure>
+    <svg viewBox="0 0 720 270" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ds-arrow2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- token 进入 -->
+        <rect x="20" y="115" width="80" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="60" y="140" text-anchor="middle">token x</text>
+
+        <!-- 路由器 -->
+        <rect x="135" y="115" width="80" height="40" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="175" y="135" text-anchor="middle" fill="#24555A" font-weight="600">Router</text>
+        <text x="175" y="150" text-anchor="middle" font-size="9" fill="#24555A">Top-6 of 160</text>
+        <line x1="100" y1="135" x2="135" y2="135" stroke="#96897A" marker-end="url(#ds-arrow2)"/>
+
+        <!-- 160 个路由专家（示意性画 8x5） -->
+        <text x="460" y="22" text-anchor="middle" font-size="10" fill="#96897A">160 个细粒度路由专家（每个 1536 维 FFN）</text>
+        <g>
+          <!-- 用网格点表示 40 个，实际 160 -->
+          <g fill="#ECE4D4" stroke="#96897A" stroke-width="0.6">
+            <!-- 第 1 行 -->
+            <rect x="270" y="32" width="22" height="14"/><rect x="295" y="32" width="22" height="14"/><rect x="320" y="32" width="22" height="14"/><rect x="345" y="32" width="22" height="14"/><rect x="370" y="32" width="22" height="14"/><rect x="395" y="32" width="22" height="14"/><rect x="420" y="32" width="22" height="14"/><rect x="445" y="32" width="22" height="14"/>
+            <rect x="270" y="50" width="22" height="14"/><rect x="295" y="50" width="22" height="14"/><rect x="320" y="50" width="22" height="14"/><rect x="345" y="50" width="22" height="14"/><rect x="370" y="50" width="22" height="14"/><rect x="395" y="50" width="22" height="14"/><rect x="420" y="50" width="22" height="14"/><rect x="445" y="50" width="22" height="14"/>
+            <rect x="270" y="68" width="22" height="14"/><rect x="295" y="68" width="22" height="14"/><rect x="320" y="68" width="22" height="14"/><rect x="345" y="68" width="22" height="14"/><rect x="370" y="68" width="22" height="14"/><rect x="395" y="68" width="22" height="14"/><rect x="420" y="68" width="22" height="14"/><rect x="445" y="68" width="22" height="14"/>
+            <rect x="270" y="86" width="22" height="14"/><rect x="295" y="86" width="22" height="14"/><rect x="320" y="86" width="22" height="14"/><rect x="345" y="86" width="22" height="14"/><rect x="370" y="86" width="22" height="14"/><rect x="395" y="86" width="22" height="14"/><rect x="420" y="86" width="22" height="14"/><rect x="445" y="86" width="22" height="14"/>
+            <rect x="270" y="104" width="22" height="14"/><rect x="295" y="104" width="22" height="14"/><rect x="320" y="104" width="22" height="14"/><rect x="345" y="104" width="22" height="14"/><rect x="370" y="104" width="22" height="14"/><rect x="395" y="104" width="22" height="14"/><rect x="420" y="104" width="22" height="14"/><rect x="445" y="104" width="22" height="14"/>
+          </g>
+          <!-- 被选中的 6 个 -->
+          <g fill="#B54A2C" fill-opacity="0.5" stroke="#B54A2C" stroke-width="1.2">
+            <rect x="295" y="32" width="22" height="14"/>
+            <rect x="345" y="50" width="22" height="14"/>
+            <rect x="420" y="68" width="22" height="14"/>
+            <rect x="270" y="86" width="22" height="14"/>
+            <rect x="395" y="104" width="22" height="14"/>
+            <rect x="445" y="86" width="22" height="14"/>
+          </g>
+          <text x="500" y="118" font-size="9.5" fill="#B54A2C">★ 6 个被激活</text>
+        </g>
+
+        <!-- 共享专家 -->
+        <rect x="270" y="140" width="197" height="34" rx="2" fill="#24555A" fill-opacity="0.18" stroke="#24555A" stroke-width="1.2"/>
+        <text x="368" y="161" text-anchor="middle" fill="#24555A" font-weight="600">2 个共享专家（所有 token 必经）</text>
+
+        <!-- 求和 -->
+        <rect x="510" y="115" width="80" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="550" y="135" text-anchor="middle">加权求和</text>
+        <text x="550" y="150" text-anchor="middle" font-size="9" fill="#96897A">6 路由 + 2 共享</text>
+        <line x1="467" y1="80" x2="510" y2="125" stroke="#B54A2C" stroke-width="0.9" marker-end="url(#ds-arrow2)"/>
+        <line x1="467" y1="157" x2="510" y2="140" stroke="#24555A" stroke-width="0.9" marker-end="url(#ds-arrow2)"/>
+
+        <!-- 输出 -->
+        <rect x="620" y="115" width="80" height="40" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="660" y="140" text-anchor="middle" fill="#24555A">输出</text>
+        <line x1="590" y1="135" x2="620" y2="135" stroke="#96897A" marker-end="url(#ds-arrow2)"/>
+
+        <!-- 底部对比 -->
+        <text x="20" y="220" font-size="10.5" fill="#96897A">Mixtral 8x7B：</text>
+        <text x="120" y="220" font-size="10.5" fill="#2E2A22">8 个粗粒度专家，激活 2 个</text>
+        <text x="20" y="240" font-size="10.5" fill="#B54A2C">DeepSeek-V2：</text>
+        <text x="120" y="240" font-size="10.5" fill="#B54A2C" font-weight="600">160 个细粒度路由专家 + 2 个共享专家，激活 6 个 + 2 个</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · DeepSeekMoE 的细粒度路由：160 个小专家中选 6 个，外加 2 个所有 token 都走的共享专家</figcaption>
+  </figure>
+
+  <p>共享专家这个设计尤其值得停下来说。它的存在让"<em>通用知识</em>"（比如语法、常见搭配）有一个固定承载位置，不必在 160 个路由专家之间重复学习；路由专家因此能专注"<em>专门知识</em>"。这个思路后来被 Qwen-MoE、OLMoE 等一系列后续工作继承。</p>
+
+  <h3>第三刀：GRPO —— 拿掉强化学习里的"价值网络"</h3>
+  <p>预训练完之后，DeepSeek-V2 走的是标准的 SFT + RL 两阶段对齐。RL 这一步用的是团队自己在 DeepSeekMath 论文里提出的 <em class="latin">GRPO</em>（Group Relative Policy Optimization）。理解 GRPO 之前，得先看 PPO 在 LLM 上有什么毛病。</p>
+  <p>PPO 是 ChatGPT 用的 RLHF 算法（参见本系列第 6 篇 InstructGPT），它的 Actor-Critic 架构要求<em>同时维护两个 LLM</em>：一个策略模型（Actor）负责生成、一个价值模型（Critic）负责估算"这个 prompt 的预期奖励是多少"。Critic 跟 Actor 一样大，<em>显存直接翻倍</em>。更糟的是，奖励信号通常只在序列末尾给（答案对/错），Critic 要从这种稀疏信号里学每个中间 token 的价值——既难训又不稳。</p>
+
+  <p>GRPO 的核心洞察就一句话：<em>不需要"学习"预期奖励，直接"测量"它</em>。对每个 prompt，让模型一次生成 K 个回答（论文里 K=8），打分，用<em>组内均值和标准差</em>当作基线，替代 Critic 学出来的价值函数。</p>
+
+  <div class="formula-block">
+    $$ \hat{A}_i = \frac{r_i - \mu_{\text{group}}}{\sigma_{\text{group}} + \epsilon}, \quad \mu_{\text{group}} = \frac{1}{K}\sum_{i=1}^{K} r_i $$
+    <span class="eqn mono">(3)</span>
+  </div>
+
+  <p>归一化之后，比组内平均好的回答得到正优势、被强化；差的得到负优势、被抑制。然后照搬 PPO 的 clip 目标做策略更新。<em>Critic 整个被拿掉了</em>——四个模型（Actor + Critic + Reward + Reference）变两个（Actor + Reward），显存砍掉一大块，训练也更稳。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ds-arrow3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- Prompt -->
+        <rect x="20" y="100" width="80" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="60" y="125" text-anchor="middle">Prompt x</text>
+
+        <!-- 生成 K 个回答 -->
+        <text x="200" y="60" text-anchor="middle" font-size="10" fill="#96897A">采样 K=8 个回答</text>
+        <rect x="135" y="70"  width="130" height="22" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="200" y="85" text-anchor="middle" font-size="10">y₁（reward=10）</text>
+        <rect x="135" y="95"  width="130" height="22" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="200" y="110" text-anchor="middle" font-size="10">y₂（reward=2）</text>
+        <rect x="135" y="120" width="130" height="22" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="200" y="135" text-anchor="middle" font-size="10">y₃（reward=4）</text>
+        <rect x="135" y="145" width="130" height="22" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="200" y="160" text-anchor="middle" font-size="10">y₄（reward=8）</text>
+        <text x="200" y="185" text-anchor="middle" font-size="9.5" fill="#96897A">... 共 8 个</text>
+        <line x1="100" y1="120" x2="135" y2="120" stroke="#96897A" marker-end="url(#ds-arrow3)"/>
+
+        <!-- 组内统计 -->
+        <rect x="305" y="95" width="120" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="365" y="115" text-anchor="middle" fill="#24555A" font-weight="600">组内统计</text>
+        <text x="365" y="132" text-anchor="middle" font-size="9.5" fill="#24555A">μ=6, σ≈3.16</text>
+        <line x1="265" y1="120" x2="305" y2="120" stroke="#96897A" marker-end="url(#ds-arrow3)"/>
+
+        <!-- 优势 -->
+        <rect x="465" y="95" width="120" height="50" rx="2" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C" stroke-width="1.2"/>
+        <text x="525" y="115" text-anchor="middle" fill="#B54A2C" font-weight="600">归一化优势</text>
+        <text x="525" y="132" text-anchor="middle" font-size="9.5" fill="#B54A2C">Â_i = (r_i-μ)/σ</text>
+        <line x1="425" y1="120" x2="465" y2="120" stroke="#96897A" marker-end="url(#ds-arrow3)"/>
+
+        <!-- 策略更新 -->
+        <rect x="620" y="95" width="80" height="50" rx="2" fill="#24555A" fill-opacity="0.18" stroke="#24555A"/>
+        <text x="660" y="115" text-anchor="middle" fill="#24555A">PPO-clip</text>
+        <text x="660" y="132" text-anchor="middle" font-size="9.5" fill="#24555A">策略更新</text>
+        <line x1="585" y1="120" x2="620" y2="120" stroke="#96897A" marker-end="url(#ds-arrow3)"/>
+
+        <!-- 标注 -->
+        <text x="360" y="210" text-anchor="middle" font-size="11" fill="#B54A2C" font-weight="600">关键：用"组内均值"替代 Critic 学出来的价值函数</text>
+        <text x="360" y="228" text-anchor="middle" font-size="10" fill="#96897A">Critic 整个网络被拿掉，显存砍掉约 40%-50%，训练更稳</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · GRPO 工作流：对同一 prompt 采样 K 个回答，用组内奖励的均值/标准差作为基线，无需 Critic 网络</figcaption>
+  </figure>
+
+  <p>GRPO 在 DeepSeek-V2 上还只是"省显存、训练稳"的工程改进，但同一年它在 DeepSeek-R1 上大放异彩——纯靠 GRPO + 规则奖励（答案对错），模型自发涌现出"反思—修正"的链式推理，被论文称为"aha moment"。这是后话，我们后面讲 R1 时还会再细讲。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>DeepSeek-V2 用 8.1T tokens 多语言语料预训练，再经 SFT（150 万对话）+ GRPO 对齐。结果用一句话概括：<em>21B 激活参数，全面追平、部分超越 70B 量级开源对手</em>。下表是几个关键基准的对比。</p>
+
+  <table>
+    <thead>
+      <tr><th>基准 / 任务</th><th>DeepSeek-V2</th><th>DeepSeek 67B</th><th>LLaMA 3 70B</th><th>Mixtral 8x22B</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">MMLU（综合知识）</td><td>78.5</td><td>76.3</td><td>78.9</td><td>77.6</td></tr>
+      <tr><td class="text">CMMLU（中文综合）</td><td>84.0</td><td>76.3</td><td>—</td><td>—</td></tr>
+      <tr><td class="text">HumanEval（代码）</td><td>69.5</td><td>53.7</td><td>67.1</td><td>45.1</td></tr>
+      <tr><td class="text">GSM8K（数学）</td><td>92.2</td><td>84.1</td><td>89.6</td><td>78.7</td></tr>
+      <tr><td class="text">MATH（竞赛数学）</td><td>57.6</td><td>32.9</td><td>50.4</td><td>43.2</td></tr>
+    </tbody>
+  </table>
+
+  <p>最刺眼的几行在<em>中文、代码、数学</em>这三类任务上。CMMLU 比 DeepSeek 67B 高出近 8 分，MATH 高出 24.7 分，HumanEval 高出 15.8 分——而 DeepSeek-V2 的激活参数只有 DeepSeek 67B 的 <em>31%</em>。论文特别强调，这些任务恰恰是最吃"<em>知识容量</em>"和"<em>精细推理</em>"的，正是细粒度 MoE + MLA 联手发力的方向。</p>
+
+  <p>更让人意外的是<em>训练成本与推理效率</em>的对比。和自家上一代 DeepSeek 67B 稠密模型相比，DeepSeek-V2 节省 42.5% 训练成本，KV 缓存减少 93.3%，最大生成吞吐提升到 5.76 倍。这是论文标题"economical, efficient"两个词最直接的兑现。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <text x="360" y="20" text-anchor="middle" font-size="12" font-weight="600">DeepSeek-V2 vs DeepSeek 67B：效率指标对比</text>
+
+        <!-- 训练成本 -->
+        <text x="40" y="60" font-size="11" fill="#96897A">训练成本</text>
+        <rect x="40" y="68" width="300" height="20" fill="#96897A" fill-opacity="0.45"/>
+        <text x="346" y="83" font-size="10" fill="#96897A">67B = 100%</text>
+        <rect x="40" y="68" width="173" height="20" fill="#B54A2C" fill-opacity="0.7"/>
+        <text x="179" y="83" font-size="10" fill="#F4EFE4" text-anchor="middle">V2 = 57.5%（-42.5%）</text>
+
+        <!-- KV 缓存 -->
+        <text x="40" y="120" font-size="11" fill="#96897A">KV 缓存</text>
+        <rect x="40" y="128" width="300" height="20" fill="#96897A" fill-opacity="0.45"/>
+        <text x="346" y="143" font-size="10" fill="#96897A">67B = 100%</text>
+        <rect x="40" y="128" width="20" height="20" fill="#B54A2C" fill-opacity="0.7"/>
+        <text x="70" y="143" font-size="10" fill="#B54A2C" font-weight="600">V2 = 6.7%（-93.3%）</text>
+
+        <!-- 生成吞吐 -->
+        <text x="40" y="180" font-size="11" fill="#96897A">最大生成吞吐</text>
+        <rect x="40" y="188" width="52" height="20" fill="#96897A" fill-opacity="0.45"/>
+        <text x="98" y="203" font-size="10" fill="#96897A">67B = 1×</text>
+        <rect x="40" y="188" width="300" height="20" fill="#B54A2C" fill-opacity="0.7"/>
+        <text x="190" y="203" font-size="10" fill="#F4EFE4" text-anchor="middle">V2 = 5.76×</text>
+
+        <!-- 激活参数 -->
+        <text x="40" y="240" font-size="11" fill="#96897A">激活参数</text>
+        <rect x="40" y="220" width="300" height="14" fill="none" stroke="none"/>
+        <text x="160" y="240" font-size="11" fill="#96897A">67B：</text>
+        <text x="200" y="240" font-size="11" fill="#2E2A22">67B 全激活</text>
+        <text x="430" y="240" font-size="11" fill="#B54A2C" font-weight="600">V2：</text>
+        <text x="460" y="240" font-size="11" fill="#B54A2C" font-weight="600">236B 总参 / 仅激活 21B</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 6</span> · DeepSeek-V2 相对自家 DeepSeek 67B 的效率提升：训练省 42.5%、KV 缓存省 93.3%、吞吐 5.76×</figcaption>
+  </figure>
+
+  <p>对话版本（DeepSeek-V2 Chat RL）的开放评测同样亮眼：英文 MT-Bench <em>8.97</em>，中文 AlignBench <em>7.91</em>——在 2024 年中，这是开源模型里第一梯队的水平。配合上面那组效率数字，DeepSeek-V2 Chat 在 API 平台上的报价直接定到 GPT-4 Turbo 的 <em>1/100</em> 量级，价格战由此引爆。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>DeepSeek-V2 是一篇"小论文撬动大行业"的典型。它的影响分三层。</p>
+  <p>第一层是<em>架构层面</em>。MLA 第一次证明了"低秩压缩 attention"可以做到 KV 缓存极小、性能反升。这个发现直接改写了中国开源大模型的 attention 选型——Qwen3、DeepSeek-V3、Kimi K2、MiniMax 等几乎所有 2024 下半年到 2025 年的新一代模型，要么直接用 MLA，要么用其变体。MHA/GQA 在旗舰级 LLM 里几乎被一夜淘汰。</p>
+  <p>第二层是<em>经济层面</em>。V2 是把"<em>推理成本</em>"这个词写进大模型架构设计核心议程的第一篇论文。在它之前，大家主要关心"训得起、训得好"；在它之后，"推理得起、推理得便宜"成为和模型能力同等重要的优化目标。<em>每 token 推理成本</em>从此成为和大模型价格直接挂钩的硬指标，引发 2024 年中国大模型价格战，让 LLM 真正开始走进中小开发者的日常工作流。</p>
+  <p>第三层是<em>叙事层面</em>。V2 是中国开源大模型第一次在<em>架构创新</em>而不是工程优化上，做出全球影响力的一篇论文。MLA 的低秩压缩思路后来被 Anthropic、Meta 等闭源/海外团队在技术报告里反复引用。它打破了一个心照不宣的偏见——"<em>架构创新只能发生在硅谷</em>"。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>DeepSeek-V2 不是终点，它自己暴露的问题，恰好成了 DeepSeek-V3 要解决的起点。</p>
+  <p>最显眼的是<em>显存依然是大头</em>。MLA 把 KV 缓存压到 1/14，但 236B 的总参数<em>全都得常驻显存</em>——和 Mixtral 一样，V2 的部署门槛对中小团队依然很高，需要 8 张 H100 才能跑满血版。这给了后来 <em>DeepSeek-V2-Lite</em>（16B 总参 / 2.4B 激活）和量化方案出现的空间。</p>
+  <p>其次是<em>辅助损失的副作用</em>。V2 用辅助损失强制专家负载均衡，但它会轻微干扰主任务梯度、影响最终效果。DeepSeek-V3 后来用"<em>无辅助损失的负载均衡</em>"——给每个专家加一个可学习偏置项，路由时把偏置加进 Top-K 选择，但偏置不参与梯度回传——一举解决这个矛盾。</p>
+  <p>还有<em>训练精度瓶颈</em>。V2 用 BF16 训练，进一步降精度会损失性能。V3 后来引入 <em>FP8 混合精度训练</em>，把训练成本再砍一半（最终只花 557.6 万美元就训出 671B 大模型）。这是后话。</p>
+  <p>最后是<em>GRPO 在通用对齐上的潜力</em>还没被充分挖掘。V2 里 GRPO 主要做偏好对齐，但 DeepSeek 团队隐隐觉得它能做更多——这个直觉后来在 R1 上得到验证：纯靠 GRPO + 规则奖励，模型自发学会推理。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把推理效率这条暗线和本系列的主线拼起来，能看清 DeepSeek-V2 的全貌。</p>
+  <p>attention 效率这条线其实和 MoE 同样古老。2017 年 Transformer 用的是 MHA，每个头独立存 K/V，缓存随上下文线性膨胀。2019 年 Shazeer 提出 MQA，把所有头的 K/V 合并成一份——缓存砍 1/N，但性能明显掉。2023 年 Ainslie 提出 GQA，折中一下，Mistral 7B、LLaMA 2/3 全都采用。MoE 那条线我们在上一篇 Mixtral 里讲过：1991 年 Jacobs 起源 → 2017 Shazeer 稀疏门控 → Google 系 GShard/Switch/GLaM 全闭源 → 2024 年初 Mixtral 开源主流化。</p>
+  <p>DeepSeek-V2 的历史位置就在这两条暗线的<em>交汇点</em>上：MLA 把 attention 效率从"减头"路径切到"低秩压缩"路径，DeepSeekMoE 把 MoE 从"粗粒度专家"切到"细粒度 + 共享专家"。再加上 GRPO 把 RLHF 的 Critic 砍掉——<em>三件事同时发生</em>。这次交汇直接定义了之后一年开源大模型的架构基调：MLA + 细粒度 MoE + 无 Critic RL，几乎成了中国新一代开源 LLM 的标配。V2 之后，DeepSeek-V3 把这套配方推向 671B 规模、加入 FP8 训练；Qwen 系列从 Qwen2.5 开始跟进 MoE；R1 在 V3 之上用 GRPO 触发推理涌现——整个 2024 下半年到 2025 年的开源大模型图景，几乎都可以追溯到 V2 这次交汇。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>DeepSeek-V2 最有意思的故事，是它<em>先有价格，再有论文</em>。2024 年 5 月初，API 平台悄无声息地挂出了 V2 的报价单——每百万 tokens 输入 1 元、输出 2 元。整个中国大模型圈瞬间炸锅：所有人都在问"这怎么可能赚钱？"人们开始逆向：是用更小的模型？蒸馏？激进量化？甚至有人怀疑是不是亏本冲量。</p>
+  <p>一个月后技术报告发出，谜底揭晓——是<em>架构本身</em>就这么便宜。236B 总参只激活 21B，KV 缓存压到 1/14，最大吞吐 5.76 倍。这不是商业补贴，是工程红利。一夜之间，"MoE + MLA"成了所有中国大模型公司的必选项——通义、智谱、Kimi、MiniMax 纷纷跟进自研 MoE 架构，价格战由此全面爆发。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 标题 -->
+        <text x="360" y="22" text-anchor="middle" font-size="12" font-weight="600">2024 年中：API 价格战（每百万 tokens 输入价格，元）</text>
+
+        <!-- GPT-4 Turbo -->
+        <rect x="40" y="50" width="60" height="22" fill="#96897A" fill-opacity="0.55"/>
+        <text x="40" y="42" font-size="10" fill="#96897A">GPT-4 Turbo</text>
+        <text x="110" y="66" font-size="10" fill="#96897A">~120 元</text>
+
+        <!-- 闭源旗舰平均 -->
+        <rect x="40" y="85" width="50" height="22" fill="#96897A" fill-opacity="0.45"/>
+        <text x="40" y="105" font-size="10" fill="#96897A">闭源旗舰（均价）</text>
+        <text x="100" y="101" font-size="10" fill="#96897A">~70 元</text>
+
+        <!-- DeepSeek 67B -->
+        <rect x="40" y="120" width="6" height="22" fill="#96897A" fill-opacity="0.32"/>
+        <text x="40" y="158" font-size="10" fill="#96897A">DeepSeek 67B</text>
+        <text x="52" y="136" font-size="10" fill="#96897A">~7 元</text>
+
+        <!-- DeepSeek-V2 -->
+        <rect x="40" y="155" width="1" height="14" fill="#B54A2C" fill-opacity="0.9" stroke="#B54A2C"/>
+        <text x="40" y="186" font-size="10" fill="#B54A2C" font-weight="600">DeepSeek-V2（本篇）</text>
+        <text x="48" y="166" font-size="10" fill="#B54A2C" font-weight="600">1 元</text>
+
+        <!-- 注释 -->
+        <text x="540" y="60" font-size="10" fill="#24555A">V2 之前：</text>
+        <text x="540" y="78" font-size="10" fill="#96897A">闭源旗舰主导，开源模型</text>
+        <text x="540" y="92" font-size="10" fill="#96897A">贵且弱</text>
+        <text x="540" y="120" font-size="10" fill="#B54A2C" font-weight="600">V2 之后：</text>
+        <text x="540" y="138" font-size="10" fill="#2E2A22">开源模型又便宜又强，</text>
+        <text x="540" y="152" font-size="10" fill="#2E2A22">逼着全行业跟降，</text>
+        <text x="540" y="166" font-size="10" fill="#2E2A22">大模型真正走进日常</text>
+        <text x="540" y="180" font-size="10" fill="#2E2A22">开发者工作流。</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 7</span> · DeepSeek-V2 引发的 API 价格战示意（数值为公开报价近似值，仅作量级对照）</figcaption>
+  </figure>
+
+  <p>另一个常被忽视的细节：DeepSeek-V2 的中文能力之所以特别强，是因为预训练语料里<em>中文占比大幅上采样</em>——LLaMA 2 中文只占 0.13%，GPT-3 占 0.1%，DeepSeek-V2 直接把中文拉到与英文相当的比例。这件事在今天看来理所当然，但在 2024 年中却是首创性的：之前所有"主流"开源模型都默认以英文为主、中文为辅。V2 之后，中文友好不再是"中国特供版"的标签，而是基础模型必须考虑的标配。</p>
+  <p>顺便说说团队。DeepSeek（深度求索）成立于 2023 年，背靠量化私募幻方，创始人梁文锋是量化背景出身。这种"非传统 AI 大厂"的出身让他们有两个特点：一是<em>对算力成本极度敏感</em>（量化交易天生精打细算），二是<em>敢于做架构创新</em>（没有大厂历史包袱）。V2 论文标题里的"economical"一词，某种程度上就是这种团队气质的写照。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读 DeepSeek-V2，我最深的感受是它把"<em>推理成本</em>"这个长期被忽视的维度，正式推上了大模型架构设计的核心议程。在此之前，scaling law 主导一切，大家拼命堆参数、堆数据，几乎没人认真想过"推理一个 token 要花多少钱"。V2 用 MLA + 细粒度 MoE + GRPO 三刀齐下，证明了一件事：<em>架构创新本身就是一种 scaling</em>——不是把模型做得更大，而是把同样的模型做得更经济。</p>
+  <p>这个洞察在 2024 年之后越来越重要。Chinchilla 把"数据-参数"配比优化到极致后，继续在稠密模型上堆参数的边际收益越来越低，而推理成本却随用户规模线性增长。当一个模型要服务千万级用户时，"每 token 便宜一个数量级"远比"基准分高 1 分"重要得多。从这个角度看，DeepSeek-V2 不只是一篇技术论文，它定义了一种<em>新的价值取向</em>——大模型的优劣，不只要看它在 benchmark 上拿多少分，更要看它让多少人用得起。</p>
+  <p>MLA 那个"压缩后性能反升"的反直觉发现也值得细想。它暗示了一件事：<em>标准 attention 可能本来就"过参数化"了</em>。每个头独立存 K/V 这种设计，与其说是性能必需，不如说是历史路径依赖。低秩瓶颈某种意义上起到了正则化作用，让 attention 更聚焦于真正重要的信息。这个洞察或许还能反过来启发我们重新审视 Transformer 里其他"理所当然"的组件——哪些是真正必要的？哪些只是历史惯性？</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    MLA 用低秩压缩把 KV 缓存压到 1/14，性能却反超 MHA。如果沿着这条路继续走——把 $d_c$ 再压一半、压到 1/28，性能会保持还是崩塌？这条"压缩-性能曲线"的拐点在哪里？想想看，这或许就是下一代 attention 设计最关键的问题之一。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>DeepSeek-V3 Technical Report</h3>
+    <p style="margin:0;">V2 把"经济"两个字写进了大模型架构设计，但 236B 总参的部署门槛和 BF16 训练的精度瓶颈还在。半年后，DeepSeek-V3 带着三件新武器回归：FP8 混合精度训练把成本再砍一半（671B 模型只花 557.6 万美元）、无辅助损失的负载均衡让专家更自由地分工、Multi-Token Prediction 让模型一次预测多个 token。再加上 671B 总参 / 37B 激活的极致稀疏比——这一次，开源 MoE 真正开始和闭源旗舰正面对抗。下一期，我们看 DeepSeek 是怎么把 V2 的配方放大到极限的。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 011 篇</span>
+    <span>2026-08-11</span>
+  </footer>
+
+</div>
+</body>
+</html>
