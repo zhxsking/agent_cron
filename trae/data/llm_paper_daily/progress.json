@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 12,
-  "last_run_date": "2026-08-12",
+  "last_index": 13,
+  "last_run_date": "2026-08-13",
   "papers_covered": [
     {
       "index": 1,
@@ -98,10 +98,18 @@
       "date": "2024-12-26",
       "era": "前沿演进期 2023–2024",
       "filename": "12_20260812_DeepSeek_V3.html"
+    },
+    {
+      "index": 13,
+      "title_en": "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning",
+      "title_zh": "DeepSeek-R1：纯强化学习让模型自己'顿悟'出思维链——当奖励只剩'答案对不对'，模型竟自发学会了反思与验证",
+      "date": "2025-01-20",
+      "era": "推理范式期 2025–",
+      "filename": "13_20260813_DeepSeek_R1.html"
     }
   ],
   "next_preview": {
-    "title_en": "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning",
-    "title_zh": "DeepSeek-R1：纯强化学习让模型自己'顿悟'出思维链——当奖励只剩'答案对不对'，模型竟自发学会了反思与验证"
+    "title_en": "Kimi k1.5: Scaling Reinforcement Learning with LLMs",
+    "title_zh": "Kimi K1.5：把 RL 上下文扩到 128K，用'长2短'把长思考迁移给小模型——推理的另一条路"
   }
 }
