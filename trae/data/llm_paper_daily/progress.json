@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 13,
-  "last_run_date": "2026-08-13",
+  "last_index": 14,
+  "last_run_date": "2026-08-14",
   "papers_covered": [
     {
       "index": 1,
@@ -106,10 +106,18 @@
       "date": "2025-01-20",
       "era": "推理范式期 2025–",
       "filename": "13_20260813_DeepSeek_R1.html"
+    },
+    {
+      "index": 14,
+      "title_en": "Kimi k1.5: Scaling Reinforcement Learning with LLMs",
+      "title_zh": "Kimi K1.5：把上下文当算力来'扩'——128K 长思考 RL + 长短蒸馏，推理的另一条路",
+      "date": "2025-01-22",
+      "era": "推理范式期 2025–",
+      "filename": "14_20260814_Kimi_K1.5.html"
     }
   ],
   "next_preview": {
-    "title_en": "Kimi k1.5: Scaling Reinforcement Learning with LLMs",
-    "title_zh": "Kimi K1.5：把 RL 上下文扩到 128K，用'长2短'把长思考迁移给小模型——推理的另一条路"
+    "title_en": "s1: Simple test-time scaling",
+    "title_zh": "s1：1000 道题 + 26 分钟训练 + 一个'Wait'——不搞强化学习，也能让模型学会'再想想'"
   }
 }

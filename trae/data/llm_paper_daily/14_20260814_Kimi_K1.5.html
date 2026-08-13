@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kimi K1.5 论文精读 · 大模型经典论文系列 #014</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#014</span>
+  </div>
+
+  <h1 class="title">
+    Kimi k1.5: Scaling Reinforcement Learning with LLMs
+    <span class="en">Kimi K1.5：把上下文当算力来"扩"——128K 长思考 RL + 长短蒸馏，推理的另一条路</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Kimi Team (Moonshot AI)</span>
+    <span>机构：Moonshot AI（月之暗面）</span>
+    <span>发表：2025-01 / arXiv 技术报告</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2501.12599" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://kimi.com" target="_blank" rel="noopener">Project</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">上回说到，2025 年 1 月 20 日，DeepSeek-R1 把 OpenAI o1 的推理黑箱砸开了一道缝：不用任何思维链示范，纯靠"答案对不对"的强化学习，模型自己就学会了反思与验证。故事到这里，似乎已经迎来了一个干脆利落的结局——RL，就是答案。</p>
+
+  <p class="lead">可仅仅两天后，1 月 22 日，北京另一支团队把第二份答卷拍上了 arXiv。他们做的是同一件事——追平 o1，但给出的回答几乎处处相反：他们认真做了 SFT 冷启动，认真设计了奖励，认真写了基础设施，并且抛出一个 R1 没怎么强调的论断——<em>推理的瓶颈不是算法不够巧，而是模型"想"得不够久；把上下文窗口拉到 128K，问题就解决了一大半</em>。这份报告叫 Kimi K1.5。两份答卷，两条路，同一个月，同一个对手。推理模型的拼图，至此才真正完整。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    Kimi K1.5 把强化学习的上下文窗口扩到 128K，用"部分回放"让超长思考训练变得付得起，再用"长2短"蒸馏把长思考的本事塞回快答小模型——不靠搜索树、不靠价值函数、不靠过程奖励模型，就追平了 OpenAI o1。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>这个系列走到第 13 篇时，推理范式的大门刚刚被 R1 推开。但一扇门被推开，往往意味着里面还有好几条岔路。R1 选的是"极简纯 RL"——能省则省，看涌现。Kimi K1.5 选的是另一条岔路：<em>把上下文长度当成第一性的扩展轴</em>，然后用工程把它做扎实。</p>
+
+  <p>它的位置很特殊。往上接，它继承的是 DeepSeek-V3 那条"开源高效基座"的性价比脉络，也接住了 o1 抛出的"test-time scaling"命题；往下开，它给后来的推理模型示范了一种可复制的工程范式——<em>长上下文 RL 是可行的，只要你能把超长序列的训练成本压下来</em>。它和 R1 一起，把 2025 年"推理范式期"的版图从"有没有人能复现 o1"推进到"复现有几条路、各有什么取舍"。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arw" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="160" x2="690" y2="160" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="10" fill="#96897A">
+        <!-- 奠基期 -->
+        <circle cx="60" cy="160" r="4" fill="#24555A" fill-opacity="0.25" stroke="#24555A"/>
+        <text x="60" y="142" text-anchor="middle">2017</text>
+        <text x="60" y="186" text-anchor="middle" fill="#2E2A22">Transformer</text>
+
+        <circle cx="105" cy="160" r="4" fill="#24555A" fill-opacity="0.25" stroke="#24555A"/>
+        <text x="105" y="142" text-anchor="middle">2018</text>
+        <text x="105" y="186" text-anchor="middle" fill="#2E2A22">BERT</text>
+
+        <circle cx="145" cy="160" r="4" fill="#24555A" fill-opacity="0.25" stroke="#24555A"/>
+        <text x="145" y="142" text-anchor="middle">2019</text>
+        <text x="145" y="186" text-anchor="middle" fill="#2E2A22">GPT-2</text>
+
+        <!-- 规模化期 -->
+        <circle cx="195" cy="160" r="4" fill="#24555A" fill-opacity="0.25" stroke="#24555A"/>
+        <text x="195" y="142" text-anchor="middle">2020</text>
+        <text x="195" y="186" text-anchor="middle" fill="#2E2A22">GPT-3</text>
+
+        <circle cx="240" cy="160" r="4" fill="#24555A" fill-opacity="0.25" stroke="#24555A"/>
+        <text x="240" y="142" text-anchor="middle">2022</text>
+        <text x="240" y="186" text-anchor="middle" fill="#2E2A22">Chinchilla</text>
+
+        <!-- 对齐期 -->
+        <circle cx="285" cy="160" r="4" fill="#24555A" fill-opacity="0.25" stroke="#24555A"/>
+        <text x="285" y="142" text-anchor="middle">2022</text>
+        <text x="285" y="186" text-anchor="middle" fill="#2E2A22">InstructGPT</text>
+
+        <!-- 前沿期 -->
+        <circle cx="335" cy="160" r="4" fill="#24555A" fill-opacity="0.25" stroke="#24555A"/>
+        <text x="335" y="142" text-anchor="middle">2023</text>
+        <text x="335" y="186" text-anchor="middle" fill="#2E2A22">LLaMA</text>
+
+        <circle cx="375" cy="160" r="4" fill="#24555A" fill-opacity="0.25" stroke="#24555A"/>
+        <text x="375" y="142" text-anchor="middle">2023</text>
+        <text x="375" y="186" text-anchor="middle" fill="#2E2A22">DPO</text>
+
+        <circle cx="415" cy="160" r="4" fill="#24555A" fill-opacity="0.25" stroke="#24555A"/>
+        <text x="415" y="142" text-anchor="middle">2023</text>
+        <text x="415" y="186" text-anchor="middle" fill="#2E2A22">Mistral 7B</text>
+
+        <circle cx="460" cy="160" r="4" fill="#24555A" fill-opacity="0.25" stroke="#24555A"/>
+        <text x="460" y="142" text-anchor="middle">2024</text>
+        <text x="460" y="186" text-anchor="middle" fill="#2E2A22">Mixtral</text>
+
+        <circle cx="505" cy="160" r="4" fill="#24555A" fill-opacity="0.25" stroke="#24555A"/>
+        <text x="505" y="142" text-anchor="middle">2024.05</text>
+        <text x="505" y="186" text-anchor="middle" fill="#2E2A22">DS-V2</text>
+
+        <circle cx="555" cy="160" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="555" y="142" text-anchor="middle">2024.09</text>
+        <text x="555" y="186" text-anchor="middle" fill="#96897A">o1（黑箱）</text>
+
+        <circle cx="610" cy="160" r="4" fill="#24555A" fill-opacity="0.25" stroke="#24555A"/>
+        <text x="610" y="142" text-anchor="middle">2024.12</text>
+        <text x="610" y="186" text-anchor="middle" fill="#2E2A22">DS-V3</text>
+
+        <!-- 已解析的 R1 -->
+        <circle cx="650" cy="160" r="5" fill="#24555A" fill-opacity="0.45" stroke="#24555A"/>
+        <text x="650" y="142" text-anchor="middle">2025.01</text>
+        <text x="650" y="186" text-anchor="middle" fill="#2E2A22">R1</text>
+
+        <!-- 本篇高亮 K1.5 -->
+        <circle cx="688" cy="160" r="9" fill="#B54A2C"/>
+        <circle cx="688" cy="160" r="14" fill="none" stroke="#B54A2C" stroke-width="1" opacity="0.4"/>
+        <text x="688" y="126" text-anchor="middle" fill="#B54A2C" font-weight="600" font-size="11">本篇</text>
+        <text x="688" y="186" text-anchor="middle" fill="#2E2A22" font-weight="600">K1.5</text>
+        <text x="688" y="203" text-anchor="middle" fill="#96897A" font-size="9">2025.01</text>
+
+        <!-- 时代分组标签 -->
+        <text x="100" y="248" text-anchor="middle" font-size="9" fill="#96897A">奠基期</text>
+        <text x="217" y="248" text-anchor="middle" font-size="9" fill="#96897A">规模化探索期</text>
+        <text x="285" y="263" text-anchor="middle" font-size="9" fill="#96897A">对齐期</text>
+        <text x="430" y="248" text-anchor="middle" font-size="9" fill="#96897A">前沿演进期</text>
+        <text x="660" y="248" text-anchor="middle" font-size="9" fill="#B54A2C" font-weight="600">推理范式期</text>
+
+        <line x1="170" y1="238" x2="170" y2="110" stroke="#96897A" stroke-dasharray="2 3" opacity="0.4"/>
+        <line x1="262" y1="238" x2="262" y2="110" stroke="#96897A" stroke-dasharray="2 3" opacity="0.4"/>
+        <line x1="310" y1="238" x2="310" y2="110" stroke="#96897A" stroke-dasharray="2 3" opacity="0.4"/>
+        <line x1="580" y1="238" x2="580" y2="110" stroke="#B54A2C" stroke-dasharray="2 3" opacity="0.4"/>
+
+        <text x="688" y="278" text-anchor="middle" font-size="9" fill="#B54A2C">长上下文 RL 路线</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的 Kimi K1.5 位置。深青色实心节点为本系列已解析的 13 篇里程碑论文，橙色高亮节点为本篇。K1.5 与 R1 同处"推理范式期"，却走了不同的技术路线。</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要理解 K1.5 为什么把宝押在"上下文长度"上，得先看清 2024 年底推理领域的两个心结。</p>
+
+  <p>第一个心结是<em> scaling law 的天花板</em>。从 GPT-3 到 Chinchilla，预训练靠的是"模型更大、数据更多"，可这条路撞上了一堵墙：高质量预训练数据快被用完了。继续堆参数、堆 token，收益越来越钝。学界需要一条<em>新的扩展轴</em>——不是再多吃几本教科书，而是让模型学会自己"探索"出新的训练信号。强化学习看起来正是这条轴：模型靠奖励去试，试出来的轨迹本身就是新数据，不受静态数据集的限制。</p>
+
+  <p>第二个心结是<em> o1 复现的"复杂派"困境</em>。o1 一出，研究界一窝蜂去试各种"显式搜索"方案——<em class="latin">Monte Carlo Tree Search</em>（蒙特卡洛树搜索）把推理展开成一棵树逐节点评估、<em>过程奖励模型（PRM）</em>给每一步打分、再配一个价值网络估计前景。这些方案理论上很美，工程上全是坑：搜索空间随步数爆炸、价值模型在超长序列上难训、PRM 又要海量人工标注的逐步数据。<em>没有一个</em>真正复现出 o1 级别的通用推理能力。复杂，反而成了包袱。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    把推理模型想成解题的考生。复杂派的做法是给他配一整套装备：草稿本分页索引、每写一步有个老师批改打分、还有个顾问估算"照这样写下去能得几分"。装备很全，可协调起来手忙脚乱。Kimi 团队的思路相反——别给人配老师顾问了，<em>直接把考试时间从 1 小时拉到 8 小时</em>，给他一沓够长的草稿纸，让他自己写、自己回头查、自己推翻重来。时间够长，"想清楚"就不再需要外挂。
+  </div>
+
+  <p>这条思路把矛头指向一个被忽视的变量：<em>上下文长度</em>。o1 之所以能"想很久"，本质是它能在一次生成里塞下很长的思维链。可之前做 RL 的人，上下文窗口普遍只开到几千、一两万 token——模型"想"到一半就被截断，反思和回溯根本没空间展开。Kimi 团队赌的是：把 RL 的上下文扩到 128K，模型自己就会长出规划、反思、纠错的能力，根本不需要树搜索和价值函数来手把手教。</p>
+
+  <p>赌注很大，但拦路虎也很实在——128K token 的 RL 训练，<em>贵得吓人</em>。每条训练轨迹都要生成几万到十几万 token，光生成成本就够喝一壶，更别提反向传播。K1.5 真正的工程贡献，是发明了一个叫<em>部分回放（partial rollout）</em>的机制，把这头大象拆成了能一口口吃下去的小块。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>把背景拧干，K1.5 要回答的核心问题可以拆成两句：</p>
+
+  <div class="callout question">
+    <span class="label">核心问题</span>
+    能不能<em>不用搜索树、不用价值函数、不用过程奖励模型</em>，只靠"长上下文 + 结果奖励"的强化学习，就训出对标 o1 的推理能力？如果上下文长度真的是推理的扩展轴，那它训出来的"长思考"本事，能不能再迁移给答题更快的小模型？
+  </div>
+
+  <p>前半句挑战的是"复杂派"的共识——那时几乎所有人都觉得，要追平 o1 至少得上一套 PRM 或 MCTS。后半句则埋着这篇论文最讨巧的一招：<em>长2短</em>。因为长思考模型推理起来太贵（一条数学题动辄几万 token），真要上线服务，得有办法把它"想得久"的本事，塞进一个"答得快"的模型里。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    假如你只能给模型一个奖励信号——"最终答案对不对"，却把它的思考空间限制在 4K token 内，你觉得它能学会反思吗？那把空间放到 128K 呢？同样是"对就奖励、错就不管"，窗口大小会带来本质差别吗？先凭直觉猜一个，再往下看实验给出的答案。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>K1.5 的方法可以拆成四块来读：<em>训练流水线</em>（先做什么后做什么）、<em>长上下文 RL</em>（核心赌注）、<em>部分回放</em>（让 128K 付得起）、<em>长2短</em>（把贵本事变便宜）。我们一块块看。</p>
+
+  <h3>四阶段训练流水线</h3>
+  <p>和 R1"跳过 SFT 直接 RL"的莽撞不同，K1.5 走的是稳扎稳打的四阶段。先有一个多模态预训练基座，接着做一轮通用 SFT 让模型学会听指令，然后用一小批精选的<em>长思维链（long-CoT）</em>示范做 SFT 冷启动——这一步是给模型"打个样"，让它知道"答题前先长长地想一段"是什么格式。最后才进入真正的 RL 训练阶段。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 360" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arw2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 四阶段主轴 -->
+        <rect x="20" y="120" width="120" height="70" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="148" text-anchor="middle" font-weight="600">① 预训练</text>
+        <text x="80" y="166" text-anchor="middle" font-size="9" fill="#96897A">多模态基座</text>
+        <text x="80" y="180" text-anchor="middle" font-size="9" fill="#96897A">next-token</text>
+
+        <rect x="170" y="120" width="120" height="70" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="230" y="148" text-anchor="middle" font-weight="600">② 通用 SFT</text>
+        <text x="230" y="166" text-anchor="middle" font-size="9" fill="#96897A">指令跟随</text>
+        <text x="230" y="180" text-anchor="middle" font-size="9" fill="#96897A">对话能力</text>
+
+        <rect x="320" y="120" width="120" height="70" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="380" y="148" text-anchor="middle" font-weight="600">③ long-CoT SFT</text>
+        <text x="380" y="166" text-anchor="middle" font-size="9" fill="#96897A">长思维链冷启动</text>
+        <text x="380" y="180" text-anchor="middle" font-size="9" fill="#96897A">"打个样"</text>
+
+        <rect x="470" y="120" width="130" height="70" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="535" y="148" text-anchor="middle" fill="#B54A2C" font-weight="600">④ RL 训练</text>
+        <text x="535" y="166" text-anchor="middle" font-size="9" fill="#96897A">128K 上下文</text>
+        <text x="535" y="180" text-anchor="middle" font-size="9" fill="#B54A2C" font-weight="600">核心阶段</text>
+
+        <line x1="140" y1="155" x2="170" y2="155" stroke="#96897A" marker-end="url(#arw2)"/>
+        <line x1="290" y1="155" x2="320" y2="155" stroke="#96897A" marker-end="url(#arw2)"/>
+        <line x1="440" y1="155" x2="470" y2="155" stroke="#96897A" marker-end="url(#arw2)"/>
+
+        <!-- RL 阶段三大要素 -->
+        <text x="535" y="100" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">RL 三要素</text>
+        <line x1="535" y1="108" x2="535" y2="116" stroke="#B54A2C" stroke-width="1"/>
+
+        <rect x="470" y="220" width="130" height="26" fill="#24555A" fill-opacity="0.08" stroke="#24555A"/>
+        <text x="535" y="237" text-anchor="middle" font-size="10" fill="#24555A">长上下文扩展</text>
+
+        <rect x="470" y="252" width="130" height="26" fill="#24555A" fill-opacity="0.08" stroke="#24555A"/>
+        <text x="535" y="269" text-anchor="middle" font-size="10" fill="#24555A">部分回放</text>
+
+        <rect x="470" y="284" width="130" height="26" fill="#24555A" fill-opacity="0.08" stroke="#24555A"/>
+        <text x="535" y="301" text-anchor="middle" font-size="10" fill="#24555A">改进策略优化</text>
+
+        <line x1="535" y1="192" x2="535" y2="218" stroke="#B54A2C" stroke-dasharray="2 3" opacity="0.5"/>
+
+        <!-- 长2短分支 -->
+        <rect x="320" y="284" width="130" height="56" rx="2" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C" stroke-dasharray="4 3"/>
+        <text x="385" y="308" text-anchor="middle" fill="#B54A2C" font-weight="600">长2短</text>
+        <text x="385" y="324" text-anchor="middle" font-size="9" fill="#96897A">长度惩罚 + 模型合并</text>
+
+        <line x1="470" y1="297" x2="450" y2="305" stroke="#B54A2C" stroke-dasharray="2 3" opacity="0.5" marker-end="url(#arw2)"/>
+
+        <!-- 产物 -->
+        <rect x="630" y="148" width="70" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="665" y="170" text-anchor="middle" fill="#24555A" font-weight="600">长CoT</text>
+        <text x="665" y="186" text-anchor="middle" font-size="9" fill="#24555A">对标 o1</text>
+
+        <rect x="630" y="284" width="70" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="665" y="306" text-anchor="middle" fill="#24555A" font-weight="600">短CoT</text>
+        <text x="665" y="322" text-anchor="middle" font-size="9" fill="#24555A">便宜快答</text>
+
+        <line x1="600" y1="173" x2="630" y2="173" stroke="#96897A" marker-end="url(#arw2)"/>
+        <line x1="450" y1="312" x2="630" y2="309" stroke="#96897A" stroke-dasharray="2 3" opacity="0.5" marker-end="url(#arw2)"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · Kimi K1.5 训练流水线。前两阶段打底，第三阶段用 long-CoT 做 SFT 冷启动，第四阶段是核心的 128K RL；RL 训出的长思考模型再经"长2短"蒸馏出快答版本。</figcaption>
+  </figure>
+
+  <p>这里有个微妙的设计选择值得停一下。R1 之所以敢跳过 SFT，是想验证"涌现"的纯粹性；K1.5 之所以老老实实做 long-CoT SFT，是因为它的目标不是验证哲学命题，而是<em>把工程做扎实</em>——冷启动让 RL 有个不错的起点，训练更稳，也更容易复现。两条路没有对错，只是诉求不同。</p>
+
+  <h3>核心赌注：把上下文当算力来扩</h3>
+  <p>RL 阶段是这篇论文的灵魂。它的"极简"体现在三不靠：不靠 MCTS、不靠价值函数、不靠过程奖励模型，<em>只靠结果奖励</em>——数学题对答案、代码题跑测试。奖励信号稀疏到只有最后一个 token，可 K1.5 赌的就是：只要上下文够长，模型自己会在中间把"怎么想"补齐。</p>
+
+  <p>道理是这样的。在短上下文里，模型生成一段推理就像在一张小草稿纸上算题——写满了就得交卷，没地方检查、没地方推翻重来。把窗口放到 128K，等于换了张无限续页的大草稿纸：模型可以先试一种解法，写到一半发现不对，回头重写；可以列个计划，再逐步验证；可以自己出几个反例试试。这些"规划、反思、纠错"的行为，<em>不需要谁教</em>，只要空间够大，它们就会在结果奖励的压力下自发长出来。</p>
+
+  <div class="callout">
+    <span class="label">关键洞察</span>
+    论文给出一句很硬的话：<em>增加上下文长度，等同于增加搜索步数</em>。别人靠显式搜索树去探索，K1.5 靠"一条长轨迹里的自我修正"去隐式搜索。搜索不是没有，只是被折叠进了上下文里。实验里他们观察到：上下文越长，性能持续提升，没有见顶——这成了"上下文是扩展轴"最直接的证据。
+  </div>
+
+  <p>不过光有长上下文还不够稳。在几万 token 的序列上做策略梯度，梯度很容易乱窜、训练很容易崩。K1.5 用了一个<em>在线镜像下降（online mirror descent）</em>的变体来做策略优化，核心是给每步更新套一个 KL 约束，让新策略别离旧策略太远：</p>
+
+  <div class="formula-block">
+    $$ \pi_{t+1} = \arg\min_{\pi}\left[ -\mathbb{E}_{\pi}[R] + \frac{1}{\eta}\, D_{\mathrm{KL}}\!\left(\pi \,\|\, \pi_t\right) \right] $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>左边是"把奖励拉高"，右边是"别跑偏太远"。这个 KL 项像一个安全带，让模型在长序列的崎岖奖励地形上敢迈步又不至于摔下悬崖，比朴素的策略梯度稳得多。再配上<em>长度惩罚</em>（鼓励该短则短，治"想太多病"）和精心筛过的数据配方，整套优化就齐活了。</p>
+
+  <h3>部分回放：让 128K 训练付得起</h3>
+  <p>到这里，方法在道理上已经通了，可工程上还是个无底洞。128K 的 RL，每条轨迹都要从头生成十几万 token，一个训练步里还要采好几条——这钱烧不起，时间也等不起。K1.5 最巧的工程贡献，就是<em>部分回放（partial rollout）</em>。</p>
+
+  <p>思路一句话：一条长轨迹不必每次从头生成，可以拆成"前缀 + 新后缀"。前缀是之前已经生成并缓存好的（KV 状态、logits 都在），直接复用；这次只新生成一小段后缀拼上去训练。要是某条轨迹太长、一轮生成不完，就把它<em>暂停</em>，存下来，下一轮接着续。这样一来，昂贵的长序列生成被切成了廉价的小块，128K 的训练才真正跑得动。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arw3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <text x="360" y="26" text-anchor="middle" font-size="12" fill="#96897A">朴素做法：每步从头生成整条 128K 轨迹</text>
+        <rect x="60" y="44" width="600" height="28" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="360" y="62" text-anchor="middle" font-size="10">从头生成十几万 token —— 贵、慢</text>
+        <text x="690" y="62" font-size="9" fill="#B54A2C">✗</text>
+
+        <line x1="360" y1="84" x2="360" y2="110" stroke="#96897A" stroke-dasharray="2 3"/>
+
+        <text x="360" y="128" text-anchor="middle" font-size="12" fill="#24555A" font-weight="600">部分回放：τ = [ τ_prefix ; τ_new ]</text>
+
+        <!-- 第 t 轮 -->
+        <text x="60" y="158" font-size="10" fill="#96897A">第 t 轮</text>
+        <rect x="110" y="146" width="300" height="28" fill="#24555A" fill-opacity="0.18" stroke="#24555A"/>
+        <text x="260" y="164" text-anchor="middle" font-size="10" fill="#24555A">τ_prefix（缓存复用）</text>
+        <rect x="410" y="146" width="90" height="28" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C"/>
+        <text x="455" y="164" text-anchor="middle" font-size="10" fill="#B54A2C">τ_new</text>
+        <line x1="500" y1="160" x2="540" y2="160" stroke="#96897A" marker-end="url(#arw3)"/>
+        <rect x="540" y="146" width="120" height="28" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="600" y="164" text-anchor="middle" font-size="10">拼接送入训练</text>
+
+        <!-- 第 t+1 轮 -->
+        <text x="60" y="206" font-size="10" fill="#96897A">第 t+1 轮</text>
+        <rect x="110" y="194" width="390" height="28" fill="#24555A" fill-opacity="0.18" stroke="#24555A"/>
+        <text x="305" y="212" text-anchor="middle" font-size="10" fill="#24555A">τ_prefix' = 旧 prefix + 旧 new（继续缓存）</text>
+        <rect x="500" y="194" width="90" height="28" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C"/>
+        <text x="545" y="212" text-anchor="middle" font-size="10" fill="#B54A2C">τ_new'</text>
+
+        <!-- 暂停续写 -->
+        <line x1="360" y1="232" x2="360" y2="246" stroke="#96897A" stroke-dasharray="2 3"/>
+        <rect x="100" y="250" width="520" height="24" fill="none" stroke="#B54A2C" stroke-dasharray="4 3"/>
+        <text x="360" y="266" text-anchor="middle" font-size="10" fill="#B54A2C">轨迹太长一轮写不完 → 暂停存档 → 下一轮续写</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 部分回放机制。前缀复用缓存、只新生成后缀；超长轨迹可暂停续写。它把"生成一条 128K 轨迹"的整块成本，切成了可累积的小块，是长上下文 RL 得以工程化的关键。</figcaption>
+  </figure>
+
+  <p>除了部分回放，K1.5 在基础设施上也下了功夫：用 Kubernetes 边车容器把训练框架（<em class="latin">Megatron</em>）和推理框架（<em class="latin">vLLM</em>）塞在同一组 GPU 上，让"生成"和"训练"交替复用算力，把闲置压到最低；代码题则配了一个安全沙箱，直接跑测试拿结果奖励。这些工程细节看着不性感，却是 128K RL 能跑通的地基。</p>
+
+  <h3>长2短：把贵本事变便宜</h3>
+  <p>RL 训出来的长 CoT 模型很强，但有个要命的缺点：<em>用不起</em>。解一道题动辄生成几万 token，按 token 计费的话，每道数学题都是一顿大餐。真要上线服务，必须有便宜版本。这就是<em>长2短（long2short）</em>要解决的——把长思考模型"想得久"的本事，迁移给"答得快"的短 CoT 模型。</p>
+
+  <p>具体两招。第一招是<em>带长 CoT 激活的长度惩罚</em>：在 RL 阶段加一个软惩罚，鼓励模型在保证正确的前提下尽量短，逼它把长思考里真正有用的步骤浓缩下来。第二招更简单粗暴——<em>模型合并</em>：把长 CoT 模型和一个短 CoT 模型直接揉到一起，让合并后的模型既有前者的推理深度，又有后者的简洁。两招都无需重新大规模训练，几乎是"白捡"一个快答版。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>结果分两部分看：长 CoT 版对标 o1，短 CoT 版（长2短产物）反超一众前辈。</p>
+
+  <table>
+    <thead>
+      <tr><th>评测基准</th><th>OpenAI o1</th><th>K1.5 长 CoT</th><th>说明</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">AIME</td><td>~79.2</td><td>77.5</td><td class="text">竞赛数学，基本追平</td></tr>
+      <tr><td class="text">MATH-500</td><td>96.4</td><td>96.2</td><td class="text">几乎打平</td></tr>
+      <tr><td class="text">Codeforces</td><td>—</td><td>第 94 百分位</td><td class="text">代码竞赛</td></tr>
+      <tr><td class="text">MathVista</td><td>—</td><td>74.9</td><td class="text">多模态数学，图文混合推理</td></tr>
+    </tbody>
+  </table>
+
+  <p>长 CoT 版用一套极简框架（没有 MCTS、没有价值函数、没有 PRM）追平了 o1——这本身就是对"复杂派"的一记反证：原来那些重型装备并非必需，把上下文拉长就够了。更亮眼的是短 CoT 版，它把长思考的本事浓缩进快答模型后，成绩依然漂亮得惊人：</p>
+
+  <table>
+    <thead>
+      <tr><th>评测基准</th><th>GPT-4o</th><th>Claude 3.5 Sonnet</th><th>K1.5 短 CoT</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">AIME</td><td>~9.3</td><td>~16.0</td><td>60.8</td></tr>
+      <tr><td class="text">MATH-500</td><td>~74.6</td><td>~78.3</td><td>94.6</td></tr>
+      <tr><td class="text">LiveCodeBench</td><td>~7.7</td><td>~17.2</td><td>47.3</td></tr>
+    </tbody>
+  </table>
+
+  <p>论文里最抓眼球的数字是"在某些指标上比 GPT-4o、Claude 3.5 Sonnet 高出多达 <em class="latin">+550%</em>"。这个百分比来自 AIME 这类题上原本基数极低的对比（个位数对 60 分），数学上是相对提升，读者心里要有数——但即便换成绝对分差，K1.5 短 CoT 版把 AIME 从个位数拉到 60 分，这个跳跃本身就够震撼了。它说明<em>长思考里学到的东西是真的可以迁移的</em>，不是"想得久"模型独有的黑魔法。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="180" y="30" text-anchor="middle" font-weight="600">长 CoT 模型</text>
+        <text x="540" y="30" text-anchor="middle" font-weight="600" fill="#B54A2C">短 CoT 模型（长2短产物）</text>
+        <line x1="360" y1="20" x2="360" y2="240" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <rect x="40" y="56" width="280" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="180" y="78" text-anchor="middle">思考长度：数万 token</text>
+
+        <rect x="40" y="100" width="280" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="180" y="122" text-anchor="middle">推理强 · 但贵 · 慢</text>
+
+        <rect x="40" y="144" width="280" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="180" y="166" text-anchor="middle">对标 OpenAI o1</text>
+
+        <rect x="400" y="56" width="280" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="540" y="78" text-anchor="middle" fill="#B54A2C">思考长度：大幅压缩</text>
+
+        <rect x="400" y="100" width="280" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="540" y="122" text-anchor="middle" fill="#B54A2C">推理仍强 · 便宜 · 快</text>
+
+        <rect x="400" y="144" width="280" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="540" y="166" text-anchor="middle" fill="#B54A2C">AIME 60.8 · 反超 GPT-4o</text>
+
+        <!-- 迁移箭头 -->
+        <path d="M320 122 C 350 122, 370 122, 398 122" fill="none" stroke="#24555A" stroke-width="1.5" marker-end="url(#arw4)"/>
+        <text x="360" y="200" text-anchor="middle" font-size="10" fill="#24555A">长度惩罚 + 模型合并</text>
+        <text x="360" y="216" text-anchor="middle" font-size="10" fill="#24555A">长2短蒸馏</text>
+      </g>
+      <defs>
+        <marker id="arw4" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#24555A"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 长 CoT 与短 CoT 模型对比。长2短把"想得久"的本事压缩进"答得快"的模型，既保住推理能力，又把推理成本降到可服务化的水平。</figcaption>
+  </figure>
+
+  <p>还有一组结果格外有说服力——<em>上下文长度的扩展曲线</em>。论文展示：随着 RL 上下文从短拉到 128K，性能持续上升，没有出现"拉到某个点就饱和"的拐点。这正是"上下文是扩展轴"最直接的证据，也是这篇论文最想留给后续研究者的那个钩子。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>K1.5 的贡献可以浓缩成三句话。</p>
+
+  <p>第一，它给推理模型的复现指了一条<em>可工程化的路线</em>。R1 证明了"纯 RL 能涌现推理"，但它的极简让很多人怀疑可复现性；K1.5 则把"长上下文 RL"从理念落成了配方——partial rollout 怎么做、策略优化怎么稳、long2short 怎么蒸馏，都写得清清楚楚。后来的开源推理模型，或多或少都从这套工程范式里借过砖。</p>
+
+  <p>第二，它重新定义了"搜索"在推理里的位置。在它之前，"复现 o1"几乎等于"上 MCTS/PRM"；K1.5 之后，学界开始接受一个更省事的观念——<em>显式搜索可以被折叠进长上下文里的隐式搜索</em>。这个观念转变，让一大批没有搜索树基础设施的团队也能做出强力推理模型。</p>
+
+  <p>第三，long2short 把"推理能力可迁移"这件事摆上了台面。它意味着昂贵的长思考训练不必只在推理时变现，可以蒸馏成便宜资产反复使用——这直接影响了后来推理模型"训练用长、部署用短"的标准做法。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>K1.5 不是没有软肋。最明显的一条：<em>结果奖励依赖可验证的真值</em>。数学题有标准答案、代码题有测试用例，可一旦遇到开放写作、伦理判断这类没有客观对错的任务，"答案对不对"这个奖励就失效了。论文的成果几乎都集中在可验证领域，泛化到不可验证领域仍是开放问题——后来的"奖励模型 + RL"路线正是在补这一块。</p>
+
+  <p>第二，长 CoT 推理<em>真的很贵</em>。即便有 long2short 救场，长模型本身的推理 token 成本依然远高于普通模型。"想太多病"——模型在简单题上也啰嗦几千字——也是推理模型普遍的副作用，K1.5 的长度惩罚只是缓解，没根治。</p>
+
+  <p>第三，"上下文是扩展轴"这个论断虽然在实验区间内成立，但<em>它的尽头在哪没人知道</em>。128K 之后是 256K、1M 继续涨，还是会撞墙？长上下文带来的 KV 缓存成本、训练稳定性会不会在某处反噬？这些问题 K1.5 没能回答，留给了后来的长上下文推理研究。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把这条线串起来，能看清推理范式是怎么一步步冒出来的。早期是"模型该长多大"（GPT-3、Chinchilla）和"模型该怎样听人话"（InstructGPT、DPO）两条主线，它们在 2024 年底都走到了阶段性尽头——DeepSeek-V3 把"堆参数+对齐"的性价比做到了极致。可模型还是不会"思考"，回答时一口气说完，没有草稿、没有检查。</p>
+
+  <p>2024 年 9 月，o1 第一次把"思考时间"当成可扩展资源，但它是黑箱。学界两条复现路线几乎同时起步：一条是 DeepSeek-R1 的"极简纯 RL，看涌现"，赌的是奖励信号本身就够；另一条就是 Kimi K1.5 的"长上下文 RL + 工程化"，赌的是空间够大模型自己会长出推理。两条路在 2025 年 1 月先后交卷，一个偏哲学验证，一个偏工程落地，互为镜像。K1.5 之后，"长上下文 RL"成了可复制的范式，long2short 让"训长用短"成了标配，推理模型正式从"能不能复现 o1"进入"怎么把推理做便宜、做通用"的新阶段。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>这篇论文背后最戏剧性的，是它和 R1 的"双响炮"剧本。2025 年 1 月，杭州的 DeepSeek 和北京的 Moonshot 两支中国团队，一前一后（差两天）把对标 o1 的答卷贴上 arXiv。一个走极简纯 RL，一个走长上下文工程，几乎覆盖了"复现 o1"的所有主流思路。业界戏称这是"中国推理模型双响炮"——OpenAI 那只黑箱，被两束探照灯从不同角度同时照亮。</p>
+
+  <div class="callout">
+    <span class="label">轶事</span>
+    K1.5 有个细节很"产品经理"。R1 是一份纯技术报告，K1.5 却是<em>多模态</em>的——能看图解题。这其实暴露了两家团队的性格差：DeepSeek 像个较真的学者，先把"纯 RL 能不能涌现推理"这个科学问题证干净；Moonshot 本就有 Kimi 这个面向消费者的产品，自然顺手把视觉能力塞了进去，让模型既能算数学题，也能看懂带图的几何题、读懂数据图表。一个追求纯粹，一个拥抱实用，人设鲜明。
+  </div>
+
+  <p>还有个有意思的对照——两家对"长思考"的态度。R1 靠模型自己涌现出"Wait, let me reconsider"的反思，是被动长出来的；K1.5 则是<em>主动把上下文拉到 128K</em>，等于明确告诉模型"给你这么大空间，你尽管想"。一个像放养，一个像给足场地。殊途同归到 o1 级别，恰恰说明"想得久"才是那把钥匙，至于怎么让模型想得久，门道很多。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 220" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arw5" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <text x="360" y="28" text-anchor="middle" font-size="12" fill="#96897A">同一个对手 o1，两条路</text>
+
+        <!-- R1 路线 -->
+        <rect x="40" y="60" width="170" height="34" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="125" y="82" text-anchor="middle" fill="#24555A">DeepSeek-R1</text>
+        <rect x="40" y="104" width="170" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="125" y="126" text-anchor="middle" font-size="10">极简 · 纯 RL</text>
+        <rect x="40" y="148" width="170" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="125" y="170" text-anchor="middle" font-size="10">跳过 SFT · 看涌现</text>
+
+        <!-- K1.5 路线 -->
+        <rect x="510" y="60" width="170" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="595" y="82" text-anchor="middle" fill="#B54A2C">Kimi K1.5</text>
+        <rect x="510" y="104" width="170" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="595" y="126" text-anchor="middle" font-size="10">长上下文 · 工程</text>
+        <rect x="510" y="148" width="170" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="595" y="170" text-anchor="middle" font-size="10">冷启动 + 128K RL</text>
+
+        <!-- 共同目标 -->
+        <circle cx="360" cy="111" r="34" fill="none" stroke="#96897A" stroke-dasharray="3 3"/>
+        <text x="360" y="108" text-anchor="middle" font-size="10" fill="#96897A">同一个目标</text>
+        <text x="360" y="124" text-anchor="middle" font-size="11" fill="#2E2A22" font-weight="600">追平 o1</text>
+
+        <line x1="210" y1="111" x2="324" y2="111" stroke="#96897A" marker-end="url(#arw5)"/>
+        <line x1="510" y1="111" x2="396" y2="111" stroke="#96897A" marker-end="url(#arw5)"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · R1 与 K1.5 的路线对照。一个放养等涌现，一个给场地做工程，殊途同归追平 o1。</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读完 K1.5，我最深的感受是它把"扩展轴"这个概念讲透了。预训练时代，大家只会沿"参数×数据"这一个方向扩；K1.5 之后，"上下文长度"成了第二个可扩的方向，"思考时间"成了可计量的资源。这件事的深远影响在于：它让推理能力从"玄学涌现"变成了"可工程化调参"——你要更强的推理？那就开更大的上下文、做更稳的长序列 RL、再蒸馏个短版上线。从玄学到工程，往往就是一门技术走向普及的临界点。</p>
+
+  <p>但我也想泼一点冷水。K1.5 的成功高度依赖"可验证奖励"这个前提，这让它的方法论在数学、代码这类有标准答案的领域如鱼得水，可一旦搬到科研、写作、决策这类"答案好不好全凭判断"的场景，整套奖励机制就失灵了。怎么把"长上下文 RL"扩展到不可验证领域，是下一个真正的大题。此外，"长2短"虽好，但它本质上仍是蒸馏，短模型的能力天花板被长模型锁死——能不能让短模型自己长出长思考的能力，而不是从长模型那里"借"？R1 的纯 RL 路线其实隐隐在回答这个相反的问题。</p>
+
+  <p>把 R1 和 K1.5 放一起看，会发现一个有趣的循环：R1 说"别管那么多，纯 RL 就行"，K1.5 说"不行，得长上下文加工程"。两份答卷都成立，恰恰说明推理这道题，<em>解法从来不止一种</em>。真正决定胜负的，不是哪条路更"对"，而是哪条路更"可复现、可扩展、可服务化"。从这个角度看，K1.5 的工程取向，也许比 R1 的哲学取向更接近产业落地的形态。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    K1.5 把"想得久"的能力蒸馏给了"答得快"的短模型，听起来两全其美。可如果一个短模型从没自己"想"过很久，它的推理能力算自己的，还是从长模型那里借来的？当蒸馏成了标配，我们会不会训出一批"只会抄长模型思路、自己不会深思"的短模型？这个问题，下一篇会从另一个极端给出回答。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>s1: Simple test-time scaling</h3>
+    <p style="margin:0;">R1 和 K1.5 都把宝押在强化学习上——一个纯 RL，一个长上下文 RL，工程都不轻。可偏偏有人不服这套：斯坦福团队说，去掉强化学习，只用 1000 道精心挑的题、26 分钟训练，再配一句"Wait"逼模型多想两步，就能反超 o1-preview 27%。没有 RL，没有搜索树，没有 128K 长上下文——下一篇，我们拆解 s1，看看"极简"到底能极简到什么地步。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 14 篇</span>
+    <span>2026-08-14</span>
+  </footer>
+
+</div>
+</body>
+</html>
