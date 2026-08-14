@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>s1 论文精读 · 大模型经典论文系列 #015</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#015</span>
+  </div>
+
+  <h1 class="title">
+    s1: Simple test-time scaling
+    <span class="en">s1：1000 道题 + 26 分钟训练 + 一个"Wait"——不搞强化学习，也能让模型学会"再想想"</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Niklas Muennighoff*, Zitong Yang*, Weijia Shi*, Xiang Lisa Li*, Li Fei-Fei, Hannaneh Hajishirzi, Luke Zettlemoyer, Percy Liang, Emmanuel Candès, Tatsunori Hashimoto</span>
+    <span>机构：Stanford University, University of Washington, Allen Institute for AI, Contextual AI</span>
+    <span>发表：2025-01-31 / arXiv（后收录于 EMNLP 2025）</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2501.19393" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/simplescaling/s1" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://hf.co/simplescaling/s1-32B" target="_blank" rel="noopener">Model</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">2025 年 1 月的最后一天，arXiv 上挂出了一篇名字极其嚣张的论文——<em class="latin">s1: Simple test-time scaling</em>。彼时距离 OpenAI 发布 o1 模型刚过去四个月，整个领域都在疯狂追问同一个问题："o1 到底是怎么做到的？"众人或上千万样本强化学习，或蒙特卡洛树搜索，或多智能体辩论，把方案越堆越复杂。而斯坦福这群人给出的答案，是往模型生成里硬塞一个单词：<em class="latin">Wait</em>。</p>
+
+  <p class="lead">就这么一个看起来像开玩笑的操作，配合 1000 道精心挑选的数学题、26 分钟的训练，就把一个 32B 的开源模型推到了 AIME 2024 上 56.7% 的成绩——比 OpenAI o1-preview 还高出一截。论文标题里的 <em class="latin">s1</em>，正是"<em class="latin">simple 1</em>"的缩写：你要 o1，我就给你一个最简单版本的 1。这场"极简主义"的逆袭，是这一篇要讲的故事。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    用 1000 道精选难题做监督微调，再用"硬塞 Wait / 强行截断"的预算强制在推理时控制思考长度，就能复现 o1 级别的测试时扩展行为——不需要强化学习，不需要海量数据。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>如果把大模型的发展看成一条河流，那它在 2024 年 9 月拐了个大弯。在那之前，几乎所有的努力都汇入同一条主航道——<em>训练时扩展</em>（train-time scaling）：模型更大、数据更多、算力更猛，Kaplan 的 Scaling Laws 和 Chinchilla 的算力最优配比都是这条河上的航标。</p>
+  <p>OpenAI o1 的出现，相当于在主航道旁边开了一条新支流——<em>测试时扩展</em>（test-time scaling）：模型本身不变大，但在回答前让它"多想一会儿"，把算力从训练阶段挪到推理阶段。问题是，o1 把这条支流的水源藏了起来，连个示意地图都没给。</p>
+  <p>本篇 s1 就站在这个分叉口上。它<em>承接</em>了 o1 抛出的"测试时扩展"命题，又<em>开启</em>了一条"极简复现"的路线——后续的 s1.1、LIMO、Sky-T1、Open-R1 等一连串工作都沿着这条路往下走。它和 DeepSeek-R1（本系列第 13 篇）、Kimi K1.5（第 14 篇）同处一个时代，但走的是完全相反的极端：那两位用海量样本和强化学习把效果推到极致，s1 却反问一句——"能不能少到 1000 道？"</p>
+
+  <figure>
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arw" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="120" x2="660" y2="120" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 奠基期 -->
+        <circle cx="80" cy="120" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="100" text-anchor="middle">2017</text>
+        <text x="80" y="148" text-anchor="middle" fill="#2E2A22">Transformer</text>
+
+        <!-- 预训练 -->
+        <circle cx="180" cy="120" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="180" y="100" text-anchor="middle">2018–20</text>
+        <text x="180" y="148" text-anchor="middle" fill="#2E2A22">BERT / GPT-3</text>
+
+        <!-- 规模化 -->
+        <circle cx="290" cy="120" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="290" y="100" text-anchor="middle">2022</text>
+        <text x="290" y="148" text-anchor="middle" fill="#2E2A22">Chinchilla / InstructGPT</text>
+
+        <!-- 开源 -->
+        <circle cx="400" cy="120" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="400" y="100" text-anchor="middle">2023–24</text>
+        <text x="400" y="148" text-anchor="middle" fill="#2E2A22">LLaMA / Mistral / MoE</text>
+
+        <!-- o1 转折 -->
+        <circle cx="510" cy="120" r="6" fill="#24555A"/>
+        <text x="510" y="92" text-anchor="middle" fill="#24555A" font-weight="600">2024.09</text>
+        <text x="510" y="148" text-anchor="middle" fill="#2E2A22" font-weight="600">OpenAI o1</text>
+        <text x="510" y="164" text-anchor="middle" fill="#24555A">测试时扩展起点</text>
+
+        <!-- 本篇 s1 -->
+        <circle cx="590" cy="120" r="9" fill="#B54A2C"/>
+        <text x="590" y="80" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="590" y="148" text-anchor="middle" fill="#2E2A22" font-weight="600">s1</text>
+        <text x="590" y="164" text-anchor="middle" fill="#B54A2C">极简复现路线</text>
+
+        <!-- 同期 R1/Kimi -->
+        <circle cx="590" cy="60" r="3" fill="#96897A"/>
+        <text x="590" y="48" text-anchor="middle" fill="#96897A">R1 · K1.5（同期）</text>
+        <line x1="590" y1="63" x2="590" y2="111" stroke="#96897A" stroke-dasharray="3 3"/>
+      </g>
+      <!-- 支流标注 -->
+      <text x="660" y="210" text-anchor="end" font-family="JetBrains Mono" font-size="10" fill="#96897A">训练时扩展 → 测试时扩展</text>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的 s1：在 o1 开出的"测试时扩展"支流上，走极简复现路线</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要理解 s1 为什么重要，得先回到 2024 年 9 月 OpenAI 发布 o1 时那种"信息不对称"的焦虑。o1 在 AIME、Codeforces、GPQA 这些推理重镇上吊打一众前辈，OpenAI 却只放出了几句模糊的描述：用大规模强化学习训练、会生成长思维链、能在测试时分配更多算力。具体怎么训的？数据从哪来？奖励信号怎么设计？一律不说。</p>
+  <p>这就好比有人当众表演了一套绝世武功，然后告诉你"练这个需要每天打坐"——你只知道大方向，细节全是黑箱。社区的反应可想而知：复制尝试如雨后春笋。</p>
+  <ul>
+    <li><em>蒙特卡洛树搜索</em>（MCTS）：把推理过程当成下棋，搜索一棵"思维树"；</li>
+    <li><em>多智能体辩论</em>：让多个模型互相挑刺，投票出最佳答案；</li>
+    <li><em>大规模强化学习</em>：DeepSeek-R1 用百万级样本、多阶段 RL 才追平 o1。</li>
+  </ul>
+  <p>这些方法有一个共同特点：<em>越搞越复杂</em>。要么需要专门的搜索框架，要么需要海量标注数据，要么需要数百万步的 RL 训练。普通研究者想复现？基本不可能。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象你想复制一位米其林大厨的拿手菜。前几拨人分别去搭建分子料理设备、养专属菌种、从意大利运特定产地的水。s1 的研究者则反问一句："有没有可能，这道菜的核心就是火候和盐的时机？"于是他们用一口普通铁锅、四种家常调料，端出了一盘让评委分不出高下的菜。
+  </div>
+
+  <p>更关键的是，之前所有的复制尝试，<em>没有一项能清晰地复现"测试时扩展"行为</em>——也就是说，没法证明"给模型更多推理算力，性能就稳步上升"。这是 o1 最神秘、也最核心的特性。s1 要回答的，正是这个问题。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>论文开篇就抛出一个挑衅式的提问：</p>
+  <blockquote style="border-left:3px solid var(--accent);margin:24px 0;padding:6px 22px;color:var(--ink);font-style:normal;">
+    <em class="latin">What is the simplest approach to achieve both test-time scaling and strong reasoning performance?</em>
+  </blockquote>
+  <p>翻译过来就是：<em>实现"测试时扩展 + 强推理"的最简方法，到底是什么？</em></p>
+  <p>这个问题拆成两半。前半句"测试时扩展"，要求模型在推理时能被精确控制——给多少算力它就用多少，给得多它就想得久，给得少它就赶紧收尾。后半句"强推理"，要求这个模型在数学竞赛、博士级科学题这种硬核任务上，性能真能和 o1-preview 掰手腕。两件事缺一不可：光能控制思考长度但答得烂，没用；答得好但不能控制，也不算复现了 o1 的核心能力。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    假如你只能用 1000 条训练数据，并且不允许用任何强化学习，你会怎么设计一个方案，让模型既"会做题"又"能控制思考时长"？先在心里盘一盘你的方案，再往下看 s1 是怎么做的。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>s1 的方案干净利落地分成两块：<em>造数据</em>（s1K）和<em>控推理</em>（Budget Forcing，预算强制）。前者决定模型"会不会想"，后者决定模型"想多久"。我们一块一块拆。</p>
+
+  <h3>4.1 造数据：从 59K 到 1K 的三道筛子</h3>
+  <p>作者先从十几个公开数据集里收集了约 <em class="latin">59,000</em> 道带推理过程的问题，覆盖数学竞赛（MATH、OmniMath、OlympiadBench）、考试题（AGIEval）、编程（USACO）、科学（SciEval）等。然后套上三道筛子，一路筛到 1000 道。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象你在挑 1000 本藏书组建一个私人图书馆。<em>质量</em>是先剔除印刷错乱、缺页破损的；<em>难度</em>是扔掉小学生也能读完的；<em>多样性</em>是确保书架上不能全是言情小说，得有哲学、科普、诗集、传记各占一席。
+  </div>
+
+  <ul>
+    <li><em>质量（Quality）</em>：人工 + 规则清洗。剔除格式错乱、ASCII 图表残缺、答案对不上的样本。推理轨迹（思维链）从 <em class="latin">Gemini Thinking Experimental</em> 蒸馏而来，确保每一条都步骤清晰、能推出正确答案。</li>
+    <li><em>难度（Difficulty）</em>：用 Qwen2.5-7B-Instruct 和 Qwen2.5-32B-Instruct 两个模型去解题，<em>只要其中任一个能在给定的思考预算内解出来，这道题就被判定"太简单"而淘汰</em>。留下来的，都是两个模型都啃不动的硬骨头。</li>
+    <li><em>多样性（Diversity）</em>：把题目按领域聚类（数学、物理、化学、生物、计算机等共约 50 个细分类），然后<em>从每个类里均匀采样</em>，防止数据集被某一种题型主导。</li>
+  </ul>
+
+  <figure>
+    <svg viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arw2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 初始池 -->
+        <rect x="20" y="90" width="120" height="60" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="115" text-anchor="middle" font-weight="600">59,000 题</text>
+        <text x="80" y="135" text-anchor="middle" font-size="10" fill="#96897A">十几个公开数据集</text>
+
+        <!-- 三道筛子 -->
+        <rect x="220" y="30" width="150" height="50" rx="2" fill="#ECE4D4" stroke="#B54A2C"/>
+        <text x="295" y="50" text-anchor="middle" fill="#B54A2C" font-weight="600">① 质量 Quality</text>
+        <text x="295" y="66" text-anchor="middle" font-size="10" fill="#96897A">清洗 + 蒸馏思维链</text>
+
+        <rect x="220" y="95" width="150" height="50" rx="2" fill="#ECE4D4" stroke="#B54A2C"/>
+        <text x="295" y="115" text-anchor="middle" fill="#B54A2C" font-weight="600">② 难度 Difficulty</text>
+        <text x="295" y="131" text-anchor="middle" font-size="10" fill="#96897A">Qwen 7B/32B 都解不出</text>
+
+        <rect x="220" y="160" width="150" height="50" rx="2" fill="#ECE4D4" stroke="#B54A2C"/>
+        <text x="295" y="180" text-anchor="middle" fill="#B54A2C" font-weight="600">③ 多样性 Diversity</text>
+        <text x="295" y="196" text-anchor="middle" font-size="10" fill="#96897A">50 类聚类后均匀采样</text>
+
+        <!-- 最终 -->
+        <rect x="500" y="90" width="160" height="60" rx="2" fill="#B54A2C" fill-opacity="0.14" stroke="#B54A2C"/>
+        <text x="580" y="115" text-anchor="middle" fill="#B54A2C" font-weight="600">s1K：1,000 题</text>
+        <text x="580" y="133" text-anchor="middle" font-size="10" fill="#96897A">高质量 + 高难度 + 多样</text>
+
+        <!-- 箭头 -->
+        <line x1="140" y1="105" x2="220" y2="55" stroke="#96897A" marker-end="url(#arw2)"/>
+        <line x1="140" y1="120" x2="220" y2="120" stroke="#96897A" marker-end="url(#arw2)"/>
+        <line x1="140" y1="135" x2="220" y2="185" stroke="#96897A" marker-end="url(#arw2)"/>
+        <line x1="370" y1="55" x2="500" y2="105" stroke="#96897A" marker-end="url(#arw2)"/>
+        <line x1="370" y1="120" x2="500" y2="120" stroke="#96897A" marker-end="url(#arw2)"/>
+        <line x1="370" y1="185" x2="500" y2="135" stroke="#96897A" marker-end="url(#arw2)"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · s1K 数据集的三道筛选：从 59K 候选一路筛到 1K</figcaption>
+  </figure>
+
+  <p>这三道筛子缺一不可——后面的消融实验会证明：随机抽 1000 道、只看难度不看多样性、只看多样性不看难度，性能都会明显下滑。s1 的"少"是建立在"精"之上的。</p>
+
+  <h3>4.2 微调：朴素到不能再朴素的 SFT</h3>
+  <p>有了 s1K，下一步是训练。这里 s1 的选择朴素到让人怀疑人生：<em>标准监督微调（SFT）</em>，下一个 token 预测，没有强化学习，没有过程奖励模型，没有多阶段课程。基座模型选 Qwen2.5-32B-Instruct（一个已经做过指令微调的开源模型），训练数据就是 s1K 这 1000 道题。</p>
+  <p>训练成本呢？<em class="latin">16 张 H100 GPU，跑 26 分钟</em>。你没看错——比一集美剧还短。论文里给的数字换算下来大约 7 个 H100·小时的总算力开销。这个量级意味着，任何一个有显卡的高校实验室都能复现。</p>
+
+  <div class="callout">
+    <span class="label">关键判断</span>
+    s1 的潜台词是：现代基座模型（如 Qwen2.5-32B）<em>在预训练阶段已经把"怎么推理"的知识编码进了参数里</em>，SFT 做的不是"教模型推理"，而是"激活模型已有的推理能力"。1000 道题不是教具，而是钥匙。
+  </div>
+
+  <h3>4.3 控推理：Budget Forcing（预算强制）</h3>
+  <p>这是整篇论文最关键、也最骚气的部分。模型微调好之后，s1 想在推理时精确控制它"想多久"。怎么做？作者提出了 <em class="latin">Budget Forcing</em>，翻译过来是"预算强制"——你不按我给的预算想，我就强制你按预算来。</p>
+  <p>它有两个方向的操作，对应"想得太多"和"想得太少"两种情况：</p>
+
+  <ul>
+    <li><em>最大预算强制（如果超时）</em>：模型生成思考 token 时，如果数量超过了设定的上限，就<em>强行插入一个"思考结束"分隔符 + "Final Answer:"</em>，逼模型立刻转去输出最终答案。这是一种"时间到，交卷"。</li>
+    <li><em>最小预算强制（如果想提前收工）</em>：模型如果在还没达到下限时就想吐出"思考结束"分隔符，就<em>压制这个分隔符的生成，并在当前推理轨迹末尾追加一个单词 "Wait"</em>。模型看到自己刚说了一半突然来个"等等"，往往会接着反思、回头复查、修正之前的步骤。这个过程可以重复多次。</li>
+  </ul>
+
+  <figure>
+    <svg viewBox="0 0 700 320" xmlns="http://www.w3.org/0/svg">
+      <defs>
+        <marker id="arw3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 中间是模型思考流 -->
+        <rect x="40" y="40" width="120" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="100" y="58" text-anchor="middle">问题输入</text>
+        <text x="100" y="74" text-anchor="middle" font-size="10" fill="#96897A">&lt;think&gt; 开始</text>
+
+        <rect x="200" y="40" width="120" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="260" y="58" text-anchor="middle">思考中…</text>
+        <text x="260" y="74" text-anchor="middle" font-size="10" fill="#96897A">生成思维链</text>
+
+        <line x1="160" y1="62" x2="200" y2="62" stroke="#96897A" marker-end="url(#arw3)"/>
+
+        <!-- 路径 A：超时 -->
+        <text x="350" y="30" font-size="11" fill="#24555A" font-weight="600">路径 A：思考超时</text>
+        <rect x="360" y="40" width="140" height="44" rx="2" fill="#24555A" fill-opacity="0.10" stroke="#24555A"/>
+        <text x="430" y="58" text-anchor="middle" fill="#24555A" font-weight="600">强行截断</text>
+        <text x="430" y="74" text-anchor="middle" font-size="10" fill="#24555A">插 &lt;/think&gt; + Final Answer</text>
+        <line x1="320" y1="55" x2="360" y2="55" stroke="#24555A" marker-end="url(#arw3)"/>
+
+        <rect x="540" y="40" width="120" height="44" rx="2" fill="#ECE4D4" stroke="#24555A"/>
+        <text x="600" y="58" text-anchor="middle" fill="#24555A">立即输出答案</text>
+        <line x1="500" y1="62" x2="540" y2="62" stroke="#24555A" marker-end="url(#arw3)"/>
+
+        <!-- 路径 B：想提前收工 -->
+        <text x="350" y="120" font-size="11" fill="#B54A2C" font-weight="600">路径 B：想提前收工</text>
+        <rect x="200" y="130" width="120" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="260" y="148" text-anchor="middle">尝试输出</text>
+        <text x="260" y="164" text-anchor="middle" font-size="10" fill="#96897A">&lt;/think&gt; 分隔符</text>
+        <line x1="260" y1="84" x2="260" y2="130" stroke="#96897A" stroke-dasharray="3 3"/>
+
+        <rect x="360" y="130" width="140" height="44" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="430" y="148" text-anchor="middle" fill="#B54A2C" font-weight="600">压制 + 追加 Wait</text>
+        <text x="430" y="164" text-anchor="middle" font-size="10" fill="#B54A2C">"等等，再检查一下"</text>
+        <line x1="320" y1="145" x2="360" y2="145" stroke="#B54A2C" marker-end="url(#arw3)"/>
+
+        <!-- 回流到思考中 -->
+        <path d="M 430 174 Q 430 210 320 210 Q 260 210 260 174" stroke="#B54A2C" fill="none" stroke-dasharray="4 4" marker-end="url(#arw3)"/>
+        <text x="345" y="228" text-anchor="middle" font-size="10" fill="#B54A2C">模型反思 / 复查 / 修正步骤</text>
+
+        <!-- 多次 Wait 循环 -->
+        <text x="100" y="260" font-size="11" fill="#96897A">可重复多次，直到达到预算上限再走路径 A 收尾</text>
+        <text x="100" y="280" font-size="10" fill="#96897A">→ 这就是"测试时扩展"的可控旋钮</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · Budget Forcing 机制：超时则强行截断，提前收工则追加 "Wait" 强迫再想</figcaption>
+  </figure>
+
+  <p>这个设计的精妙之处在于：<em>"Wait" 这个词在训练数据里本来就有"等等，让我再想想"的语义</em>。模型在 s1K 里见过大量带反思、回头验证的思维链，所以一旦在生成中途撞见 "Wait"，它会自然地把这个信号理解成"该重新审视前面的步骤了"——然后真的去复查、去修正。一个看似粗暴的字符串拼接，意外地撬动了模型自带的自我修正能力。</p>
+
+  <p>把这套训练 + 推理流程串起来，s1 的完整配方是这样的：</p>
+
+  <figure>
+    <svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arw4" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <rect x="20" y="50" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="72" text-anchor="middle">Qwen2.5-32B</text>
+        <text x="80" y="88" text-anchor="middle" font-size="10" fill="#96897A">基座模型</text>
+
+        <rect x="180" y="50" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="240" y="72" text-anchor="middle">SFT on s1K</text>
+        <text x="240" y="88" text-anchor="middle" font-size="10" fill="#96897A">1000 题 · 26 分钟</text>
+
+        <rect x="340" y="50" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="400" y="72" text-anchor="middle">s1-32B</text>
+        <text x="400" y="88" text-anchor="middle" font-size="10" fill="#96897A">推理模型</text>
+
+        <rect x="500" y="50" width="170" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="585" y="72" text-anchor="middle" fill="#24555A">+ Budget Forcing</text>
+        <text x="585" y="88" text-anchor="middle" font-size="10" fill="#24555A">测试时控制思考时长</text>
+
+        <line x1="140" y1="75" x2="180" y2="75" stroke="#96897A" marker-end="url(#arw4)"/>
+        <line x1="300" y1="75" x2="340" y2="75" stroke="#96897A" marker-end="url(#arw4)"/>
+        <line x1="460" y1="75" x2="500" y2="75" stroke="#96897A" marker-end="url(#arw4)"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · s1 完整配方：基座 → SFT → 推理时 Budget Forcing</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>评测主要在三个推理重镇上：AIME 2024（美国数学邀请赛，竞赛级）、MATH500（高中到大学数学题集）、GPQA Diamond（博士级物理化学生物）。先看 s1-32B 和 o1 系列的硬碰硬对比：</p>
+
+  <table>
+    <thead>
+      <tr><th>模型</th><th>训练样本</th><th>AIME 2024</th><th>MATH 500</th><th>GPQA Diamond</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">o1-preview（API）</td><td>?</td><td>44.6</td><td>85.5</td><td>73.3</td></tr>
+      <tr><td class="text">o1-mini（API）</td><td>?</td><td>70.0</td><td>90.0</td><td>60.0</td></tr>
+      <tr><td class="text">s1-32B（无 BF）</td><td>1K</td><td>50.0</td><td>92.6</td><td>56.6</td></tr>
+      <tr><td class="text" style="color:var(--accent);font-weight:600;">s1-32B（+ Budget Forcing）</td><td>1K</td><td style="color:var(--accent);font-weight:600;">56.7</td><td style="color:var(--accent);font-weight:600;">93.0</td><td>59.6</td></tr>
+    </tbody>
+  </table>
+
+  <p>关键观察有几点。首先，<em>在 AIME 2024 上，s1-32B 以 56.7% 比 44.6% 领先 o1-preview 整整 12 个百分点</em>（相对提升约 27%，论文标题里那个"up to 27%"就来自这里）。一个 1000 道题、26 分钟训练出来的开源模型，在数学竞赛上反超 OpenAI 当时的旗舰推理模型——这个结果在 2025 年 1 月底是相当震撼的。</p>
+  <p>其次，<em>Budget Forcing 确实有效</em>。开启 BF 后，AIME 2024 从 50.0% 涨到 56.7%，GPQA 从 56.6% 涨到 59.6%——给模型更多"思考时间"，性能就跟着涨。这就是 o1 一直没公开的那条"测试时扩展曲线"。</p>
+  <p>更让人惊喜的是<em>外推能力</em>。s1-32B 训练时的最大序列长度是有限的，但通过 BF 不断追加 "Wait"，模型能在<em>超出训练所见长度</em>的情况下继续推理，AIME 2024 从 50% 一路推到 57%。这意味着模型的"会推理"和"能想很久"在一定程度上是解耦的。</p>
+  <p>但故事不全是好消息。<em>GPQA Diamond 上 s1 只有 59.6%，远低于 o1-preview 的 73.3%</em>。原因很直接——s1K 主要是数学题，跨学科的科学推理覆盖不足。这暴露了"小数据"路线的固有代价：数据少，覆盖就窄，长板越长短板越短。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <!-- 坐标轴 -->
+      <line x1="80" y1="240" x2="660" y2="240" stroke="#96897A"/>
+      <line x1="80" y1="40" x2="80" y2="240" stroke="#96897A"/>
+      <g font-family="JetBrains Mono" font-size="10" fill="#96897A">
+        <!-- Y 轴 -->
+        <text x="72" y="244" text-anchor="end">40</text>
+        <text x="72" y="200" text-anchor="end">50</text>
+        <text x="72" y="156" text-anchor="end">60</text>
+        <text x="72" y="112" text-anchor="end">70</text>
+        <text x="72" y="44" text-anchor="end">80</text>
+        <line x1="78" y1="200" x2="660" y2="200" stroke="#96897A" stroke-dasharray="2 4" opacity="0.4"/>
+        <line x1="78" y1="156" x2="660" y2="156" stroke="#96897A" stroke-dasharray="2 4" opacity="0.4"/>
+        <line x1="78" y1="112" x2="660" y2="112" stroke="#96897A" stroke-dasharray="2 4" opacity="0.4"/>
+        <!-- X 轴 -->
+        <text x="120" y="258" text-anchor="middle">512</text>
+        <text x="220" y="258" text-anchor="middle">1024</text>
+        <text x="320" y="258" text-anchor="middle">2048</text>
+        <text x="420" y="258" text-anchor="middle">4096</text>
+        <text x="520" y="258" text-anchor="middle">8192</text>
+        <text x="620" y="258" text-anchor="middle">16384</text>
+        <text x="370" y="276" text-anchor="middle" fill="#2E2A22">平均思考 token 数</text>
+        <text x="40" y="140" text-anchor="middle" transform="rotate(-90 40 140)" fill="#2E2A22">AIME 2024 准确率 (%)</text>
+      </g>
+      <!-- s1 曲线 -->
+      <path d="M 120 226 Q 200 218 220 210 Q 280 196 320 178 Q 380 168 420 162 Q 480 158 520 156 Q 580 156 620 156" stroke="#B54A2C" stroke-width="2" fill="none"/>
+      <circle cx="120" cy="226" r="4" fill="#B54A2C"/>
+      <circle cx="220" cy="210" r="4" fill="#B54A2C"/>
+      <circle cx="320" cy="178" r="4" fill="#B54A2C"/>
+      <circle cx="420" cy="162" r="4" fill="#B54A2C"/>
+      <circle cx="520" cy="156" r="4" fill="#B54A2C"/>
+      <circle cx="620" cy="156" r="4" fill="#B54A2C"/>
+      <text x="630" y="150" font-family="JetBrains Mono" font-size="11" fill="#B54A2C" font-weight="600">s1-32B</text>
+      <text x="630" y="164" font-family="JetBrains Mono" font-size="9" fill="#B54A2C">50% → 57%</text>
+
+      <!-- o1-preview 参考线 -->
+      <line x1="80" y1="244" x2="660" y2="244" stroke="#24555A" stroke-dasharray="6 4" opacity="0.6"/>
+      <text x="650" y="240" text-anchor="end" font-family="JetBrains Mono" font-size="10" fill="#24555A">o1-preview: 44.6%</text>
+
+      <!-- 标注 -->
+      <text x="280" y="60" font-family="JetBrains Mono" font-size="11" fill="#B54A2C" font-weight="600">关键发现：思考 token 越多，准确率越高</text>
+      <text x="280" y="76" font-family="JetBrains Mono" font-size="10" fill="#96897A">这条曲线本身就是 o1 一直没公开的"测试时扩展"行为</text>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · s1-32B 在 AIME 2024 上的测试时扩展曲线（示意，数据基于论文 Figure 1）</figcaption>
+  </figure>
+
+  <h3>5.1 消融：为什么"三道筛子"和"Budget Forcing"都不可少</h3>
+  <p>论文最扎实的部分是消融实验，作者逐一拆解了每个设计选择的贡献。先看数据筛选：</p>
+
+  <table>
+    <thead>
+      <tr><th>s1K 变体</th><th>筛选方式</th><th>AIME 2024</th><th>GPQA</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">完整 s1K</td><td>难度 + 多样性 + 质量</td><td>56.7</td><td>59.6</td></tr>
+      <tr><td class="text">随机 1K</td><td>从 59K 随机抽</td><td>明显下滑</td><td>明显下滑</td></tr>
+      <tr><td class="text">只看难度</td><td>不强制多样性</td><td>下滑</td><td>下滑</td></tr>
+      <tr><td class="text">只看多样性</td><td>不强制难度</td><td>下滑</td><td>下滑</td></tr>
+    </tbody>
+  </table>
+
+  <p>结论很硬：<em>三个筛子缺一不可</em>。随便抽 1000 道的效果远不如精心筛的 1000 道——"少"必须是"精"前提下的少。</p>
+  <p>更有趣的是测试时扩展方法的横向对比。作者把 Budget Forcing 和另外四种控制思考时长的方法做了对比：</p>
+
+  <table>
+    <thead>
+      <tr><th>方法</th><th>控制方式</th><th>可控性</th><th>结论</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">Token-conditional</td><td>prompt 里要求"想 N 个 token"</td><td>差</td><td class="text">模型根本不会数 token</td></tr>
+      <tr><td class="text">Step-conditional</td><td>要求"分 N 步推理"</td><td>差</td><td class="text">模型用"少步多 token"或"多步少 token"绕过约束</td></tr>
+      <tr><td class="text">Class-conditional</td><td>按题型给不同预算</td><td>脆</td><td class="text">难泛化、易被钻空子</td></tr>
+      <tr><td class="text">Rejection sampling</td><td>多次采样挑长的</td><td>反向</td><td class="text">越长反而越差（inverse scaling）</td></tr>
+      <tr><td class="text" style="color:var(--accent);font-weight:600;">Budget Forcing</td><td>硬塞 / 截断</td><td style="color:var(--accent);font-weight:600;">强</td><td class="text" style="color:var(--accent);font-weight:600;">清晰、单调的扩展曲线</td></tr>
+    </tbody>
+  </table>
+
+  <figure>
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 标题 -->
+        <text x="350" y="24" text-anchor="middle" font-weight="600">五种测试时扩展方法对比</text>
+
+        <!-- BF -->
+        <rect x="40" y="50" width="120" height="40" rx="2" fill="#B54A2C" fill-opacity="0.14" stroke="#B54A2C"/>
+        <text x="100" y="75" text-anchor="middle" fill="#B54A2C" font-weight="600">Budget Forcing</text>
+        <text x="100" y="105" text-anchor="middle" font-size="10" fill="#B54A2C">✓ 单调上升</text>
+        <text x="100" y="120" text-anchor="middle" font-size="10" fill="#B54A2C">✓ 可控</text>
+
+        <!-- TCC -->
+        <rect x="180" y="50" width="120" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="240" y="75" text-anchor="middle">Token-cond.</text>
+        <text x="240" y="105" text-anchor="middle" font-size="10" fill="#96897A">✗ 模型不会数 token</text>
+        <text x="240" y="120" text-anchor="middle" font-size="10" fill="#96897A">✗ 控制失效</text>
+
+        <!-- SCC -->
+        <rect x="320" y="50" width="120" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="380" y="75" text-anchor="middle">Step-cond.</text>
+        <text x="380" y="105" text-anchor="middle" font-size="10" fill="#96897A">✗ 步数 ≠ token 数</text>
+        <text x="380" y="120" text-anchor="middle" font-size="10" fill="#96897A">✗ 被模型"hack"</text>
+
+        <!-- CCC -->
+        <rect x="460" y="50" width="120" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="520" y="75" text-anchor="middle">Class-cond.</text>
+        <text x="520" y="105" text-anchor="middle" font-size="10" fill="#96897A">✗ 需要类别标签</text>
+        <text x="520" y="120" text-anchor="middle" font-size="10" fill="#96897A">✗ 难泛化</text>
+
+        <!-- RS -->
+        <rect x="40" y="170" width="120" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="100" y="195" text-anchor="middle">Rejection Samp.</text>
+        <text x="100" y="225" text-anchor="middle" font-size="10" fill="#96897A">✗ inverse scaling</text>
+        <text x="100" y="240" text-anchor="middle" font-size="10" fill="#96897A">✗ 越长越差</text>
+
+        <!-- 总结 -->
+        <rect x="200" y="170" width="460" height="70" rx="2" fill="#24555A" fill-opacity="0.08" stroke="#24555A"/>
+        <text x="430" y="195" text-anchor="middle" fill="#24555A" font-weight="600">结论</text>
+        <text x="430" y="215" text-anchor="middle" font-size="11" fill="#24555A">看似最粗暴的"硬塞 Wait"</text>
+        <text x="430" y="231" text-anchor="middle" font-size="11" fill="#24555A">反而是唯一稳定可控的方案</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 6</span> · 五种测试时扩展方法的横向对比：Budget Forcing 是唯一稳定可控的</figcaption>
+  </figure>
+
+  <p>这个对比传达了一个反直觉的结论：<em>越"软"的控制方法越不可靠</em>。让模型自己数 token、自己分步骤，它都会用各种方式"应付"过去；反而是 s1 这种直接干预生成流的"硬"方法，能拿到清晰单调的扩展曲线。某种程度上，这和当年 InstructGPT 用"人类反馈"硬教模型听话的逻辑异曲同工——模型自己不老实，就得上强制手段。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>s1 的影响远远超出了它本身的性能数字。它在三个层面上重塑了社区对"推理模型"的认知：</p>
+  <ul>
+    <li><em>证明了"测试时扩展"不需要 RL</em>。在 s1 之前，社区隐约达成的共识是"想复现 o1，得上大规模强化学习"——DeepSeek-R1 就是这么做的。s1 用 1000 道 SFT 直接打脸了这个共识，把"测试时扩展"从一个 RL 问题降维成一个数据 + 推理控制问题。</li>
+    <li><em>把"小数据 + 精筛选"的范式推上了风口</em>。s1 之后，LIMO（817 道题）、Sky-T1、Open-R1 一系列工作都沿着"少量精筛数据"的路线走，形成了 2025 年上半年一个明显的学术潮流。</li>
+    <li><em>开源全栈，降低门槛</em>。模型权重、s1K 数据集、训练脚本、评测脚本全部开源，附 Hugging Face 上的可下载 checkpoint。任何一个有 16 张 H100 的团队都能在半小时内复现。这种"完全透明"的做法，和 OpenAI o1 的"完全黑箱"形成了鲜明对比，也奠定了 2025 年推理模型研究的开放基调。</li>
+  </ul>
+  <p>更深层的意义在于，s1 把"推理能力"重新定义成了一个<em>激活问题</em>而不是<em>习得问题</em>。它暗示：现代基座模型在预训练时已经"见过"足够多的推理模式，后训练要做的，是给模型几把"钥匙"，让它把已经会的东西拿出来用。这个观点在 LIMO 论文里被进一步推到极致——下期我们会详细讲。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>s1 不是银弹，它有几条相当明显的局限：</p>
+  <ul>
+    <li><em>"Wait" 加多了会进入死循环</em>。论文承认，连续追加太多次 "Wait" 后，模型有时会在同一个推理步骤上反复打转，反而把答案改错。BF 的"最大次数"得小心调，并不是越多越好。</li>
+    <li><em>序列扩展会饱和</em>。把思考 token 从 512 涨到 4096 收益明显，但从 8192 涨到 16384 收益就趋于平缓。论文在讨论部分提到，<em>并行扩展（parallel scaling）</em>——同时跑多条思维链再投票——可能是突破这个瓶颈的方向，但 s1 没有深入。</li>
+    <li><em>覆盖不均</em>。s1K 偏数学，导致 GPQA 这种跨学科科学题上 s1-32B 远不如 o1-preview。"小数据"路线的天然代价在这里暴露无遗。</li>
+    <li><em>没追上 o1 / R1 的上限</em>。s1-32B 的 AIME 56.7% 虽然超过 o1-preview，但和 o1（74.4%）、DeepSeek-R1（79.8%）相比仍有明显差距。极简路线换来的是可复现性，牺牲的是天花板。</li>
+    <li><em>评测稳定性</em>。后来社区复现发现，AIME 这种只有 30 道题的小评测集方差很大，s1 的某些数字在不同 vLLM 版本下会波动 10 个百分点以上。作者后来发布了 s1.1 修了一些问题，但"小评测集 + 极小训练集"组合本身的统计稳定性是个隐患。</li>
+  </ul>
+  <p>后续工作大致沿着三条路弥补这些局限：一是继续扩数据但保持精筛（LIMO、s1.1）；二是引入 RL 把上限推高（DeepSeek-R1 路线）；三是探索并行扩展与更精细的测试时算力调度（如 PRM、树搜索）。s1 自己没有走完任何一条，但它把"这条路能走通"这件事，第一次清清楚楚地证明了。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把 s1 放回整条大模型发展线上，能看得很清楚它是怎么承前启后的。</p>
+  <p><em>奠基期（2017 前后）</em>：Transformer 把"并行训练"变成可能，scaling laws 的种子埋下。</p>
+  <p><em>预训练范式期（2018–2020）</em>：BERT、GPT-2、GPT-3 接力证明"大力出奇迹"，但模型主要在训练时变强，推理时就是一次前向。</p>
+  <p><em>规模化探索期（2020–2022）</em>：Chinchilla 校准了"模型 / 数据"配比，InstructGPT 把"对齐"提上日程。算力主要还是花在训练。</p>
+  <p><em>对齐与应用期（2022–2023）</em>：LLaMA 开源、DPO 简化对齐、Mistral / MoE 把效率做到极致。开源生态第一次能和闭源掰手腕。</p>
+  <p><em>推理范式期（2024.09 起）</em>：o1 拐出"测试时扩展"的新航道，DeepSeek-R1、Kimi K1.5 用大规模 RL 把上限推到极致。</p>
+  <p><em>本篇 s1 站在推理范式期的"极简分岔"上</em>：和 R1、K1.5 同期，但反向操作——用最少的数据、最简单的训练、最朴素的推理控制，证明"测试时扩展"不是 RL 的专利。它和 LIMO、Sky-T1 一道，构成了 2025 年初"小数据复现 o1"的三角阵营，也直接催生了 Open-R1 等开放复现运动。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>s1 这篇论文本身就是个"故事性拉满"的样本，几个细节值得玩味。</p>
+  <p><em>名字就是挑衅</em>。<em class="latin">s1</em> = <em class="latin">simple 1</em>，直白地对着 OpenAI 的 <em class="latin">o1</em> 喊话："你要 o1，我给你 s1，简单版。"在论文写作和 GitHub README 里，作者团队几乎不掩饰这种"极简主义"的姿态——他们甚至把仓库命名为 <em class="latin">simplescaling</em>，把组织名都注册成了"简单扩展"。</p>
+  <p><em>豪华的作者阵容</em>。论文一作 Niklas Muennighoff 是 MTEB（最流行的检索评测基准）的提出者；共同一作 Zitong Yang 来自斯坦福；通讯作者之一是<em>李飞飞</em>——对，就是 ImageNet 那个李飞飞。一位计算机视觉的奠基人物出现在 LLM 推理论文的作者列表里，本身就说明了"推理范式"已经成了整个 AI 社区的焦点。最后一位 Tatsunori Hashimoto 也是斯坦福的明星教授，长期做对齐和评测。这种"明星梦之队"做这么一个"小数据"实验，反差感很强。</p>
+  <p><em>"Wait" 这个 trick 的发现</em>。从论文里看，作者最初是想做更精细的"按 token 数控制思考"的，但消融发现模型根本不会数自己的 token。情急之下他们试了"直接在结尾贴个 Wait"这种粗暴做法，结果意外地好用——模型不仅接着想了，还想得更对了。这种"歪打正着"的发现，是科研里最迷人的瞬间之一。</p>
+  <p><em>26 分钟训练的"梗"</em>。论文一发，社区里就有人算账："26 分钟训练出一个推理模型，比一集《老友记》还短。"这个数字成了 s1 传播最广的标签，也成了"小数据派"最有力的口号。当然，前提是 Qwen2.5-32B 已经把"硬功夫"在预训练里练好了——s1 做的是"临门一脚"。但这临门一脚，确实漂亮。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 两个钟 -->
+        <circle cx="180" cy="90" r="55" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="180" y="80" text-anchor="middle" font-weight="600">26 分钟</text>
+        <text x="180" y="100" text-anchor="middle" font-size="11" fill="#B54A2C">s1 训练时长</text>
+        <text x="180" y="116" text-anchor="middle" font-size="10" fill="#96897A">16× H100</text>
+
+        <circle cx="520" cy="90" r="55" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="520" y="80" text-anchor="middle" font-weight="600">数月</text>
+        <text x="520" y="100" text-anchor="middle" font-size="11" fill="#24555A">o1 / R1 训练时长</text>
+        <text x="520" y="116" text-anchor="middle" font-size="10" fill="#96897A">海量样本 + RL</text>
+
+        <!-- 等号 -->
+        <text x="350" y="98" text-anchor="middle" font-size="22" fill="#96897A">≈</text>
+        <text x="350" y="120" text-anchor="middle" font-size="10" fill="#96897A">AIME 2024</text>
+        <text x="350" y="134" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">s1 还更高一点</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 7</span> · 26 分钟 vs 数月：s1 用极小的训练成本换来了可比的推理性能</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读完 s1，最让我难忘的不是它跑赢了 o1-preview 这个数字，而是它把"推理能力"这件事重新框定成了一个<em>激活问题</em>。在过去几年，社区习惯性地把"模型不会推理"理解成"模型没学会推理"，于是不断地堆数据、堆 RL、堆奖励信号。s1 提供了另一种解释：现代基座模型早就"会"了，只是没被正确地"叫醒"。</p>
+  <p>这个视角一旦接受，一连串推论就跟着来了。如果推理是激活而不是习得，那"激活钥匙"的质量就远比数量重要——这正是 s1K 三道筛子要解决的问题，也是后续 LIMO 把数据量进一步压到 817 的理论依据。如果推理是激活，那训练成本的天花板就不该由"教模型推理"决定，而该由"造钥匙"决定——这才是 26 分钟训练能成立的真正原因。</p>
+  <p>但 s1 也提示了一个值得警惕的倾向。<em>"小数据 + 强基座"组合最大的风险，是让研究者的注意力从"模型本身的能力"偏移到"激活技巧"上</em>。Budget Forcing 这种"硬塞 Wait"的做法虽然有效，但本质上是一种解码期的工程技巧，它并没有让模型真的"更会推理"，只是让模型"把已有的推理能力挤出来"。如果整个领域都去钻研这种"挤"的技巧，而忽视了基座模型推理能力的根本提升，长远看未必是好事。</p>
+  <p>更现实的问题是成本账。s1-32B 训练只要 26 分钟没错，但<em>推理时</em>为了拿到那 27% 的提升，需要让模型生成上万个思考 token——单次推理成本是普通 chat 模型的几十倍。"测试时扩展"这个名字的另一面，是"测试时烧钱"。对于真正大规模部署的应用，这笔账怎么算，是 s1 这类工作还没有认真回答的问题。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果"推理能力"真的是激活问题，那是不是意味着——只要基座模型足够强，连 1000 道题都不需要，0 道题也能激活？换句话说，"Wait" 这种 trick 是否可能在某个足够强的基座上，零样本就直接生效？你觉得这条路能走通吗？为什么？
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>LIMO: Less Is More for Reasoning</h3>
+    <p style="margin:0;">s1 把数据压到了 1000 道，下篇论文直接把刀架到了 817 道——而且还抛出了"少即是多推理假说"，宣称复杂推理能力可以用极少量精心编排的"认知模板"激活。817 道题能把 AIME 从 6.5% 推到 57.1%，并且还能在 10 个未见过的基准上泛化提升 40.5%。这究竟是 s1 路线的延续，还是一次更激进的挑衅？</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 015 篇</span>
+    <span>2026-08-15</span>
+  </footer>
+
+</div>
+</body>
+</html>
