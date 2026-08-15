@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LIMO 论文精读 · 大模型经典论文系列 #016</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#016</span>
+  </div>
+
+  <h1 class="title">
+    LIMO: Less is More for Reasoning
+    <span class="en">LIMO：817 道题就能"推理涌现"——挑战 s1 的 1000 道，重新定义推理的最小训练量</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Yixin Ye, Zhen Huang, Yang Xiao, Ethan Chern, Shijie Xia, Pengfei Liu</span>
+    <span>机构：上海交通大学 · SII-GAIR · 复旦大学 · 香港理工大学</span>
+    <span>发表：2025-02 / arXiv · COLM 2025</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2502.03387" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/GAIR-NLP/LIMO" target="_blank" rel="noopener">GitHub</a>
+  </div>
+
+  <!-- ============ 上篇回顾 ============ -->
+  <div class="callout">
+    <span class="label">上篇回顾</span>
+    上一篇我们读了 <em class="latin">s1</em>：用 1000 道题 + 26 分钟训练 + 一个"Wait"，就让模型学会"再想想"。它证明测试时扩展可以靠极简 SFT 实现。但一个更激进的问题立刻浮出水面——1000 道真的已经是下限了吗？能不能更少？少到什么程度，推理能力才会"断电"？这一篇，上海交大的团队把数字砍到了 817，并给出了一套解释"为什么少反而够"的理论。
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">2025 年 2 月 5 日，DeepSeek-R1 引发的全球复现狂潮正烧到最旺。几乎每个实验室都在做同一件事：堆更多数据、上更复杂的强化学习，试图"教会"模型推理。那天深夜，arXiv 上悄悄挂出一篇短文，标题只有四个字母——<em class="latin">LIMO</em>。</p>
+
+  <p class="lead">论文里有一个数字刺痛了所有人：<em>817</em>。作者们声称，只用 817 道精心挑选的数学题做最普通的监督微调（SFT），就让一个 32B 模型在美国数学奥赛邀请赛 AIME 上从 6.5% 飙到 57.1%。而当时主流方案用的数据量，是它的 100 倍。更反常的是，它在从没见过的基准上居然也涨了——这直接打了"SFT 只会让模型死记硬背"这条行业信条一记耳光。817，这个奇怪的、不是整数也不是量级数的数字，一夜之间成了社区热搜。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    只要基座模型在预训练中已经"学过"足够的数学知识，那么激活它的推理能力，并不需要海量数据——只需要几百道精选的"认知模板"轻轻一拨，推理就会自己涌现。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>把 LIMO 放进大模型推理的故事线里，它的位置非常微妙：它<em>既不发明新算法，也不刷新模型架构</em>，却在 2025 年初"全民卷 RL"的喧嚣里，硬生生用一份 817 题的数据集，把"推理能力从哪来"这个问题重新摆回了桌面上。</p>
+
+  <p>它的上游是 <em class="latin">DeepSeek-R1</em> 和 <em class="latin">s1</em>：前者证明纯 RL 能让模型自发"顿悟"出思维链，后者证明 1000 道 SFT 也能做到。LIMO 继承了 s1 的"极简 SFT"路线，却把数字进一步压到 817，并第一次给出了一个<em>可解释的假说</em>——为什么这么少就够了。它的下游则直接催生了"少样本激发推理"这一整条支线：LIMOPro、Light-R1、LIMO-R1-Like 等后续工作纷纷跟进，连 OpenAI、Anthropic 的后续技术报告里也开始频繁讨论"激发"而非"教会"。</p>
+
+  <p>换句话说，LIMO 是推理范式期里那个<em>把"训练"重新定义成"唤醒"的转折点</em>。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="120" x2="660" y2="120" stroke="#96897A" stroke-width="1"/>
+
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 已解析节点：实心 -->
+        <circle cx="70" cy="120" r="5" fill="#24555A"/>
+        <text x="70" y="100" text-anchor="middle" fill="#24555A">2017</text>
+        <text x="70" y="148" text-anchor="middle" fill="#2E2A22">Transformer</text>
+
+        <circle cx="150" cy="120" r="5" fill="#24555A"/>
+        <text x="150" y="100" text-anchor="middle" fill="#24555A">2020</text>
+        <text x="150" y="148" text-anchor="middle" fill="#2E2A22">GPT-3</text>
+
+        <circle cx="230" cy="120" r="5" fill="#24555A"/>
+        <text x="230" y="100" text-anchor="middle" fill="#24555A">2022</text>
+        <text x="230" y="148" text-anchor="middle" fill="#2E2A22">InstructGPT</text>
+
+        <circle cx="310" cy="120" r="5" fill="#24555A"/>
+        <text x="310" y="100" text-anchor="middle" fill="#24555A">2023</text>
+        <text x="310" y="148" text-anchor="middle" fill="#2E2A22">LLaMA / DPO</text>
+
+        <circle cx="390" cy="120" r="5" fill="#24555A"/>
+        <text x="390" y="100" text-anchor="middle" fill="#24555A">2024</text>
+        <text x="390" y="148" text-anchor="middle" fill="#2E2A22">DeepSeek-V3</text>
+
+        <circle cx="470" cy="120" r="5" fill="#24555A"/>
+        <text x="470" y="100" text-anchor="middle" fill="#24555A">2025.01</text>
+        <text x="470" y="148" text-anchor="middle" fill="#2E2A22">DeepSeek-R1</text>
+
+        <circle cx="545" cy="120" r="5" fill="#24555A"/>
+        <text x="545" y="100" text-anchor="middle" fill="#24555A">2025.01</text>
+        <text x="545" y="148" text-anchor="middle" fill="#2E2A22">s1</text>
+
+        <!-- 本篇：放大高亮 -->
+        <circle cx="610" cy="120" r="9" fill="#B54A2C"/>
+        <circle cx="610" cy="120" r="14" fill="none" stroke="#B54A2C" stroke-width="1" opacity="0.4"/>
+        <text x="610" y="88" text-anchor="middle" fill="#B54A2C" font-weight="600">2025.02</text>
+        <text x="610" y="152" text-anchor="middle" fill="#B54A2C" font-weight="600">LIMO（本篇）</text>
+
+        <!-- 已解析区间标注 -->
+        <line x1="70" y1="172" x2="545" y2="172" stroke="#24555A" stroke-width="1.5"/>
+        <text x="307" y="190" text-anchor="middle" fill="#24555A" font-size="10">已精读 15 篇</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的 LIMO 位置。实心点为本系列已精读论文，红色放大点为本篇。</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要理解 LIMO 为什么"反常"，得先看看 2025 年初主流的推理训练范式长什么样。当时大家信奉两条近乎公理的假设：</p>
+
+  <ul>
+    <li><em>假设一</em>：复杂的认知过程（多步推理、知识整合、结构化解题）必须靠大量监督演示才能学会，于是训练集动辄几万、几十万条。</li>
+    <li><em>假设二</em>：SFT 主要导致"记忆"而不是"泛化"——模型只是在背题，换个壳就不会了。所以真正要泛化，得靠强化学习。</li>
+  </ul>
+
+  <p>在这两条假设下，整个领域的动作高度一致：<em class="latin">NuminaMath</em> 这类数据集堆到 86 万条，<em class="latin">OpenMathInstruct</em> 直奔 200 万条，各家 RL 方案把奖励函数调得越来越细。所有人都默认"更多数据 = 更强推理"，就像当年 GPT-3 时代默认"更大模型 = 更强能力"一样。</p>
+
+  <p>但 LIMO 的作者们注意到两件被忽视的事。第一，<em>基础模型已经不一样了</em>。Llama 2 的训练数据是 1.8 万亿 token，而 Llama 3 光用于数学推理的数据就有 3.7 万亿 token——现代基座模型在预训练阶段，已经把海量的数学定理、解题套路、竞赛题模式"咽"进了参数里。问题早就从"怎么让模型学会数学"悄悄变成了"怎么让模型把已经会的数学用出来"。</p>
+
+  <p>第二，<em>推理时计算的空间被打开了</em>。<em class="latin">o1</em>、<em class="latin">DeepSeek-R1</em> 这类工作证明，只要允许模型生成足够长的思维链，它就能把"想"的过程摊开来一步步走。这意味着模型需要一个"认知工作区"来展开和应用它已有的知识，而不是一堆新数据去灌。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象一个读了万卷书但从不开口的学霸。主流 RL 方案像是天天考试、做错就罚、做对就奖，硬把他训练成应试机器；而 LIMO 想做的事更像是——递给他 817 道"样板题"，每道都附上一份"高手是怎么想这道题的"完整思路。学霸看完顿悟："哦，原来我脑子里的东西该这么组织着用。"然后他就能去解从没见过的题了。
+  </div>
+
+  <p>这两点观察合在一起，指向一个大胆的猜测：<em>如果知识已经在模型里、推理空间也已经够大，那么"激活"这套能力，可能根本不需要海量数据</em>。LIMO 就是为了验证这个猜测而生的。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>论文要回答的问题可以压成一句：</p>
+
+  <div class="callout question">
+    <span class="label">核心问题</span>
+    一个预训练已充分编码数学知识的基础模型，能否仅靠极少量的高质量推理样本被"激活"出复杂的数学推理能力——同时还能泛化到从未见过的任务上？
+  </div>
+
+  <p>这个问题里藏着三重挑战。第一是<em>量</em>的挑战：少到几百条，够吗？第二是<em>质</em>的挑战：什么样的样本才配当"激活剂"？第三是<em>泛化</em>的挑战：如果只在小数据上 SFT，模型到底是真学会了推理，还是只是把这几百道背下来？第三个问题最致命，因为它直接对抗"假设二"。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果让你来挑这 800 多道"激活题"，你会优先挑什么样的？是简单题让模型建立信心，还是难题把模型逼到极限？先在心里给个答案，等下看看论文的选择和你差多远。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>LIMO 的方法部分干净得让人意外——它<em>没有任何新算法</em>。整个方法可以拆成两块：一个理论假说，和一个把假说落地的数据构建流程。模型训练就是最朴素的 SFT。换句话说，这篇论文的真正创新在"数据科学"而不在"算法"。</p>
+
+  <h3>4.1 LIMO 假说：从"教会"到"唤醒"</h3>
+  <p>作者把他们的核心主张提炼成一句话，称为 <em class="latin">Less-Is-More Reasoning Hypothesis</em>（LIMO 假说）：</p>
+
+  <div class="callout">
+    <span class="label">LIMO 假说</span>
+    在预训练阶段已充分编码领域知识的基础模型中，复杂的推理能力可以通过<em>少量但精心编排的认知过程演示</em>而涌现。
+  </div>
+
+  <p>假说进一步指出，"激活推理"的门槛（作者称之为<em>激发阈值</em>，<em class="latin">Elicitation Threshold</em>）并不由任务本身的复杂度决定，而由两个因素决定：</p>
+
+  <div class="formula-block">
+    $$\text{Elicitation Threshold} = f\big(\underbrace{K_{\text{pretrain}}}_{\text{预训练知识完备性}},\ \underbrace{Q_{\text{template}}}_{\text{认知模板有效性}}\big)$$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>翻译成人话：知识底子越厚、样板题越精，激活所需的样本就越少。这两个因素一个朝向"过去"（预训练给了多少），一个朝向"现在"（微调样本质量多高）。这把推理能力的来源，从"训练时灌进去的"重新归因到"预训练时已经埋下的"。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ah2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 左：预训练知识库 -->
+        <rect x="30" y="40" width="180" height="90" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="68" text-anchor="middle" font-weight="600">预训练知识库</text>
+        <text x="120" y="90" text-anchor="middle" font-size="11" fill="#96897A">数学定理 · 解题套路</text>
+        <text x="120" y="108" text-anchor="middle" font-size="11" fill="#96897A">竞赛题模式（潜伏）</text>
+        <text x="120" y="126" text-anchor="middle" font-size="10" fill="#24555A">K_pretrain ↑</text>
+
+        <!-- 右：认知模板 -->
+        <rect x="490" y="40" width="180" height="90" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="580" y="68" text-anchor="middle" font-weight="600">认知模板（817 题）</text>
+        <text x="580" y="90" text-anchor="middle" font-size="11" fill="#96897A">拆解 · 自检 · 探索</text>
+        <text x="580" y="108" text-anchor="middle" font-size="11" fill="#96897A">粒度自适应</text>
+        <text x="580" y="126" text-anchor="middle" font-size="10" fill="#24555A">Q_template ↑</text>
+
+        <!-- 中：激发 -->
+        <rect x="260" y="170" width="180" height="70" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="350" y="200" text-anchor="middle" fill="#B54A2C" font-weight="600">激发阈值 ↓</text>
+        <text x="350" y="222" text-anchor="middle" font-size="11" fill="#B54A2C">所需样本量骤减</text>
+
+        <!-- 底：涌现的推理 -->
+        <rect x="260" y="170" width="180" height="70" rx="2" fill="none" stroke="none"/>
+        <line x1="120" y1="130" x2="290" y2="178" stroke="#96897A" marker-end="url(#ah2)"/>
+        <line x1="580" y1="130" x2="410" y2="178" stroke="#96897A" marker-end="url(#ah2)"/>
+
+        <rect x="260" y="260" width="180" height="0" rx="2"/>
+      </g>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <text x="350" y="265" text-anchor="middle">↓ 极少样本 SFT</text>
+        <text x="350" y="278" text-anchor="middle" fill="#B54A2C" font-weight="600">复杂推理涌现</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · LIMO 假说示意：激发推理的门槛由"预训练知识完备性"与"认知模板有效性"共同决定，二者越强，所需样本越少。</figcaption>
+  </figure>
+
+  <h3>4.2 数据构建：从千万题到 817 题</h3>
+  <p>假说要落地，关键在于"认知模板"怎么造。LIMO 的数据构建是一条精密的漏斗，把千万级的候选题，一步步筛到 817 道。整个流程分两段：先筛<em>问题</em>，再造<em>推理链</em>。</p>
+
+  <p><strong>第一步：问题筛选——只留"难但可解"的。</strong>作者从 <em class="latin">NuminaMath-CoT</em>、<em class="latin">DeepScaleR</em>、AIME 历史题、MATH、中国各级数学题等来源，汇集了一个千万级的候选题池。然后用两层过滤：</p>
+
+  <ul>
+    <li><em>第一层</em>：用 <em class="latin">Qwen2.5-Math-7B-Instruct</em> 这个中等能力模型去解题，4 次尝试内能做对的，统统扔掉——太简单的题不配当模板。</li>
+    <li><em>第二层</em>：对剩下的题，用更强的 <em class="latin">DeepSeek-R1-Distill-Qwen-32B</em> 采样 32 次，<em>只保留 32 次里只做对 1–3 次的题</em>。</li>
+  </ul>
+
+  <p>这个"1–3 / 32"的窗口是整条流程最精妙的设定。它的含义是：这道题<em>很难，但又不是完全无解</em>——强模型偶尔能蒙对，说明它需要调动复杂的推理才有可能拿下。这种题最能逼出长思维链，最适合当"认知模板"。筛完之后，得到 2,125 道题，组成所谓的 <em class="latin">LIMO-Pool</em>，并和所有评测基准做了 n-gram 去重，确保没有"漏题"。</p>
+
+  <p><strong>第二步：推理链构建——给每道题配一份"高手思路"。</strong>对每道入选题，作者调用多个强推理模型（<em class="latin">DeepSeek-R1</em>、<em class="latin">DeepSeek-R1-Distill-Qwen-32B</em>、<em class="latin">QwQ-32B</em>）生成多种解法，再用自我蒸馏扩充候选。然后，他们没有用模型当裁判（那样太贵且不稳），而是设计了一套<em>基于规则的打分系统</em>，从四个维度评估每条推理链：</p>
+
+  <table>
+    <thead>
+      <tr><th>维度</th><th>衡量什么</th><th>典型信号词</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">Elaborated Reasoning</td><td class="text">推理是否充分展开、步骤详尽</td><td>步骤连接词频率</td></tr>
+      <tr><td class="text">Self-Verification</td><td class="text">是否主动检查中间结果</td><td>"check / verify / let me"等</td></tr>
+      <tr><td class="text">Exploratory Approach</td><td class="text">是否尝试多种可能路径</td><td>"perhaps / might / alternatively"</td></tr>
+      <tr><td class="text">Adaptive Granularity</td><td class="text">推理粒度是否张弛有度</td><td>详略结构指标</td></tr>
+    </tbody>
+  </table>
+
+  <p>打分靠的是"信号词词频"这类朴素规则——听起来甚至有点土，但它<em>可复现、可解释、零成本</em>。最后从 2,125 个"题—解"对里，挑出四维得分最高的 800 条（论文最初版本是 817 条），这就是 <em class="latin">LIMO</em> 数据集。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ah3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 漏斗：递减的矩形 -->
+        <rect x="20" y="70" width="120" height="60" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="95" text-anchor="middle">千万级候选题池</text>
+        <text x="80" y="112" text-anchor="middle" font-size="10" fill="#96897A">NuminaMath · AIME</text>
+        <text x="80" y="125" text-anchor="middle" font-size="10" fill="#96897A">MATH · 中国题…</text>
+
+        <line x1="140" y1="100" x2="180" y2="100" stroke="#96897A" marker-end="url(#ah3)"/>
+
+        <rect x="180" y="78" width="110" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="235" y="97" text-anchor="middle">滤简单题</text>
+        <text x="235" y="113" text-anchor="middle" font-size="10" fill="#96897A">Qwen2.5-Math-7B</text>
+
+        <line x1="290" y1="100" x2="330" y2="100" stroke="#96897A" marker-end="url(#ah3)"/>
+
+        <rect x="330" y="78" width="110" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="385" y="97" text-anchor="middle">滤过难题</text>
+        <text x="385" y="113" text-anchor="middle" font-size="10" fill="#96897A">R1-Distill-32B×32</text>
+
+        <line x1="440" y1="100" x2="480" y2="100" stroke="#96897A" marker-end="url(#ah3)"/>
+
+        <rect x="480" y="72" width="100" height="56" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="530" y="92" text-anchor="middle" fill="#24555A">LIMO-Pool</text>
+        <text x="530" y="110" text-anchor="middle" fill="#24555A" font-weight="600">2,125 道</text>
+        <text x="530" y="123" text-anchor="middle" font-size="9" fill="#96897A">难但可解</text>
+
+        <!-- 第二行：推理链打分 -->
+        <line x1="530" y1="128" x2="530" y2="150" stroke="#96897A" marker-end="url(#ah3)"/>
+
+        <rect x="240" y="155" width="200" height="38" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="340" y="172" text-anchor="middle" fill="#B54A2C">四维规则打分 → 取最高分</text>
+        <text x="340" y="187" text-anchor="middle" fill="#B54A2C" font-weight="600">LIMO 数据集 = 800 / 817 道</text>
+
+        <line x1="480" y1="150" x2="440" y2="160" stroke="#96897A" marker-end="url(#ah3)"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · LIMO 数据构建漏斗：千万级候选 → 两层难度过滤 → 2,125 道 LIMO-Pool → 四维打分 → 最终 800/817 道"认知模板"。</figcaption>
+  </figure>
+
+  <h3>4.3 训练：朴素到不像创新</h3>
+  <p>有了数据，训练反而简单得不值一提。基座选 <em class="latin">Qwen2.5-32B-Instruct</em>，方法是最标准的全参数 SFT，跑 15 个 epoch，学习率常规，序列长度拉到 16,384 token（为了装下长思维链），工程上用 <em class="latin">DeepSpeed ZeRO-3</em> 加 <em class="latin">FlashAttention-2</em> 加速。没有 RL，没有奖励模型，没有 PPO，没有任何花活。</p>
+
+  <p>这种"刻意的朴素"本身就是一个声明：LIMO 想证明的不是"我的算法多厉害"，而是<em>"在合适的知识底子和合适的样本下，最简单的 SFT 就够了"</em>。把变量压到最少，才好把功劳干净地归给"数据质量"这一个因素。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>结果是这篇论文最震撼的部分。先看主结果（论文最初版本，817 样本）：</p>
+
+  <table>
+    <thead>
+      <tr><th>基准</th><th>此前 SFT 强模型</th><th>LIMO（817 题）</th><th>提升</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">AIME（竞赛级）</td><td>6.5%</td><td>57.1%</td><td>+50.6</td></tr>
+      <tr><td class="text">MATH</td><td>59.2%</td><td>94.8%</td><td>+35.6</td></tr>
+      <tr><td class="text">10 个分布外基准（平均）</td><td>—</td><td>+40.5%（绝对）</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <p>而 LIMO 用的数据量，只有当时主流方案（如 <em class="latin">NuminaMath</em> 的 86 万条）的<em>约 1%</em>。最反常的是第三行——它在 10 个<em>从未训练过</em>的基准上平均涨了 40.5 个百分点，<em>超越了用 100 倍数据训练的模型</em>。这等于当面驳斥了"SFT 只会记忆、不会泛化"。</p>
+
+  <p>论文后来在 COLM 2025 正式版（v3）里把数据精炼到 800 条，性能进一步抬高：AIME24 达到 <em>63.3%</em>，MATH500 达到 <em>95.6%</em>，10 个分布外基准绝对提升 <em>45.8%</em>，所有基准平均 <em>78.1%</em>——超过了 <em class="latin">o1-preview</em>（61.1%）和 <em class="latin">QwQ-32B-Preview</em>（66.9%）这两个当时更强的推理模型。</p>
+
+  <div class="callout">
+    <span class="label">令人惊讶的发现</span>
+    LIMO 在"分布外"上的涨幅，甚至比"分布内"还猛。这意味着那 800 道题教会模型的，不是"某类题怎么解"，而是<em>一种通用的思考方式</em>——它会迁移。这恰恰是"激活已有知识"假说最强有力的证据：如果是记忆，就该只在见过的题型上涨。
+  </div>
+
+  <p>更扎实的是一组消融实验，它们把"为什么少就够了"拆得很清楚：</p>
+
+  <ul>
+    <li><em>推理链质量是关键</em>。同样的问题，用 L1–L5 五档不同质量的解法训练，性能随质量<em>单调上升</em>。这证明"认知模板"的有效性确实决定激发效果。</li>
+    <li><em>难题比简单题更值钱</em>。同样 500 道，AIME 级别的难题（Advanced-500）远胜简单题和普通复杂题。这呼应了"难但可解"的筛选哲学。</li>
+    <li><em>基座模型是地基</em>。同样用 LIMO 数据，<em class="latin">Qwen2.5-32B-Instruct</em> 在 AIME24 上拿到 63.3，而旧得多的 <em class="latin">Qwen1.5-32B-Chat</em> 只有 9.2。差距说明 LIMO 不是"从零教数学"，而是"唤醒已学过的数学"——底子差，再多模板也唤不醒。</li>
+    <li><em>边际收益快速递减</em>。基座裸跑 AIME24 是 16.5，400 道就冲到 57.5，800 道到 63.3，加到 2000 道只到 69.6。前几百道的价值最大，之后曲线明显变平。</li>
+  </ul>
+
+  <figure>
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="120" y="28" text-anchor="middle" font-weight="600">主流大数据 SFT</text>
+        <text x="350" y="28" text-anchor="middle" font-weight="600">RL Scaling（R1 路线）</text>
+        <text x="580" y="28" text-anchor="middle" font-weight="600" fill="#B54A2C">LIMO（本篇）</text>
+        <line x1="240" y1="20" x2="240" y2="240" stroke="#96897A" stroke-dasharray="4 4"/>
+        <line x1="470" y1="20" x2="470" y2="240" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <!-- 主流大数据 -->
+        <rect x="40" y="55" width="160" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="74" text-anchor="middle">数据：10万～100万</text>
+        <rect x="40" y="95" width="160" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="114" text-anchor="middle">方法：SFT（堆量）</text>
+        <rect x="40" y="135" width="160" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="154" text-anchor="middle">假设：多练才能会</text>
+        <rect x="40" y="175" width="160" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="194" text-anchor="middle">泛化：易记忆、弱迁移</text>
+
+        <!-- RL Scaling -->
+        <rect x="270" y="55" width="160" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="74" text-anchor="middle">数据：海量 + 奖励</text>
+        <rect x="270" y="95" width="160" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="114" text-anchor="middle">方法：RL（PPO/GRPO）</text>
+        <rect x="270" y="135" width="160" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="154" text-anchor="middle">假设：试错塑行为</text>
+        <rect x="270" y="175" width="160" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="194" text-anchor="middle">泛化：强，但成本高</text>
+
+        <!-- LIMO -->
+        <rect x="500" y="55" width="160" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="580" y="74" text-anchor="middle" fill="#B54A2C">数据：817 道（1%）</text>
+        <rect x="500" y="95" width="160" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="580" y="114" text-anchor="middle" fill="#B54A2C">方法：朴素 SFT</text>
+        <rect x="500" y="135" width="160" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="580" y="154" text-anchor="middle" fill="#B54A2C">假设：唤醒已有知识</text>
+        <rect x="500" y="175" width="160" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="580" y="194" text-anchor="middle" fill="#B54A2C">泛化：强（分布外暴涨）</text>
+
+        <!-- 结论 -->
+        <rect x="180" y="220" width="340" height="30" fill="none" stroke="#96897A" stroke-dasharray="3 3"/>
+        <text x="350" y="239" text-anchor="middle" fill="#2E2A22">同等甚至更强性能，成本仅为 1%</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 三条推理训练路线对比。LIMO 用 1% 的数据 + 朴素 SFT，在性能和泛化上反超大路与 RL 路线。</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>LIMO 的影响，首先是一次<em>认知层面的纠偏</em>。它用一个干净的对照实验告诉社区：在强基座已经普及的 2025 年，"推理能力"的瓶颈早就不是数据量，而是<em>数据质量</em>和<em>激活方式</em>。这把"更多数据 = 更强推理"的执念，和"SFT 只会记忆"的偏见，一起钉进了历史的注脚。</p>
+
+  <p>其次，它直接催生了一条研究支线。论文发布后，第三方评测迅速验证：在 AIME24 和 GPQA 上比同规模基线高出约 10 个百分点；在刚结束的 AIME 2025 评测里，仅用 817 条训练的 LIMO 拿到 44.6 分，足以和用 80 万条数据训练的模型掰手腕。后续 <em class="latin">LIMOPro</em>（NeurIPS 2025）进一步用困惑度裁剪推理链，让模型"想得更短却更准"；<em class="latin">Light-R1</em> 等工作也沿这条"少而精"的思路推进。</p>
+
+  <p>更深层的意义在于它给出的<em>假说框架</em>。"激发阈值 = f（预训练知识完备性, 认知模板有效性）"这个公式，把推理能力的来源从"训练时灌入"重新归因到"预训练时埋下"。这暗示了一个略显哲学的结论：<em>我们也许从来都没有"教会"大模型推理，我们只是在学会怎么"叫醒"它</em>。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>LIMO 的"少"是有前提的，这些前提也正是它的局限。</p>
+
+  <ul>
+    <li><em>强依赖基座</em>。消融实验里，Qwen1.5-32B-Chat 只拿到 9.2 分——LIMO 不是点石成金，<em>石头里得先有金子</em>。预训练不够强的模型，再多模板也唤不醒。</li>
+    <li><em>筛选成本隐性很高</em>。虽然最终训练只用 817 条，但筛选出这 817 条，需要先用强模型做百万次推理（32 次采样 × 数千题），这背后的算力并不便宜，只是被"训练成本低"掩盖了。</li>
+    <li><em>主要验证于数学</em>。论文后来补充了 MMLU-Pro、LogiQAv2 等非数学基准，但 LIMO 假说在代码、多步规划、长程推理等其他认知域是否同样成立，仍待更广泛验证。</li>
+    <li><em>需要长上下文</em>。训练序列拉到 16K token，意味着这套方法对不支持长上下文的基座不友好。</li>
+  </ul>
+
+  <p>作者在 Future Work 里点出了四个方向：跨领域泛化、理论基础的数学化、自动化评估认知模板质量、多模态扩展。这些后来都成了社区跟进的热点。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把视线拉远，大模型"推理"这条线其实走过三个阶段，LIMO 正卡在第三阶段的入口。</p>
+
+  <p><em>第一阶段：提示工程时代（2022–2024）。</em>从 Chain-of-Thought 到 Self-Consistency，大家靠改提示词让模型"一步步想"，能力天花板卡在基座本身。</p>
+
+  <p><em>第二阶段：RL 觉醒时代（2024 末–2025 初）。</em>OpenAI o1 引爆，DeepSeek-R1 证明纯 RL 能让模型自发长出思维链。思路是"用奖励塑行为"，数据越堆越多，算法越调越复杂。</p>
+
+  <p><em>第三阶段：极简激发时代（2025 初–）。</em>s1 用 1000 道题 + SFT 证明"不需要 RL 也能推理"；LIMO 进一步把数字砍到 817，并给出"唤醒"的理论解释。这标志着社区开始从"教会"转向"激活"。</p>
+
+  <p>LIMO 之后，问题不再是"能不能用很少的数据激发推理"，而是<em>"少到什么程度是下限""怎么自动找到最好的认知模板""不同领域的激发阈值是否不同"</em>。它把一个工程问题，升级成了一个关于"知识在模型中如何潜伏与如何被唤醒"的科学问题。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>LIMO 这个名字，是向 2023 年的 <em class="latin">LIMA</em> 致敬。LIMA 当年用 1000 条数据搞定"对齐"，证明了对齐任务里"少即是多"。LIMO 的作者们觉得：既然对齐能少，推理为什么不能少？于是沿用了同样的命名哲学，把 M（Alignment）换成了 M（More）的解读——<em class="latin">Less is More for Reasoning</em>。</p>
+
+  <p>论文里最戏剧性的一幕，是它的发布时机。2025 年 2 月 5 日，全世界正疯了一样复现 DeepSeek-R1，每个团队都在比谁的 RL 数据更多、谁的奖励函数更巧。LIMO 偏偏选在这一天，扔出一个"反潮流"的结论：<em>别卷了，817 道就够</em>。817 这个奇怪的数字——不是整数、不是量级——一夜之间成了社区 meme，有人甚至开玩笑说"是不是作者卡里还剩 817 条 GPU 时长"。</p>
+
+  <div class="callout">
+    <span class="label">幕后</span>
+    论文一作 Yixin Ye 和共同一作 Zhen Huang 来自上海交大 GAIR 实验室，通讯作者是 GAIR 负责人刘鹏飞。刘鹏飞正是早年 FlashAttention 之前一系列注意力效率工作背后的推动者之一，团队一向擅长"用最小成本撬动最大杠杆"。LIMO 的"朴素 SFT + 精选数据"风格，其实和这个团队一贯的品味一脉相承。
+  </div>
+
+  <p>还有个有趣的细节：论文用词频统计给推理链打分，听起来朴素得像个本科生作业。但正是这种"土办法"让它<em>人人可复现</em>——数据集和模型第一时间挂上 HuggingFace，任何人在一张卡上就能跑。这种"反精英"的姿态，反而让它在 RL 主导的精英赛道里杀出重围。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 知识宝库 -->
+        <rect x="40" y="70" width="160" height="90" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="100" text-anchor="middle" font-weight="600">基座模型</text>
+        <text x="120" y="120" text-anchor="middle" font-size="11" fill="#96897A">（已装满数学知识</text>
+        <text x="120" y="136" text-anchor="middle" font-size="11" fill="#96897A">但锁着、不出声）</text>
+        <text x="120" y="150" text-anchor="middle" font-size="20">🔒</text>
+
+        <!-- 一串钥匙 -->
+        <g>
+          <line x1="240" y1="115" x2="430" y2="115" stroke="#B54A2C" stroke-width="1.5"/>
+          <circle cx="260" cy="115" r="9" fill="none" stroke="#B54A2C" stroke-width="1.5"/>
+          <circle cx="300" cy="115" r="9" fill="none" stroke="#B54A2C" stroke-width="1.5"/>
+          <circle cx="340" cy="115" r="9" fill="none" stroke="#B54A2C" stroke-width="1.5"/>
+          <circle cx="380" cy="115" r="9" fill="none" stroke="#B54A2C" stroke-width="1.5"/>
+          <circle cx="420" cy="115" r="9" fill="none" stroke="#B54A2C" stroke-width="1.5"/>
+          <text x="340" y="90" text-anchor="middle" fill="#B54A2C" font-weight="600">817 把"认知钥匙"</text>
+          <text x="340" y="145" text-anchor="middle" font-size="10" fill="#96897A">每把都是一道精选难题 + 高手思路</text>
+        </g>
+
+        <line x1="200" y1="115" x2="240" y2="115" stroke="#96897A" stroke-dasharray="3 3"/>
+
+        <!-- 涌现 -->
+        <rect x="480" y="70" width="180" height="90" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="570" y="100" text-anchor="middle" font-weight="600" fill="#B54A2C">推理能力涌现</text>
+        <text x="570" y="120" text-anchor="middle" font-size="11" fill="#B54A2C">AIME 6.5% → 57.1%</text>
+        <text x="570" y="138" text-anchor="middle" font-size="11" fill="#B54A2C">分布外 +40.5%</text>
+        <text x="570" y="152" text-anchor="middle" font-size="20">🔓</text>
+
+        <line x1="430" y1="115" x2="480" y2="115" stroke="#96897A" marker-end="url(#ah4)"/>
+        <defs>
+          <marker id="ah4" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+          </marker>
+        </defs>
+
+        <text x="350" y="200" text-anchor="middle" font-size="11" fill="#96897A">不是往宝库里塞金子，而是找到对的那串钥匙</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · LIMO 的钥匙比喻：基座已是装满知识的宝库，817 道认知模板只是那串对的钥匙。</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>LIMO 让我最受触动的，不是 817 这个数字，而是它对"训练"这件事的重新定义。过去我们默认训练是"把知识灌进模型"，于是天然认为任务越难、灌得越多越好。LIMO 提醒我们：在基座足够强的今天，训练更像是<em>调试一台已经组装好但没通电的机器</em>——你需要的是接对几根线，而不是重新造一台。</p>
+
+  <p>这个视角一旦切换，很多现象都有了新解释。为什么 s1 的 1000 道和 LIMO 的 817 道效果差不多？因为它们都在"接同一根线"，只是钥匙的花纹略有不同。为什么 RL 路线和 SFT 路线殊途同归？因为前者靠奖惩让模型自己摸到开关、后者直接示范开关在哪——终点都是"通电"。这暗示着，未来"推理训练"的核心竞争力，可能不再是算力和数据规模，而是<em>对"知识在模型中如何编码、如何被激活"的理解深度</em>。</p>
+
+  <p>当然，LIMO 也留下一个我个人很在意的悬念：如果激发阈值由预训练知识决定，那么<em>不同基座的"最激发样本"是不是不一样的</em>？换句话说，LIMO 这 817 道题对 Qwen2.5 有效，对 Llama、对 Mistral 还有效吗？如果不一样，那"认知模板"的寻找就该是<em>每个基座一份定制</em>，而不是一份通用配方。这个问题，可能正是下一个研究热潮的起点。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果激发推理只需要几百道"认知模板"，那这是否意味着，模型能力的上限其实早就被预训练锁死了，后训练只是在逼近这个上限？换句话说，LIMO 是证明了"少即是多"，还是无意中暴露了"后训练的天花板"？欢迎带着这个问题，和我一起进入下一篇。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Sky-T1: Train your own O1 preview model within $450</h3>
+    <p style="margin:0;">LIMO 说"817 道精选题就够"，那是不是所有人都该走"少而精"？偏偏同一周，大洋彼岸的 UC Berkeley NovaSky 团队给出了相反的答案——他们用 1.7 万条蒸馏数据、不到 450 美元、19 小时训练，复刻出匹敌 o1-preview 的开源推理模型 Sky-T1。一个"少即是多"，一个"蒸馏换平价"，两条路线在同一个月撞在一起，谁更接近推理的真相？下一篇，我们看"蒸馏派"是怎么把 o1 拉下神坛的。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 016 篇</span>
+    <span>2026-08-16</span>
+  </footer>
+
+</div>
+</body>
+</html>
