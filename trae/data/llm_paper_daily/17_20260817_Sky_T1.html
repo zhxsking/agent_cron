@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sky-T1 论文精读 · 大模型经典论文系列 #017</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+  td.win{ color:var(--accent); font-weight:600; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#017</span>
+  </div>
+
+  <h1 class="title">
+    Sky-T1: Train your own O1 preview model within $450
+    <span class="en">Sky-T1：不到 450 美元训练自己的 o1——17K 蒸馏数据 + Qwen2.5-32B，开源推理模型的"平价复刻"路线</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：NovaSky Team</span>
+    <span>机构：UC Berkeley Sky Computing Lab</span>
+    <span>发表：2025-01-10 / 技术博客</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://novasky-ai.github.io/posts/sky-t1/" target="_blank" rel="noopener">Project</a>
+    <a href="https://github.com/NovaSky-AI/SkyThought" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://huggingface.co/NovaSky-AI/Sky-T1-32B-Preview" target="_blank" rel="noopener">HuggingFace</a>
+  </div>
+
+  <!-- ============ 上篇回顾 ============ -->
+  <div class="callout">
+    <span class="label">上篇回顾</span>
+    上一篇我们读了 <em class="latin">LIMO</em>：上海交大的团队用 817 道精选数学题做 SFT，就让 32B 模型在 AIME 上从 6.5% 飙到 57.1%，并给出"少即是多"的解释——推理能力早就藏在预训练里，只需轻轻一拨。但同一周，大洋彼岸的另一支队伍给出了截然相反的答案：他们用 1.7 万条数据、不到 450 美元、19 个小时，复刻出一个匹敌 o1-preview 的开源推理模型。一个说"817 够了"，一个说"17000 才稳"，两条路线在同一个月正面相撞。这一篇，我们看"蒸馏派"是怎么把 o1 拉下神坛的。
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">2025 年 1 月 9 日深夜，旧金山湾区的雾还没散。UC Berkeley 的 <em class="latin">NovaSky</em> 团队在一篇博客里写下了一行让整个 AI 社区炸锅的标题——<em class="latin">Train your own O1 preview model within $450</em>（用不到 450 美元，训练你自己的 o1 预览版）。</p>
+
+  <p class="lead">彼时 OpenAI 的 o1 已经发布了四个月，那个会"先想再答"的模型让所有人见识到了推理的威力，但它的权重、训练细节、甚至思维链的完整内容都被锁在黑箱里。学术界想复现，连门都摸不到。而 NovaSky 团队说：<em>450 美元，19 小时，8 张 H100，我们造出了一个</em>。这个数字之所以刺眼，是因为 o1 的训练成本被外界普遍猜测在千万美元量级。450 美元，大概只够在旧金山吃几顿像样的米其林。一个"午餐价"的 o1，就这样被一群伯克利的学生造出来了——而且数据、代码、权重全部开源。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    用 17K 条从开源推理模型 QwQ 蒸馏出的思维链数据，监督微调 Qwen2.5-32B-Instruct，19 小时、8 张 H100、不到 450 美元，就训出一个在数学和编程上匹敌 o1-preview 的开源推理模型——证明推理能力可以靠"师生蒸馏"廉价复制，不需要强化学习。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>把 Sky-T1 放进大模型推理的故事线里，它占据了一个非常特殊的位置：<em>它是"蒸馏派"的第一个完整范本</em>。</p>
+
+  <p>在它之前，推理模型的路只有一条——OpenAI 的 o1，闭源、神秘、贵得离谱。社区里最早的两批探路者各走各的：<em class="latin">Still-2</em> 试图用自我改进激发数学推理，<em class="latin">Journey</em> 也在数学领域小试牛刀，但都只敢碰数学这一条腿。Sky-T1 的突破在于，它同时搞定了数学和编程两个领域，而且把整套"配方"毫无保留地摊开——<em>数据怎么造、怎么筛、怎么练、花了多少钱、用的什么显卡，全写了</em>。</p>
+
+  <p>它的上游是 <em class="latin">QwQ-32B-Preview</em>（阿里 Qwen 团队的开源推理模型，充当"老师"）和 <em class="latin">Still-2</em>（提供了部分数据和重写灵感）；它的下游则直接催生了 2025 年初那场"全民蒸馏 o1"的狂欢——<em class="latin">s1</em>、<em class="latin">LIMO</em>、<em class="latin">Open-R1</em>、<em class="latin">Light-R1</em> 纷纷跟进，连带着 NovaSky 自己也很快推出了治"话痨"的 <em class="latin">Sky-T1-32B-Flash</em>。</p>
+
+  <p>换句话说，Sky-T1 是推理范式期里那个<em>把"复刻 o1"从口号变成食谱的转折点</em>。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ah1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="130" x2="660" y2="130" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="10" fill="#96897A">
+        <!-- 早期里程碑 -->
+        <circle cx="60" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="60" y="112" text-anchor="middle">2017</text>
+        <text x="60" y="152" text-anchor="middle">Transformer</text>
+
+        <circle cx="150" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="150" y="112" text-anchor="middle">2020</text>
+        <text x="150" y="152" text-anchor="middle">GPT-3</text>
+
+        <circle cx="235" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="235" y="112" text-anchor="middle">2023</text>
+        <text x="235" y="152" text-anchor="middle">LLaMA/DPO</text>
+
+        <!-- 推理时代分界 -->
+        <line x1="320" y1="100" x2="320" y2="170" stroke="#96897A" stroke-dasharray="3 3" stroke-width="0.8"/>
+        <text x="320" y="92" text-anchor="middle" fill="#96897A" font-size="9">推理范式期</text>
+
+        <!-- 推理时代节点 -->
+        <circle cx="360" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="360" y="112" text-anchor="middle">2024.09</text>
+        <text x="360" y="152" text-anchor="middle">o1 (闭源)</text>
+
+        <circle cx="430" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="430" y="112" text-anchor="middle">2024.11</text>
+        <text x="430" y="152" text-anchor="middle">QwQ (老师)</text>
+
+        <!-- 本篇高亮 -->
+        <circle cx="500" cy="130" r="8" fill="#B54A2C"/>
+        <text x="500" y="100" text-anchor="middle" fill="#B54A2C" font-weight="600" font-size="11">本篇位置</text>
+        <text x="500" y="118" text-anchor="middle" fill="#B54A2C" font-size="9">2025.01.10</text>
+        <text x="500" y="156" text-anchor="middle" fill="#2E2A22" font-weight="600">Sky-T1</text>
+
+        <circle cx="570" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="570" y="112" text-anchor="middle">2025.01</text>
+        <text x="570" y="152" text-anchor="middle">DeepSeek-R1</text>
+
+        <circle cx="640" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="640" y="112" text-anchor="middle">2025.02</text>
+        <text x="640" y="152" text-anchor="middle">LIMO</text>
+      </g>
+      <!-- 已解析覆盖范围标注 -->
+      <path d="M 60 175 Q 350 200 640 175" fill="none" stroke="#24555A" stroke-width="1" stroke-dasharray="2 3" opacity="0.6"/>
+      <text x="350" y="215" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#24555A">本系列已解析 #001–#017（含本篇）</text>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · Sky-T1 在大模型发展脉络中的位置：推理范式期的"蒸馏复刻"转折点</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>2024 年 9 月，OpenAI 发布 o1，整个领域第一次见识到"会思考的模型"长什么样：它会在给出答案前，先输出一段长长的内心独白——把问题拆解、尝试不同路径、发现走错了就退回来重试，最后才郑重写下答案。这种"先想再答"的能力，让它在数学竞赛、编程题、科学推理上把一众"张口就答"的模型甩开一大截。</p>
+
+  <p>但 o1 有一个致命的问题：<em>它是一个彻底的黑箱</em>。权重不开源，技术报告语焉不详，连完整的思维链都不让看全。学术界和开源社区只能隔着玻璃围观，想复现？连"它到底是怎么训出来的"都搞不清楚。当时社区里流传着各种猜测：有人说 o1 用了超大规模的强化学习，有人说它靠的是海量的思维链蒸馏数据，还有人怀疑它内部跑了一个独立的"思考模型"。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象隔壁餐厅做出了一道绝世好菜，食客排队三小时只为尝一口。你想学，但厨师把菜谱锁在保险柜里，连食材清单都不给你看。你能怎么办？要么自己从零摸索（但可能要花十年），要么——找一个<em>也吃过这道菜、而且愿意把口感描述给你听的美食家</em>，让他把"这道菜大概是怎么做的"一点点讲给你听，你再照着自己复刻。Sky-T1 走的就是第二条路：o1 不给菜谱，那就找一个"会推理的开源模型"当老师，让它把推理过程"说出来"，再拿这些话当教材，教一个本来不会推理的学生。
+  </div>
+
+  <p>在 Sky-T1 之前，社区其实已经开始试探。Still-2 团队尝试用自我改进的方法激发数学推理，Journey 也在数学领域做了探索。但它们有两个共同的短板：<em>只敢碰数学</em>（编程推理没人敢碰），以及<em>没有把完整配方公开</em>。NovaSky 团队想做的，是把这些短板一次性补齐——既要数学也要编程，还要把从数据到训练的每一个细节都摊开在阳光下。</p>
+
+  <p>而他们手里恰好有一张王牌：<em class="latin">QwQ-32B-Preview</em>。这是阿里 Qwen 团队在 2024 年 11 月底放出的开源推理模型，官方称其推理能力与 o1-preview 相当。换句话说，社区虽然摸不到 o1，但手里有了一个"开源版的 o1 替身"。NovaSky 团队的思路很简单也很大胆：<em>既然 QwQ 会推理，那就让它当老师，把它的推理过程录下来当教材，去教一个本来不会推理的学生</em>。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>Sky-T1 要回答的核心问题，可以用一句话概括：</p>
+
+  <p><em>能不能用"师生蒸馏"的方式，花不到一顿米其林的钱，造出一个在数学和编程上都能匹敌 o1-preview 的开源推理模型？</em></p>
+
+  <p>这个问题背后藏着三个更尖锐的子问题：</p>
+  <ul>
+    <li>推理数据从哪来？o1 的思维链是机密，社区手里只有 QwQ 这个"替身老师"，它的输出质量够当教材吗？</li>
+    <li>要多少数据？是几十万条堆量，还是几千条精选？数学和编程这两种"推理风格"截然不同的任务，能不能塞进同一个模型里而不互相打架？</li>
+    <li>用什么训练方法？是像 DeepSeek-R1 那样搞复杂的强化学习，还是用最朴素的监督微调（SFT）就够了？</li>
+  </ul>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果你手里有一个"会推理的老师模型"和一个"不会推理的学生模型"，最直接的教法是什么？把老师对每道题的推理过程录下来，让学生死记硬背——但这样学生真的能"学会"推理，还是只会"背"老师说过的话？在往下看之前，先猜一猜：Sky-T1 用的是监督学习还是强化学习？答案是后者会被颠覆的。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>Sky-T1 的方法可以用一句话讲完：<em>找一个会推理的开源模型当老师，录下它的推理过程，筛掉答错的，重写成干净的格式，然后用最普通的监督微调喂给一个学生模型</em>。没有强化学习，没有奖励模型，没有 PPO，朴素得几乎让人怀疑"就这样？"。但魔鬼藏在细节里——尤其是数据和配方的部分。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 340" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ah2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 老师模型 -->
+        <rect x="40" y="40" width="150" height="60" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="115" y="68" text-anchor="middle" font-weight="600">QwQ-32B-Preview</text>
+        <text x="115" y="86" text-anchor="middle" font-size="10" fill="#96897A">老师 · 会推理</text>
+
+        <!-- 题库 -->
+        <rect x="40" y="140" width="150" height="60" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="115" y="168" text-anchor="middle" font-weight="600">题库</text>
+        <text x="115" y="186" text-anchor="middle" font-size="10" fill="#96897A">AIME/MATH/APPs/TACO…</text>
+
+        <!-- 数据处理 -->
+        <rect x="270" y="90" width="160" height="100" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="350" y="118" text-anchor="middle" fill="#B54A2C" font-weight="600">数据料理机</text>
+        <text x="350" y="140" text-anchor="middle" font-size="10" fill="#2E2A22">① 老师解题</text>
+        <text x="350" y="156" text-anchor="middle" font-size="10" fill="#2E2A22">② 拒绝采样(只留对的)</text>
+        <text x="350" y="172" text-anchor="middle" font-size="10" fill="#2E2A22">③ GPT-4o-mini 重写格式</text>
+
+        <!-- 17K 数据 -->
+        <rect x="270" y="220" width="160" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="350" y="250" text-anchor="middle" fill="#24555A" font-weight="600">17K 蒸馏数据</text>
+
+        <!-- 学生模型 -->
+        <rect x="510" y="90" width="150" height="60" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="585" y="118" text-anchor="middle" font-weight="600">Qwen2.5-32B-Instruct</text>
+        <text x="585" y="136" text-anchor="middle" font-size="10" fill="#96897A">学生 · 不会推理</text>
+
+        <!-- 输出 -->
+        <rect x="510" y="190" width="150" height="60" rx="2" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C" stroke-width="1.5"/>
+        <text x="585" y="218" text-anchor="middle" fill="#B54A2C" font-weight="600">Sky-T1-32B-Preview</text>
+        <text x="585" y="236" text-anchor="middle" font-size="10" fill="#B54A2C">会推理 · 匹敌 o1-preview</text>
+
+        <!-- 箭头 -->
+        <line x1="190" y1="70" x2="270" y2="110" stroke="#96897A" marker-end="url(#ah2)"/>
+        <line x1="190" y1="170" x2="270" y2="140" stroke="#96897A" marker-end="url(#ah2)"/>
+        <line x1="350" y1="190" x2="350" y2="220" stroke="#96897A" marker-end="url(#ah2)"/>
+        <line x1="430" y1="245" x2="510" y2="130" stroke="#96897A" marker-end="url(#ah2)"/>
+        <line x1="585" y1="150" x2="585" y2="190" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#ah2)"/>
+
+        <!-- 标注 -->
+        <text x="585" y="280" text-anchor="middle" font-size="10" fill="#96897A">3 epochs · lr 1e-5 · 19h · 8×H100 · $450</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · Sky-T1 的"师生蒸馏"架构：QwQ 当老师，Qwen2.5-32B 当学生，17K 数据是教材</figcaption>
+  </figure>
+
+  <h3>步骤一：找老师——让 QwQ 把推理过程"说出来"</h3>
+  <p>蒸馏的第一步，是得有"教材"。NovaSky 团队的选择是让 QwQ-32B-Preview 来生成。<em class="latin">QwQ</em> 是阿里在 2024 年 11 月底开源的推理模型，官方宣称它的推理能力与 o1-preview 相当——也就是说，虽然社区摸不到 o1，但手里有了一个"够格的替身"。</p>
+
+  <p>具体做法是：准备一大批数学题和编程题，让 QwQ 逐题作答，把它的<em>完整推理过程</em>（包括它怎么思考、怎么试错、怎么自我纠正）全都录下来。这些录下来的"思维链"，就是教材的原始素材。</p>
+
+  <h3>步骤二：拒绝采样——只留答对的</h3>
+  <p>老师也会做错题。如果把 QwQ 的错误推理也喂给学生，学生就会"学坏"。所以 NovaSky 团队用了一个叫"拒绝采样"（<em class="latin">rejection sampling</em>）的筛选法：</p>
+  <ul>
+    <li><em>数学题</em>：用精确匹配比对 QwQ 的答案和标准答案，对不上就丢掉。</li>
+    <li><em>编程题</em>：直接跑 QwQ 生成的代码，过不了单元测试就丢掉。这比"看答案对不对"严格得多——代码必须真的能跑、能算出正确结果。</li>
+  </ul>
+
+  <p>这一步砍掉了大量"老师也答错"的样本，留下的 17K 数据，每一条都是<em>既答对、又有完整推理过程</em>的高质量教材。</p>
+
+  <h3>步骤三：格式重写——让答案"好读"</h3>
+  <p>这是 Sky-T1 最容易被忽略、却最关键的一个细节。QwQ 的原始输出格式很"随性"：它可能先写一段思考，中间插一段代码，又绕回去再想，最后才给答案。这种"想到哪写到哪"的格式，对人类阅读不友好，对模型训练更不友好——尤其是编程题，评测时通常假设"代码在最后一个代码块里"，但 QwQ 经常把代码写在中间。</p>
+
+  <p>NovaSky 团队的解决办法是：<em>用 <em class="latin">GPT-4o-mini</em> 把 QwQ 的原始思维链重写成干净、规范的格式</em>。这一步的收益惊人得不像话：</p>
+
+  <div class="callout">
+    <span class="label">令人瞠目的数字</span>
+    在 APPs 编程数据集上，如果不做格式重写，只能假设"代码在最后一个代码块"，此时 QwQ 的准确率只有 <em class="latin">~25%</em>；但 QwQ 经常把代码写在中间——重写格式后，准确率一下子跳到 <em class="latin">&gt;90%</em>。换句话说，<em>同一个模型、同样的输出，仅仅因为"答案放哪儿"的格式问题，准确率差了 65 个百分点</em>。这不是模型变聪明了，而是评测脚本终于能"读对"它的答案了。
+  </div>
+
+  <h3>步骤四：数据配方——17K 的精挑细选</h3>
+  <p>经过筛选和重写，最终用于训练的数据是 17K 条，配比如下：</p>
+
+  <table>
+    <thead>
+      <tr><th>领域</th><th>数量</th><th>来源</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">数学</td><td>10K</td><td class="text">AIME / MATH / Olympiads（NuminaMATH）</td></tr>
+      <tr><td class="text">编程</td><td>5K</td><td class="text">APPs / TACO</td></tr>
+      <tr><td class="text">科学 + 谜题</td><td>1K</td><td class="text">Still-2</td></tr>
+      <tr><td class="text"><strong>合计</strong></td><td><strong>17K</strong></td><td class="text">—</td></tr>
+    </tbody>
+  </table>
+
+  <p>这个配方不是一开始就定下来的，而是踩了一个大坑之后才摸出来的——这个坑我们在"实验结果"里细讲。</p>
+
+  <h3>步骤五：训练——朴素得让人怀疑的 SFT</h3>
+  <p>到了训练这一步，Sky-T1 的做法朴素到几乎让人怀疑"就这样？"。它用的就是最普通的<em>监督微调</em>（<em class="latin">supervised fine-tuning</em>，SFT）——把 17K 数据喂给 Qwen2.5-32B-Instruct，让模型学着模仿这些推理过程。没有强化学习，没有奖励模型，没有 PPO，没有任何花活。</p>
+
+  <p>训练参数同样朴素：</p>
+  <ul>
+    <li>基座模型：<em class="latin">Qwen2.5-32B-Instruct</em>（一个本来不会"分步推理"的指令模型）</li>
+    <li>训练轮数：3 个 <em class="latin">epoch</em></li>
+    <li>学习率：<em class="latin">1e-5</em></li>
+    <li>批次大小：96</li>
+    <li>硬件：8 张 <em class="latin">H100</em></li>
+    <li>时长：19 小时</li>
+    <li>并行策略：<em class="latin">DeepSpeed Zero-3 offload</em></li>
+    <li>训练框架：<em class="latin">Llama-Factory</em>（一个开源的微调工具箱）</li>
+    <li>总成本：按 <em class="latin">Lambda Cloud</em> 定价，约 <em class="latin">$450</em></li>
+  </ul>
+
+  <figure>
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ah3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <rect x="20" y="75" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="98" text-anchor="middle">题库</text>
+        <text x="80" y="116" text-anchor="middle" font-size="9" fill="#96897A">数学+编程+科学</text>
+
+        <rect x="170" y="75" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="230" y="98" text-anchor="middle">QwQ 解题</text>
+        <text x="230" y="116" text-anchor="middle" font-size="9" fill="#96897A">生成思维链</text>
+
+        <rect x="320" y="75" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="380" y="98" text-anchor="middle">拒绝采样</text>
+        <text x="380" y="116" text-anchor="middle" font-size="9" fill="#96897A">只留答对的</text>
+
+        <rect x="470" y="75" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="530" y="98" text-anchor="middle">GPT-4o-mini 重写</text>
+        <text x="530" y="116" text-anchor="middle" font-size="9" fill="#96897A">干净格式</text>
+
+        <rect x="620" y="60" width="60" height="80" rx="2" fill="#24555A" fill-opacity="0.15" stroke="#24555A"/>
+        <text x="650" y="95" text-anchor="middle" fill="#24555A" font-weight="600">SFT</text>
+        <text x="650" y="112" text-anchor="middle" font-size="9" fill="#24555A">Qwen2.5</text>
+        <text x="650" y="126" text-anchor="middle" font-size="9" fill="#24555A">-32B</text>
+
+        <line x1="140" y1="100" x2="170" y2="100" stroke="#96897A" marker-end="url(#ah3)"/>
+        <line x1="290" y1="100" x2="320" y2="100" stroke="#96897A" marker-end="url(#ah3)"/>
+        <line x1="440" y1="100" x2="470" y2="100" stroke="#96897A" marker-end="url(#ah3)"/>
+        <line x1="590" y1="100" x2="620" y2="100" stroke="#96897A" marker-end="url(#ah3)"/>
+
+        <text x="350" y="170" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">→ 17K 数据 · 3 epochs · 19h · $450 → Sky-T1</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · Sky-T1 完整数据与训练流程：从题库到 17K 蒸馏数据，再到 SFT 出 Sky-T1</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>Sky-T1 的成绩单，是这篇论文最让社区兴奋的部分。在六个推理基准上，它和 o1-preview 的对决是这样的：</p>
+
+  <table>
+    <thead>
+      <tr><th>基准</th><th>Qwen2.5-32B-Instruct</th><th>QwQ (老师)</th><th>Sky-T1 (本文)</th><th>o1-preview</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">Math500</td><td>76.2</td><td>85.4</td><td class="win">82.4</td><td>81.4</td></tr>
+      <tr><td class="text">AIME 2024</td><td>16.7</td><td>50.0</td><td class="win">43.3</td><td>40.0</td></tr>
+      <tr><td class="text">LiveCodeBench-Easy</td><td>84.6</td><td>90.7</td><td>86.3</td><td class="win">92.9</td></tr>
+      <tr><td class="text">LiveCodeBench-Medium</td><td>40.8</td><td>56.3</td><td class="win">56.8</td><td>54.9</td></tr>
+      <tr><td class="text">LiveCodeBench-Hard</td><td>9.8</td><td>17.1</td><td class="win">17.9</td><td>16.3</td></tr>
+      <tr><td class="text">GPQA-Diamond (科学)</td><td>45.5</td><td>52.5</td><td>56.8</td><td class="win">75.2</td></tr>
+    </tbody>
+  </table>
+
+  <p>红色加粗的是 Sky-T1 超过 o1-preview 的项目。可以看到：<em>在数学和编程的 5 个基准里，Sky-T1 赢了 4 个</em>。一个花 450 美元、19 小时训出来的开源模型，在数学竞赛和编程题上把 OpenAI 的 o1-preview 按在地上摩擦——这就是为什么社区会炸锅。</p>
+
+  <p>但注意最后一行：在 GPQA-Diamond（一个研究生级别的科学问答基准）上，Sky-T1 只有 56.8，而 o1-preview 高达 75.2，差了将近 20 个点。这个"瘸腿"很关键，我们在"局限性"里会讲它说明了什么。</p>
+
+  <h3>三个令人惊讶的发现</h3>
+
+  <p><em>发现一：模型大小有门槛，小了不行</em></p>
+  <p>团队一开始也想省钱，试过 7B 和 14B 的更小模型，结果发现它们<em>频繁生成重复内容</em>——推理着推理着就开始原地打转，说一堆车轱辘话。比如 Qwen2.5-14B-Coder-Instruct 在 APPs 上训练后，LiveCodeBench 只从 42.6% 涨到 46.3%，提升聊胜于无。结论很残酷：<em>32B 似乎是"学会推理"的最低门槛，再小就只会复读</em>。</p>
+
+  <p><em>发现二：数学和编程会"打架"</em></p>
+  <p>这是整个项目最戏剧性的一段。团队最初只用 3-4K 道数学题（来自 Numina，由 Still-2 提供）训练，AIME24 准确率从 16.7% 一路涨到 43.3%——完美。然后他们想"再加点编程数据，让它更全能"，于是把 APPs 的编程数据混进来——结果 AIME24 掉到了 36.7%。<em>编程数据把数学能力"带坏"了</em>。</p>
+
+  <p>为什么会这样？团队推测：数学推理和编程推理的"思维方式"根本不同。数学推理偏直接、结构化；编程推理则要"在脑子里模拟运行代码"、做更多逻辑推演。把两种风格混在一起，模型反而两边都学不扎实。解决办法是<em>重新平衡配方</em>——加入更难的数学题（NuminaMath）和更复杂的编程题（TACO），让两种风格都有足够的"高质量样本"来站稳脚跟。平衡后，AIME24 恢复到 43.3%，编程能力也上去了。这就是前文那个 17K 配方的由来。</p>
+
+  <p><em>发现三：格式重写比换模型还管用</em></p>
+  <p>前面提过，APPs 数据集上，QwQ 的原始输出只有 ~25% 准确率，重写格式后跳到 &gt;90%。<em>这个 65 个百分点的提升，不是靠更聪明的模型，而是靠更干净的格式</em>。它提醒所有做推理模型的人：在卷模型之前，先把数据格式理顺——这可能是性价比最高的一步。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 坐标轴 -->
+        <line x1="60" y1="220" x2="660" y2="220" stroke="#96897A" stroke-width="1"/>
+        <line x1="60" y1="220" x2="60" y2="30" stroke="#96897A" stroke-width="1"/>
+        <text x="50" y="28" text-anchor="end" font-size="10" fill="#96897A">100</text>
+        <text x="50" y="130" text-anchor="end" font-size="10" fill="#96897A">50</text>
+        <text x="50" y="224" text-anchor="end" font-size="10" fill="#96897A">0</text>
+        <text x="30" y="125" text-anchor="middle" font-size="10" fill="#96897A" transform="rotate(-90 30 125)">准确率 (%)</text>
+
+        <!-- 基准标签 -->
+        <g font-size="9" fill="#96897A">
+          <text x="120" y="240" text-anchor="middle">Math500</text>
+          <text x="220" y="240" text-anchor="middle">AIME24</text>
+          <text x="320" y="240" text-anchor="middle">LCB-Easy</text>
+          <text x="420" y="240" text-anchor="middle">LCB-Med</text>
+          <text x="520" y="240" text-anchor="middle">LCB-Hard</text>
+          <text x="620" y="240" text-anchor="middle">GPQA</text>
+        </g>
+
+        <!-- 网格线 -->
+        <line x1="60" y1="130" x2="660" y2="130" stroke="#96897A" stroke-width="0.4" stroke-dasharray="2 3" opacity="0.5"/>
+
+        <!-- Qwen2.5-32B-Instruct (灰) -->
+        <g fill="#96897A" opacity="0.7">
+          <rect x="100" y="83" width="12" height="137"/>
+          <rect x="200" y="190" width="12" height="30"/>
+          <rect x="300" y="68" width="12" height="152"/>
+          <rect x="400" y="147" width="12" height="73"/>
+          <rect x="500" y="202" width="12" height="18"/>
+          <rect x="600" y="138" width="12" height="82"/>
+        </g>
+
+        <!-- o1-preview (青) -->
+        <g fill="#24555A" opacity="0.8">
+          <rect x="114" y="74" width="12" height="146"/>
+          <rect x="214" y="148" width="12" height="72"/>
+          <rect x="314" y="53" width="12" height="167"/>
+          <rect x="414" y="121" width="12" height="99"/>
+          <rect x="514" y="191" width="12" height="29"/>
+          <rect x="614" y="85" width="12" height="135"/>
+        </g>
+
+        <!-- Sky-T1 (橙, 高亮) -->
+        <g fill="#B54A2C">
+          <rect x="128" y="72" width="12" height="148"/>
+          <rect x="228" y="142" width="12" height="78"/>
+          <rect x="328" y="65" width="12" height="155"/>
+          <rect x="428" y="118" width="12" height="102"/>
+          <rect x="528" y="188" width="12" height="32"/>
+          <rect x="628" y="118" width="12" height="102"/>
+        </g>
+
+        <!-- 图例 -->
+        <rect x="380" y="20" width="10" height="10" fill="#96897A" opacity="0.7"/>
+        <text x="395" y="29" font-size="10" fill="#2E2A22">Qwen2.5-32B</text>
+        <rect x="480" y="20" width="10" height="10" fill="#24555A" opacity="0.8"/>
+        <text x="495" y="29" font-size="10" fill="#2E2A22">o1-preview</text>
+        <rect x="565" y="20" width="10" height="10" fill="#B54A2C"/>
+        <text x="580" y="29" font-size="10" fill="#2E2A22">Sky-T1</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · Sky-T1 与 o1-preview、基座模型在六大推理基准上的对比（橙色为 Sky-T1）</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>Sky-T1 的影响，远超它那个 450 美元的价签。它一口气打破了三件事：</p>
+
+  <p><em>第一，打破了"推理只能靠强化学习"的迷信</em>。在 Sky-T1 之前，社区普遍认为 o1 的推理能力来自大规模强化学习，复现门槛极高。DeepSeek-R1 紧随其后用纯 RL 佐证了这条路。但 Sky-T1 证明：<em>光靠监督微调就够了</em>——只要你有一个会推理的老师，把它的思维链蒸馏出来，朴素 SFT 就能让一个普通指令模型学会分步推理。这让"复刻 o1"的门槛从"需要庞大 RL 基础设施"一下子降到"需要 8 张 H100 和一个周末"。</p>
+
+  <p><em>第二，打破了"推理数据是稀缺资源"的困局</em>。o1 的思维链是机密，但 QwQ 是开源的——只要有一个开源的推理模型当老师，推理数据就可以无限生成。Sky-T1 把这条"师生蒸馏"的链路彻底跑通，等于给社区递了一把"造推理数据的印钞机"。后来的 s1、LIMO、Open-R1 都在这条路上继续走，只是把数据量从 17K 砍到了 1000、817。</p>
+
+  <p><em>第三，打破了"开源追不上闭源"的悲观论调</em>。2024 年底，o1 与开源模型的差距让人绝望。Sky-T1 用 450 美元在数学和编程上追平 o1-preview，给开源社区打了一针强心剂——<em>闭源能做的，开源也能做，而且可以做得又快又便宜</em>。这直接催生了 2025 年初那场"全民复刻 o1"的狂欢。</p>
+
+  <p>更难得的是，NovaSky 团队把<em>数据、代码、权重、技术报告、训练日志（wandb）</em>全部开源，是当时开源最彻底的推理模型项目。这种"毫无保留"的态度，让任何人都能复现、改进、二创，极大加速了整个领域的迭代。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>Sky-T1 固然惊艳，但它的问题也恰恰藏在那个 450 美元的价签里。</p>
+
+  <p><em>局限一：蒸馏有"天花板"，老师不够强，学生就超不过老师</em>。Sky-T1 在 GPQA-Diamond（科学推理）上只有 56.8，被 o1-preview 的 75.2 碾压。为什么？因为它的老师 QwQ 在科学领域本身就不强（只有 52.5）。<em>蒸馏只能传递老师已有的能力，无法无中生有</em>。这是所有"师生蒸馏"路线的根本性局限——学生的上限，被老师的上限锁死。想突破这个天花板，要么换更强的老师，要么得回到强化学习，让模型自己探索超出老师的能力边界（这正是 DeepSeek-R1 走的路）。</p>
+
+  <p><em>局限二：会"想太多"</em>。Sky-T1 学会了推理，但也染上了推理模型通用的毛病——<em>过度思考</em>。一道简单题，它也会绕着圈子想上几千个 token 才给答案，又慢又贵。NovaSky 团队自己很快就意识到了这个问题，13 天后就推出了 <em class="latin">Sky-T1-32B-Flash</em>，用偏好优化把思维链长度砍掉最多 57%，精度却几乎不掉。这也是我们下一篇要讲的内容。</p>
+
+  <p><em>局限三：有"刷分"嫌疑</em>。在 Hacker News 上，有人尖锐地指出：拿一个在特定基准上微调过的模型，去和通用模型比这些基准，本质上是在"刷分"（<em class="latin">Goodhart's law</em>——当指标变成目标，指标就不再是好指标）。Sky-T1 在 Math500 和 LiveCodeBench 上确实漂亮，但换到没见过的任务上还能不能打？GPQA 上的瘸腿已经露了马脚。这个质疑一直伴随着整个"蒸馏派"。</p>
+
+  <p><em>局限四：只覆盖数学和编程</em>。o1 的推理是通用的——科学、逻辑、多步规划都能搞定。Sky-T1 虽然加了一点点科学和谜题数据（1K），但主力还是数学和编程。真正的"通用推理模型"，它还差得远。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把 Sky-T1 放回推理范式期的完整故事里，这条线大致是这样的：</p>
+
+  <p>2024 年 9 月，<em class="latin">OpenAI o1</em> 横空出世，用"长思维链 + 强化学习"打开了推理时代的大门，但一切闭源。社区只能隔窗观望。</p>
+
+  <p>2024 年 11 月底，阿里放出 <em class="latin">QwQ-32B-Preview</em>——第一个能力接近 o1-preview 的开源推理模型。它本身是怎么训出来的，细节不多，但它的存在给社区递了一根关键拐杖：一个"开源的推理老师"。</p>
+
+  <p>2024 年 12 月，<em class="latin">Still-2</em> 尝试用自我改进激发数学推理，给了后来者"格式重写"的灵感。同期 <em class="latin">Journey</em> 也在数学领域探索。但它们都只碰数学，且配方不完整。</p>
+
+  <p>2025 年 1 月 10 日，<em class="latin">Sky-T1</em> 登场——它把 QwQ 当老师，蒸馏出 17K 数据，用朴素 SFT 训出匹敌 o1-preview 的开源模型，且全栈开源。这是"蒸馏派"的第一个完整范本，把复刻 o1 的门槛砸到了 450 美元。</p>
+
+  <p>十天后的 1 月 20 日，<em class="latin">DeepSeek-R1</em> 用纯强化学习让模型自发"顿悟"出思维链，证明不靠老师、靠奖励信号也能学会推理——这是"RL 派"的回应。随后 <em class="latin">Kimi K1.5</em>（1 月 22 日）用长上下文 RL 走了另一条路。</p>
+
+  <p>紧接着，"极简派"登场：<em class="latin">s1</em>（1 月 31 日）用 1000 道题 + 一个"Wait"就激发了推理，<em class="latin">LIMO</em>（2 月 5 日）更是把数据量砍到 817，并给出"少即是多"的理论解释。这两者都受了 Sky-T1"小数据 SFT 也能行"的启发，但把"少"推到了极致。</p>
+
+  <p>而 Sky-T1 自己也在迭代——1 月 23 日的 <em class="latin">Sky-T1-32B-Flash</em> 用偏好优化治好了"话痨"。</p>
+
+  <p>回看这条线，Sky-T1 的位置很清晰：<em>它是把"复刻 o1"从口号变成可操作食谱的第一人</em>。它没有发明新算法，但它证明了一条最朴素的路是通的，从而让所有人都能跟进。后面的 s1、LIMO 是在它基础上做减法，DeepSeek-R1 是和它唱对台戏——但所有人都站在它推开的那扇门里。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>Sky-T1 这个项目，从名字到细节都透着一种"学生气"的浪漫。</p>
+
+  <p>先说名字。<em class="latin">NovaSky</em> 团队来自 UC Berkeley 的 <em class="latin">Sky Computing Lab</em>——这个名字本身就有故事。Sky Computing 是 Berkeley 名教授 Ion Stoica（也是 Databricks 联合创始人）几年前提出的一个愿景：未来的计算资源会像云一样，跨多个云厂商自由流动，按需取用。NovaSky 取的是"新星（Nova）+ Sky"的意思，带着一股"我们要在天空计算时代点燃一颗新星"的劲。而 Sky-T1 里的"Sky"，既呼应了实验室的名字，也暗含"触手可及的天空"之意——o1 是天上月，Sky-T1 是伸手就能够到的星星。</p>
+
+  <p>再说那个 450 美元。这个数字之所以能引爆社区，不只是因为它便宜，更因为它<em>具象得让人发笑</em>。450 美元，在旧金山大概够吃两顿米其林，或者租一周的合租房，或者——训一个匹敌 o1 的推理模型。NovaSky 团队在博客里特意标注了"按 <em class="latin">Lambda Cloud</em> 定价"，这种"我把账单都给你看"的坦诚，和 OpenAI 对 o1 训练成本讳莫如深形成了鲜明对比。算力赞助方 <em class="latin">Lambda</em> 和 <em class="latin">Anyscale</em> 也因此蹭了一波热度。</p>
+
+  <div class="callout">
+    <span class="label">一个微妙的反讽</span>
+    Sky-T1 用 <em class="latin">GPT-4o-mini</em> 来重写 QwQ 的思维链格式——也就是说，它<em>用 OpenAI 的模型，来帮助复刻 OpenAI 的 o1</em>。这种"用你的刀削你的柄"的循环，让不少人会心一笑。当然，GPT-4o-mini 只负责格式整理，不参与推理本身，但这个细节在社区里被反复玩梗。
+  </div>
+
+  <p>还有那段"数学和编程打架"的插曲。团队在博客里写得格外坦诚：他们老老实实承认自己踩了坑——加了编程数据后数学掉分，然后又老老实实说自己怎么填的坑。这种"把失败也写进论文"的姿态，在如今只报喜不报忧的 AI 圈里显得格外珍贵。后来 LIMO 的作者也继承了这种坦诚，把"为什么 817 就够"的理论和盘托出——或许这正是 Berkeley 学派的一种气质。</p>
+
+  <p>最后，是 Hacker News 上那场关于"刷分"的争论。有人泼冷水说"这不过是 fine-tune 刷榜"，也有人反驳"450 美元能刷到这个分本身就是新闻"。这场争论其实一直延续到今天：当一个开源模型在某个基准上超过闭源旗舰，到底是模型真的强，还是基准已经被"应试"了？Sky-T1 没有给出答案，但它把这个问题摆到了所有人面前。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- o1 黑箱 -->
+        <rect x="40" y="60" width="140" height="80" rx="2" fill="#2E2A22"/>
+        <text x="110" y="95" text-anchor="middle" fill="#F4EFE4" font-weight="600">o1</text>
+        <text x="110" y="115" text-anchor="middle" fill="#96897A" font-size="10">闭源 · 千万美元</text>
+        <text x="110" y="132" text-anchor="middle" fill="#96897A" font-size="10">黑箱</text>
+
+        <!-- 箭头 -->
+        <text x="210" y="100" text-anchor="middle" fill="#96897A" font-size="16">→</text>
+
+        <!-- QwQ 老师 -->
+        <rect x="240" y="60" width="140" height="80" rx="2" fill="#ECE4D4" stroke="#24555A" stroke-width="1.5"/>
+        <text x="310" y="95" text-anchor="middle" fill="#24555A" font-weight="600">QwQ</text>
+        <text x="310" y="115" text-anchor="middle" fill="#96897A" font-size="10">开源替身老师</text>
+        <text x="310" y="132" text-anchor="middle" fill="#96897A" font-size="10">"我替 o1 说话"</text>
+
+        <!-- 箭头 -->
+        <text x="410" y="100" text-anchor="middle" fill="#96897A" font-size="16">→</text>
+
+        <!-- Sky-T1 -->
+        <rect x="440" y="50" width="160" height="100" rx="2" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C" stroke-width="1.5"/>
+        <text x="520" y="85" text-anchor="middle" fill="#B54A2C" font-weight="600" font-size="14">Sky-T1</text>
+        <text x="520" y="108" text-anchor="middle" fill="#B54A2C" font-size="10">开源 · $450 · 19h</text>
+        <text x="520" y="128" text-anchor="middle" fill="#96897A" font-size="10">"我学会啦！"</text>
+
+        <!-- GPT-4o-mini 调侃 -->
+        <rect x="540" y="150" width="120" height="34" rx="2" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="3 3"/>
+        <text x="600" y="172" text-anchor="middle" font-size="9" fill="#96897A">GPT-4o-mini 帮忙整理格式</text>
+        <line x1="600" y1="150" x2="520" y2="140" stroke="#96897A" stroke-dasharray="2 2"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · Sky-T1 的"替身链条"：o1 闭源 → QwQ 当替身老师 → Sky-T1 复刻成功（连格式整理都借了 OpenAI 的手）</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读完整篇 Sky-T1，我最深的感受是：<em>它用最朴素的方法，问了一个最尖锐的问题——推理能力，到底是"教"出来的，还是"挖"出来的？</em></p>
+
+  <p>Sky-T1 走的是"教"的路：找一个会推理的老师，把它的话录下来，让学生照着学。这条路的有效性，恰恰说明了一件反直觉的事——<em>学生模型（Qwen2.5-32B-Instruct）本来就有推理的潜能，只是没人告诉它"该怎么推理"</em>。17K 条思维链，与其说是"教会"了它推理，不如说是"示范"了推理长什么样，然后它就把这种能力"激活"了。这和后来 LIMO 的"817 道题唤醒推理"异曲同工——只是 LIMO 把这个观察推到了更极端的结论。</p>
+
+  <p>但 Sky-T1 也暴露了"教"这条路的死穴：<em>老师的天花板，就是学生的天花板</em>。在科学推理上，QwQ 老师本身就不行，Sky-T1 也就跟着不行。这让人不禁想：如果想让模型突破老师的上限，是不是终究绕不开强化学习？DeepSeek-R1 给出了肯定的回答——它不靠老师，靠奖励信号让模型自己摸索，结果在某些维度上超过了所有"老师"。也许未来的方向，是"先用蒸馏打底，再用 RL 突破天花板"的两段式——事实上，后来很多工作正是这么做的。</p>
+
+  <p>另一个值得玩味的点是"格式重写"那段。65 个百分点的提升，竟然来自一个看似无关紧要的格式整理。这提醒我们：在 AI 领域，<em>最不起眼的工程细节，往往藏着最大的杠杆</em>。很多时候我们急着换更大的模型、更花哨的算法，却忘了先把数据的"格式"理顺。Sky-T1 的这个发现，对所有做训练的人都是一个提醒：卷模型之前，先卷数据。</p>
+
+  <p>最后，Sky-T1 引发的那场"刷分 vs 真能力"的争论，至今没有定论。但我倾向于认为：在一个基准上超过 o1，固然有"应试"的成分，但能用 450 美元训出一个在数学竞赛上赢 o1 的开源模型，这件事本身的意义，不在于"它真的比 o1 强"，而在于<em>它把推理能力的获取成本，从千万美元拉到了几百美元</em>。当一项能力便宜到人手一份，它就不再是少数公司的特权，而会变成整个生态的基础设施。Sky-T1 真正的贡献，是让"推理"这两个字，从 OpenAI 的保险柜里，走进了每个实验室的显卡。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    Sky-T1 证明了"师生蒸馏"能廉价复制推理能力，但也暴露了"学生超不过老师"的天花板。那么问题来了：如果一个开源模型的推理能力，永远只能逼近它闭源老师（QwQ、o1）的水平，那"开源追平闭源"是不是一句永远差一步的空话？还是说，总有一天，开源模型能靠强化学习自己"悟"出超越所有老师的推理能力——那一天，老师和学生还会存在吗？欢迎带着这个问题，和我一起进入下一篇。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Sky-T1-32B-Flash: Reducing Overthinking in Reasoning Models via Preference Optimization</h3>
+    <p style="margin:0;">Sky-T1 学会了推理，却染上了推理模型的通病——"想太多"。一道简单题，它也能绕着圈子想上几千个 token 才给答案，又慢又贵。13 天后，同一个 NovaSky 团队出手整治这个"话痨"：用偏好优化（preference optimization）把思维链砍掉最多 57%，精度却几乎不掉。训练成本只要 275 美元。推理模型的"减肥史"，就从这里开始——下一篇，我们看怎么教一个会推理的模型学会"适可而止"。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 017 篇</span>
+    <span>2026-08-17</span>
+  </footer>
+
+</div>
+</body>
+</html>
