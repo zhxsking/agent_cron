@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 17,
-  "last_run_date": "2026-08-17",
+  "last_index": 18,
+  "last_run_date": "2026-08-18",
   "papers_covered": [
     {
       "index": 1,
@@ -134,14 +134,22 @@
     {
       "index": 17,
       "title_en": "Sky-T1: Train your own O1 preview model within $450",
-      "title_zh": "Sky-T1：不到 450 美元训练自己的 o1——17K 蒸馏数据 + Qwen2.5-32B，开源推理模型的'平价复刻'路线",
+      "title_zh": "Sky-T1：不到 450 美元训练自己的 o1——17K 蒸馏数据 + Qwen2.5-32B，开源推理模型的"平价复刻"路线",
       "date": "2025-01-10",
       "era": "推理范式期 2025–",
       "filename": "17_20260817_Sky_T1.html"
+    },
+    {
+      "index": 18,
+      "title_en": "Sky-T1-32B-Flash: Reducing Overthinking in Reasoning Models via Preference Optimization",
+      "title_zh": "Sky-T1-32B-Flash：用偏好优化教推理模型'适可而止'——把过长的思维链砍掉 57%，精度却几乎不掉",
+      "date": "2025-01-23",
+      "era": "推理范式期 2025–",
+      "filename": "18_20260818_Sky_T1_32B_Flash.html"
     }
   ],
   "next_preview": {
-    "title_en": "Sky-T1-32B-Flash: Reducing Overthinking in Reasoning Models via Preference Optimization",
-    "title_zh": "Sky-T1-32B-Flash：用偏好优化教推理模型'适可而止'——把过长的思维链砍掉 57%，精度却几乎不掉"
+    "title_en": "QwQ: Reflect Deeply on the Boundaries of the Unknown",
+    "title_zh": "QwQ：在未知边界上深思——阿里 Qwen 团队的开源推理模型，Sky-T1 背后的'老师'"
   }
 }

@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sky-T1-32B-Flash 论文精读 · 大模型经典论文系列 #018</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+  td.win{ color:var(--accent); font-weight:600; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#018</span>
+  </div>
+
+  <h1 class="title">
+    Sky-T1-32B-Flash: Reducing Overthinking in Reasoning Models via Preference Optimization
+    <span class="en">Sky-T1-32B-Flash：用偏好优化教推理模型"适可而止"——把过长的思维链砍掉 57%，精度却几乎不掉</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Tyler Griggs, Shiyi Cao, Dacheng Li, Shu Liu, Shishir G. Patil, Matei Zaharia, Joey Gonzalez, Ion Stoica</span>
+    <span>机构：UC Berkeley Sky Computing Lab · NovaSky Team</span>
+    <span>发表：2025-01-23 / 技术博客</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://novasky-ai.github.io/posts/reduce-overthinking/" target="_blank" rel="noopener">Project</a>
+    <a href="https://github.com/NovaSky-AI/SkyThought" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://huggingface.co/NovaSky-AI/Sky-T1-32B-Flash" target="_blank" rel="noopener">HuggingFace</a>
+  </div>
+
+  <!-- ============ 上篇回顾 ============ -->
+  <div class="callout">
+    <span class="label">上篇回顾</span>
+    上一篇我们读了 <em class="latin">Sky-T1</em>：NovaSky 团队用 17K 蒸馏数据、不到 450 美元、19 个小时，复刻出一个数学和编程上匹敌 <em class="latin">o1-preview</em> 的开源推理模型，把"复刻 o1"的门槛砸到了午餐价。但故事结尾我们留了一个钩子——Sky-T1 学会了推理，却染上了推理模型通用的毛病：<em>想太多</em>。一道简单题，它也能绕着圈子想上几千个 token 才给答案，又慢又贵。13 天后，同一个团队出手整治这个"话痨"。这一篇，我们看怎么教一个会推理的模型学会"适可而止"。
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">2025 年 1 月 23 日，距 Sky-T1 发布仅仅 13 天，NovaSky 团队又抛出了一篇博客，标题比上一篇更狠——<em class="latin">Think Less, Achieve More</em>（少想一点，多做一点）。副标题更直接：<em class="latin">Cut Reasoning Costs by 50% Without Sacrificing Accuracy</em>（推理成本砍半，精度不掉）。</p>
+
+  <p class="lead">彼时社区刚为"450 美元训出 o1"兴奋了一周多，紧接着就发现 Sky-T1 有个让人又爱又恨的毛病：它推理得太勤快了。问它"2+2 等于几"，它可能先反思一下"2 的本体论意义"，再验证一下加法的交换律，最后绕了 3000 个 token 才郑重写下"4"。这种"过度思考"（<em class="latin">overthinking</em>）是所有推理模型的通病——它们学会了"想"，却没学会"什么时候不用想"。NovaSky 的解法很有意思：不重新训练，不加规则限制，而是用一种叫"偏好优化"的心理学式技巧，让模型自己悟出"简洁也是美德"。结果：思维链最多砍掉 57%，精度几乎不掉，训练只要 275 美元。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    用 10K 条偏好对（同一个问题的"啰嗦版"和"简洁版"答案），通过 <em class="latin">SimPO</em> 偏好优化训练 Sky-T1-32B-Preview，把推理模型的思维链长度砍掉最多 57%，精度几乎不掉——证明推理模型可以学会"想得短一点"，而不需要重新从零训练。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>把 Sky-T1-32B-Flash 放进大模型推理的故事线里，它占据的是一个承上启下的微妙位置：<em>它是"推理效率"这个新课题的奠基性范本</em>。</p>
+
+  <p>在它之前，整个推理范式期都在解决一个核心问题——"怎么让模型学会推理"。从 <em class="latin">o1</em> 到 <em class="latin">DeepSeek-R1</em>、<em class="latin">Kimi K1.5</em>、<em class="latin">Sky-T1</em>、<em class="latin">s1</em>、<em class="latin">LIMO</em>，所有人都在卷"能不能推理""能不能更准"。但当一个模型真的学会推理之后，新的问题立刻浮出水面：<em>它推理得太多了</em>。</p>
+
+  <p>Sky-T1-32B-Flash 是第一批正面回应这个问题的开源工作之一。它把焦点从"让模型会想"转向"让模型想得恰到好处"——既不偷懒（该想的时候要想透），也不啰嗦（能一步到位的别绕三步）。这个思路后来催生了一整个"高效推理"（<em class="latin">efficient reasoning</em>）的研究方向，从 <em class="latin">adaptive thinking</em> 到 <em class="latin">step-level penalization</em>，都在它推开的这扇门里继续走。</p>
+
+  <p>它的上游是 Sky-T1-32B-Preview（上一篇讲过的"学生模型"，现在变成了"被改造对象"）和 DPO/SimPO 这条偏好优化的方法线（我们早在第 8 篇讲过 DPO）；它的下游则是整个"治推理模型话痨"的浪潮。可以说，<em>它是推理范式期里那个把"效率"二字正式写进议程的转折点</em>。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ah1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="130" x2="660" y2="130" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="10" fill="#96897A">
+        <!-- 早期里程碑 -->
+        <circle cx="60" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="60" y="112" text-anchor="middle">2017</text>
+        <text x="60" y="152" text-anchor="middle">Transformer</text>
+
+        <circle cx="150" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="150" y="112" text-anchor="middle">2023</text>
+        <text x="150" y="152" text-anchor="middle">DPO</text>
+
+        <!-- 推理时代分界 -->
+        <line x1="235" y1="100" x2="235" y2="170" stroke="#96897A" stroke-dasharray="3 3" stroke-width="0.8"/>
+        <text x="235" y="92" text-anchor="middle" fill="#96897A" font-size="9">推理范式期</text>
+
+        <!-- 推理时代节点 -->
+        <circle cx="280" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="280" y="112" text-anchor="middle">2024.09</text>
+        <text x="280" y="152" text-anchor="middle">o1</text>
+
+        <circle cx="370" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="370" y="112" text-anchor="middle">2025.01</text>
+        <text x="370" y="152" text-anchor="middle">DeepSeek-R1</text>
+
+        <circle cx="440" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="440" y="112" text-anchor="middle">2025.01.10</text>
+        <text x="440" y="152" text-anchor="middle">Sky-T1</text>
+
+        <!-- 本篇高亮 -->
+        <circle cx="510" cy="130" r="8" fill="#B54A2C"/>
+        <text x="510" y="100" text-anchor="middle" fill="#B54A2C" font-weight="600" font-size="11">本篇位置</text>
+        <text x="510" y="118" text-anchor="middle" fill="#B54A2C" font-size="9">2025.01.23</text>
+        <text x="510" y="156" text-anchor="middle" fill="#2E2A22" font-weight="600">Sky-T1-Flash</text>
+
+        <!-- 效率时代分界 -->
+        <line x1="565" y1="100" x2="565" y2="170" stroke="#B54A2C" stroke-dasharray="3 3" stroke-width="0.8"/>
+        <text x="615" y="92" text-anchor="middle" fill="#B54A2C" font-size="9">高效推理方向</text>
+
+        <circle cx="620" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="620" y="112" text-anchor="middle">2025+</text>
+        <text x="620" y="152" text-anchor="middle">adaptive</text>
+      </g>
+      <!-- 已解析覆盖范围标注 -->
+      <path d="M 60 175 Q 350 200 620 175" fill="none" stroke="#24555A" stroke-width="1" stroke-dasharray="2 3" opacity="0.6"/>
+      <text x="350" y="215" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#24555A">本系列已解析 #001–#018（含本篇）</text>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · Sky-T1-32B-Flash 在大模型发展脉络中的位置：从"让模型会推理"到"让模型想得恰到好处"的转折点</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>2024 年底到 2025 年初，推理模型成了大模型圈最炙手可热的方向。o1、DeepSeek-R1、QwQ、Sky-T1 接连登场，一个比一个会"想"。但很快，所有人都撞上了同一堵墙：<em>这些模型推理得太勤快了</em>。</p>
+
+  <p>什么是"过度思考"？简单说，就是推理模型在面对简单问题时，依然要绕上一大圈才肯给答案。比如你问它"法国首都是哪里"，它不会直接说"巴黎"，而要先把欧洲地理梳理一遍，再验证巴黎的历史地位，最后反思一下"我是不是想得太简单了"，绕上几千个 token 才落笔。这听起来像是个无害的小毛病，但实际后果很严重：</p>
+  <ul>
+    <li><em>慢</em>：用户等一个简单答案要等几十秒，体验极差。</li>
+    <li><em>贵</em>：生成 token 是要花算力的，多想几千个 token，就是多花几倍的钱。</li>
+    <li><em>错</em>：想得太多反而会绕进死胡同，把原本能答对的题想错。</li>
+  </ul>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象你雇了一个特别聪明但也特别纠结的实习生。你让他订会议室，他不会直接订，而要先写一份三页的备忘录，分析"会议室"这个概念在组织协作中的哲学意义，再对比五种订会议室的方法论，最后反思"我订会议室的方式是否体现了对同事时间的尊重"——然后才订。你哭笑不得：他确实把事办了，但花了一下午。Sky-T1-32B-Preview 就是这么个实习生。Flash 版要做的，是教他学会：<em>有些事，订就完了，别想那么多</em>。
+  </div>
+
+  <p>这个问题在 Sky-T1-32B-Preview 身上格外刺眼。它本身就是用蒸馏学来的推理能力——它从 QwQ 老师那里继承了"会想"，但也继承了"想太多"的毛病。NovaSky 团队自己也承认：Preview 版的 Sky-T1 在 AIME24 数学竞赛上平均要生成 <em class="latin">6881</em> 个 token 才给一个答案，而一个不会推理的普通模型（Qwen2.5-32B-Instruct）只要 <em class="latin">970</em> 个。换句话说，<em>Sky-T1 为了多答对几道题，付出的代价是 7 倍的输出长度</em>。</p>
+
+  <p>更让人头疼的是，社区一开始没找到好的解法。最朴素的思路是"加规则"——在 prompt 里加一句"请简洁回答"，或者在生成超过 N 个 token 时强制截断。但这些硬规则治标不治本：模型该想的时候被截断了会答错，不该想的时候没被截断还是啰嗦。<em>真正的问题是，模型根本分不清"这道题该想多少"</em>。</p>
+
+  <p>NovaSky 团队的选择是一条更巧妙的路：不靠规则，靠<em>偏好</em>。他们借鉴了 DPO（第 8 篇讲过的"直接偏好优化"）的思路——与其告诉模型"不要啰嗦"（这是规则），不如给它看一堆"啰嗦版答案"和"简洁版答案"的对比，让它自己悟出"原来简洁的也答得对，那我以后就这样"（这是偏好）。这种心理学式的训练，比硬规则优雅得多。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>Sky-T1-32B-Flash 要回答的核心问题，可以用一句话概括：</p>
+
+  <p><em>能不能用偏好优化，让一个已经学会推理的模型，在不重新训练、不掉精度的情况下，自己学会"想得短一点"？</em></p>
+
+  <p>这个问题背后藏着三个更尖锐的子问题：</p>
+  <ul>
+    <li>训练数据怎么造？偏好优化需要"成对数据"——同一个问题，一个啰嗦一个简洁的两种答案。这些答案从哪来？谁来决定哪个是"好"的？</li>
+    <li>怎么避免"治啰嗦治过头"？如果一味鼓励简洁，模型会不会从一个极端跳到另一个极端，变成"想太少"（<em class="latin">underthinking</em>），该深想的时候也敷衍了事？</li>
+    <li>用什么训练方法？DPO 是经典选择，但它需要训练一个参考模型，又慢又贵。有没有更轻量的偏好优化算法？</li>
+  </ul>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果你手里有一个啰嗦的推理模型，想教它简洁，最直接的做法是什么？你可能会想"那我就找一堆简洁答案，让模型模仿"。但这其实是监督微调（SFT），不是偏好优化。SFT 只能教模型"说什么"，偏好优化却能教模型"在两种说法里更偏好哪一种"。这两者的区别在哪？提示：前者像背范文，后者像培养品味。在往下看之前，先想想为什么"培养品味"比"背范文"更适合治"啰嗦"。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>Sky-T1-32B-Flash 的方法可以用一句话讲完：<em>让啰嗦模型自己生成一堆"啰嗦版"和"简洁版"答案，配成偏好对，然后用 SimPO 训练它偏好简洁版</em>。听起来简单，但魔鬼全在细节里——尤其是怎么造数据、怎么避免"治啰嗦治过头"。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ah2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 阶段一：数据生成 -->
+        <rect x="30" y="30" width="200" height="90" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="130" y="52" text-anchor="middle" font-weight="600">① 数据生成</text>
+        <text x="130" y="70" text-anchor="middle" font-size="9" fill="#96897A">Sky-T1-Preview</text>
+        <text x="130" y="84" text-anchor="middle" font-size="9" fill="#96897A">12K 题 × 8 次 / temp 1.0</text>
+        <text x="130" y="100" text-anchor="middle" font-size="9" fill="#24555A">→ 最短答对=chosen</text>
+        <text x="130" y="114" text-anchor="middle" font-size="9" fill="#B54A2C">→ 最长答对=rejected</text>
+
+        <!-- 阶段二：补丁数据 -->
+        <rect x="30" y="140" width="200" height="60" rx="2" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C" stroke-dasharray="3 2"/>
+        <text x="130" y="162" text-anchor="middle" fill="#B54A2C" font-weight="600">补丁：1K "想太少"对</text>
+        <text x="130" y="178" text-anchor="middle" font-size="9" fill="#2E2A22">短答错=reject</text>
+        <text x="130" y="192" text-anchor="middle" font-size="9" fill="#2E2A22">长答对=chosen</text>
+
+        <!-- 阶段三：重写 -->
+        <rect x="270" y="80" width="180" height="90" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="360" y="102" text-anchor="middle" font-weight="600">② 响应重写</text>
+        <text x="360" y="120" text-anchor="middle" font-size="9" fill="#96897A">Llama3.3-70B</text>
+        <text x="360" y="134" text-anchor="middle" font-size="9" fill="#24555A">FCS+1：留首解+一个</text>
+        <text x="360" y="148" text-anchor="middle" font-size="9" fill="#2E2A22">删 "Alternatively..."</text>
+        <text x="360" y="162" text-anchor="middle" font-size="9" fill="#2E2A22">删多余反思</text>
+
+        <!-- 10K 偏好对 -->
+        <rect x="270" y="200" width="180" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="360" y="230" text-anchor="middle" fill="#24555A" font-weight="600">10K 偏好对</text>
+
+        <!-- 阶段四：SimPO -->
+        <rect x="490" y="80" width="180" height="90" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="580" y="102" text-anchor="middle" fill="#B54A2C" font-weight="600">③ SimPO 偏好优化</text>
+        <text x="580" y="120" text-anchor="middle" font-size="9" fill="#96897A">无需参考模型</text>
+        <text x="580" y="134" text-anchor="middle" font-size="9" fill="#96897A">内置长度归一化</text>
+        <text x="580" y="148" text-anchor="middle" font-size="9" fill="#24555A">直接偏好简洁</text>
+        <text x="580" y="162" text-anchor="middle" font-size="9" fill="#24555A">8×H100 · $275</text>
+
+        <!-- 输出 -->
+        <rect x="490" y="200" width="180" height="60" rx="2" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C" stroke-width="1.5"/>
+        <text x="580" y="222" text-anchor="middle" fill="#B54A2C" font-weight="600">Sky-T1-32B-Flash</text>
+        <text x="580" y="240" text-anchor="middle" font-size="9" fill="#B54A2C">长度-57% · 精度不掉</text>
+        <text x="580" y="254" text-anchor="middle" font-size="9" fill="#B54A2C">"学会了适可而止"</text>
+
+        <!-- 箭头 -->
+        <line x1="230" y1="75" x2="270" y2="110" stroke="#96897A" marker-end="url(#ah2)"/>
+        <line x1="230" y1="170" x2="270" y2="130" stroke="#96897A" marker-end="url(#ah2)"/>
+        <line x1="360" y1="170" x2="360" y2="200" stroke="#96897A" marker-end="url(#ah2)"/>
+        <line x1="450" y1="225" x2="490" y2="225" stroke="#96897A" marker-end="url(#ah2)"/>
+        <line x1="580" y1="170" x2="580" y2="200" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#ah2)"/>
+
+        <!-- 标注 -->
+        <text x="350" y="320" text-anchor="middle" font-size="10" fill="#96897A">PRM800K 题库 · 数学+编程 · 全流程开源</text>
+        <text x="350" y="340" text-anchor="middle" font-size="10" fill="#96897A">注意：chosen 和 rejected 都答对，只是长度不同</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · Sky-T1-32B-Flash 三阶段方法：数据生成 → 响应重写 → SimPO 偏好优化（中间补了 1K"想太少"对防止矫枉过正）</figcaption>
+  </figure>
+
+  <h3>步骤一：让模型自己生成"啰嗦版"和"简洁版"</h3>
+  <p>偏好优化需要成对数据——同一个问题，一个"好"答案一个"差"答案。但去哪找这么多"啰嗦 vs 简洁"的对比？NovaSky 团队的选择很巧妙：<em>让模型自己生成</em>。</p>
+
+  <p>具体做法是：从 PRM800K 数据集（一个数学题集）里挑了 12000 道题，让 Sky-T1-32B-Preview 对每道题回答 8 次，温度设为 1.0（高温采样，让每次回答都不一样）。这样每道题就有 8 个版本——有的长有的短，有的对有的错。然后他们做了一件简单却关键的事：</p>
+  <ul>
+    <li>在 8 个<em>答对</em>的版本里，挑最短的当"好答案"（<em class="latin">chosen</em>）</li>
+    <li>挑最长的当"差答案"（<em class="latin">rejected</em>）</li>
+  </ul>
+
+  <p>注意一个细节：chosen 和 rejected <em>都答对了</em>，区别只在长度。这正是偏好优化想教模型的——"答案对不对"已经解决了，现在要教的是"答对的前提下，能不能更简洁"。</p>
+
+  <h3>步骤二：补丁数据——治"想太少"</h3>
+  <p>这是整个方法里最有意思、最容易被忽略的一步。NovaSky 团队一开始只用了上面的"短答对 vs 长答对"数据训练，结果立刻撞上一个新问题：<em>模型从"想太多"矫枉过正，变成了"想太少"</em>。</p>
+
+  <p>它学会了"简洁是美德"，但学过头了——面对 AIME24 这种难题，它也开始敷衍了事，三言两语给个答案就交差，结果准确率掉了。简单题它答得快又对，难题它答得快但错了。换句话说，<em>它只学会了"短"，没学会"该短的时候短，该长的时候长"</em>。</p>
+
+  <p>NovaSky 团队的解决办法很有"补丁"色彩：再加 1000 条"反向偏好对"——</p>
+  <ul>
+    <li>同一个问题，找一个<em>短的、答错的</em>版本当 rejected</li>
+    <li>找一个<em>长的、答对的</em>版本当 chosen</li>
+  </ul>
+
+  <p>这等于告诉模型："看，有时候想得短会答错，想得长才能答对。<em>别一味求短，该深想的时候还得深想</em>。"这 1000 条补丁数据虽然数量小，但作用关键——它把模型从"无脑求短"拉回到"看情况长短"的平衡点。</p>
+
+  <div class="callout">
+    <span class="label">关键洞察</span>
+    这一步揭示了一个反直觉的道理：<em>教模型"简洁"，不能只给它看简洁的样本，还得给它看"简洁但错了"的反面教材</em>。这有点像教孩子写作文——光给他看范文不够，还得给他看"敷衍了事写砸了"的反例，他才知道分寸在哪。偏好优化的精髓，从来不是"教该说什么"，而是"在两种说法里建立品味"。
+  </div>
+
+  <h3>步骤三：响应重写——把啰嗦的答案剪干净</h3>
+  <p>光有偏好对还不够。Sky-T1-Preview 的"啰嗦"是有具体形态的——它最爱犯的毛病是"多解法堆叠"：一道题先用方法 A 解一遍，写着写着"Alternatively, let me reconsider..."，又用方法 B 解一遍，最后"Let me verify..."再验一遍。三个解法堆在一起，又长又乱。</p>
+
+  <p>NovaSky 团队用一个叫 <em class="latin">Llama3.3-70B</em> 的模型来"重写"这些答案——把多余的解法剪掉，但保留推理质量。他们设计了一个叫 <em class="latin">FCS+1</em>（First Correct Solution plus One，首解加一）的方法：</p>
+  <ul>
+    <li>保留<em>第一个答对的解法</em>（First Correct Solution）</li>
+    <li>再加<em>一个额外的解法</em>作为补充（+1）</li>
+    <li>把后面那些"Alternatively..."的冗余解法全删掉</li>
+  </ul>
+
+  <p>为什么是"加一"而不是"只保留首解"？团队试过只保留首解（FCS），效果不够好——保留一点备选解法，能让模型在偏好训练时还保留住"多角度验证"的能力，不至于被剪得太狠。这个"+1"是个很克制的折中：<em>既剪掉了冗余，又没剪掉推理的多样性</em>。</p>
+
+  <p>编程题要特殊处理——代码题很少出现"三个版本堆叠"的情况，所以重写规则不同。这种"分类型定制"的工程细节，恰恰是这种工作最见功力的地方。</p>
+
+  <h3>步骤四：SimPO——比 DPO 更轻的偏好优化</h3>
+  <p>到训练这一步，NovaSky 团队做了一个关键的技术选择：用 <em class="latin">SimPO</em>（Simple Preference Optimization，简单偏好优化）而不是更经典的 DPO。</p>
+
+  <p>我们在第 8 篇讲过 DPO——它把 RLHF 拆骨剥皮，把奖励模型和 PPO 化简成一道数学推导，变成监督学习。但 DPO 有个毛病：它需要一个"参考模型"（<em class="latin">reference model</em>）来计算概率比，这让训练又慢又占显存。SimPO 的改进很直接——</p>
+
+  <div class="formula-block">
+    $$ \mathcal{L}_{\text{SimPO}} = -\log\sigma\!\left(\frac{\beta}{|y_w|}\log\frac{\pi_\theta(y_w|x)}{\pi_{\text{ref}}(y_w|x)} - \frac{\beta}{|y_l|}\log\frac{\pi_\theta(y_l|x)}{\pi_{\text{ref}}(y_l|x)} - \gamma\right) $$
+    <span class="eqn mono">(1) DPO 形式</span>
+  </div>
+
+  <div class="formula-block">
+    $$ \mathcal{L}_{\text{SimPO}} = -\log\sigma\!\left(\frac{\beta}{|y_w|}\log\pi_\theta(y_w|x) - \frac{\beta}{|y_l|}\log\pi_\theta(y_l|x) - \gamma\right) $$
+    <span class="eqn mono">(2) SimPO 形式</span>
+  </div>
+
+  <p>对比一下就能看出区别：DPO 公式里有 <em class="latin">π_ref</em>（参考模型）这一项，需要维护一个额外的模型来算概率比；SimPO 直接把这一项去掉了，只用当前模型 <em class="latin">π_θ</em> 的对数概率，<em>省掉了整个参考模型</em>。更妙的是，SimPO 用 <em class="latin">1/|y|</em>（答案长度的倒数）做了长度归一化——长答案的 log 概率天然更小，归一化后才能和短答案公平比较。这个设计对"治啰嗦"再合适不过：<em>它天生就在惩罚长答案</em>。</p>
+
+  <p>训练参数同样朴素：</p>
+  <ul>
+    <li>基座模型：<em class="latin">Sky-T1-32B-Preview</em>（上一篇那个会推理但啰嗦的模型）</li>
+    <li>偏好对数据：<em class="latin">10K</em> 条（数学 + 编程）</li>
+    <li>优化器：<em class="latin">SimPO</em></li>
+    <li>硬件：8 张 <em class="latin">H100</em></li>
+    <li>总成本：按 <em class="latin">Lambda Cloud</em> 定价，约 <em class="latin">$275</em>（比上一篇的 450 还便宜）</li>
+  </ul>
+
+  <figure>
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ah3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="10" fill="#2E2A22">
+        <!-- PRM800K -->
+        <rect x="15" y="85" width="90" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="60" y="105" text-anchor="middle">PRM800K</text>
+        <text x="60" y="120" text-anchor="middle" font-size="8" fill="#96897A">12K 题</text>
+
+        <!-- 8 次采样 -->
+        <rect x="125" y="85" width="90" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="170" y="105" text-anchor="middle">采样 ×8</text>
+        <text x="170" y="120" text-anchor="middle" font-size="8" fill="#96897A">temp=1.0</text>
+
+        <!-- 配对 -->
+        <rect x="235" y="85" width="100" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="285" y="102" text-anchor="middle">配偏好对</text>
+        <text x="285" y="116" text-anchor="middle" font-size="8" fill="#24555A">短对=chosen</text>
+        <text x="285" y="128" text-anchor="middle" font-size="8" fill="#B54A2C">长对=rejected</text>
+
+        <!-- 重写 -->
+        <rect x="355" y="85" width="100" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="405" y="102" text-anchor="middle">FCS+1 重写</text>
+        <text x="405" y="116" text-anchor="middle" font-size="8" fill="#96897A">Llama3.3-70B</text>
+        <text x="405" y="128" text-anchor="middle" font-size="8" fill="#96897A">删冗余解法</text>
+
+        <!-- +补丁 -->
+        <rect x="475" y="85" width="90" height="50" rx="2" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C" stroke-dasharray="3 2"/>
+        <text x="520" y="105" text-anchor="middle" fill="#B54A2C">+1K 补丁</text>
+        <text x="520" y="120" text-anchor="middle" font-size="8" fill="#2E2A22">短错/长对</text>
+
+        <!-- SimPO -->
+        <rect x="585" y="70" width="100" height="80" rx="2" fill="#24555A" fill-opacity="0.15" stroke="#24555A"/>
+        <text x="635" y="92" text-anchor="middle" fill="#24555A" font-weight="600">SimPO</text>
+        <text x="635" y="108" text-anchor="middle" font-size="8" fill="#24555A">10K 对</text>
+        <text x="635" y="122" text-anchor="middle" font-size="8" fill="#24555A">8×H100</text>
+        <text x="635" y="136" text-anchor="middle" font-size="8" fill="#24555A">$275</text>
+
+        <!-- 箭头 -->
+        <line x1="105" y1="110" x2="125" y2="110" stroke="#96897A" marker-end="url(#ah3)"/>
+        <line x1="215" y1="110" x2="235" y2="110" stroke="#96897A" marker-end="url(#ah3)"/>
+        <line x1="335" y1="110" x2="355" y2="110" stroke="#96897A" marker-end="url(#ah3)"/>
+        <line x1="455" y1="110" x2="475" y2="110" stroke="#96897A" marker-end="url(#ah3)"/>
+        <line x1="565" y1="110" x2="585" y2="110" stroke="#96897A" marker-end="url(#ah3)"/>
+
+        <!-- 底部标注 -->
+        <text x="350" y="185" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">→ Sky-T1-32B-Flash：长度-57% · 精度不掉 · $275 · 全流程开源</text>
+
+        <!-- SimPO 公式提示 -->
+        <rect x="200" y="200" width="300" height="14" rx="2" fill="#ECE4D4" stroke="none"/>
+        <text x="350" y="211" text-anchor="middle" font-size="8" fill="#96897A">SimPO 内置长度归一化，天生惩罚长答案</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 完整训练流程：PRM800K → 8 次采样 → 配偏好对 → FCS+1 重写 → +1K 补丁 → SimPO → Flash</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>Sky-T1-32B-Flash 的成绩单，最让人拍大腿的就是那张"长度对比表"。同一个模型，偏好优化前后，结果是这样的：</p>
+
+  <table>
+    <thead>
+      <tr><th>基准</th><th>Preview 准确率</th><th>Preview 平均长度</th><th>Flash 准确率</th><th>Flash 平均长度</th><th>长度缩减</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">Math500</td><td>86.4</td><td>2124</td><td>86.4</td><td class="win">1417</td><td class="win">-33%</td></tr>
+      <tr><td class="text">AIME 2024</td><td>43.3</td><td>6881</td><td>43.3</td><td class="win">4365</td><td class="win">-37%</td></tr>
+      <tr><td class="text">LiveCodeBench-Hard</td><td>~17.9</td><td>—</td><td>~17.9</td><td class="win">—</td><td class="win">-57%</td></tr>
+    </tbody>
+  </table>
+
+  <p>读这张表的关键在最后两列：准确率一列几乎没动（Math500 和 AIME24 都精准持平在 86.4 和 43.3），但平均长度一列砍得相当狠——Math500 从 2124 砍到 1417（-33%），AIME24 从 6881 砍到 4365（-37%），LCB-Hard 直接砍掉 57%。<em>同一个模型，想得少了，但答得一样准</em>。</p>
+
+  <p>把这翻译成钱和时间，就是：在难题上，推理成本砍掉将近六成，延迟也相应降低六成，但答对率没掉。对一个要部署到生产环境的推理模型来说，这是实打实的省钱提速——不是小数目。</p>
+
+  <h3>三个令人惊讶的发现</h3>
+
+  <p><em>发现一："啰嗦"里有大量纯冗余</em></p>
+  <p>Flash 之所以能砍掉 57% 还不掉分，本身说明了一件事：<em>原模型生成的内容里，有超过一半是"可剪除的冗余"</em>。这些冗余不是"想得更深"，而是"绕了三遍同一个解法""反思了根本不需要反思的东西""写完答案还要再验证一遍"。这印证了一个直觉——推理模型的"长"，很多时候不是"该长"，而是"刹不住车"。</p>
+
+  <p><em>发现二：治啰嗦必须配"治想太少"</em></p>
+  <p>前文提过，团队一开始只用"短答对 vs 长答对"训练，结果模型学会了无脑求短，难题敷衍了事。加了那 1000 条"短答错 vs 长答对"的补丁数据后，模型才重新学会"难题该深想"。<em>这个反复说明：教模型分寸感，得同时给它看正反两面教材</em>。这和人类学写作一模一样——光看范文会学成空话连篇，光看反例又畏首畏尾，必须正反对照才能建立品味。</p>
+
+  <p><em>发现三：偏好优化比重新训练划算得多</p>
+  <p>Sky-T1-32B-Preview 训出来花 450 美元、19 小时；Flash 在它基础上做偏好优化，只要 275 美元。<em>治好"啰嗦"的成本，比训练出"啰嗦"本身还低</em>。这意味着任何已经训好的推理模型，都可以用很低的成本再走一遍 Flash 流程，把效率提上去。后来很多开源推理模型都借鉴了这套"先蒸馏会推理，再偏好优化治啰嗦"的两段式配方。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 坐标轴 -->
+        <line x1="70" y1="230" x2="660" y2="230" stroke="#96897A" stroke-width="1"/>
+        <line x1="70" y1="230" x2="70" y2="40" stroke="#96897A" stroke-width="1"/>
+        <text x="62" y="44" text-anchor="end" font-size="9" fill="#96897A">8000</text>
+        <text x="62" y="135" text-anchor="end" font-size="9" fill="#96897A">4000</text>
+        <text x="62" y="234" text-anchor="end" font-size="9" fill="#96897A">0</text>
+        <text x="30" y="135" text-anchor="middle" font-size="9" fill="#96897A" transform="rotate(-90 30 135)">平均 token 长度</text>
+
+        <!-- 网格线 -->
+        <line x1="70" y1="135" x2="660" y2="135" stroke="#96897A" stroke-width="0.4" stroke-dasharray="2 3" opacity="0.5"/>
+
+        <!-- 基准标签 -->
+        <g font-size="9" fill="#96897A">
+          <text x="180" y="250" text-anchor="middle">Math500</text>
+          <text x="380" y="250" text-anchor="middle">AIME 2024</text>
+          <text x="580" y="250" text-anchor="middle">LCB-Hard</text>
+        </g>
+
+        <!-- Preview (灰) -->
+        <g fill="#96897A" opacity="0.75">
+          <rect x="150" y="184" width="30" height="46"/>
+          <rect x="350" y="76" width="30" height="154"/>
+          <rect x="550" y="120" width="30" height="110"/>
+        </g>
+        <g font-size="9" fill="#96897A">
+          <text x="165" y="178" text-anchor="middle">2124</text>
+          <text x="365" y="70" text-anchor="middle">6881</text>
+          <text x="565" y="114" text-anchor="middle">—</text>
+        </g>
+
+        <!-- Flash (橙, 高亮) -->
+        <g fill="#B54A2C">
+          <rect x="185" y="199" width="30" height="31"/>
+          <rect x="385" y="133" width="30" height="97"/>
+          <rect x="585" y="178" width="30" height="52"/>
+        </g>
+        <g font-size="9" fill="#B54A2C" font-weight="600">
+          <text x="200" y="193" text-anchor="middle">1417</text>
+          <text x="400" y="127" text-anchor="middle">4365</text>
+          <text x="600" y="172" text-anchor="middle">-57%</text>
+        </g>
+
+        <!-- 缩减标注 -->
+        <g font-size="9" fill="#24555A">
+          <text x="200" y="215" text-anchor="middle">-33%</text>
+          <text x="400" y="149" text-anchor="middle">-37%</text>
+        </g>
+
+        <!-- 图例 -->
+        <rect x="380" y="22" width="10" height="10" fill="#96897A" opacity="0.75"/>
+        <text x="395" y="31" font-size="10" fill="#2E2A22">Sky-T1-32B-Preview</text>
+        <rect x="540" y="22" width="10" height="10" fill="#B54A2C"/>
+        <text x="555" y="31" font-size="10" fill="#2E2A22">Sky-T1-32B-Flash</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · Preview 与 Flash 在三大基准上的平均输出长度对比（橙色为 Flash，准确率与 Preview 持平）</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>Sky-T1-32B-Flash 的影响，远超它那个 275 美元的价签。它一口气改变了三件事：</p>
+
+  <p><em>第一，把"推理效率"正式写进了大模型议程</em>。在它之前，推理模型圈的内卷焦点是"更准"——谁能多答对几道题。Flash 把另一个维度摆到了台面上："同样准的前提下，谁能想得更短"。这个维度后来催生了一整个"高效推理"研究方向：从 <em class="latin">adaptive thinking</em>（看题难度自适应思考长度）到 <em class="latin">step-level penalization</em>（按推理步骤惩罚冗余），到 2025 年中已经成了一片独立的子领域。</p>
+
+  <p><em>第二，证明了"偏好优化"是治推理毛病的轻量利器</em>。RLHF 那一套要训奖励模型、跑 PPO，又慢又贵；DPO 把它化简成监督学习，但还要参考模型。Flash 用 SimPO 进一步把参考模型也省了，整套流程在 8 张 H100 上跑一遍只要 275 美元。这给所有"已经训好的推理模型"递了一个低成本改良工具——<em>不用推倒重来，偏好优化一遍就能治话痨</em>。后来很多开源推理模型的"Flash 版"都借鉴了这条配方。</p>
+
+  <p><em>第三，把"过思考"这个概念从工程问题升级成研究课题</em>。Flash 之前，"推理模型答得啰嗦"被当成一个工程烦恼——加 prompt 限制、做长度截断就完事了。Flash 用一篇严谨的工作证明：过思考是可以被系统性治理的，治理方法有讲究（要补"想太少"的反例），治理后还能保持精度。<em>这把一个工程烦恼变成了一个有理论深度的科学问题</em>。</p>
+
+  <p>更难得的是，NovaSky 团队延续了上一篇的作风——<em>数据、代码、权重、训练脚本全部开源</em>。10K 偏好对、FCS+1 重写逻辑、SimPO 配置，全都摊在 GitHub 上。任何人都能复现、改进、二创。这种"毫无保留"的态度，让"治推理毛病"这件事迅速从 NovaSky 一家的事，变成了整个社区的事。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>Sky-T1-32B-Flash 把"治啰嗦"做到了一个相当漂亮的水准，但它的局限也藏在那个 275 美元里。</p>
+
+  <p><em>局限一：治的是"症状"，不是"病根"</em>。Flash 用偏好优化让模型学会"偏好简洁"，但模型为什么一开始会啰嗦，它没回答。啰嗦的根源可能是蒸馏数据本身啰嗦（Sky-T1 的老师 QwQ 就是个话痨），可能是训练目标鼓励长输出，也可能是某种推理范式自身的副作用。Flash 像给慢性病患者开了一剂缓解症状的药——病还在，但症状压下去了。真正要治本，得从训练数据和推理范式本身下手，这是后来的 <em class="latin">adaptive thinking</em> 路线要解决的。</p>
+
+  <p><em>局限二：偏好对的"好坏"标准很粗糙</em>。Flash 用"最短答对 vs 最长答对"来定义偏好对——但这其实假设了"短就是好"。现实里，"短而精炼"和"短而偷懒"很难区分。一个 100 token 的答案，可能是金句箴言，也可能是敷衍了事。Flash 用"补丁数据"（短答错 vs 长答对）部分缓解了这个问题，但根本的"好坏定义"还是停留在长度层面。更精细的做法，应该是按"推理步骤的有效性"来定义好坏——这正是后来 <em class="latin">GRSP</em>（Group Relative Segment Penalization）等工作的方向。</p>
+
+  <p><em>局限三：依赖外部模型做重写</em>。Flash 用 Llama3.3-70B 来重写答案、用 GPT-4o-mini 整理格式（上一篇的遗产）——<em>它治推理模型的啰嗦，自己又借了别的模型的手</em>。这让整个流程不够"自洽"，也带来一个问题：如果重写模型本身有偏差，偏好数据就会带偏被训模型。后来的工作试图让模型"自我重写"，但效果如何还在探索。</p>
+
+  <p><em>局限四：只覆盖数学和编程</em>。和上一篇 Sky-T1 一样，Flash 的训练数据主要来自 PRM800K（数学题）和编程题。科学、逻辑、多步规划这些通用推理领域，它没碰。一个真正会"看情况长短"的通用推理模型，还得跨更多领域训练。这也是后来 <em class="latin">adaptive thinking</em> 路线要补的功课。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把 Sky-T1-32B-Flash 放回推理范式期的完整故事里，"推理效率"这条线大致是这样的：</p>
+
+  <p>2024 年 9 月，<em class="latin">OpenAI o1</em> 横空出世，用"长思维链 + 强化学习"打开了推理时代的大门。但 o1 也有过思考的毛病——只是闭源，社区看不见，也没法改。</p>
+
+  <p>2024 年底到 2025 年 1 月，开源推理模型扎堆登场。<em class="latin">QwQ-32B-Preview</em>、<em class="latin">DeepSeek-R1</em>、<em class="latin">Kimi K1.5</em>、<em class="latin">Sky-T1</em>、<em class="latin">s1</em>、<em class="latin">LIMO</em> 一个比一个会推理，但也一个比一个能唠叨。<em>所有这些模型都染上了"过思考"的通病</em>——只是大家都在卷"更准"，没人顾得上治"更啰嗦"。</p>
+
+  <p>2025 年 1 月 23 日，<em class="latin">Sky-T1-32B-Flash</em> 登场——这是第一批正面治理过思考的开源工作之一。它用 SimPO 偏好优化把 Sky-T1 的思维链砍掉最多 57%，精度几乎不掉，训练只要 275 美元。它把"推理效率"这个维度正式摆到了台面上。</p>
+
+  <p>此后，"治话痨"成了一个独立的研究方向。一类路线是"自适应思考"——让模型自己判断"这道题该想多少"，从简单题秒答、难题深想，到 2025 年中已经成一摊热点。另一类是"步骤级惩罚"——不是按 token 长度惩罚，而是按"推理步骤"惩罚冗余，<em class="latin">GRSP</em> 等工作把粒度做到了更细。还有"模型融合"路线——把一个快思考模型和一个慢思考模型合并，让单一模型具备两种速度。</p>
+
+  <p>回看这条线，Flash 的位置很清晰：<em>它是把"推理效率"从工程烦恼升级为研究课题的第一人</em>。它没有发明全新的算法（SimPO 是前人的，FCS+1 是工程技巧），但它证明了一条最朴素的路是通的，从而让所有人都能跟进。后来者要么在它的基础上做精细化（按步骤而非按长度），要么在它的思路上做自适应（看题定长短）——但所有人都站在它推开的那扇门里。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>Sky-T1-32B-Flash 这个项目，从命名到细节都透着一种"伯克利学派"的幽默感。</p>
+
+  <p>先说名字。"Flash"这个词选得很有意思——它既是"闪电"，暗合"快"的主旨（推理更快了）；又是"闪光灯"，呼应"简洁"的意象（一句话点亮，不拖泥带水）；它还是 Flash memory（闪存）的"Flash"，暗示这版模型更轻量、更省资源。一个词三重含义，NovaSky 团队起名的功力可见一斑。而它的发布日期也耐人寻味——1 月 23 日，距上一篇 Sky-T1 的 1 月 10 日正好 13 天。13 天就推出一个改良版，这种迭代速度本身就是对 OpenAI 那种"一年憋一个大招"节奏的一种无声嘲讽。</p>
+
+  <p>再说那个 275 美元。这个数字比上一篇的 450 还便宜——治"话痨"比训出"话痨"还省钱。NovaSky 团队依然是把账单摊给所有人看："按 Lambda Cloud 定价，8 张 H100，275 美元。"这种"我把账单都给你看"的坦诚，和 OpenAI 对 o1 训练成本讳莫如深的作风，形成了一种持续性的反讽。算力赞助方 <em class="latin">Lambda</em> 又蹭了一波热度。</p>
+
+  <div class="callout">
+    <span class="label">一个微妙的循环</span>
+    Flash 用 <em class="latin">Llama3.3-70B</em> 来重写答案——也就是说，它用一个"本来就不会推理"的模型，去教一个"会推理但啰嗦"的模型怎么写得更简洁。这有点反直觉：不会推理的模型，反而更会写简洁答案？其实想想也合理——Llama3.3-70B 不会绕着圈子反思，它写答案就是直来直去。让一个直性子去删一个话痨的废话，反而删得恰到好处。这个"以简制繁"的搭配，是整套方法里最容易被忽略却最巧妙的一处。
+  </div>
+
+  <p>还有那段"补丁数据"的故事。NovaSky 团队在博客里写得格外坦诚——他们老实承认，一开始只用"短答对 vs 长答对"训练，结果模型学成了无脑求短，难题敷衍了事。然后又老实说自己怎么填的坑：加 1000 条"短答错 vs 长答对"的反向偏好对。这种"把失败也写进博客"的姿态，在如今只报喜不报忧的 AI 圈里显得格外珍贵。它让人想起上一篇 Sky-T1 那段"数学和编程打架"的坦白——或许这正是 Berkeley 学派的一种气质：<em>把踩坑的过程也当作成果的一部分</em>。</p>
+
+  <p>更微妙的是，Flash 的这套"偏好优化治话痨"配方，后来被很多开源团队"借鉴"。有些团队直接复用了 NovaSky 的代码和数据，有些团队把方法迁移到自己的模型上。开源的好处就在这里——你做出来的方法，会被整个社区拿去迭代、改进、二创，最终变成整个生态的公共知识。NovaSky 团队在这件事上的开放姿态，让他们在"推理效率"这个赛道上赢得了先发优势，也赢得了社区的尊重。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- Preview 啰嗦 -->
+        <rect x="30" y="40" width="280" height="140" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="170" y="62" text-anchor="middle" font-weight="600">Sky-T1-Preview</text>
+        <text x="170" y="82" text-anchor="middle" font-size="10" fill="#96897A">"2+2 等于几？"</text>
+        <text x="170" y="100" text-anchor="middle" font-size="9" fill="#96897A">嗯，2 的本体论...</text>
+        <text x="170" y="114" text-anchor="middle" font-size="9" fill="#96897A">加法交换律...</text>
+        <text x="170" y="128" text-anchor="middle" font-size="9" fill="#96897A">让我再验证...</text>
+        <text x="170" y="142" text-anchor="middle" font-size="9" fill="#96897A">Alternatively...</text>
+        <text x="170" y="156" text-anchor="middle" font-size="9" fill="#96897A">[3000 tokens 后] 答案是 4</text>
+        <text x="170" y="172" text-anchor="middle" font-size="10" fill="#B54A2C">啰嗦但答对</text>
+
+        <!-- 箭头 -->
+        <text x="350" y="115" text-anchor="middle" fill="#96897A" font-size="18">→</text>
+        <text x="350" y="135" text-anchor="middle" font-size="9" fill="#96897A">Flash 流程</text>
+
+        <!-- Flash 简洁 -->
+        <rect x="390" y="40" width="280" height="140" rx="2" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C" stroke-width="1.5"/>
+        <text x="530" y="62" text-anchor="middle" fill="#B54A2C" font-weight="600">Sky-T1-Flash</text>
+        <text x="530" y="82" text-anchor="middle" font-size="10" fill="#96897A">"2+2 等于几？"</text>
+        <text x="530" y="108" text-anchor="middle" font-size="11" fill="#2E2A22">4</text>
+        <text x="530" y="135" text-anchor="middle" font-size="9" fill="#96897A">[少量 token]</text>
+        <text x="530" y="170" text-anchor="middle" font-size="10" fill="#B54A2C">简洁且答对</text>
+        <text x="530" y="186" text-anchor="middle" font-size="9" fill="#B54A2C">长度 -57%</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · Preview 与 Flash 的"话痨 vs 言简意赅"对比：同一个模型，学会"适可而止"前后</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读完整篇 Flash，我最深的感受是：<em>它用最朴素的偏好优化，问了一个最深刻的问题——推理的"长度"和"质量"到底什么关系？</em></p>
+
+  <p>Flash 的实验结果给出了一个让人意外的答案：<em>在推理模型里，长度和质量经常是脱钩的</em>。模型生成的 6881 个 token 里，有 37% 是纯冗余——既不增进理解，也不提升准确率，只是"绕了三遍同一件事"。这挑战了一种朴素直觉："想得久就是想得深"。在推理模型身上，很多时候"想得久"只是"刹不住车"。Flash 把这件事用数据摆了出来。</p>
+
+  <p>但 Flash 也暴露了"治话痨"这件事的根本难题：<em>怎么定义"该想多少"</em>。Flash 的解法是"短答对 vs 长答对"——但这其实是用"长度"当"好坏"的代理变量。真正的"好坏"应该是"推理步骤的有效性"——一个 100 token 的精炼解法，可能比一个 1000 token 的车轱辘话更好；但也可能比一个 500 token 的多角度验证更差。<em>长度只是表象，步骤的有效性才是本质</em>。Flash 用长度做代理，是因为长度容易度量；后来的 GRSP 等工作按"步骤"做惩罚，是因为步骤更接近本质。这条线还在往前走。</p>
+
+  <p>另一个值得玩味的点是 Flash 的"治标 vs 治本"困境。Flash 是症状级的治疗——模型还是那个模型，只是被偏好优化"驯化"得不爱啰嗦了。但模型为什么一开始会啰嗦？这个问题 Flash 没回答。可能是训练数据本身啰嗦（Sky-T1 的老师 QwQ 就是个话痨），可能是训练目标鼓励长输出，也可能是推理范式自身的副作用。<em>真正治本，得从训练数据和推理范式本身下手</em>——这或许是下一代推理模型要解决的。</p>
+
+  <p>最后，Flash 让我想到一个更哲学的问题：<em>推理模型该像 System 1 还是 System 2？</em>。卡尼曼的《思考，快与慢》把人类思维分成两个系统——System 1 直觉快思考，System 2 推理慢思考。当前的推理模型都是纯 System 2——遇到任何问题都启动慢思考，连"2+2 等于几"都要绕一圈。Flash 是给 System 2 装了个"刹车"，让它不至于在任何题上都狂奔。但真正的下一步，是让模型自己判断"这道题该用 System 1 还是 System 2"——简单题秒答，难题深想。这就是后来 <em class="latin">adaptive thinking</em> 路线要做的：让一个模型同时具备快慢两种思考，按需切换。Flash 把门推开了，但门后还有很长的路。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    Flash 证明了"偏好优化能治推理模型的话痨"，但它治的是症状——模型还是那个模型，只是被驯化得不爱啰嗦了。那么问题来了：如果一个推理模型从训练数据开始就啰嗦（比如它的老师 QwQ 是个话痨，蒸馏出来的学生也啰嗦），那"偏好优化治话痨"是不是永远只能做到"治标不治本"？还是说，根治过思考的真正办法，是重新设计推理范式本身——让模型从根上就不会啰嗦？要回答这个问题，我们得回到推理范式的源头，看看那个"会推理的老师"自己是怎么被训出来的。下一篇，我们就去认识这位"老师"。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>QwQ: Reflect Deeply on the Boundaries of the Unknown</h3>
+    <p style="margin:0;">从第 17 篇 Sky-T1 开始，一个名字反复出场却始终没正面亮相——<em class="latin">QwQ</em>。它是 Sky-T1 的"老师"，是开源社区第一个能力接近 o1-preview 的推理模型，也是 Sky-T1 啰嗦毛病的源头。它的名字念作"kwuh"，是"<em class="latin">Qwen with Questions</em>"的缩写——一个会提问的 Qwen。2024 年 11 月 28 日，阿里 Qwen 团队放出这个 32B 的推理模型，用一句"在未知边界上深思"立下 Flag，也把开源推理的火种递到了 NovaSky 手里。下一篇，我们去认识这位"老师"——看它怎么用纯强化学习让一个 32B 模型学会反思与验证，又怎么把"啰嗦"的基因传给了它的学生们。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 018 篇</span>
+    <span>2026-08-18</span>
+  </footer>
+
+</div>
+</body>
+</html>
