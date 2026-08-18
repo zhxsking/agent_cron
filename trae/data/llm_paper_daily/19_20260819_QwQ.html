@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QwQ 论文精读 · 大模型经典论文系列 #019</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+  td.win{ color:var(--accent); font-weight:600; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#019</span>
+  </div>
+
+  <h1 class="title">
+    QwQ: Reflect Deeply on the Boundaries of the Unknown
+    <span class="en">QwQ：在未知边界上深思——阿里 Qwen 团队的开源推理模型，Sky-T1 背后的"老师"</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Qwen Team</span>
+    <span>机构：Alibaba Cloud · 通义千问</span>
+    <span>发表：2024-11-28 / 技术博客</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://qwenlm.github.io/blog/qwq-32b-preview/" target="_blank" rel="noopener">Project</a>
+    <a href="https://github.com/QwenLM/Qwen2.5" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://huggingface.co/Qwen/QwQ-32B-Preview" target="_blank" rel="noopener">HuggingFace</a>
+  </div>
+
+  <!-- ============ 上篇回顾 ============ -->
+  <div class="callout">
+    <span class="label">上篇回顾</span>
+    上一篇我们读了 <em class="latin">Sky-T1-32B-Flash</em>：NovaSky 团队用偏好优化把推理模型的话痨毛病治了——思维链砍掉 57%，精度几乎不掉，275 美元搞定。但结尾我们留了个钩子：Flash 治的是"症状"，话痨的"病根"在哪？答案指向 Sky-T1 的"老师"——那个教会它推理、也把"啰嗦"基因传给它的模型。这一篇，我们终于要见到这位反复被提起、却始终没正面登场的关键角色。
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">2024 年 9 月，OpenAI 抛出一颗炸弹：<em class="latin">o1</em>。它不再"秒答"，而是会先"想"——在开口之前，它在一段隐藏的思维链里反复推敲、自我质疑、推翻重来，然后才落笔写下答案。它把数学竞赛、博士级科学、真实编程题的纪录刷到了一个新高度。但最让开源社区抓狂的是：<em>o1 把它怎么"想"的全藏了起来</em>。你看不见它的思路，改不了它的推理，更别提在自己机器上跑。</p>
+
+  <p class="lead">整整两个半月，开源推理只能望洋兴叹。然后，2024 年 11 月 28 日，一个名字念作"kwuh"的模型出现了——<em class="latin">QwQ</em>，"Qwen with Questions"（会提问的通义千问）。它只有 320 亿参数，比动辄数千亿的大模型小了一个数量级，却第一个在公开评测里摸到了 <em class="latin">o1-preview</em> 的门槛。更关键的是：<em>它把"想"的过程完全摊开给你看</em>——它会问自己"我确定吗？"，会推翻重来，会绕进死胡同再爬出来。这篇没有公式、没有实验曲线、几乎全篇是哲学散文的"论文"，就这样把开源推理的火种，从闭源巨头的黑箱里，接了过来。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    QwQ 是阿里 Qwen 团队基于 Qwen2.5-32B、用"冷启动 + 强化学习"训出的开源推理模型——它用只奖励"最终答案对不对"的极简奖励信号，让一个 32B 的小模型自发学会反思、验证与回溯，第一个在公开评测里接近闭源的 o1，也成了后来 Sky-T1 等一众开源推理模型的"老师"。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>把 QwQ 放进大模型推理的故事线里，它的位置非常特殊：<em>它是开源推理范式的"第一块多米诺骨牌"</em>。</p>
+
+  <p>2024 年 9 月 <em class="latin">o1</em> 发布，推理时代开幕，但那是闭源的独角戏——没有权重、没有思路、没有复现路径。整整两个半月，开源圈只能干瞪眼。QwQ-32B-Preview 在 11 月 28 日登场，是<em>第一个在公开评测里摸到 o1-preview 门槛的开源模型</em>，而且只用了 320 亿参数。它证明了"小模型 + 强化学习"也能学会推理，不必非得堆几千亿参数。</p>
+
+  <p>更深远的影响在于它成了一个"源头"。我们在第 17 篇讲过 <em class="latin">Sky-T1</em>——那个 450 美元复刻 o1 的开源推理模型，它的推理能力正是<em>从 QwQ 蒸馏来的</em>。第 18 篇的 Sky-T1-32B-Flash 治好的"话痨毛病"，病根也追溯到 QwQ。可以说，QwQ 是一整条开源推理支流的<em>上游</em>：它的权重、它的思路、它的"啰嗦"基因，顺着蒸馏流向了无数后来者。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ah1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="130" x2="660" y2="130" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="10" fill="#96897A">
+        <!-- 早期里程碑 -->
+        <circle cx="60" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="60" y="112" text-anchor="middle">2017</text>
+        <text x="60" y="152" text-anchor="middle">Transformer</text>
+
+        <circle cx="150" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="150" y="112" text-anchor="middle">2023</text>
+        <text x="150" y="152" text-anchor="middle">Qwen2.5</text>
+
+        <!-- 推理时代分界 -->
+        <line x1="215" y1="100" x2="215" y2="170" stroke="#96897A" stroke-dasharray="3 3" stroke-width="0.8"/>
+        <text x="245" y="92" text-anchor="middle" fill="#96897A" font-size="9">推理范式期</text>
+
+        <!-- o1 -->
+        <circle cx="270" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="270" y="112" text-anchor="middle">2024.09</text>
+        <text x="270" y="152" text-anchor="middle">o1 (闭源)</text>
+
+        <!-- 本篇高亮 -->
+        <circle cx="370" cy="130" r="8" fill="#B54A2C"/>
+        <text x="370" y="100" text-anchor="middle" fill="#B54A2C" font-weight="600" font-size="11">本篇位置</text>
+        <text x="370" y="118" text-anchor="middle" fill="#B54A2C" font-size="9">2024.11.28</text>
+        <text x="370" y="156" text-anchor="middle" fill="#2E2A22" font-weight="600">QwQ-32B-Preview</text>
+
+        <!-- 下游 -->
+        <circle cx="470" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="470" y="112" text-anchor="middle">2025.01.10</text>
+        <text x="470" y="152" text-anchor="middle">Sky-T1</text>
+
+        <circle cx="560" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="560" y="112" text-anchor="middle">2025.01.20</text>
+        <text x="560" y="152" text-anchor="middle">DeepSeek-R1</text>
+
+        <circle cx="640" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="640" y="112" text-anchor="middle">2025+</text>
+        <text x="640" y="152" text-anchor="middle">开源推理浪潮</text>
+      </g>
+      <!-- 蒸馏流向标注 -->
+      <path d="M 378 138 Q 420 175 462 138" fill="none" stroke="#24555A" stroke-width="1" stroke-dasharray="2 3" opacity="0.7"/>
+      <text x="420" y="195" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#24555A">蒸馏 ↓</text>
+      <!-- 已解析覆盖范围标注 -->
+      <path d="M 60 218 Q 350 238 640 218" fill="none" stroke="#24555A" stroke-width="1" stroke-dasharray="2 3" opacity="0.6"/>
+      <text x="350" y="232" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#24555A">本系列已解析 #001–#019（含本篇）</text>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · QwQ 在大模型推理脉络中的位置：开源推理的第一块多米诺骨牌，下游流向 Sky-T1 等蒸馏模型</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>2024 年下半年，大模型圈的主旋律从"卷参数"悄悄转向了"卷思考"。这一转变的导火索是 9 月 12 日的 o1。</p>
+
+  <p>在那之前，所有人都在按 <em class="latin">Chinchilla</em>（第 5 篇）的剧本走：堆更多数据、训更大模型、刷更高分。但 o1 提出了一个反直觉的新思路——<em>与其在训练时卷算力，不如在推理时卷思考</em>。它不再秒答，而是先生成一段长长的"内心独白"（思维链，<em class="latin">chain of thought</em>），在里面反复推敲，最后才写答案。结果，它在数学竞赛、博士级科学、真实编程上把纪录刷到了新高度。</p>
+
+  <p>但 o1 有一个让开源社区如鲠在喉的特点：<em>它是黑箱</em>。OpenAI 既不公开权重，也把思维链藏了起来——官方理由是"安全"和"防止被模仿"，但在社区看来，这更像是商业护城河。你只能看到一个会"想"的模型，却看不见它怎么想、学不会它怎么训。<em>开源推理，被锁在了门外</em>。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象隔壁有个天才同学，每次考试都满分，但他的草稿纸永远折起来塞进口袋，谁也不给看。你知道他"会想"，但学不会他"怎么想"。o1 就是这个天才。开源社区急需一个"愿意把草稿纸摊在桌上"的天才——哪怕分数低几分。QwQ 要当的就是这个"摊开草稿"的角色。
+  </div>
+
+  <p>阿里 Qwen 团队有几个独特优势，让它在这场竞赛里抢了先。第一，它在 2024 年 9 月刚发布了 <em class="latin">Qwen2.5</em> 系列——尤其是 32B 这个档位，数学能力在同级别里已经拔尖。第二，Qwen 系列从 1.0、1.5、2.0 一路走来，训练基建成熟。第三，它有完整的开源传统，权重一向大方公开。于是团队做了一个决定：拿数学底子最好的 Qwen2.5-32B 当底座，用强化学习教会它"想"，然后把权重和思路全摊开。</p>
+
+  <p>这里有个关键的"为什么是 32B"的问题。Qwen2.5 系列从 0.5B 到 72B 全覆盖，为什么推理版选 32B？答案是<em>一个工程上的甜点位</em>：32B 是能稳定支撑长思维链连贯性的最小档位——再小，长推理时会"断片"；而 32B 量化后又能塞进单张高端消费级显卡（比如一张 80GB 的 A100，或两张 4090）。<em>既要够聪明能想清楚，又要够小让大多数人跑得动</em>，32B 正好卡在这个交点上。</p>
+
+  <p>背景的另一条线是方法论。要让模型学会推理，主流有两条路：<em>监督微调</em>（SFT，喂给它一堆带思路的范例让它模仿）和<em>强化学习</em>（RL，让它自己试，答对了给奖励）。SFT 简单，但思路是"别人教的"，容易僵化；RL 让模型自己"悟"出思路，更有可能涌现出超出范例的推理策略。o1 据信走的是 RL 路线，DeepSeek 后来也用纯 RL 搞出了 R1-Zero 的"顿悟"（第 13 篇）。Qwen 团队选了一条折中的路：<em>冷启动 SFT 打底 + RL 进阶</em>——先喂一点范例让它学会"想"的格式，再用 RL 让它自己练出推理的内功。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>QwQ 要回答的核心问题，可以拆成一句：</p>
+
+  <p><em>能不能用一个只有 320 亿参数的开源模型，靠强化学习学会像 o1 那样"先想后答"，并把推理过程完全公开，从而接住开源推理的火种？</em></p>
+
+  <p>这个问题背后，藏着三个更尖锐的子问题：</p>
+  <ul>
+    <li><em>小模型能学会推理吗？</em>o1 的参数规模是个谜，但业界普遍相信它远超 32B。一个 32B 的"小"模型，在长思维链里会不会"想断片"、会不会推理质量不够？</li>
+    <li><em>奖励信号该给什么？</em>RL 需要一个"做对了就奖励"的信号。但"推理"是好是坏，很难自动评判——你没法自动判断一段思路"够不够深刻"。能自动判的，只有"最终答案对不对"。可只奖励最终答案，模型真的能自己悟出"反思、验证"这些中间策略吗？</li>
+    <li><em>开源要开到什么程度？</em>光公开权重不够，推理模型的灵魂在"思路"。要不要把思维链也完全公开，哪怕它有时会"翻车"、会绕进死胡同、会突然蹦出别的语言？</li>
+  </ul>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果你要训练一个会推理的模型，奖励只能给"最终答案对不对"（因为只有最终答案能自动判对错）。你觉得，只奖励最终答案，模型会自己悟出"做完检查一遍""觉得不对推翻重来"这些中间策略吗？还是说，必须得手把手教它每一步怎么想（SFT），它才会？在往下看之前，先猜一个：你觉得"只看结果的奖励"能不能催生出"过程中的反思"？这恰恰是 QwQ 和后来 R1 最让人意外的发现。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>QwQ 的方法可以用一句话概括：<em>拿一个数学底子好的 32B 底座，先冷启动教会它"想"的格式，再用只看结果的强化学习让它自己练出推理的内功</em>。这篇"论文"最特别的地方在于——它几乎没有讲技术细节，通篇是哲学散文。但结合后续 QwQ-32B 正式版披露的训练流程，方法的全貌是这样的：</p>
+
+  <figure>
+    <svg viewBox="0 0 700 360" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ah2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 底座 -->
+        <rect x="30" y="40" width="160" height="70" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="110" y="62" text-anchor="middle" font-weight="600">底座模型</text>
+        <text x="110" y="80" text-anchor="middle" font-size="9" fill="#96897A">Qwen2.5-32B</text>
+        <text x="110" y="96" text-anchor="middle" font-size="9" fill="#96897A">32.5B · dense</text>
+        <text x="110" y="110" text-anchor="middle" font-size="9" fill="#24555A">数学底子好</text>
+
+        <!-- 阶段一：冷启动 -->
+        <rect x="240" y="30" width="180" height="90" rx="2" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <text x="330" y="52" text-anchor="middle" fill="#B54A2C" font-weight="600">① 冷启动 SFT</text>
+        <text x="330" y="70" text-anchor="middle" font-size="9" fill="#96897A">精选长思维链范例</text>
+        <text x="330" y="84" text-anchor="middle" font-size="9" fill="#2E2A22">竞赛数学/代码/科学</text>
+        <text x="330" y="98" text-anchor="middle" font-size="9" fill="#24555A">教会"想"的格式</text>
+        <text x="330" y="112" text-anchor="middle" font-size="9" fill="#24555A">学会产出长推理</text>
+
+        <!-- 阶段二：RL -->
+        <rect x="470" y="30" width="200" height="90" rx="2" fill="#24555A" fill-opacity="0.15" stroke="#24555A"/>
+        <text x="570" y="52" text-anchor="middle" fill="#24555A" font-weight="600">② 强化学习 (RL)</text>
+        <text x="570" y="70" text-anchor="middle" font-size="9" fill="#96897A">只奖励"最终答案"</text>
+        <text x="570" y="84" text-anchor="middle" font-size="9" fill="#2E2A22">数学→数值匹配</text>
+        <text x="570" y="98" text-anchor="middle" font-size="9" fill="#2E2A22">代码→单元测试</text>
+        <text x="570" y="112" text-anchor="middle" font-size="9" fill="#B54A2C">反思/验证自发涌现</text>
+
+        <!-- 模型自循环 -->
+        <rect x="300" y="160" width="160" height="70" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="380" y="182" text-anchor="middle" font-weight="600">推理时</text>
+        <text x="380" y="198" text-anchor="middle" font-size="9" fill="#96897A">生成思维链</text>
+        <text x="380" y="212" text-anchor="middle" font-size="9" fill="#96897A">质疑→验证→回溯</text>
+        <text x="380" y="226" text-anchor="middle" font-size="9" fill="#96897A">→ 写答案</text>
+
+        <!-- 输出 -->
+        <rect x="470" y="160" width="200" height="70" rx="2" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C" stroke-width="1.5"/>
+        <text x="570" y="182" text-anchor="middle" fill="#B54A2C" font-weight="600">QwQ-32B-Preview</text>
+        <text x="570" y="198" text-anchor="middle" font-size="9" fill="#B54A2C">思路完全公开</text>
+        <text x="570" y="212" text-anchor="middle" font-size="9" fill="#B54A2C">接近 o1-preview</text>
+        <text x="570" y="226" text-anchor="middle" font-size="9" fill="#B54A2C">Apache 2.0 开源</text>
+
+        <!-- 箭头 -->
+        <line x1="190" y1="75" x2="240" y2="75" stroke="#96897A" marker-end="url(#ah2)"/>
+        <line x1="420" y1="75" x2="470" y2="75" stroke="#96897A" marker-end="url(#ah2)"/>
+        <line x1="570" y1="120" x2="570" y2="160" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#ah2)"/>
+        <line x1="380" y1="195" x2="470" y2="195" stroke="#96897A" marker-end="url(#ah2)"/>
+        <!-- RL 到推理时的反馈虚线 -->
+        <path d="M 470 90 Q 430 130 380 160" fill="none" stroke="#96897A" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#ah2)"/>
+
+        <!-- 底部标注 -->
+        <text x="350" y="290" text-anchor="middle" font-size="10" fill="#96897A">核心洞察：只奖励"最终答案对不对"，模型竟自发学会了反思、验证、回溯</text>
+        <text x="350" y="310" text-anchor="middle" font-size="10" fill="#24555A">→ 推理策略不是"教"出来的，是"悟"出来的</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · QwQ 两阶段训练法：冷启动 SFT 打底（教格式）→ RL 进阶（练内功，只看结果）→ 推理时摊开思路</figcaption>
+  </figure>
+
+  <h3>步骤一：底座的选择——为什么是 Qwen2.5-32B</h3>
+  <p>QwQ 的第一步不是训练，而是<em>选底座</em>。这听起来像废话，但在推理模型里，底座选得好，事半功倍。</p>
+
+  <p>团队选了 Qwen2.5-32B，理由很实在：这个档位在 Qwen2.5 全家族里数学底子最硬，又小到能塞进消费级显卡。它是 dense（稠密）架构，不是 MoE——每个参数在每个 token 上都激活，行为可预测，没有路由器那样的不确定因素。它用了 GQA（分组查询注意力），KV 缓存更省，这对"要生成长长思维链"的推理模型来说很关键——思维链动辄几千上万 token，KV 缓存一爆，能同时服务的请求数就崩了。</p>
+
+  <p>一句话：<em>选 32B dense，是"够聪明"和"跑得动"的精准折中</em>。这也埋下了 QwQ 后来能跑在单卡上、被广泛复现的伏笔。</p>
+
+  <h3>步骤二：冷启动——先教会"想"的格式</h3>
+  <p>选好底座，直接上 RL 行不行？后来 DeepSeek 的 R1-Zero 证明：行，纯 RL 也能涌现推理。但 R1-Zero 也暴露了纯 RL 的毛病——输出的可读性差、格式乱、容易跑偏。Qwen 团队选了一条更稳的路：<em>先冷启动</em>。</p>
+
+  <p>所谓冷启动，就是先做一轮监督微调（SFT）：精心筛一批<em>竞赛级数学题、编程题、科学题</em>，配上带完整思路的解答，让模型模仿着学。这一步的目的<em>不是教推理本身</em>，而是教模型两件小事：</p>
+  <ul>
+    <li><em>格式</em>：学会产出"长长的、有结构的"思维链，而不是秒答。</li>
+    <li><em>调性</em>：学会在思路里"自问自答"——"我确定吗？""换个方法试试？""验证一下"。</li>
+  </ul>
+
+  <p>这一步像是给模型一个"思考的脚手架"。有了脚手架，下一步 RL 才有施展的空间。否则直接上 RL，模型连"该想多长"都不知道。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    冷启动像教孩子写作文前，先给他读几篇范文——不是让他抄，而是让他知道"作文长这样、有起承转合"。至于他能不能写出自己的好作文，得靠他自己练（RL）。不给范文直接让他写，他能写出东西，但格式可能乱七八糟——这就是 R1-Zero 的处境。
+  </div>
+
+  <h3>步骤三：强化学习——只奖励"最终答案"</h3>
+  <p>冷启动之后是重头戏：强化学习。这一步才是 QwQ 推理能力的真正来源，也是整个方法最反直觉的地方。</p>
+
+  <p>RL 的核心是"奖励信号"。教推理最难的，就是<em>怎么自动判断"推理好不好"</em>。一段思路够不够深刻？有没有走弯路？该不该推翻重来？这些都没法自动评判。能自动评判的，只有最朴素的一件事：<em>最终答案对不对</em>。</p>
+
+  <p>Qwen 团队的做法极简：</p>
+  <ul>
+    <li><em>数学题</em>：答案是个数（或能化简成的数），对就是对，错就是错——<em>数值匹配</em>。</li>
+    <li><em>编程题</em>：跑一遍隐藏的测试用例，过了就是过——<em>单元测试</em>。</li>
+  </ul>
+
+  <p>也就是说，奖励函数 <em class="latin">R</em> 长这样：</p>
+
+  <div class="formula-block">
+    $$ R = \begin{cases} 1, & \text{若最终答案正确} \\ 0, & \text{若最终答案错误} \end{cases} $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>就这么一个 0/1 信号。模型在思考过程中做的所有事——反思、验证、推翻重来、换方法——<em>统统不直接给奖励</em>。它只能通过"最终答对了"这个结果，反推"我刚才那串思考是有用的"。这听起来像放羊，但结果惊人：<em>模型自己悟出了反思和验证</em>。</p>
+
+  <p>为什么会这样？你可以这样理解：当一个会"自问自答"的模型，发现"自问自答之后再验证一遍"能让自己更可能答对（拿到那 1 分奖励），它就会越来越多地这么做。奖励是结果的，但策略是涌现的。<em>推理策略不是被教出来的，是被奖励"选"出来的</em>。这和第 13 篇 DeepSeek-R1 的发现如出一辙——当奖励只剩"答案对不对"，模型竟自发学会了反思与验证。QwQ 比 R1 早两个月，是这条路上更早的探路者。</p>
+
+  <h3>步骤四：推理时——把草稿摊在桌上</h3>
+  <p>训练完，最体现 QwQ 灵魂的一步来了：<em>推理时完全公开思维链</em>。</p>
+
+  <p>这一点和 o1 形成了最尖锐的对比。o1 会想，但把想法藏起来；QwQ 会想，而且把怎么想的<em>原原本本写出来</em>。你会看到它问自己"我确定吗？"，看到它写"让我换个角度"，看到它推翻前面的思路重来，甚至看到它绕进一个死胡同、卡住、再爬出来。</p>
+
+  <p>团队在博客里给了一个很能说明问题的例子。给它一道题：</p>
+
+  <pre><code>请给错误的等式 1 + 2 * 3 + 4 * 5 + 6 * 7 + 8 * 9 = 479
+加一对括号，使等式成立。</code></pre>
+
+  <p>QwQ 不会直接给答案。它会先算"不加括号时等于多少"，发现不对；然后系统地试各种括号位置，每试一种都验证；试错几次后，它会说一句类似"等一下，让我重新想想"（<em class="latin">Wait, let me reconsider</em>），然后找到正确位置。整个过程像看一个数学家在草稿纸上涂涂改改——<em>正是这种"看得见的挣扎"，让开源社区终于能研究推理模型的思路长什么样</em>。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>QwQ-32B-Preview 的成绩单，是它"320 亿参数小模型"身份最让人意外的地方。在四个硬核推理基准上：</p>
+
+  <table>
+    <thead>
+      <tr><th>基准</th><th>评测内容</th><th>QwQ-32B-Preview</th><th>意义</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">GPQA</td><td class="text">博士级科学问答</td><td class="win">65.2</td><td class="text">研究生级科学推理</td></tr>
+      <tr><td class="text">AIME</td><td class="text">数学奥赛</td><td class="win">50.0</td><td class="text">中学奥数难题</td></tr>
+      <tr><td class="text">MATH-500</td><td class="text">综合数学</td><td class="win">90.6</td><td class="text">数学理解力</td></tr>
+      <tr><td class="text">LiveCodeBench</td><td class="text">真实编程</td><td class="win">50.0</td><td class="text">实战编程能力</td></tr>
+    </tbody>
+  </table>
+
+  <p>光看数字可能没感觉。把它放回当时的语境里——一个 32B 的开源模型，在 2024 年 11 月，数学奥赛 AIME 拿到 50.0，博士级科学 GPQA 拿到 65.2——<em>这摸到了 o1-preview 的门槛</em>。而 o1-preview 的参数规模是个谜，业界普遍相信远超 32B。一个比对手小一个数量级、还把思路全公开的模型，能打成这样，本身就是个宣言：<em>推理不是大模型的专利</em>。</p>
+
+  <p>更让人咋舌的是后续。2025 年 3 月 5 日，团队放出正式版 QwQ-32B——还是那 32B，但 RL 训得更充分，还加了通用奖励模型来管指令遵循、格式、工具调用。结果它<em>在数学和编程上追平了 DeepSeek-R1</em>——一个 6710 亿参数（370 亿激活）的巨兽。32B 追平 671B，参数省了二十倍。这直接让阿里港股那一周涨了 8.39%，冲上 52 周新高。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 坐标轴 -->
+        <line x1="70" y1="230" x2="660" y2="230" stroke="#96897A" stroke-width="1"/>
+        <line x1="70" y1="230" x2="70" y2="40" stroke="#96897A" stroke-width="1"/>
+        <text x="62" y="44" text-anchor="end" font-size="9" fill="#96897A">100</text>
+        <text x="62" y="135" text-anchor="end" font-size="9" fill="#96897A">50</text>
+        <text x="62" y="234" text-anchor="end" font-size="9" fill="#96897A">0</text>
+        <text x="30" y="135" text-anchor="middle" font-size="9" fill="#96897A" transform="rotate(-90 30 135)">得分</text>
+
+        <!-- 网格线 -->
+        <line x1="70" y1="135" x2="660" y2="135" stroke="#96897A" stroke-width="0.4" stroke-dasharray="2 3" opacity="0.5"/>
+
+        <!-- 基准标签 -->
+        <g font-size="9" fill="#96897A">
+          <text x="170" y="250" text-anchor="middle">MATH-500</text>
+          <text x="330" y="250" text-anchor="middle">GPQA</text>
+          <text x="490" y="250" text-anchor="middle">AIME</text>
+          <text x="620" y="250" text-anchor="middle">LiveCodeBench</text>
+        </g>
+
+        <!-- QwQ (橙, 高亮) -->
+        <g fill="#B54A2C">
+          <rect x="150" y="62" width="30" height="168"/>
+          <rect x="310" y="113" width="30" height="117"/>
+          <rect x="470" y="140" width="30" height="90"/>
+          <rect x="600" y="140" width="30" height="90"/>
+        </g>
+        <g font-size="9" fill="#B54A2C" font-weight="600">
+          <text x="165" y="56" text-anchor="middle">90.6</text>
+          <text x="325" y="107" text-anchor="middle">65.2</text>
+          <text x="485" y="134" text-anchor="middle">50.0</text>
+          <text x="615" y="134" text-anchor="middle">50.0</text>
+        </g>
+
+        <!-- 50分参考线 -->
+        <text x="660" y="132" text-anchor="end" font-size="8" fill="#96897A">— o1门槛线</text>
+
+        <!-- 图例 -->
+        <rect x="430" y="22" width="10" height="10" fill="#B54A2C"/>
+        <text x="445" y="31" font-size="10" fill="#2E2A22">QwQ-32B-Preview</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · QwQ-32B-Preview 在四大推理基准上的得分：一个 32B 小模型，摸到了 o1-preview 的门槛</figcaption>
+  </figure>
+
+  <h3>三个令人惊讶的发现</h3>
+
+  <p><em>发现一：小模型也能学会推理</em></p>
+  <p>在 QwQ 之前，业界有一种隐忧：推理是不是大模型的专属？毕竟 o1 的规模是个谜，没人证明过"小模型 + RL"也行。QwQ 用 32B 交出了答卷，打破了这种迷信。它说明推理能力<em>未必靠参数堆，而靠训练方法</em>——这是个范式级的认知，直接催生了后来一票"小而会想"的开源模型。</p>
+
+  <p><em>发现二：只奖励结果，过程会自己涌现</em></p>
+  <p>这是最反直觉的。你不教模型"要反思""要验证"，只奖励"答对了"，它自己就学会了反思和验证。这暗示一件深意：<em>推理策略可能本来就"潜伏"在模型里</em>，RL 只是把它"选"出来、放大。这和 DeepSeek-R1 的发现互相印证，让"涌现式推理"成了推理范式期的核心议题。</p>
+
+  <p><em>发现三：开源的"草稿"比闭源的"答案"更值钱</em></p>
+  <p>QwQ 公开思路这件事，价值远超分数本身。它的思维链成了<em>开源社区研究"推理长什么样"的第一手教材</em>。NovaSky 团队正是盯着 QwQ 公开的思路，蒸馏出了 Sky-T1（第 17 篇）。可以说，<em>o1 给了答案，QwQ 给了思路，而思路比答案更能启发后来者</em>。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>QwQ 的影响，远超它那 320 亿参数的体量。它一口气改变了三件事：</p>
+
+  <p><em>第一，打破了"推理是大模型专利"的迷信</em>。在它之前，推理能力似乎和 o1 那种闭源巨兽绑定。QwQ 用 32B 证明：只要训练方法对，小模型也能想。这直接催生了"小而会想"的开源推理支流——Sky-T1（32B）、s1（基于 Qwen2.5 的轻量推理）、LIMO，一票后辈都是踩着 QwQ 的肩膀进场的。</p>
+
+  <p><em>第二，它是开源推理的"源头活水"</em>。QwQ 的权重和公开思路，成了后来者蒸馏、模仿、改进的素材库。Sky-T1 明说就是从 QwQ 蒸馏的；s1 用的基座也姓 Qwen。它把 o1 藏起来的"怎么想"，变成了整个社区都能研究的公共资产。<em>一个开源模型，顶替了 OpenAI 没做的"开源教程"</em>。</p>
+
+  <p><em>第三，它和 DeepSeek-R1 一起，把"涌现式推理"推上了舞台中心</em>。两个团队，几乎同时（QwQ 11 月，R1 次年 1 月），都发现"只奖励结果，推理过程会涌现"。这种跨团队的互相印证，让"涌现式推理"从孤证变成了共识，奠定了推理范式期的核心方法论。<em>它俩是这场范式革命的双子星</em>。</p>
+
+  <p>更难得的是 Qwen 团队的开放姿态——Apache 2.0，权重、思路、demo 全公开。这种"毫无保留"，让它从一家之贡献，变成了整个生态的起点。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>QwQ 团队难得地坦诚，在博客里老实列了四条毛病。这些毛病不是吹毛求疵，恰恰揭示了推理模型早期的真实困境。</p>
+
+  <p><em>局限一：语言混用</em>。QwQ 想着想着会突然蹦出别的语言——比如中英夹杂，甚至冒出代码。这听起来好笑，其实是训练数据多语混杂 + 长推理时"语言稳定性"不足的硬伤。<em>一个会推理的模型，连"用什么语言想"都稳不住</em>，可见长链推理的稳定性有多难。后来 QwQ-32B 正式版花了不少功夫治这个。</p>
+
+  <p><em>局限二：递归推理死循环</em>。这是最讽刺的一条。一个名叫"Questions（会提问）"的模型，会陷入"自我质疑→推翻→再质疑→再推翻"的死循环，绕不出来，最后给不出结论。这正是第 18 篇 Sky-T1-Flash 治的"话痨"毛病的病根——<em>QwQ 把"想太多"的基因，顺着蒸馏传给了 Sky-T1</em>。Flash 用偏好优化治了症状，但 QwQ 自己这个"病根"，要靠训练范式本身来解。</p>
+
+  <p><em>局限三：偏科严重</em>。QwQ 在数学和编程上拔尖，但常识推理、细腻语言理解一塌糊涂。它"会想"，但只在它会的领域想。这暴露了"结果奖励 RL"的天花板——奖励信号只在可验证的领域（数学有标准答案、代码能跑测试）才好使，<em>到了没法自动判对错的领域，这套方法就抓瞎了</em>。怎么给"开放式推理"设计奖励，是后来通用奖励模型要补的功课。</p>
+
+  <p><em>局限四：论文"不论文"</em>。QwQ-32B-Preview 这篇"论文"，其实是一篇技术博客——通篇哲学散文，几乎没有方法细节、没有消融实验、没有训练曲线。这让它"好看"但"不好复现"。社区只能从公开的思路和权重反推它怎么训的。这种"哲学先行、技术后补"的姿态，后来被正式版 QwQ-32B 的技术披露部分补上，但 Preview 阶段的模糊性，确实是它的硬伤。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把 QwQ 放回推理范式期的完整故事里，"开源推理"这条线大致是这样的：</p>
+
+  <p>2024 年 9 月，<em class="latin">OpenAI o1</em> 横空出世，用"长思维链 + 强化学习"打开推理时代的大门。但它是闭源的——权重、思路全藏，开源社区只能干瞪眼。</p>
+
+  <p>2024 年 11 月 28 日，<em class="latin">QwQ-32B-Preview</em> 登场——第一个在公开评测里摸到 o1-preview 门槛的开源模型。它用 32B 的小身板 + 冷启动 SFT + 结果奖励 RL，证明小模型也能学会推理，而且把思路完全摊开。它成了开源推理的"火种"。</p>
+
+  <p>2025 年 1 月，开源推理扎堆爆发。<em class="latin">DeepSeek-R1</em> 用纯 RL 搞出了 R1-Zero 的"顿悟"，和 QwQ 互相印证"涌现式推理"；<em class="latin">Kimi K1.5</em> 用长上下文 RL；<em class="latin">Sky-T1</em> 从 QwQ 蒸馏出会推理的小模型；<em class="latin">s1</em>、<em class="latin">LIMO</em> 用极小数据搞推理。<em>这一波，几乎每条支流都能追溯到 QwQ 这个源头</em>。</p>
+
+  <p>随后，推理模型的毛病也暴露了——话痨、过思考、语言混乱。第 18 篇的 <em class="latin">Sky-T1-32B-Flash</em> 用偏好优化治话痨；正式版 <em class="latin">QwQ-32B</em>（2025 年 3 月）用通用奖励模型治偏科和格式，还追平了 DeepSeek-R1。"治推理毛病"成了新一摊热点。</p>
+
+  <p>回看这条线，QwQ 的位置很清晰：<em>它是开源推理从"被锁门外"到"自己造钥匙"的转折点</em>。它没有发明全新的算法（冷启动 SFT + RL 都是经典操作），但它第一个把这套组合在 32B 上跑通、并把一切公开，从而让所有人都能跟进。后来者要么在它的基础上蒸馏（Sky-T1），要么和它互相印证（R1），要么治它留下的毛病（Flash）——但所有人都站在它推开的那扇门里。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>QwQ 这个项目，从名字到气质，都透着一种"哲学中带着可爱"的独特调性。</p>
+
+  <p>先说名字。"QwQ"念作"kwuh"，团队特意注明发音类似"quill"（羽毛笔）——一支会写字的羽毛笔，这意象选得妙。它的全称是"Qwen with Questions"（会提问的通义千问），缩写却故意拼成一个表情——<em>QwQ</em>，看着就像一张瞪大眼睛、满脸问号的脸。一个严肃的推理模型，起名起成一个大写的"?"，这自嘲的功力，在 AI 圈屈指可数。</p>
+
+  <p>再说那篇"论文"本身。读 QwQ-32B-Preview 的博客，你会怀疑自己打开了一本哲学散文集，而不是技术报告。开篇就是苏格拉底式的诘问——"What does it mean to think, to question, to understand?"（何为思考、何为提问、何为理解？）。通篇用"一个永远的学生""它知道自己一无所知"这种句子，把一个 RL 训练的模型写成了求道者。副标题"Reflect Deeply on the Boundaries of the Unknown"（在未知边界上深思），更像论文标题，而不是产品发布。这种"用哲学散文发模型"的姿态，在只报数字不谈意义的 AI 圈，显得格外清流。</p>
+
+  <div class="callout">
+    <span class="label">一个微妙的循环</span>
+    QwQ 名字里的"Questions（提问）"，是它的灵魂——它会自问自答、反复质疑。但这恰恰也是它最大的毛病：它想太多了，会陷进"自我质疑→推翻→再质疑"的死循环出不来。一个因"会提问"而强大的模型，也因"问太多"而卡壳。这像极了那个老笑话：一个哲学家能想明白生死，却在"中午吃什么"上卡了一下午。<em>它的天赋和它的诅咒，是同一件事</em>。后来 Sky-T1-Flash 花了 275 美元，专门治这位"老师"传下去的话痨基因。
+  </div>
+
+  <p>还有那只吉祥物。Qwen 团队的博客配图里，QwQ 是一个二次元风格的小人——和它"硬核推理模型"的身份形成一种反差萌。一个会做奥数、能写代码的"学霸"，配一张萌系二次元脸，这种"反差"成了 QwQ 的视觉记忆点。</p>
+
+  <p>最后是市场的反应。2025 年 3 月 QwQ-32B 正式版发布那周，阿里港股涨了 8.39%，冲上 52 周新高——一个开源模型，直接拉动了一家巨头股价。这多少说明：在推理范式期，"开源"已经不是"打不过闭源才开源"的妥协，而是一种能撬动市场信心的战略。QwQ 让阿里在"中国开源推理"这个赛道上，抢到了先发的高地。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- QwQ 老师 -->
+        <rect x="30" y="40" width="200" height="140" rx="2" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C" stroke-width="1.5"/>
+        <text x="130" y="62" text-anchor="middle" fill="#B54A2C" font-weight="600">QwQ（老师）</text>
+        <text x="130" y="84" text-anchor="middle" font-size="10" fill="#96897A">"会提问"</text>
+        <text x="130" y="104" text-anchor="middle" font-size="9" fill="#96897A">自我质疑...</text>
+        <text x="130" y="118" text-anchor="middle" font-size="9" fill="#96897A">推翻重来...</text>
+        <text x="130" y="132" text-anchor="middle" font-size="9" fill="#96897A">再质疑...</text>
+        <text x="130" y="146" text-anchor="middle" font-size="9" fill="#96897A">绕进死循环</text>
+        <text x="130" y="170" text-anchor="middle" font-size="10" fill="#B54A2C">天赋=诅咒</text>
+
+        <!-- 蒸馏箭头 -->
+        <text x="270" y="105" text-anchor="middle" fill="#24555A" font-size="18">→</text>
+        <text x="270" y="125" text-anchor="middle" font-size="9" fill="#24555A">蒸馏</text>
+        <text x="270" y="139" text-anchor="middle" font-size="8" fill="#96897A">传下"会想"</text>
+        <text x="270" y="151" text-anchor="middle" font-size="8" fill="#96897A">也传下"想太多"</text>
+
+        <!-- Sky-T1 学生 -->
+        <rect x="320" y="40" width="170" height="140" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="405" y="62" text-anchor="middle" font-weight="600">Sky-T1（学生）</text>
+        <text x="405" y="84" text-anchor="middle" font-size="10" fill="#96897A">继承了"会想"</text>
+        <text x="405" y="104" text-anchor="middle" font-size="9" fill="#96897A">也继承了"啰嗦"</text>
+        <text x="405" y="124" text-anchor="middle" font-size="9" fill="#96897A">6881 tokens/题</text>
+        <text x="405" y="170" text-anchor="middle" font-size="10" fill="#96897A">话痨病根</text>
+
+        <!-- 治理箭头 -->
+        <text x="530" y="105" text-anchor="middle" fill="#B54A2C" font-size="18">→</text>
+        <text x="530" y="125" text-anchor="middle" font-size="9" fill="#B54A2C">Flash 治</text>
+        <text x="530" y="139" text-anchor="middle" font-size="8" fill="#96897A">偏好优化</text>
+
+        <!-- Flash -->
+        <rect x="560" y="40" width="120" height="140" rx="2" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C"/>
+        <text x="620" y="62" text-anchor="middle" fill="#B54A2C" font-weight="600">Flash</text>
+        <text x="620" y="84" text-anchor="middle" font-size="9" fill="#96897A">"适可而止"</text>
+        <text x="620" y="104" text-anchor="middle" font-size="9" fill="#B54A2C">长度 -57%</text>
+        <text x="620" y="124" text-anchor="middle" font-size="9" fill="#B54A2C">精度不掉</text>
+        <text x="620" y="170" text-anchor="middle" font-size="10" fill="#B54A2C">治了症状</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 推理的"师徒病根链"：QwQ 的"想太多"基因，经蒸馏传给 Sky-T1，再被 Flash 治症状——但病根还在 QwQ 身上</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读完整篇 QwQ，我最深的感受是：<em>它用最朴素的奖励，问了一个最深刻的问题——推理到底是是被"教"出来的，还是被"选"出来的？</em></p>
+
+  <p>QwQ 和 DeepSeek-R1 几乎同时发现了一件让人震动的事：你不用手把手教模型每一步怎么想，只奖励"最终答案对不对"，模型自己就能悟出反思、验证、回溯。这暗示一个深意——<em>推理策略可能本来就"潜伏"在模型里，强化学习只是把它"选"出来、放大</em>。这有点像进化论：长颈鹿的脖子不是被"教"长的，而是"脖子长的活得久"这个选择压力，把它选出来的。RL 对推理，扮演的就是自然选择对长颈鹿脖子的角色。</p>
+
+  <p>但这套"涌现式推理"也有它的天花板，QwQ 的局限说得很清楚：<em>它只在"能自动判对错"的领域涌现</em>。数学有标准答案、代码能跑测试，所以 QwQ 数学编程拔尖；可一进到"开放式推理"——写文章、做规划、常识判断——奖励信号就没法自动给了，这套方法立刻抓瞎。这暴露了"结果奖励 RL"的根本边界：<em>它能选出一个"对的答案"，但选不出一个"好的思路"</em>。怎么给"开放式、没标准答案的推理"设计奖励，是下一代推理模型要迈的坎。</p>
+
+  <p>另一个让我玩味的点，是 QwQ 那个"天赋即诅咒"的悖论。它因"会提问"而强大，也因"问太多"而卡壳——死循环、话痨、把毛病传给学生。这其实指向一个更根本的问题：<em>推理模型该不该学会"适可而止"？</em>。第 18 篇 Flash 用偏好优化治了症状，但治标不治本——模型还是那个会陷入死循环的模型，只是被驯化得不爱绕了。真正治本，可能得从奖励信号本身下手：不能只奖励"答对"，还得奖励"答得简洁""该停就停"。这或许会和"过程奖励"（奖励每一步推理）合流，催生下一代更"有分寸感"的推理模型。</p>
+
+  <p>最后，QwQ 让我重新想了"开源"的意义。o1 给了答案，藏了思路；QwQ 给了思路，开源了权重。结果是：思路比答案更能启发后来者。Sky-T1 不是看着 o1 的答案学会推理的，是盯着 QwQ 公开的思路学会的。这多少说明：<em>在推理范式期，最值钱的不是分数，是"看得见的思考过程"</em>。OpenAI 藏起来的，恰恰是 QwQ 公开出去、最终撬动整个开源生态的那块宝贝。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    QwQ 证明了"只奖励最终答案，推理过程会涌现"。但这有个隐含前提：得有"标准答案"能自动判对错，这套方法才好使。那么问题来了：那些<em>没有标准答案</em>的推理——写一篇好文章、做一个合理的长期规划、判断一句话得不得体——靠"结果奖励"还能催生出推理能力吗？如果不能，下一代推理模型要靠什么，才能在"开放式领域"也学会像样地思考？要回答这个问题，我们得退一步，看看这一切的源头——那个让 QwQ、让整个开源圈都去模仿的"闭源祖师爷"，自己又是怎么被造出来的。下一篇，我们去会会它。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Learning to Reason with LLMs</h3>
+    <p style="margin:0;">整个推理范式期的所有故事——QwQ、DeepSeek-R1、Sky-T1——都绕不开一个名字：<em class="latin">o1</em>。2024 年 9 月 12 日，OpenAI 抛出这个"会先想后答"的模型，用一句"Learning to Reason with LLMs"（让大模型学会推理）改写了规则：算力该往训练时卷，还是往推理时卷？思路该不该藏起来？下一篇，我们回到这场推理革命的源头，看 OpenAI 怎么用强化学习训练出第一条"思维链"，又为什么把模型怎么"想"的，锁进了黑箱。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 019 篇</span>
+    <span>2026-08-19</span>
+  </footer>
+
+</div>
+</body>
+</html>

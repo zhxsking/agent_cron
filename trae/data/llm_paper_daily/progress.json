@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 18,
-  "last_run_date": "2026-08-18",
+  "last_index": 19,
+  "last_run_date": "2026-08-19",
   "papers_covered": [
     {
       "index": 1,
@@ -146,10 +146,18 @@
       "date": "2025-01-23",
       "era": "推理范式期 2025–",
       "filename": "18_20260818_Sky_T1_32B_Flash.html"
+    },
+    {
+      "index": 19,
+      "title_en": "QwQ: Reflect Deeply on the Boundaries of the Unknown",
+      "title_zh": "QwQ：在未知边界上深思——阿里 Qwen 团队的开源推理模型，Sky-T1 背后的'老师'",
+      "date": "2024-11-28",
+      "era": "推理范式期 2025–",
+      "filename": "19_20260819_QwQ.html"
     }
   ],
   "next_preview": {
-    "title_en": "QwQ: Reflect Deeply on the Boundaries of the Unknown",
-    "title_zh": "QwQ：在未知边界上深思——阿里 Qwen 团队的开源推理模型，Sky-T1 背后的'老师'"
+    "title_en": "Learning to Reason with LLMs",
+    "title_zh": "o1：让模型学会'先想后答'——OpenAI 用强化学习训练思维链，推理范式时代由此开启"
   }
 }
