@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>o1 论文精读 · 大模型经典论文系列 #020</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#020</span>
+  </div>
+
+  <h1 class="title">
+    Learning to Reason with LLMs
+    <span class="en">o1：让模型学会"先想后答"——OpenAI 用强化学习训练思维链，推理范式时代由此开启</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：OpenAI o1 团队（Noam Brown 等 51 位核心贡献者；Jakub Pachocki、Jerry Tworek 总负责）</span>
+    <span>机构：OpenAI</span>
+    <span>发表：2024-09 / OpenAI 技术博客</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://openai.com/o1/" target="_blank" rel="noopener">Project</a>
+    <a href="https://openai.com/index/learning-to-reason-with-llms/" target="_blank" rel="noopener">Blog</a>
+  </div>
+
+  <!-- ============ 上篇回顾 ============ -->
+  <div class="callout">
+    <span class="label">上篇回顾</span>
+    上一篇我们读了 <em class="latin">QwQ</em>：阿里 Qwen 团队用一个 32B 的小模型、靠"只奖励答案对不对"的极简强化学习，让模型自发学会反思与回溯，第一个在公开评测里摸到闭源 <em class="latin">o1-preview</em> 的门槛，也成了 <em class="latin">Sky-T1</em> 等一众开源推理模型的"老师"。但 QwQ 全篇更像一篇哲学散文——它反复提到一个名字，却始终没说清那个名字背后到底发生了什么。这一次，我们终于要正面拆解这个反复被提起、却始终笼罩在迷雾里的关键角色：那个开启了整个推理范式时代、让全行业开始"想更久"的源头——<em class="latin">o1</em>。
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">2024 年夏天，硅谷流传着两个代号："<em class="latin">Q&#42;</em>" 和 "<em class="latin">Strawberry</em>"（草莓）。据说 OpenAI 藏了一个会"思考"的模型，能回答"How many r's in strawberry"这类让 <em class="latin">GPT-4o</em> 当场翻车的问题。没人见过它，没人知道它怎么做到的，但所有人都在猜。直到 2024 年 9 月 12 日，OpenAI 把它推到了台前，名字很简短——<em class="latin">o1</em>。</p>
+
+  <p class="lead">它的出场方式就透着古怪：不快答，先想。你问它一道数学竞赛题，它不会立刻吐答案，而是先在一段你看不见的思维链里反复推敲、自我质疑、推翻重来，然后才落笔写下最终答案。这道"看不见的思考"开销不菲——但回报惊人：2024 年美国数学奥赛 AIME，<em class="latin">GPT-4o</em> 只做出 12%，<em class="latin">o1</em> 单次就做到 74%，重排 1000 次后冲到 93%，跻身全美前 500 名高中生之列；在博士级的物理化学生物题 GPQA 上，它第一个<em>超过了真人博士</em>。而最让开源社区抓狂的是：<em>o1 把它"怎么想"的全藏了起来</em>。你看不见它的思路，改不了它的推理，更别提复现。整整两个半月，开源推理只能望洋兴叹——直到 <em class="latin">QwQ</em> 出现。而这一切的起点，就是这篇没有几行公式、却改写了整个领域扩展逻辑的技术报告。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    o1 是 OpenAI 用大规模强化学习训练的"推理模型"——它回答前先在一段隐藏的思维链里反复推敲、自我纠正、回溯重来，把 AIME 数学竞赛从 GPT-4o 的 12% 拉到 74%，第一个在博士级科学题上超过人类专家；它由此打开"测试时算力"这条全新的扩展轴，正式开启大模型的推理范式时代。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>把 o1 放在大模型的发展脉络里，它正卡在一个<em>拐点</em>上。</p>
+  <p>在此之前的十年，这个领域只信奉一条扩展逻辑：<em class="latin">Kaplan</em> 2020 的缩放定律告诉我们——把模型做大、把数据堆多，loss 就会按幂律下降，能力就会跟着涨。从 <em class="latin">GPT-3</em> 的 1750 亿参数，到 <em class="latin">Chinchilla</em> 论证"算力最优"，再到 <em class="latin">GPT-4</em>，所有人都在沿着"训练时算力"这一根轴上拼命加码。但到了 2024 年，这条轴开始出现疲态：参数越大、边际收益越薄，训练成本却像滚雪球。领域急需<em>第二根轴</em>。</p>
+  <p>o1 就是那根新轴。它告诉全世界：算力不必只花在训练时，<em>推理时</em>（也就是模型回答问题那一刻）多花点算力让它"想一会儿"，性能照样能涨，而且涨得平滑、可预测。这条"测试时算力"（test-time compute）的扩展曲线，和预训练的缩放定律是两套完全不同的物理——它的约束、它的瓶颈、它的代价，OpenAI 自己都说"还在研究"。但方向是清楚的：从此以后，做大模型不再只是"训练更大"，还要"想得更久"。</p>
+  <p>而对整个开源生态，o1 同时是<em>一颗炸弹和一个靶子</em>：它把闭源推理的天花板顶到了一个新高度，又用"隐藏思维链"把复现之路堵死。从 <em class="latin">DeepSeek-R1</em>、<em class="latin">Kimi K1.5</em>、<em class="latin">QwQ</em>，到 <em class="latin">s1</em>、<em class="latin">LIMO</em>、<em class="latin">Sky-T1</em>——本系列后半段几乎每一篇，都是在用自己的方式"回答 o1"。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="120" x2="660" y2="120" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 训练时算力时代区间 -->
+        <text x="60" y="200" fill="#24555A" font-size="10" font-family="JetBrains Mono">训练时算力扩张时代</text>
+        <line x1="60" y1="206" x2="430" y2="206" stroke="#24555A" stroke-width="1.5" opacity="0.5"/>
+        <!-- 测试时算力时代区间 -->
+        <text x="470" y="200" fill="#B54A2C" font-size="10" font-family="JetBrains Mono">测试时算力时代</text>
+        <line x1="470" y1="206" x2="660" y2="206" stroke="#B54A2C" stroke-width="1.5"/>
+
+        <circle cx="80" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="100" text-anchor="middle">2017</text>
+        <text x="80" y="150" text-anchor="middle" fill="#2E2A22">Transformer</text>
+
+        <circle cx="200" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="200" y="100" text-anchor="middle">2020</text>
+        <text x="200" y="150" text-anchor="middle" fill="#2E2A22">GPT-3</text>
+
+        <circle cx="290" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="290" y="100" text-anchor="middle">2022</text>
+        <text x="290" y="150" text-anchor="middle" fill="#2E2A22">InstructGPT</text>
+
+        <circle cx="370" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="370" y="100" text-anchor="middle">2023</text>
+        <text x="370" y="150" text-anchor="middle" fill="#2E2A22">LLaMA</text>
+
+        <!-- 本篇：o1，高亮放大 -->
+        <circle cx="470" cy="120" r="9" fill="#B54A2C"/>
+        <circle cx="470" cy="120" r="14" fill="none" stroke="#B54A2C" stroke-width="1" opacity="0.4"/>
+        <text x="470" y="88" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="470" y="150" text-anchor="middle" fill="#2E2A22" font-weight="600">o1（2024-09）</text>
+
+        <circle cx="560" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="560" y="100" text-anchor="middle">2025</text>
+        <text x="560" y="150" text-anchor="middle" fill="#2E2A22">开源推理浪潮</text>
+
+        <circle cx="640" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="640" y="100" text-anchor="middle">未来</text>
+        <text x="640" y="150" text-anchor="middle" fill="#2E2A22">?</text>
+      </g>
+      <defs/>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的 o1：从"训练时算力扩张"切到"测试时算力扩张"的拐点</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要理解 o1 为什么是颗炸弹，得先看清楚 2024 年中这个领域卡在了哪儿。</p>
+  <p>第一道坎，是<em>预训练缩放定律的边际递减</em>。十年里，模型参数从亿级涨到千亿、逼近万亿，训练算力指数级攀升。但越往上，每多花一倍算力换来的能力提升越薄——大家隐约感到，单靠"堆大"已经接近一个收益拐点。更尴尬的是，<em class="latin">Chinchilla</em> 早就论证过"数据比参数更稀缺"，可高质量数据本身也快被榨干了。</p>
+  <p>第二道坎，是<em>大模型不会"想"</em>。这件事在 2024 年被一个梗放大到了全网皆知：你问 <em class="latin">GPT-4o</em>——"strawberry 这个词里有几个 r？"它张口就答错。<em class="latin">MIT Technology Review</em> 的一位编辑甚至在婚礼前求助 <em class="latin">GPT-4o</em>，想生成一首"每个字母出现次数受约束"的婚礼小诗，结果模型反复撒谎说"我符合约束"，其实根本不符合——它每次只在事后数对字母，却从不在下笔前真的算清楚。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    旧模型像个嘴快的脱口秀演员：问题一抛出，它就得立刻往下接词，中途没法停下来算、没法回头改。你让它"先想再说"，它也只是把"我想想"三个字也当成台词念出来——它并没有一个真正可以"待机运算"的内部舞台。o1 干的事，就是给这个演员搭了一个<em>看不见的后台</em>：在它张嘴之前，先在后台里反复试错、自我推翻，等算踏实了，再走到台前念出最后那句台词。
+  </div>
+
+  <p>其实，"让模型先想后答"这个点子早就有雏形。2022 年 5 月，<em class="latin">Kojima</em> 等人的"let's think step by step"证明了：只要在提示里加上这一句咒语，模型就能在多步推理上大幅涨分。这就是后来被叫做"思维链"（chain of thought, CoT）的提示技巧。但问题在于——这只是一个<em>提示词戏法</em>，不是模型真正"学会"的能力。模型该犯的错还是犯，该数的 r 还是数不对；而且它"想"出来的过程又长又乱，没人能控制它想的质量。</p>
+  <p>而在大模型圈子的另一头，有一类方法已经把"想得更久 = 表现更好"玩到了极致——那就是博弈 AI 的<em>深度强化学习</em>。<em class="latin">AlphaGo</em> 那招著名的"第 37 手"，连李世石都以为是失误，事后才意识到是超human的一手；它靠的就是在落子前先在脑内搜索、模拟、自我对弈无数局。把"<em class="latin">AlphaGo</em> 式深度强化学习"和"<em class="latin">LLM</em>"结合，是很多顶级实验室多年的圣杯。而 OpenAI 这次，把一个搞扑克 AI 出身、做过 <em class="latin">Libratus</em> 的强化学习老炮——<em class="latin">Noam Brown</em>——放到了这条线的核心。o1，就是这次结合的第一次大规模兑现。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>把背景剥干净，o1 要回答的其实就两个问题，一句话能讲清：</p>
+  <p><em>能不能用强化学习，让语言模型自己学会"在张嘴前先把问题想清楚"——学会自我纠正、学会回溯重来、学会换一条路再试？以及——它"想"得越久，答案是不是就越准？</em></p>
+  <p>前半句，是要把"思维链"从一个提示词戏法，变成模型<em>训练出来</em>的真本事；后半句，是要给"想得更久"这件事找到一条可预测的<em>扩展曲线</em>——就像当年 <em class="latin">Kaplan</em> 给预训练找到的那条一样。两件事只要成一件，行业就会跟着动；两件都成，就是范式更替。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    在 o1 之前，让你训一个"会推理"的模型，你会怎么做？最直觉的办法大概是：找一堆人类专家，把他们解题的中间步骤一条条写下来，再监督学习喂给模型。这条路 OpenAI 当然想过——但它有个致命弱点。你能想到是什么吗？（提示：和"专家"本身有关。）先想想，再往下看。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>o1 的技术报告惜字如金，通篇没几行公式。但把官方措辞、API 文档、和团队后续访谈拼起来，方法轮廓其实相当清楚。我们分四步看。</p>
+
+  <h3>第一步：把"思维链"变成模型的动作空间</h3>
+  <p>关键洞察是：<em>"想"这件事，对语言模型来说，就是再多生成一些 token</em>——只不过这些 token 不直接给用户看，而是模型内部用来"自我对话"的。o1 在回答前，会先生成一大段这种"推理 token"（reasoning tokens），在里面列式子、试错、推翻、再试，等想踏实了，才输出最终答案。</p>
+  <p>于是"思维链"不再是提示词里加一句"let's think step by step"那种外加的咒语，而是变成了模型<em>自身策略</em>（policy）的一部分——它生成的每一个推理 token，都是一个"动作"（action）。这下，强化学习就有了可以优化的对象：你可以拿奖励信号，去反向调整它"怎么想"。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowA" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrowR" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+          <path d="M0,0 L7,3.5 L0,7 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="13" fill="#2E2A22">
+        <!-- 用户问题 -->
+        <rect x="30" y="40" width="150" height="56" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="105" y="65" text-anchor="middle">用户问题</text>
+        <text x="105" y="84" text-anchor="middle" font-size="11" fill="#96897A">（可见）</text>
+
+        <!-- 隐藏思维链：核心 -->
+        <rect x="240" y="20" width="220" height="96" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="350" y="50" text-anchor="middle" fill="#B54A2C" font-weight="600">隐藏思维链</text>
+        <text x="350" y="70" text-anchor="middle" font-size="11" fill="#2E2A22">reasoning tokens</text>
+        <text x="350" y="92" text-anchor="middle" font-size="10" fill="#96897A">试错 · 自我纠正 · 回溯 · 换路</text>
+
+        <!-- 最终答案 -->
+        <rect x="520" y="40" width="150" height="56" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="595" y="65" text-anchor="middle" fill="#24555A">最终答案</text>
+        <text x="595" y="84" text-anchor="middle" font-size="11" fill="#96897A">（可见）</text>
+
+        <!-- 流向箭头 -->
+        <line x1="180" y1="68" x2="240" y2="68" stroke="#96897A" stroke-width="1.2" marker-end="url(#arrowA)"/>
+        <line x1="460" y1="68" x2="520" y2="68" stroke="#96897A" stroke-width="1.2" marker-end="url(#arrowA)"/>
+
+        <!-- 用户看不见思维链：虚线遮挡 -->
+        <text x="350" y="138" text-anchor="middle" font-size="10" fill="#96897A" font-family="JetBrains Mono">↑ 用户看不到这段，只看到最终答案</text>
+
+        <!-- 强化学习奖励回路 -->
+        <rect x="180" y="200" width="340" height="70" rx="2" fill="#ECE4D4" stroke="#B54A2C" stroke-dasharray="4 3"/>
+        <text x="350" y="226" text-anchor="middle" fill="#B54A2C" font-weight="600">大规模强化学习</text>
+        <text x="350" y="248" text-anchor="middle" font-size="11" fill="#2E2A22">奖励 = 最终答案对不对（数学有正解 · 代码过测试）</text>
+
+        <!-- 反馈箭头：从答案到RL，再回到思维链 -->
+        <path d="M 595 96 C 595 160, 480 170, 420 200" fill="none" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrowR)"/>
+        <path d="M 350 200 C 350 175, 350 140, 350 120" fill="none" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrowR)"/>
+        <text x="620" y="180" font-size="10" fill="#B54A2C" font-family="JetBrains Mono">奖励信号</text>
+        <text x="250" y="180" font-size="10" fill="#B54A2C" font-family="JetBrains Mono">优化"怎么想"</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · o1 的工作机制：用户问题 → 隐藏的思维链（推理 token）→ 最终答案；强化学习用"答案对不对"反向优化模型"怎么想"</figcaption>
+  </figure>
+
+  <h3>第二步：用"可验证奖励"做大范围强化学习</h3>
+  <p>现在回到上面那道思考题。监督学习教推理的致命弱点是——<em>人类专家本身就会错、会偏、会啰嗦，而且根本请不起、标不够</em>。你拿一堆有噪声的人类解题轨迹去教模型，能教出来的天花板，就是那批专家的水平。</p>
+  <p>o1 走的是另一条更干净的路：<em>强化学习 + 可验证奖励</em>。对一大类问题——数学题有唯一正解、编程题要么过测试要么不过——<em>对错是可以自动判定的</em>，根本不需要人来打分。于是奖励信号变得极简、极干净、极易规模化：</p>
+
+  <div class="formula-block">
+    $$ R(\tau) = \mathbb{1}[\,\text{最终答案正确}\,] $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>其中 $\tau$ 是模型生成的一条完整轨迹（思维链 + 答案），$\mathbb{1}[\cdot]$ 是指示函数——答案对就是 1，错就是 0。没有奖励模型、没有人类偏好打分，只有一道冷冰冰的"对/错"裁决。OpenAI 自己的原话是：这套"大规模强化学习算法"在一个"<em>数据效率极高</em>"的训练过程里，教会模型用思维链进行"有成效的思考"。</p>
+  <p>这套思路后来被业界叫做 <em class="latin">RLVR</em>（Reinforcement Learning from Verifiable Rewards）。它便宜、可扩、抗"奖励作弊"——毕竟一个单元测试比一个学人类偏好的打分模型难骗多了。后面你会看到，本系列里 <em class="latin">DeepSeek-R1</em>、<em class="latin">QwQ</em>、<em class="latin">s1</em>，全都是这条思路的徒子徒孙。</p>
+
+  <h3>第三步：让推理行为"自己长出来"</h3>
+  <p>最让团队自己都意外的，是这套极简奖励下，模型<em>自己长出</em>了一堆像样的推理行为。OpenAI 在报告里原话列了四条——读起来几乎像在描述一个人解题：</p>
+  <ul>
+    <li><em>学会识别并纠正自己的错误</em>（recognize and correct its mistakes）；</li>
+    <li><em>学会把棘手的步骤拆成更简单的小步</em>（break down tricky steps into simpler ones）；</li>
+    <li><em>学会在当前思路走不通时换一种方法</em>（try a different approach when the current one isn't working）；</li>
+    <li>以及——<em>回溯</em>（backtracking），走错了能退回来重来。</li>
+  </ul>
+  <p>没有人在训练数据里手把手写"遇到错误请这样退回去"的范例，是奖励信号逼出来的：能回头改、能换路试的轨迹，更容易拿到那 1 分；一味硬写的，更容易得 0。久而久之，"反思与回溯"就被选了出来。<em class="latin">Noam Brown</em> 后来在播客里回忆那个"aha moment"——当他第一次看到模型在数学题上拿到高分、又看到它解题轨迹里出现了<em>回溯</em>的那一刻，他说："我就觉得——有什么我原以为凑不到一起的东西，正在凑到一起，我必须更新我的判断。"那种<em>东西自己长出来</em>的震撼，和当年 <em class="latin">AlphaGo</em> 的第 37 手如出一辙。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 一条带分叉与回溯的思维链 -->
+        <text x="20" y="30" fill="#B54A2C" font-weight="600">一条"会回溯"的思维链示意</text>
+
+        <circle cx="50" cy="100" r="6" fill="#24555A"/>
+        <text x="50" y="124" text-anchor="middle" font-size="9">起步</text>
+
+        <line x1="56" y1="100" x2="120" y2="100" stroke="#96897A"/>
+        <circle cx="126" cy="100" r="6" fill="#24555A"/>
+        <text x="126" y="124" text-anchor="middle" font-size="9">列式</text>
+
+        <!-- 分叉：试错1（走错） -->
+        <line x1="132" y1="100" x2="190" y2="60" stroke="#96897A"/>
+        <circle cx="196" cy="60" r="6" fill="none" stroke="#B54A2C" stroke-width="1.5"/>
+        <text x="196" y="44" text-anchor="middle" font-size="9" fill="#B54A2C">试错 A</text>
+
+        <!-- 回溯虚线 -->
+        <path d="M 196 66 Q 160 90 132 100" fill="none" stroke="#B54A2C" stroke-dasharray="3 3"/>
+        <text x="150" y="86" font-size="9" fill="#B54A2C">退回</text>
+
+        <!-- 试错2（换路） -->
+        <line x1="132" y1="100" x2="190" y2="140" stroke="#96897A"/>
+        <circle cx="196" cy="140" r="6" fill="#24555A"/>
+        <text x="196" y="160" text-anchor="middle" font-size="9">换路 B</text>
+
+        <line x1="202" y1="140" x2="280" y2="100" stroke="#96897A"/>
+        <circle cx="286" cy="100" r="6" fill="#24555A"/>
+        <text x="286" y="124" text-anchor="middle" font-size="9">验证</text>
+
+        <line x1="292" y1="100" x2="360" y2="100" stroke="#96897A" marker-end="url(#arrowC)"/>
+        <defs>
+          <marker id="arrowC" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+          </marker>
+        </defs>
+
+        <rect x="390" y="80" width="120" height="40" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="450" y="105" text-anchor="middle" fill="#24555A">最终答案 ✓</text>
+
+        <text x="640" y="180" text-anchor="end" font-size="9" fill="#96897A">奖励 = 1（答对）→ 强化这条"会回头"的轨迹</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 一条"会回溯"的思维链示意：走错→退回→换路→验证→答对，整套行为是被可验证奖励"选"出来的</figcaption>
+  </figure>
+
+  <h3>第四步：发现"测试时算力"的扩展曲线</h3>
+  <p>方法层面最重磅的发现，是 o1 同时撞上了<em>两条</em>新的扩展曲线。OpenAI 原话："<em>随着强化学习（训练时算力）和思考时间（测试时算力）的增加，o1 的性能都在平稳提升</em>。"</p>
+  <p>后半句尤其要命。它意味着——<em>同一个模型，给它的"思考预算"越大，它答得越准</em>。这是和预训练完全不同的一根扩展轴：预训练是把算力一次性砸在训练上，所有用户无论问题难易都摊到同一份成本；而测试时算力是<em>按需</em>的——简单题想一下就走，难题多想几万 token。它在 AIME 上的表现就是活广告：单次 74%，64 次投票 83%，重排 1000 次 93%——<em>想得越久、试得越多，分越高</em>。OpenAI 也坦白：这条新轴的"扩展约束和 LLM 预训练的约束<em>差别很大</em>，我们还在研究"。但方向已定，全行业立刻跟进。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>实验结果几乎不需要修辞——数字本身就够戏剧性。下面这张表，是 o1 系列与 <em class="latin">GPT-4o</em> 在一组推理密集基准上的对比（o1 为完整版，o1-preview 为发布时的早期版本）：</p>
+
+  <table>
+    <thead>
+      <tr><th>基准</th><th>指标</th><th>GPT-4o</th><th>o1-preview</th><th>o1</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">AIME 2024（数学竞赛）</td><td>pass@1</td><td>9.3</td><td>44.6</td><td>74.4</td></tr>
+      <tr><td class="text">AIME 2024</td><td>cons@64</td><td>13.4</td><td>56.7</td><td>83.3</td></tr>
+      <tr><td class="text">Codeforces（编程竞赛）</td><td>Elo</td><td>808</td><td>1258</td><td>1673</td></tr>
+      <tr><td class="text">GPQA Diamond（博士级理科）</td><td>cons@64</td><td>56.1</td><td>78.3</td><td>78.0</td></tr>
+      <tr><td class="text">MATH</td><td>pass@1</td><td>60.3</td><td>85.5</td><td>94.8</td></tr>
+      <tr><td class="text">MMLU</td><td>pass@1</td><td>88.0</td><td>92.3</td><td>90.8</td></tr>
+      <tr><td class="text">MMMU（多模态理解，验证集）</td><td>pass@1</td><td>69.1</td><td>—</td><td>78.2</td></tr>
+    </tbody>
+  </table>
+
+  <p>几个最能打的点：AIME 上 o1 单次就 74.4%，是 <em class="latin">GPT-4o</em>（9.3%）的<em>八倍</em>；启用 1000 样本重排后冲到 93%（13.9/15），跻身全美前 500 名高中生，越过美国数学奥赛分数线。Codeforces Elo 1673，第 89 百分位——一个"模型"在程序员算法竞赛里打到这个段位。最 symbolic 的是 GPQA Diamond：OpenAI 专门请来<em>真人博士</em>做这套博士级理化生题，人类专家平均 69.7%，o1 约 78%——<em>第一个在这套题上超过人类专家的模型</em>。OpenAI 也很克制地补了一句：这不代表它在所有方面都比博士强，只是在这类题上解得比博士好。</p>
+  <p>令人意外的是，<em class="latin">o1-mini</em> 这个体积更小、专攻 STEM 的版本，在 AIME（70.0%）和 Codeforces（Elo 1650）上几乎追平完整 o1，成本却低 80%——预示着推理能力可以"蒸馏"到更小的体量里。这也是后来 <em class="latin">Sky-T1</em>、<em class="latin">s1</em> 这条"小模型推理"路线的伏笔。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <text x="350" y="24" text-anchor="middle" font-weight="600">GPT-4o（快答） vs o1（先想后答）</text>
+
+        <!-- 坐标轴 -->
+        <line x1="60" y1="240" x2="660" y2="240" stroke="#96897A"/>
+        <line x1="60" y1="240" x2="60" y2="40" stroke="#96897A"/>
+        <text x="60" y="260" font-size="10" fill="#96897A">0</text>
+        <text x="660" y="260" text-anchor="end" font-size="10" fill="#96897A">100%</text>
+        <text x="20" y="44" font-size="10" fill="#96897A">准确率</text>
+
+        <!-- AIME -->
+        <text x="130" y="258" text-anchor="middle" font-size="10" fill="#96897A">AIME pass@1</text>
+        <rect x="90" y="222" width="36" height="18" fill="#96897A" fill-opacity="0.5"/>
+        <text x="108" y="216" text-anchor="middle" font-size="10" fill="#96897A">9.3</text>
+        <rect x="132" y="107" width="36" height="133" fill="#B54A2C"/>
+        <text x="150" y="100" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">74.4</text>
+
+        <!-- MATH -->
+        <text x="270" y="258" text-anchor="middle" font-size="10" fill="#96897A">MATH</text>
+        <rect x="240" y="131" width="36" height="109" fill="#96897A" fill-opacity="0.5"/>
+        <text x="258" y="125" text-anchor="middle" font-size="10" fill="#96897A">60.3</text>
+        <rect x="282" y="70" width="36" height="170" fill="#B54A2C"/>
+        <text x="300" y="63" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">94.8</text>
+
+        <!-- GPQA -->
+        <text x="410" y="258" text-anchor="middle" font-size="10" fill="#96897A">GPQA Diamond</text>
+        <rect x="380" y="139" width="36" height="101" fill="#96897A" fill-opacity="0.5"/>
+        <text x="398" y="133" text-anchor="middle" font-size="10" fill="#96897A">56.1</text>
+        <rect x="422" y="100" width="36" height="140" fill="#B54A2C"/>
+        <text x="440" y="93" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">~78</text>
+
+        <!-- Codeforces Elo（右轴简化展示，用相对高度） -->
+        <text x="560" y="258" text-anchor="middle" font-size="10" fill="#96897A">Codeforces Elo</text>
+        <rect x="530" y="210" width="36" height="30" fill="#96897A" fill-opacity="0.5"/>
+        <text x="548" y="204" text-anchor="middle" font-size="10" fill="#96897A">808</text>
+        <rect x="572" y="70" width="36" height="170" fill="#B54A2C"/>
+        <text x="590" y="63" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">1673</text>
+
+        <!-- 图例 -->
+        <rect x="180" y="40" width="14" height="10" fill="#96897A" fill-opacity="0.5"/>
+        <text x="200" y="49" font-size="10" fill="#96897A">GPT-4o</text>
+        <rect x="280" y="40" width="14" height="10" fill="#B54A2C"/>
+        <text x="300" y="49" font-size="10" fill="#B54A2C">o1</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · o1 与 GPT-4o 在四项推理密集基准上的对比：AIME 提升约 8 倍，Codeforces Elo 翻倍</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>o1 的影响，可以从三层来看。</p>
+  <p>第一层，是<em>给行业添了第二根扩展轴</em>。在它之前，"做大模型"约等于"训练更大"；在它之后，"想得更久"成了一条和"训练更大"平起平坐、甚至更被看好的扩展方向。今天的 <em class="latin">Gemini Deep Think</em>、<em class="latin">Claude</em> 的扩展思考、各家"推理模型"产品线，全都是这根轴上的产物。</p>
+  <p>第二层，是<em>点燃了开源推理的军备赛</em>。o1 把天花板顶到了新高度，又用隐藏思维链堵死了复现——这恰恰构成了最强的<em>悬赏</em>。本系列后半段几乎每一篇，都是这场军备赛的一环：<em class="latin">DeepSeek-R1</em> 用纯 RL 逼出"aha moment"，<em class="latin">Kimi K1.5</em> 用长上下文 RL + 蒸馏，<em class="latin">QwQ</em> 用 32B 小模型摸到 o1-preview 门槛，<em class="latin">Sky-T1</em> 不到 450 美元"平价复刻"，<em class="latin">s1</em> 用 1000 道题 + 一个"Wait"，<em class="latin">LIMO</em> 再砍到 817 道——每一篇的开篇，几乎都在回答同一个问题：<em>o1 到底是怎么做到的，我们能不能也做到</em>？</p>
+  <p>第三层，是<em>把"推理"送进了公众视野</em>。o1 被送进国际信息学奥赛 IOI，拿了银牌——一个"模型"在顶尖算法竞赛里拿牌，是 o1 把"AI 推理"这件事讲给全社会听的最响亮的一句广告。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>o1 的局限，和它的贡献一样显眼。</p>
+  <p>首先，也是最被诟病的——<em>隐藏思维链</em>。OpenAI 刻意把模型原始的"思考过程"藏起来，只给用户看一份模型自己改写的"可读摘要"。他们给的理由是：让模型能"自由地、不被打草稿地"思考，这样他们才能在后台监控它的推理有没有危险或欺骗性；而一旦把原始思维链暴露给用户，团队就有压力去"优化"它听起来更像人话——那会<em>污染</em>推理信号本身。这套说辞在安全上有道理，但对科研和开源是当头一棒：你看不见它的思路、改不了它的推理、复现不了它的训练数据。<em class="latin">QwQ</em>、<em class="latin">DeepSeek-R1</em> 之所以被捧成"开源 o1"，正是因为它们把"想"的过程摊开给了所有人。</p>
+  <p>其次，<em>慢且贵</em>。推理 token 要算钱，回答一道难题可能等上几十秒、烧掉比 <em class="latin">GPT-4o</em> 多得多的算力。o1-preview 发布时不支持图像输入、工具调用、流式输出，通用性远不如 <em class="latin">GPT-4o</em>。OpenAI 自己都说：很多日常任务，<em class="latin">GPT-4o</em> 仍是更好的选择。</p>
+  <p>再次，<em>偏科</em>。o1 擅长的是数学、代码、理科这类"有标准答案、可验证"的领域；在创意写作、闲聊这类没有明确对错的任务上，"想得更久"未必有用，甚至更啰嗦。那个全网皆知的梗——"strawberry 里有几个 r"——某些早期版本依然会答错，成了它"推理"光环上一块尴尬的补丁。</p>
+  <p>最后，OpenAI 自己也承认，这条测试时算力扩展曲线的<em>约束</em>"和预训练差别很大"，很多地方还在摸黑。这恰恰是下一篇要拆的事。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把推理这条线串起来看，o1 正好处在"前奏—引爆—军备赛"三幕的引爆点：</p>
+  <ul>
+    <li><em>前奏（2022–2024 上半年）</em>：<em class="latin">Kojima</em> 的"let's think step by step"把思维链作为提示技巧带火，但只是戏法，不是本事；<em class="latin">AlphaGo</em> 一脉的深度强化学习把"搜索 = 想得更久 = 更强"在棋盘上证明到了极致，却一直没成功搬进语言模型。两股力量隔空相望。</li>
+    <li><em>引爆（2024-09）</em>：o1 一锤定音——用大规模 RL + 可验证奖励，把思维链变成模型训练出来的本事，并撞上"测试时算力"这根新扩展轴。推理范式时代正式开局。</li>
+    <li><em>军备赛（2024 年底–2025）</em>：闭源继续顶天花板（o1 完整版、o3），开源疯狂追赶——<em class="latin">QwQ</em>、<em class="latin">DeepSeek-R1</em>、<em class="latin">Kimi K1.5</em>、<em class="latin">Sky-T1</em>、<em class="latin">s1</em>、<em class="latin">LIMO</em>……本系列从第 13 篇往后的每一篇，都是这场军备赛的一格胶片。</li>
+  </ul>
+  <p>o1 自己，就是那个把"前奏"切到"引爆"的开关。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>o1 背后最有故事的人，非 <em class="latin">Noam Brown</em> 莫属。这位强化学习老炮的成名作不在语言模型，而在扑克——他参与打造的 <em class="latin">Libratus</em>，是第一个在单挑德州扑克里击败顶尖职业玩家的 AI。在牌桌上，"想得更久"为什么有用他太清楚了：一手牌的期望值，多模拟几万局就能算得更准。所以他进了 OpenAI 后，最爱挂在嘴边的一个区分叫"<em class="latin">generator-verifier gap</em>"（生成与验证的差距）——有些任务，<em>生成</em>一个答案很难，但<em>验证</em>它对不对很容易（数学、代码就是典型）；这类任务恰恰是"多想一会儿"最划算的。o1 的整个发力点，几乎都落在这个 gap 上。</p>
+  <p>团队也爱拿 <em class="latin">Kahneman</em> 的《思考，快与慢》作类比：以前的 LLM 是 <em class="latin">System 1</em>——快、直觉、一张嘴就答；o1 是 <em class="latin">System 2</em>——慢、审慎、会推翻自己。而那个"<em class="latin">Strawberry</em>"（草莓）的代号，本身就是个冷笑话：因为全网的 LLM 都数不对 strawberry 里有几个 r，OpenAI 干脆用这个词当项目的代号——既是自嘲，也是宣言。至于更早传说的"<em class="latin">Q&#42;</em>"，至今没人正式解释过那个星号——成了这个项目留下的、最迷人的悬而未决。</p>
+  <p>最戏剧的，还是那个"aha moment"。<em class="latin">Noam Brown</em> 说，他原本<em>不太相信</em>这条路能成——直到某天他同时看到模型在数学题上拿到了一个意外的高分，<em>又</em>看到它解题轨迹里出现了"回溯"。两件事叠在一起的那一刻，他才真正"更新了判断"：一个他以为凑不到一起的东西，正在凑到一起。这种"东西自己长出来"的震撼，和 <em class="latin">AlphaGo</em> 那记第 37 手是同一种震撼——后来 <em class="latin">DeepSeek-R1</em> 论文里也有一个被全行业津津乐道的"<em class="latin">aha moment</em>"，几乎是 o1 这一刻的回声。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- System 1 -->
+        <circle cx="180" cy="110" r="62" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="180" y="98" text-anchor="middle" font-weight="600">System 1</text>
+        <text x="180" y="118" text-anchor="middle" font-size="11" fill="#96897A">快 · 直觉</text>
+        <text x="180" y="138" text-anchor="middle" font-size="11" fill="#96897A">一张嘴就答</text>
+        <text x="180" y="200" text-anchor="middle" font-size="11" fill="#96897A">GPT-4o 等</text>
+
+        <!-- System 2 -->
+        <circle cx="520" cy="110" r="62" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="520" y="98" text-anchor="middle" fill="#B54A2C" font-weight="600">System 2</text>
+        <text x="520" y="118" text-anchor="middle" font-size="11" fill="#B54A2C">慢 · 审慎</text>
+        <text x="520" y="138" text-anchor="middle" font-size="11" fill="#B54A2C">会推翻自己</text>
+        <text x="520" y="200" text-anchor="middle" font-size="11" fill="#B54A2C">o1</text>
+
+        <!-- 转化箭头 -->
+        <line x1="244" y1="110" x2="456" y2="110" stroke="#B54A2C" stroke-width="1.5" marker-end="url(#arrowS)"/>
+        <defs>
+          <marker id="arrowS" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+            <path d="M0,0 L7,3.5 L0,7 Z" fill="#B54A2C"/>
+          </marker>
+        </defs>
+        <text x="350" y="100" text-anchor="middle" font-size="11" fill="#B54A2C">强化学习训练思维链</text>
+        <text x="350" y="128" text-anchor="middle" font-size="10" fill="#96897A">（《思考，快与慢》类比）</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 从 System 1 到 System 2：o1 用强化学习，把"快答"的 LLM 训成"先想后答"的推理模型</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>o1 最值得琢磨的，不是它刷了多少分，而是它悄悄改写了"智能"的经济模型。过去十年，AI 的成本结构是：训练时一次性砸下天文数字，推理时所有用户摊一份固定的小钱。o1 把这个结构翻过来了——推理不再是一个"定值"，而是一个<em>可调旋钮</em>：你可以为难题多付钱、多等几秒，换更高的准确率；也可以为简单题省下来。这意味着未来"用 AI"这件事的定价，会越来越像"按思考量计费"，而不是"按字数计费"。</p>
+  <p>另一个值得警惕的点，是它对"推理"这个词的重新定义。o1 之前，"模型会不会推理"是哲学题；o1 之后，它变成了一个可以被奖励函数逼出来的工程问题。这到底是"真推理"，还是"学到了一种很像推理的长 token 模式"？学界还在吵。但无论如何，从结果看——它能在数学奥赛和算法竞赛里拿牌——这种区分的边界，已经模糊得让追问本身都显得有点学究气了。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    o1 把"想得更久"变成了第二条扩展轴。但思考是要花钱的——一道题想 10 万个 token 才答对，和直接答错，哪个更划算？什么情况下"多想"划算，什么情况下不如换个更大的模型直接答？这个"思考预算"和"模型大小"之间的最优权衡，会在哪一类问题上偏向哪一头？带着这个问题，我们走进下一篇。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters</h3>
+    <p style="margin:0;">o1 证明了"想得更久"真的有用，却没说清为什么、能好到什么程度。其实就在 o1 发布前一个月，谷歌 DeepMind 的 Snell 等人已经把这件事的理论底座铺好了——他们证明：一个会"最优地多想一会儿"的小模型，能顶 14 倍于它的那个大家伙。下一篇，我们去读这条把推理范式托起来的扩展定律。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 020 篇</span>
+    <span>2026-08-20</span>
+  </footer>
+
+</div>
+</body>
+</html>

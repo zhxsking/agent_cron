@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 19,
-  "last_run_date": "2026-08-19",
+  "last_index": 20,
+  "last_run_date": "2026-08-20",
   "papers_covered": [
     {
       "index": 1,
@@ -134,7 +134,7 @@
     {
       "index": 17,
       "title_en": "Sky-T1: Train your own O1 preview model within $450",
-      "title_zh": "Sky-T1：不到 450 美元训练自己的 o1——17K 蒸馏数据 + Qwen2.5-32B，开源推理模型的"平价复刻"路线",
+      "title_zh": "Sky-T1：不到 450 美元训练自己的 o1——17K 蒸馏数据 + Qwen2.5-32B，开源推理模型的'平价复刻'路线",
       "date": "2025-01-10",
       "era": "推理范式期 2025–",
       "filename": "17_20260817_Sky_T1.html"
@@ -154,10 +154,18 @@
       "date": "2024-11-28",
       "era": "推理范式期 2025–",
       "filename": "19_20260819_QwQ.html"
+    },
+    {
+      "index": 20,
+      "title_en": "Learning to Reason with LLMs",
+      "title_zh": "o1：让模型学会'先想后答'——OpenAI 用强化学习训练思维链，推理范式时代由此开启",
+      "date": "2024-09-12",
+      "era": "推理范式期 2025–",
+      "filename": "20_20260820_o1.html"
     }
   ],
   "next_preview": {
-    "title_en": "Learning to Reason with LLMs",
-    "title_zh": "o1：让模型学会'先想后答'——OpenAI 用强化学习训练思维链，推理范式时代由此开启"
+    "title_en": "Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters",
+    "title_zh": "Scaling LLM Test-Time Compute：小模型'多想一会儿'能顶 14 倍大的模型——为 o1 推理范式铺好理论底座的扩展定律"
   }
 }
