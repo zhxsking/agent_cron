@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scaling Test-Time Compute 论文精读 · 大模型经典论文系列 #021</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:38px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:21px;
+    color:var(--muted);
+    margin-top:10px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:28px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#021</span>
+  </div>
+
+  <h1 class="title">
+    Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters
+    <span class="en">Scaling LLM Test-Time Compute：小模型"多想一会儿"能顶 14 倍大的模型——为 o1 推理范式铺好理论底座的扩展定律</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Charlie Snell, Jaehoon Lee, Kelvin Xu, Aviral Kumar</span>
+    <span>机构：UC Berkeley &amp; Google DeepMind（Snell 实习期间完成）</span>
+    <span>发表：2024-08 / arXiv（ICLR 2025 Oral）</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2408.03314" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://openreview.net/forum?id=4FWAwZtd2n" target="_blank" rel="noopener">OpenReview</a>
+  </div>
+
+  <!-- ============ 上篇回顾 ============ -->
+  <div class="callout">
+    <span class="label">上篇回顾</span>
+    上一篇我们读了 <em class="latin">o1</em>：OpenAI 用大规模强化学习训练出"先想后答"的推理模型，把 AIME 从 <em class="latin">GPT-4o</em> 的 12% 拉到 74%，正式开启"测试时算力"这根新扩展轴。但 o1 的技术报告惜字如金——它只告诉你"想得更久真的有用"，却没说清<em>为什么</em>有用、能<em>好到什么程度</em>、什么时候"多想"反而不如"换个更大的模型直接答"。其实，就在 o1 发布前<em>整整五周</em>，谷歌 DeepMind 的一篇没有产品、没有 demo、只有几条冷冰冰曲线的论文，已经把这套问题的理论底座铺好了。这一次，我们正面拆开这条把整个推理范式托起来的"扩展定律"。
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">2024 年 8 月 6 日，一篇标题长得吓人的论文悄悄上了 arXiv。没有发布会，没有产品页，作者名单只有四个人——带头的是个还在读博的学生。它没有放出任何会"思考"的炫酷 demo，只贴了几张坐标图，图上是一条条上升的曲线。可就是这几条曲线，把整个领域对"算力该怎么花"的常识，悄悄翻了过来。</p>
+
+  <p class="lead">常识是这样的：要更强的模型，就训更大的模型——参数从亿到百亿到逼近万亿，训练算力指数级攀升，<em class="latin">Kaplan</em> 2020 的缩放定律、<em class="latin">Chinchilla</em> 2022 的算力最优配比，十年里所有人都在沿"训练时算力"这一根轴上拼命加码。这篇论文却问了一个看似天真的问题：<em>如果不在训练时加码，而是在模型回答的那一刻，让它多花点算力"想一会儿"——能涨多少？涨得过那个 14 倍于它的大家伙吗？</em>答案出乎所有人意料：在算力对等的前提下，一个会"最优地多想一会儿"的小模型，竟然真的能反超一个 14 倍大的预训练模型。这篇论文的名字，就成了后来整个推理范式时代最常被引用的一句话——<em>scaling test-time compute optimally</em>。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    这篇论文给"测试时算力"找到了它的"Chinchilla"：它证明，把推理算力按问题难度<em>自适应</em>地分配（compute-optimal 策略），效率比无脑 best-of-N 高 4 倍以上；在算力对等的前提下，一个小模型"多想一会儿"能反超 14 倍大的模型——这就为一个月后 o1 的登场，铺好了那条最关键的理论曲线。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>把这篇论文放进大模型的发展脉络，它正卡在一根<em>轴的拐点</em>上。</p>
+  <p>在此之前的十年，这个领域只信奉一根轴：<em class="latin">Kaplan</em> 2020 告诉我们"把模型做大、数据堆多，loss 就按幂律下降"，<em class="latin">Chinchilla</em> 2022 进一步把"算力怎么花最划算"算到了最优——但无论怎么做，算力都是花在<em>训练时</em>。从 <em class="latin">GPT-3</em> 的 1750 亿参数、到 <em class="latin">GPT-4</em>、再到逼近万亿的传说，所有人都在这一根轴上加码。可到了 2024 年中，这根轴开始露出疲态：参数越大、边际收益越薄，而训练成本像滚雪球——领域急需<em>第二根轴</em>。</p>
+  <p>这篇论文，就是给第二根轴<em>立柱</em>的那篇。它没造模型、没刷产品，只做了一件最朴素也最关键的事：把"推理时多花算力"这件事，像当年 <em class="latin">Kaplan</em> 给训练时算力做的那样，画出一条<em>可预测的扩展曲线</em>，并给出"怎么花才最优"的配方。它的措辞甚至有意在致敬 <em class="latin">Chinchilla</em>——那个把训练算力配比做到最优的"compute-optimal"，被它原封不动搬了过来，只不过这次说的是<em>推理</em>算力。一个月后，<em class="latin">o1</em> 踩着这条曲线登场，把"想得更久"变成了一款产品；再之后，<em class="latin">DeepSeek-R1</em>、<em class="latin">Kimi K1.5</em>、<em class="latin">Gemini Deep Think</em>、<em class="latin">Claude</em> 的扩展思考——本系列后半段几乎每一篇，都在这条曲线上找自己的位置。</p>
+  <p>换言之：<em class="latin">Kaplan</em> 是训练时算力的扩展定律，<em class="latin">Chinchilla</em> 是训练时算力的最优配比；而 Snell 这篇，就是<em>推理时算力的扩展定律 + 最优配比，一次写完</em>。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="120" x2="660" y2="120" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 两个时代区间 -->
+        <text x="60" y="220" fill="#24555A" font-size="10">训练时算力扩张时代</text>
+        <line x1="60" y1="226" x2="400" y2="226" stroke="#24555A" stroke-width="1.5" opacity="0.5"/>
+        <text x="450" y="220" fill="#B54A2C" font-size="10">测试时算力时代</text>
+        <line x1="450" y1="226" x2="660" y2="226" stroke="#B54A2C" stroke-width="1.5"/>
+
+        <!-- 已解析的里程碑：实心 accent2 -->
+        <circle cx="80" cy="120" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="80" y="100" text-anchor="middle">2017</text>
+        <text x="80" y="150" text-anchor="middle" fill="#2E2A22">Transformer</text>
+
+        <circle cx="190" cy="120" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="190" y="100" text-anchor="middle">2020</text>
+        <text x="190" y="150" text-anchor="middle" fill="#2E2A22">GPT-3</text>
+
+        <circle cx="270" cy="120" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="270" y="100" text-anchor="middle">2022</text>
+        <text x="270" y="150" text-anchor="middle" fill="#2E2A22">Chinchilla</text>
+
+        <circle cx="340" cy="120" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="340" y="100" text-anchor="middle">2023</text>
+        <text x="340" y="150" text-anchor="middle" fill="#2E2A22">LLaMA</text>
+
+        <!-- 本篇：Snell，2024-08，高亮放大 -->
+        <circle cx="430" cy="120" r="9" fill="#B54A2C"/>
+        <circle cx="430" cy="120" r="14" fill="none" stroke="#B54A2C" stroke-width="1" opacity="0.4"/>
+        <text x="430" y="88" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="430" y="150" text-anchor="middle" fill="#2E2A22" font-weight="600">Snell（2024-08）</text>
+
+        <!-- o1 紧随其后，已解析 -->
+        <circle cx="500" cy="120" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="500" y="100" text-anchor="middle">2024-09</text>
+        <text x="500" y="150" text-anchor="middle" fill="#2E2A22">o1</text>
+
+        <circle cx="580" cy="120" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="580" y="100" text-anchor="middle">2025</text>
+        <text x="580" y="150" text-anchor="middle" fill="#2E2A22">开源推理浪潮</text>
+
+        <circle cx="640" cy="120" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="640" y="100" text-anchor="middle">未来</text>
+        <text x="640" y="150" text-anchor="middle">?</text>
+      </g>
+      <defs/>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的位置：实心点为本系列已解析论文，红色为本篇——它把扩展轴从"训练时"切到"测试时"，比 o1 早五周登场</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要理解这篇论文为什么重要，得先看清楚 2024 年中这个领域卡在了哪儿。</p>
+  <p>第一道坎，是<em>预训练缩放定律的边际递减</em>。十年里模型参数从亿级涨到千亿、逼近万亿，训练算力指数级攀升。可越往上，每多花一倍算力换来的能力提升越薄——大家隐约感到，单靠"堆大"已经接近一个收益拐点。更尴尬的是，<em class="latin">Chinchilla</em> 早就论证过"数据比参数更稀缺"，可高质量数据本身也快被榨干了。换句话说，<em class="latin">Kaplan</em> 那条训练时算力的扩展曲线，<em>斜率在变缓</em>。</p>
+  <p>第二道坎，是<em>推理时算力没人懂</em>。其实"让模型多花点算力再回答"这件事，雏形早就有：<em class="latin">Kojima</em> 2022 的"let's think step by step"证明了提示里加一句咒语就能在多步推理上大幅涨分；<em class="latin">Wang</em> 等人的 self-consistency 让模型多采样几次再投票；self-critique 让模型自己批评自己再改。但问题在于——这些方法在数学推理这种硬任务上<em>时灵时不灵</em>：有的工作说有用，有的工作说"基本没用"，结论乱成一团。没人说得清：到底哪种方法有效？多花一倍推理算力能涨多少？什么时候该"多想"，什么时候"多想"纯属浪费？</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象两个学生去考数学。学生 A 在学校念了十年，但每道题只给自己 30 秒，读完题就落笔；学生 B 只念了五年，可每道题给自己 5 分钟——验算、换种方法再算一遍、回头检查。在难题上，B 经常反超 A，尽管 A"训练时算力"是 B 的两倍。直觉上谁都觉得"这很合理"，可在大模型领域，<em>这条直觉从未被系统地量化成一条曲线</em>。Snell 这篇干的就是这件事：把"多想一会儿能涨多少"画成可预测的扩展曲线，再告诉你在什么难度区间、用哪种"想"法最划算。
+  </div>
+
+  <p>第三道坎，也是最关键的——<em>两根轴之间怎么权衡，完全没人算过</em>。假如你手里有 X 的算力，你可以拿去训练一个更大的模型（一次性花掉），也可以拿去给一个小模型在回答时"多想"（每次推理花掉）。这两条路哪个更划算？这道权衡题直接决定了未来 AI 的<em>经济模型</em>：是继续造数据中心级的大模型，还是把算力挪到推理端、让端侧小模型也能匹敌大模型？可 2024 年中之前，这道题<em>没有答案</em>——因为推理那根轴连曲线都没有，怎么权衡？</p>
+  <p>Snell 这篇，就是来补这三道坎的：先把推理时算力的扩展曲线画出来，再给出最优配比，最后把它和预训练算力放在同一张图上比一比。整套叙事结构，几乎是 <em class="latin">Kaplan</em> + <em class="latin">Chinchilla</em> 的推理时版——这也是为什么后来大家都管它叫"<em class="latin">Chinchilla</em> of test-time compute"。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>把背景剥干净，这篇论文要回答的其实就一个问题，一句话能讲清：</p>
+  <p><em>如果允许一个 LLM 在回答时多花一笔"非平凡"的推理算力，它能把准确率提到多高？以及——把这笔推理算力，最优地花出去的策略是什么？</em></p>
+  <p>这个问题拆开有两层。第一层是<em>能不能</em>：多花算力到底有没有用、能涨多少？这是扩展曲线本身。第二层是<em>怎么花才最优</em>：同样一笔算力，是用在"多采样几个再投票"上，还是用在"让模型自己改答案"上，还是用在"靠验证器挑最好的那一个"上？更重要的是——<em>不同的问题，最优花法是不是不一样</em>？</p>
+  <p>这两个问题，前者对应 <em class="latin">Kaplan</em> 那条扩展曲线，后者对应 <em class="latin">Chinchilla</em> 那个"算力最优配比"。Snell 一篇论文里把它们一起答了——这也是它后来被当成推理范式的"扩展定律"来引的根本原因。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    假如你手里有 64 倍的推理算力预算，面对一道数学题，你会怎么花？最直觉的答案大概是：让模型采样 64 次，再投票选最多的那个答案（self-consistency）。这条路听起来很合理——可论文会告诉你，这是<em>最浪费</em>的花法之一。为什么？先想想，再往下看。（提示：和"问题难度"有关。）
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>这篇论文的方法论骨架其实很干净——它先给"测试时算力"建了一个<em>统一视角</em>，再在这个视角里分析两种最主流的"花算力"方式，最后把分析结果合成一套"按难度自适应"的最优策略。我们分四步看。</p>
+
+  <h3>第一步：把"测试时算力"统一成"提议者 + 验证者"</h3>
+  <p>作者的第一个洞察是：不管市面上有多少种"让模型多想"的方法——best-of-N、self-consistency、self-critique、思维链、树搜索——它们其实都可以塞进一个统一的二分框架里。每个方法要么在改"<em>提议者</em>"（proposer，负责生成答案的那个），要么在改"<em>验证者</em>"（verifier，负责判断哪个答案更好的那个）。</p>
+  <ul>
+    <li><em>改提议者</em>：让模型生成<em>更准</em>的候选——比如让它先写一段思维链再答，或者让它"自己批评自己、再改一版"（revision）。这是顺着<em>一条</em>思路把它磨精。</li>
+    <li><em>改验证者</em>：让模型生成<em>多个</em>候选，再用一个判官挑出最好的那个——比如 best-of-N + 一个奖励模型。这是<em>横向铺开</em>，靠数量取胜。</li>
+  </ul>
+  <p>这个二分视角的好处是：从此"多想一会儿"不再是一团模糊的咒语，而是一组<em>可分析、可配比</em>的旋钮——你可以在提议者上花多少算力、在验证者上花多少算力，是两个独立的决策。论文就沿着这两根旋钮各做了一遍系统分析。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 340" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowM1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrowM2" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+          <path d="M0,0 L7,3.5 L0,7 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="13" fill="#2E2A22">
+        <!-- 输入问题 -->
+        <rect x="30" y="40" width="140" height="56" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="100" y="65" text-anchor="middle">数学问题</text>
+        <text x="100" y="84" text-anchor="middle" font-size="11" fill="#96897A">MATH 基准</text>
+
+        <!-- 提议者轴（左路） -->
+        <rect x="220" y="20" width="220" height="76" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="330" y="46" text-anchor="middle" fill="#24555A" font-weight="600">提议者（顺磨一条路）</text>
+        <text x="330" y="68" text-anchor="middle" font-size="11">迭代修订 revision</text>
+        <text x="330" y="86" text-anchor="middle" font-size="10" fill="#96897A">"自己批评自己 → 改一版"</text>
+
+        <!-- 验证者轴（右路） -->
+        <rect x="220" y="140" width="220" height="76" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="330" y="166" text-anchor="middle" fill="#B54A2C" font-weight="600">验证者（横铺多候选）</text>
+        <text x="330" y="188" text-anchor="middle" font-size="11">best-of-N + PRM 搜索</text>
+        <text x="330" y="206" text-anchor="middle" font-size="10" fill="#96897A">"生成 N 个 → 判官挑最好"</text>
+
+        <!-- 两条路汇入 compute-optimal -->
+        <rect x="490" y="80" width="180" height="76" rx="2" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C"/>
+        <text x="580" y="108" text-anchor="middle" fill="#B54A2C" font-weight="600">compute-optimal</text>
+        <text x="580" y="128" text-anchor="middle" font-size="11" fill="#2E2A22">按难度自适应分配</text>
+        <text x="580" y="146" text-anchor="middle" font-size="10" fill="#96897A">谁划算用谁</text>
+
+        <!-- 箭头 -->
+        <line x1="170" y1="58" x2="220" y2="58" stroke="#96897A" stroke-width="1.2" marker-end="url(#arrowM1)"/>
+        <line x1="170" y1="78" x2="220" y2="178" stroke="#96897A" stroke-width="1.2" marker-end="url(#arrowM1)"/>
+        <path d="M 440 58 C 470 58, 470 100, 490 100" fill="none" stroke="#24555A" stroke-width="1.2" marker-end="url(#arrowM1)"/>
+        <path d="M 440 178 C 470 178, 470 140, 490 140" fill="none" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrowM2)"/>
+
+        <!-- 底部：两条轴是独立旋钮 -->
+        <text x="330" y="252" text-anchor="middle" font-size="11" fill="#96897A">↑ 两条独立的"花算力"旋钮</text>
+        <text x="330" y="270" text-anchor="middle" font-size="11" fill="#96897A">论文沿这两根各做了一遍系统分析</text>
+
+        <!-- 难度自适应 -->
+        <rect x="180" y="290" width="340" height="40" rx="2" fill="#ECE4D4" stroke="#B54A2C" stroke-dasharray="4 3"/>
+        <text x="350" y="315" text-anchor="middle" fill="#B54A2C" font-weight="600">关键洞察：最优花法随问题难度而变</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · 论文的统一视角：所有"多想"方法都落在"提议者"或"验证者"两根轴上；compute-optimal 策略按问题难度，自适应地从两根轴上各取所需</figcaption>
+  </figure>
+
+  <h3>第二步：两条轴，各自怎么花算力</h3>
+  <p>接下来，作者沿着这两根轴，各做了一遍系统分析。实验在 <em class="latin">MATH</em> 这个高难度的数学竞赛基准上做，模型用的是 <em class="latin">PaLM 2-S</em> 的一个专门微调版（论文里记作 <em class="latin">PaLM 2-S*</em>）——一个相对"小"的模型。</p>
+  <p><em>验证者轴</em>：让模型生成 N 个候选解，再用一个<em>过程奖励模型</em>（process reward model，PRM）给每条候选的<em>每一步</em>打分，挑出总分最高的那条。这是把"想得多"变成了"广撒网 + 好判官"。这里关键的一点是，PRM 是<em>过程级</em>的——它不只看最后答案对不对，而是看推理的<em>每一步</em>对不对（这套思路来自 OpenAI 的 <em class="latin">Let's Verify Step by Step</em>，也就是我们下一篇要拆的那篇）。</p>
+  <p><em>提议者轴</em>：训练一个"修订模型"，让它先答一版，再"自己批评自己、改一版"，如此迭代若干轮——这是把"想得多"变成"顺着一条思路反复磨"。论文里这套 revision 模型是专门微调出来的，因为直接拿现成模型做 self-critique 基本没用。</p>
+
+  <p>两条轴单独看，都给出了<em>单调上升</em>的扩展曲线——多花算力，准确率就涨。但真正让这篇论文封神的，是接下来第三步那个看似不起眼、却改写一切的发现。</p>
+
+  <h3>第三步：最优花法，随难度而变</h3>
+  <p>作者把 <em class="latin">MATH</em> 的题目按"难度"分成<em>易 / 中 / 难</em>三档——怎么估难度？很简单：用基础模型在每道题上采样 N 次，看答对的比例，比例高的就是"易"、低的就是"难"。然后，他们把"多采样再挑"（best-of-N + PRM）和"自己改"（revision）这两套花法，分别在三档难度上画了扩展曲线。</p>
+  <p>结果出现了一个让所有人都得停下来想一想的<em>交叉</em>：</p>
+  <ul>
+    <li><em>简单题</em>：best-of-N + PRM 划算——模型本来就大概率能做对，多生成几个候选、用判官挑，几乎稳赢；花在"自己改"上的算力基本浪费。</li>
+    <li><em>中等题</em>：两者都涨，但 best-of-N + PRM 仍略胜——靠多采样能覆盖到正确解。</li>
+    <li><em>难题</em>：曲线翻转——best-of-N + PRM 几乎不涨了（因为模型压根采不出对的解，再怎么挑也是从错的里面挑），反而是 revision 开始抬头——"顺着一条思路反复磨"能逼出原本采不到的答案。</li>
+  </ul>
+
+  <div class="formula-block">
+    $$ \text{compute-optimal}(q) = \arg\max_{s \in \{\text{search},\, \text{revise}\}} \; \mathbb{E}\big[\,\text{acc}\,\big|\, q,\, s,\, \text{budget}\,\big] $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>这个公式写得极其朴素，但意思是颠覆性的：<em>不存在一种"放之四海皆最优"的花法</em>。最优策略 $\text{compute-optimal}(q)$ 是<em>问题 $q$ 的函数</em>——简单题该广撒网、难题该顺着磨，中等题取个折中。把这个难度自适应的策略定下来，就是论文所谓的 <em class="latin">compute-optimal scaling strategy</em>。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 360" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 三档难度子图 -->
+        <!-- 易 -->
+        <text x="120" y="30" text-anchor="middle" font-weight="600" fill="#24555A">易 题</text>
+        <line x1="50" y1="200" x2="200" y2="200" stroke="#96897A"/>
+        <line x1="50" y1="60" x2="50" y2="200" stroke="#96897A"/>
+        <text x="50" y="55" text-anchor="middle" font-size="10" fill="#96897A">acc</text>
+        <text x="205" y="215" text-anchor="end" font-size="10" fill="#96897A">算力</text>
+        <!-- best-of-N + PRM：快速冲高 -->
+        <path d="M 50 200 Q 70 90 200 80" fill="none" stroke="#B54A2C" stroke-width="2"/>
+        <text x="170" y="95" font-size="10" fill="#B54A2C">best-of-N+PRM</text>
+        <!-- revision：缓 -->
+        <path d="M 50 200 Q 100 160 200 130" fill="none" stroke="#24555A" stroke-width="2" stroke-dasharray="4 3"/>
+        <text x="120" y="150" font-size="10" fill="#24555A">revision</text>
+        <text x="120" y="240" text-anchor="middle" font-size="10" fill="#B54A2C">PRM 搜索更划算</text>
+
+        <!-- 中 -->
+        <text x="350" y="30" text-anchor="middle" font-weight="600" fill="#24555A">中 等 题</text>
+        <line x1="280" y1="200" x2="430" y2="200" stroke="#96897A"/>
+        <line x1="280" y1="60" x2="280" y2="200" stroke="#96897A"/>
+        <text x="280" y="55" text-anchor="middle" font-size="10" fill="#96897A">acc</text>
+        <text x="435" y="215" text-anchor="end" font-size="10" fill="#96897A">算力</text>
+        <path d="M 280 200 Q 320 130 430 110" fill="none" stroke="#B54A2C" stroke-width="2"/>
+        <text x="395" y="120" font-size="10" fill="#B54A2C">best-of-N+PRM</text>
+        <path d="M 280 200 Q 330 150 430 120" fill="none" stroke="#24555A" stroke-width="2" stroke-dasharray="4 3"/>
+        <text x="320" y="165" font-size="10" fill="#24555A">revision</text>
+        <text x="350" y="240" text-anchor="middle" font-size="10" fill="#96897A">两者接近，PRM 略胜</text>
+
+        <!-- 难 -->
+        <text x="580" y="30" text-anchor="middle" font-weight="600" fill="#24555A">难 题</text>
+        <line x1="510" y1="200" x2="660" y2="200" stroke="#96897A"/>
+        <line x1="510" y1="60" x2="510" y2="200" stroke="#96897A"/>
+        <text x="510" y="55" text-anchor="middle" font-size="10" fill="#96897A">acc</text>
+        <text x="665" y="215" text-anchor="end" font-size="10" fill="#96897A">算力</text>
+        <!-- best-of-N+PRM 几乎平 -->
+        <path d="M 510 200 Q 560 190 660 175" fill="none" stroke="#B54A2C" stroke-width="2"/>
+        <text x="620" y="168" font-size="10" fill="#B54A2C">best-of-N+PRM（平）</text>
+        <!-- revision 反超 -->
+        <path d="M 510 200 Q 560 150 660 115" fill="none" stroke="#24555A" stroke-width="2" stroke-dasharray="4 3"/>
+        <text x="560" y="140" font-size="10" fill="#24555A">revision 反超</text>
+        <text x="580" y="240" text-anchor="middle" font-size="10" fill="#24555A">曲线翻转，revision 更划算</text>
+
+        <!-- 底部交叉说明 -->
+        <rect x="120" y="280" width="460" height="56" rx="2" fill="#ECE4D4" stroke="#B54A2C"/>
+        <text x="350" y="304" text-anchor="middle" fill="#B54A2C" font-weight="600">compute-optimal：按难度自适应地从两根轴取最优</text>
+        <text x="350" y="322" text-anchor="middle" font-size="11" fill="#2E2A22">易 → PRM 搜索；中 → 折中；难 → 顺着磨</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 最优花法随难度而变：简单题 PRM 搜索快速冲高；难题曲线翻转，revision 反超——这正是 compute-optimal 自适应分配的依据</figcaption>
+  </figure>
+
+  <p>这套难度自适应，带来的收益是惊人的。论文给出最直接的对比：在达到同样准确率的前提下，<em class="latin">compute-optimal</em> 策略所需的推理算力，比无脑 <em class="latin">best-of-N</em> 基线<em>少 4 倍以上</em>。换句话说，那道思考题的答案揭晓了：64 倍算力全砸在"多采样再投票"上，是最浪费的花法之一——因为你把难题和简单题一视同仁了；最优的花法，是把难题的算力挪去"自己改"、把简单题的算力留在"广撒网"。</p>
+
+  <h3>第四步：和预训练算力放在同一张图上比</h3>
+  <p>最后一步，也是最被后来引用的一步：把这条推理时扩展曲线，和"训练一个更大模型"这根预训练轴，放在同一张 FLOPs 对等的图上比。具体设定是——让一个 <em class="latin">PaLM 2-S*</em> 小模型在推理时多花算力（用 compute-optimal 策略），去对比一个约 <em>14 倍大</em>的预训练模型直接贪心解码（不额外花推理算力），在<em>总 FLOPs 对等</em>的前提下，谁更准？</p>
+  <p>结果分两种情况：</p>
+  <ul>
+    <li>在<em>小模型本身就有一定基线能力</em>的那些题上（也就是它不至于完全做不出来的题），推理时多花算力，能让这个小模型<em>反超 14 倍大的模型</em>。</li>
+    <li>但在<em>小模型基本做不出来</em>的那些最难的题上，再怎么"多想"也涨不上去——这时候，老老实实训一个更大的模型，仍然更划算。</li>
+  </ul>
+  <p>这条结论的微妙之处在于：它<em>没有</em>说"小模型永远赢大模型"，而是划了一条清晰的<em>分界线</em>——分界线大致由 $Y/X$（推理 token 数 / 预训练 token 数）这个比值决定。当推理算力相对于预训练算力还很小（$Y \ll X$）时，小模型靠"多想"更划算；当推理算力堆到和预训练同量级（$Y \approx X$ 甚至 $Y \gg X$），训大模型重新占优。这是一条<em>有 crossover 的扩展定律</em>，不是一句口号。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>把数字摆出来，这套方法的收益更直观。所有实验在 <em class="latin">MATH</em> 基准上做，小模型是 <em class="latin">PaLM 2-S*</em>，对比的"大家伙"是约 14 倍大的预训练模型。</p>
+
+  <table>
+    <thead>
+      <tr><th>对比维度</th><th>基线</th><th>compute-optimal</th><th>提升</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">同等准确率所需推理算力</td><td>best-of-N 1×</td><td>~1/4×</td><td>&gt;4× 效率</td></tr>
+      <tr><td class="text">FLOPs 对等下小模型 vs 14× 大模型（可做題）</td><td>14× 大模型领先</td><td>小模型反超</td><td>反超</td></tr>
+      <tr><td class="text">FLOPs 对等下小模型 vs 14× 大模型（不可做題）</td><td>14× 大模型领先</td><td>仍落后</td><td>训大模型更划算</td></tr>
+      <tr><td class="text">验证者：PRM 搜索 vs ORM（最佳 N 选）</td><td>ORM 多数投票</td><td>PRM 搜索</td><td>显著更优</td></tr>
+      <tr><td class="text">提议者：直接 self-critique vs 微调 revision 模型</td><td>直接提示</td><td>微调 revision</td><td>后者才有效</td></tr>
+    </tbody>
+  </table>
+
+  <p>有两个细节值得专门点出来。<em>第一</em>，验证者这一头，<em>过程级</em>的 PRM 比只看结果的 ORM 强得多——这正是它和下一篇 <em class="latin">Let's Verify Step by Step</em> 的接续点。<em>第二</em>，提议者这一头，作者发现<em>直接拿现成模型</em>做 self-critique 几乎没用——必须专门微调一个 revision 模型，让它学会"在知道答案的前提下改对"，self-critique 才有效。这是一个被很多后续工作反复印证的结论：推理时扩展的收益，<em>高度依赖推理时用的那些子模型本身有没有被专门训练过</em>。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 左：best-of-N（无脑并行） -->
+        <text x="175" y="30" text-anchor="middle" font-weight="600">best-of-N（无脑）</text>
+        <rect x="60" y="50" width="230" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="70" text-anchor="middle" font-size="11">简单题：N 个里挑对的</text>
+        <rect x="60" y="90" width="230" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="110" text-anchor="middle" font-size="11">中等题：N 个里挑对的</text>
+        <rect x="60" y="130" width="230" height="30" fill="#ECE4D4" stroke="#96897A" opacity="0.5"/>
+        <text x="175" y="150" text-anchor="middle" font-size="11" fill="#96897A">难题：N 个全是错的，挑也没用</text>
+        <text x="175" y="190" text-anchor="middle" font-size="11" fill="#96897A">→ 算力浪费在难题上</text>
+
+        <!-- 右：compute-optimal（自适应） -->
+        <text x="525" y="30" text-anchor="middle" font-weight="600" fill="#B54A2C">compute-optimal（自适应）</text>
+        <rect x="410" y="50" width="230" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="70" text-anchor="middle" font-size="11" fill="#B54A2C">简单题：少量采样 + PRM</text>
+        <rect x="410" y="90" width="230" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="110" text-anchor="middle" font-size="11" fill="#B54A2C">中等题：折中分配</text>
+        <rect x="410" y="130" width="230" height="30" fill="#24555A" fill-opacity="0.18" stroke="#24555A"/>
+        <text x="525" y="150" text-anchor="middle" font-size="11" fill="#24555A">难题：算力挪去 revision</text>
+        <text x="525" y="190" text-anchor="middle" font-size="11" fill="#B54A2C">→ 同样准确率，算力省 4×</text>
+
+        <!-- 中间分割线 -->
+        <line x1="350" y1="20" x2="350" y2="200" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <!-- 底部结论 -->
+        <rect x="120" y="230" width="460" height="50" rx="2" fill="#ECE4D4" stroke="#B54A2C"/>
+        <text x="350" y="252" text-anchor="middle" fill="#B54A2C" font-weight="600">关键：把"难度"当成第一变量</text>
+        <text x="350" y="270" text-anchor="middle" font-size="11" fill="#2E2A22">同样是 64× 算力，简单题该广撒网、难题该顺着磨</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · best-of-N vs compute-optimal：前者对所有题一视同仁地广撒网；后者按难度把算力挪到该花的地方——同样准确率下省算力 4 倍</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>这篇论文的影响，可以从三层来看。</p>
+  <p>第一层，是<em>给行业添了第二根扩展轴</em>，而且是带着<em>曲线和最优配比</em>添的。在它之前，"做大模型"约等于"训练更大"；在它之后，"想得更久"成了一条和"训练更大"平起平坐、并且<em>有理论曲线支撑</em>的扩展方向。它的措辞甚至有意复刻 <em class="latin">Chinchilla</em>——"compute-optimal"这个词被原封搬了过来，只不过说的是推理算力。从此以后，凡是谈论"推理时算力"的工作，几乎都要引这条曲线作为起点。</p>
+  <p>第二层，是<em>给 o1 提前铺好了理论底座</em>。这篇论文 8 月 6 日上线，<em class="latin">o1</em> 9 月 12 日发布——中间只隔五周。<em class="latin">o1</em> 的技术报告惜字如金，只说"想得更久有用"，却没给出曲线；而 Snell 这篇恰好补上了那条曲线和"为什么有用"。于是后来整个领域形成了一种共识：<em class="latin">o1</em> 是产品，Snell 是它的理论。<em class="latin">DeepSeek-R1</em>、<em class="latin">Kimi K1.5</em>、<em class="latin">Gemini Deep Think</em>、<em class="latin">Claude</em> 的扩展思考——本系列后半段几乎每一篇，都在这条曲线上找自己的位置。</p>
+  <p>第三层，是<em>改写了 AI 的经济模型想象</em>。这篇论文把"训更大模型"和"让小模型多想"放在同一张 FLOPs 图上比，给了行业一个全新的部署想象：在那些小模型本来就有基线能力的任务上，端侧小模型靠"多想"或许就能匹敌数据中心级的大模型。这一想象，后来直接催生了一大批"小模型 + 测试时算力"的开源工作，甚至让"1B 模型反超 405B"这类标题成为可能——本系列的后续还会回到这个话题。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>这篇论文的局限，和它的贡献一样清楚。</p>
+  <p>首先，<em>它高度依赖一个训练良好的验证者</em>。验证者轴的整套收益，建立在有一个<em>过程级</em> PRM 之上——而训练 PRM 本身又需要大量过程级的人工标注（下一篇 <em class="latin">Let's Verify Step by Step</em> 的 <em class="latin">PRM800K</em> 就是这种标注的代价）。一旦验证者不够准，整套搜索就垮了。后来 <em class="latin">DeepSeek-R1</em> 干脆绕开神经 PRM，改用"可验证奖励"（RLVR）——一个单元测试比一个学人类偏好的 PRM 难骗多了。这恰恰从反面印证了本文对验证者的依赖。</p>
+  <p>其次，<em>小模型反超大模型，是有条件的</em>。论文自己说得很坦白：只有在"小模型本来就有一定基线能力"的题上，多想才能反超 14× 大模型；在最难的题上，再想也没用，还得训大模型。这意味着 test-time compute 不是万能药——它有清晰的<em>适用边界</em>，越过边界，还得回到训练时算力那根轴。</p>
+  <p>再次，<em>两条轴被分开研究了</em>。论文沿着"提议者"和"验证者"各做了一遍分析，但并没有真正把两者<em>联合</em>起来——比如一边 revision 一边搜索的混合策略，留给了后续工作。作者自己在 Discussion 里点明：把多种 test-time 技术整合在一起，是未来最重要的方向之一。</p>
+  <p>最后，<em>实验只覆盖了数学推理</em>。<em class="latin">MATH</em> 是个有标准答案、可验证的基准，结论能不能推广到代码、科学、开放性任务，这篇论文没给答案——后来者用了 <em class="latin">LLaMA</em>、<em class="latin">Qwen</em> 等开源模型和 <em class="latin">AIME-2024</em> 等基准复现并扩展了它的发现，才算把这条曲线推广开去。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把"测试时算力"这条线串起来看，Snell 这篇正好处在"前奏—理论—引爆—军备赛"四幕的<em>理论</em>那一幕：</p>
+  <ul>
+    <li><em>前奏（2022–2024 上半年）</em>：<em class="latin">Kojima</em> 的"let's think step by step"把思维链作为提示技巧带火；<em class="latin">Wang</em> 的 self-consistency 让模型多采样再投票；<em class="latin">Lightman</em> 的 <em class="latin">Let's Verify Step by Step</em> 把过程级 PRM 带进主流。这些工作各自证明了"多想"的一鳞半爪，但没人画出整条扩展曲线。</li>
+    <li><em>理论（2024-08）</em>：Snell 这篇一锤定音——把"测试时算力"画成可预测的扩展曲线，给出"按难度自适应"的 compute-optimal 配比，再和预训练算力正面权衡。推理时算力的"Kaplan + Chinchilla"，一次写完。</li>
+    <li><em>引爆（2024-09）</em>：五周后 <em class="latin">o1</em> 登场，把"想得更久"变成一款产品，踩着 Snell 铺好的曲线把天花板顶到新高度。</li>
+    <li><em>军备赛（2024 年底–2025）</em>：闭源继续顶天花板（o1 完整版、o3），开源疯狂追赶——<em class="latin">DeepSeek-R1</em>、<em class="latin">Kimi K1.5</em>、<em class="latin">QwQ</em>、<em class="latin">Sky-T1</em>、<em class="latin">s1</em>、<em class="latin">LIMO</em>，以及"1B 反超 405B"那类把 Snell 结论推到极致的开源复现——本系列从第 13 篇往后的每一篇，都是这场军备赛的一格胶片。</li>
+  </ul>
+  <p>Snell 自己，就是那个把"前奏"切到"理论"的开关；而它的理论曲线，又成了 <em class="latin">o1</em> 那次"引爆"的踏脚石。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>这篇论文背后最有故事的人，是第一作者 <em class="latin">Charlie Snell</em>。发这篇论文时，他还是 UC Berkeley 的在读博士生——这不是某个实验室的旗舰发布，而是他<em>在谷歌 DeepMind 实习期间</em>完成的一份工作。论文的署名只有四人：Snell 加上 DeepMind 的 <em class="latin">Jaehoon Lee</em>、<em class="latin">Kelvin Xu</em>、<em class="latin">Aviral Kumar</em>，后两位标注了"equal advising"——也就是 Kumar 和 Xu 共同指导了这位实习生。一个实习生、一篇四个人署名的论文，却成了整个推理范式时代被引用最频繁的理论底座——这种"实习生一击命中"的故事，在这个领域并不多见。</p>
+  <p>Snell 的学术血统，其实暗藏着这条研究为什么从他手里出来的线索。他师从强化学习/agent 一脉（同门出过 <em class="latin">IQL</em>、offline RL for NLG 等工作），他自己的论文列表里，既有"模仿专有 LLM 的虚假承诺"（<em class="latin">The False Promise of Imitating Proprietary LLMs</em>）这种对"小模型能不能学大模型"的反思，也有大量 RL/agent 的训练。也就是说，他天然就会从一个"agent 该怎么花算力自我改进"的视角看问题——论文摘要那句"building generally self-improving agents"，正是这个视角的注脚。把"推理时多花算力"当成"agent 的自我改进"来研究，这思路在 2024 年中还是相当新鲜的。</p>
+  <p>而最戏剧的，是它和 <em class="latin">o1</em> 的<em>时间巧合</em>。8 月 6 日论文上线，9 月 12 日 <em class="latin">o1</em> 发布，中间整整五周。后来全行业慢慢回过味来：<em class="latin">o1</em> 是踩着 Snell 这条曲线登场的——产品发布在前，理论发布在后，但理论其实<em>先于</em>产品出炉。这种"理论先于产品、却由产品背书"的时序，给这篇本来冷冰冰的曲线论文，平添了一层"预言家"的光环。Snell 自己后来在 OpenReview 上专门感谢了评审，并指向了两篇用 <em class="latin">LLaMA</em>、<em class="latin">Qwen</em> 等开源模型独立复现其结论的后续工作——这等于把"小模型多想能反超大模型"这句宣言，从 DeepMind 内部实验推广成了全行业的共识。</p>
+  <p>最后一个小彩蛋：这篇论文的措辞几乎是有意复刻 <em class="latin">Chinchilla</em>——那个把训练算力做到"compute-optimal"的 2022 论文。Snell 把"compute-optimal"原封不动搬了过来，只不过把主语从"训练"换成了"测试时"。于是圈子里慢慢形成了一个人人爱用的说法——这是"the <em class="latin">Chinchilla</em> of test-time compute"。一个实习生用一个词的复刻，就把自己钉进了大模型缩放定律的族谱里。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 两个学生 -->
+        <!-- 学生 A：训练时算力大 -->
+        <circle cx="170" cy="100" r="50" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="170" y="88" text-anchor="middle" font-weight="600">学生 A</text>
+        <text x="170" y="106" text-anchor="middle" font-size="11" fill="#96897A">念了 10 年</text>
+        <text x="170" y="124" text-anchor="middle" font-size="11" fill="#96897A">每题 30 秒落笔</text>
+        <text x="170" y="180" text-anchor="middle" font-size="11" fill="#96897A">训练时算力大</text>
+
+        <!-- 学生 B：推理时算力大 -->
+        <circle cx="530" cy="100" r="50" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="530" y="88" text-anchor="middle" fill="#B54A2C" font-weight="600">学生 B</text>
+        <text x="530" y="106" text-anchor="middle" font-size="11" fill="#B54A2C">念了 5 年</text>
+        <text x="530" y="124" text-anchor="middle" font-size="11" fill="#B54A2C">每题 5 分钟，验算 + 换法</text>
+        <text x="530" y="180" text-anchor="middle" font-size="11" fill="#B54A2C">推理时算力大</text>
+
+        <!-- 难题结果 -->
+        <line x1="220" y1="100" x2="480" y2="100" stroke="#B54A2C" stroke-width="1.5" marker-end="url(#arrowF)"/>
+        <defs>
+          <marker id="arrowF" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+            <path d="M0,0 L7,3.5 L0,7 Z" fill="#B54A2C"/>
+          </marker>
+        </defs>
+        <text x="350" y="92" text-anchor="middle" font-size="11" fill="#B54A2C">难题上 B 反超 A</text>
+        <text x="350" y="118" text-anchor="middle" font-size="10" fill="#96897A">（FLOPs 对等时的小模型 vs 14× 大模型）</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · "两个学生考数学"的类比：训练时算力大（A）vs 推理时算力大（B）——在难题上，B 能反超 A，这正是本文核心结论的生活化版本</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>这篇论文最值得琢磨的，不是它刷了多少分，而是它把"算力该怎么花"从一个工程问题，提升成了一个<em>有曲线、有最优解</em>的经济学问题。过去十年，AI 的成本结构是：训练时一次性砸下天文数字，推理时所有用户摊一份固定的小钱。Snell 这篇把它翻过来了——推理不再是一个"定值"，而是一个<em>可调旋钮</em>，而且这个旋钮有<em>最优刻度</em>，刻度由问题难度决定。这意味着未来"用 AI"这件事的定价，会越来越像"按思考量、按难度计费"，而不是"按字数计费"。</p>
+  <p>另一个值得警惕的，是它给出的<em>分界线</em>。"小模型多想能反超大模型"是这篇论文最常被引用的一句话，但它<em>有前提</em>——只在"小模型本来就有基线能力"的题上成立。越过这条线，再怎么想也没用，还得回到训大模型那根轴。这条分界线，恰恰是这个领域最容易被人<em>断章取义</em>的地方——许多后续工作（和营销话术）只引用前半句，却绝口不提前提条件。读懂这篇论文，首先得读懂它的<em>边界</em>，而不仅仅是它的<em>结论</em>。</p>
+  <p>至于"想得更久 vs 训得更大"这道权衡题——它的答案，会随着推理算力和训练算力的<em>相对价格</em>而流动。今天推理算力相对便宜，曲线偏向"多想"；哪天硬件反过来，曲线又会偏向"训大"。这道权衡没有一劳永逸的答案，只有跟着价格走的动态最优——这或许才是这篇论文留给我们最深的财富。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    Snell 这篇证明，小模型"多想"能反超 14 倍大模型——但前提是小模型本身有"基线能力"。那么对于一道小模型<em>完全做不出来</em>的题，再多的"想"也没用。问题是：能不能在<em>小模型自己想</em>的基础上，再给它配一个"判官"（PRM）——这个判官的任务不是挑答案，而是<em>告诉小模型它的每一步对不对</em>，把难题的搜索空间一点点剪掉？这条路其实正是 Snell 论文里"验证者轴"的延伸，也是它下一篇要接续的源头。下一篇，我们就去读那条源头的源头——OpenAI 怎么造出第一个能逐行给推理过程打分的判官，又怎么证明"过程监督"碾压"结果监督"。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Let's Verify Step by Step</h3>
+    <p style="margin:0 0 10px; color:var(--muted); font-size:15px;">Let's Verify Step by Step：OpenAI 给推理每一步打分——过程监督为何碾压结果监督，PRM800K 与过程奖励模型的诞生</p>
+    <p style="margin:0;">Snell 这篇的"验证者轴"，整条收益都建立在一个<em>过程级 PRM</em> 之上——可这个能给推理每一步打分的"判官"，究竟从哪儿来？为什么"逐行打分"会比"只看结果"强那么多？下一篇，我们回到 2023 年 5 月，去读 OpenAI 那篇让"过程监督"压倒"结果监督"的奠基之作——它不只造出了第一个真正能用的 PRM，还顺手放出了 80 万条逐行人工标注的 <em class="latin">PRM800K</em>，把"过程奖励模型"这个词，正式钉进了大模型的族谱。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 021 篇</span>
+    <span>2026-08-21</span>
+  </footer>
+
+</div>
+</body>
+</html>

@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 20,
-  "last_run_date": "2026-08-20",
+  "last_index": 21,
+  "last_run_date": "2026-08-21",
   "papers_covered": [
     {
       "index": 1,
@@ -162,10 +162,18 @@
       "date": "2024-09-12",
       "era": "推理范式期 2025–",
       "filename": "20_20260820_o1.html"
+    },
+    {
+      "index": 21,
+      "title_en": "Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters",
+      "title_zh": "Scaling LLM Test-Time Compute：小模型'多想一会儿'能顶 14 倍大的模型——为 o1 推理范式铺好理论底座的扩展定律",
+      "date": "2024-08-06",
+      "era": "推理范式期 2025–",
+      "filename": "21_20260821_Scaling_Test_Time_Compute.html"
     }
   ],
   "next_preview": {
-    "title_en": "Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters",
-    "title_zh": "Scaling LLM Test-Time Compute：小模型'多想一会儿'能顶 14 倍大的模型——为 o1 推理范式铺好理论底座的扩展定律"
+    "title_en": "Let's Verify Step by Step",
+    "title_zh": "Let's Verify Step by Step：OpenAI 给推理每一步打分——过程监督为何碾压结果监督，PRM800K 与过程奖励模型的诞生"
   }
 }
