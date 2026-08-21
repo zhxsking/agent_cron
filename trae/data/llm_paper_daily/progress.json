@@ -1,6 +1,6 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 21,
+  "last_index": 22,
   "last_run_date": "2026-08-21",
   "papers_covered": [
     {
@@ -170,10 +170,18 @@
       "date": "2024-08-06",
       "era": "推理范式期 2025–",
       "filename": "21_20260821_Scaling_Test_Time_Compute.html"
+    },
+    {
+      "index": 22,
+      "title_en": "Let's Verify Step by Step",
+      "title_zh": "Let's Verify Step by Step：OpenAI 给推理每一步打分——过程监督为何碾压结果监督，PRM800K 与过程奖励模型的诞生",
+      "date": "2023-05-31",
+      "era": "对齐与应用期 2022–2023",
+      "filename": "22_20260821_Lets_Verify_Step_by_Step.html"
     }
   ],
   "next_preview": {
-    "title_en": "Let's Verify Step by Step",
-    "title_zh": "Let's Verify Step by Step：OpenAI 给推理每一步打分——过程监督为何碾压结果监督，PRM800K 与过程奖励模型的诞生"
+    "title_en": "Math-Shepherd: Verify and Reinforce LLMs Step-by-step Without Human Annotations",
+    "title_zh": "Math-Shepherd：让模型自己给自己的推理每一步打分——摆脱 80 万条人工标注，PRM 走向零成本过程监督"
   }
 }

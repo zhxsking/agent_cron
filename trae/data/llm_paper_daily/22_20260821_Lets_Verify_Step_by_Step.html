@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Let's Verify Step by Step 论文精读 · 大模型经典论文系列 #022</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:38px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:21px;
+    color:var(--muted);
+    margin-top:10px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:28px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#022</span>
+  </div>
+
+  <h1 class="title">
+    Let's Verify Step by Step
+    <span class="en">Let's Verify Step by Step：OpenAI 给推理每一步打分——过程监督为何碾压结果监督，PRM800K 与过程奖励模型的诞生</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Hunter Lightman, Vineet Kosaraju, Yura Burda, Harri Edwards, Bowen Baker, Teddy Lee, Jan Leike, John Schulman, Ilya Sutskever, Karl Cobbe</span>
+    <span>机构：OpenAI</span>
+    <span>发表：2023-05 / arXiv（ICLR 2024）</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2305.20050" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/openai/prm800k" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://openai.com/research/improving-mathematical-reasoning-with-process-supervision" target="_blank" rel="noopener">Project</a>
+  </div>
+
+  <!-- ============ 上篇回顾 ============ -->
+  <div class="callout">
+    <span class="label">上篇回顾</span>
+    上一篇我们读了 <em class="latin">Snell</em> 的 <em class="latin">Scaling LLM Test-Time Compute</em>：把"推理时多花算力"画成可预测的扩展曲线，证明小模型"多想一会儿"能反超 14 倍大的模型。但那条曲线有一个被反复强调的前提——<em>它高度依赖一个过程级的"判官"</em>（process reward model，PRM），让模型在 best-of-N 搜索时能挑出每一步都对的答案。当时我们埋了一个钩子：这个能给推理每一步打分的判官，到底从哪儿来？为什么"逐行打分"会比"只看结果对不对"强那么多？这一次，我们沿着"验证者轴"往回溯——回到 2023 年 5 月，回到 OpenAI 那篇让"过程监督"压倒"结果监督"的奠基之作。它不仅造出了第一个真正能用的 PRM，还顺手放出了 80 万条逐行人工标注的 <em class="latin">PRM800K</em>，把"过程奖励模型"这个词，正式钉进了大模型的族谱。
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">想象你是一位数学老师，正在批改两个学生的作业。学生 A 把每一步推理都写得清清楚楚，到第三步时算错了，但后面接回正轨，最后答案是对的；学生 B 一路推理严密，最后一步抄错数字，答案错了。只看最终答案的判分方式（result-only grading）会把学生 A 判成"全对"、把学生 B 判成"全错"——可这个判断<em>和真实推理质量完全相反</em>。在大模型里，这种"答案蒙对、过程全错"的样本有个名字：<em class="latin">false positive</em>，是奖励模型最容易被骗的一类。</p>
+
+  <p class="lead">2023 年 5 月，<em class="latin">OpenAI</em> 发了一篇标题调皮得像在念咒语的论文——<em class="latin">Let's Verify Step by Step</em>。它做了一件看似朴素的事：雇一批人工标注员，把模型解数学题的每一步都打上"对 / 错 / 不确定"的标签，一共打了 80 万条。然后用这套"过程标签"训练一个奖励模型，让它学会<em>给推理过程打分</em>，而不是只看最终答案。结果——在 <em class="latin">MATH</em> 这个竞赛级数学基准上，过程监督的模型把准确率顶到 78.2%，比只看结果的方法高了快 6 个百分点。一个看似只换了"判分粒度"的小动作，却让后来整个推理范式都跟着它走。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    这篇论文用一个朴素的对照实验把"过程监督"钉死在<em>显著优于</em>"结果监督"的位置上——它造出第一个真正能用的过程奖励模型（PRM），在 <em class="latin">MATH</em> 上把准确率拉到 78.2%，并放出 80 万条步级标注的 <em class="latin">PRM800K</em>，从此"逐行给推理打分"成了大模型推理范式的标配。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>把这篇论文放进大模型的发展脉络，它正卡在<em>对齐范式</em>和<em>推理范式</em>的接缝处。</p>
+  <p>在它之前，对齐工作的主流是 <em class="latin">InstructGPT</em> 那一套——用人类反馈训练一个奖励模型，再用 <em class="latin">PPO</em> 把模型往奖励高的方向推。但这套 <em class="latin">RLHF</em> 里的奖励模型，几乎都是<em>结果级</em>的：人看完模型一整段回答，打一个总体偏好分；奖励模型学着复刻这个总体分。这在闲聊、写邮件这类"无所谓过程对错"的任务上工作得不错，可一碰到多步推理——数学、代码、逻辑——就露馅：模型经常<em>用错的过程蒙对答案</em>，结果级奖励模型不仅拦不住，反而会把它当成功样本奖励下去，等于在教模型"胡说也行"。</p>
+  <p>在它之后，是 <em class="latin">o1</em>、<em class="latin">R1</em>、<em class="latin">Kimi K1.5</em> 这一整条"测试时算力"的推理范式浪潮——而那条浪潮的"判官"，几乎都长得像这篇论文造出来的 PRM。Snell 那篇扩展定律的"验证者轴"，整条收益都建立在<em class="过程级 PRM</em>之上；<em class="latin">o1</em> 的思维链训练，背后也有过程监督的影子。换句话说：<em class="latin">InstructGPT</em> 给了 RLHF 一个"结果级奖励模型"，<em class="latin">Let's Verify Step by Step</em> 给推理范式提供了一个"过程级奖励模型"——它的位置，是<em>从对齐范式切到推理范式的那道铰链</em>。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="120" x2="660" y2="120" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 两个时代区间 -->
+        <text x="60" y="220" fill="#24555A" font-size="10">对齐范式时代（结果级奖励）</text>
+        <line x1="60" y1="226" x2="370" y2="226" stroke="#24555A" stroke-width="1.5" opacity="0.5"/>
+        <text x="420" y="220" fill="#B54A2C" font-size="10">推理范式时代（过程级奖励）</text>
+        <line x1="420" y1="226" x2="660" y2="226" stroke="#B54A2C" stroke-width="1.5"/>
+
+        <!-- 已解析的里程碑：实心 accent2 -->
+        <circle cx="80" cy="120" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="80" y="100" text-anchor="middle">2017</text>
+        <text x="80" y="150" text-anchor="middle" fill="#2E2A22">Transformer</text>
+
+        <circle cx="200" cy="120" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="200" y="100" text-anchor="middle">2022</text>
+        <text x="200" y="150" text-anchor="middle" fill="#2E2A22">InstructGPT</text>
+
+        <circle cx="275" cy="120" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="275" y="100" text-anchor="middle">2022</text>
+        <text x="275" y="150" text-anchor="middle" fill="#2E2A22">Uesato et al.</text>
+
+        <!-- 本篇：Lightman，2023-05，高亮放大，跨在两区间分界上 -->
+        <circle cx="345" cy="120" r="9" fill="#B54A2C"/>
+        <circle cx="345" cy="120" r="14" fill="none" stroke="#B54A2C" stroke-width="1" opacity="0.4"/>
+        <text x="345" y="88" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="345" y="150" text-anchor="middle" fill="#2E2A22" font-weight="600">Lightman（2023-05）</text>
+
+        <!-- 后续里程碑，已解析 -->
+        <circle cx="430" cy="120" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="430" y="100" text-anchor="middle">2024-08</text>
+        <text x="430" y="150" text-anchor="middle" fill="#2E2A22">Snell</text>
+
+        <circle cx="500" cy="120" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="500" y="100" text-anchor="middle">2024-09</text>
+        <text x="500" y="150" text-anchor="middle" fill="#2E2A22">o1</text>
+
+        <circle cx="570" cy="120" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="570" y="100" text-anchor="middle">2025-01</text>
+        <text x="570" y="150" text-anchor="middle" fill="#2E2A22">R1 / K1.5</text>
+
+        <circle cx="640" cy="120" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="640" y="100" text-anchor="middle">未来</text>
+        <text x="640" y="150" text-anchor="middle">?</text>
+      </g>
+      <defs/>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的位置：实心点为本系列已解析论文，红色为本篇——它正卡在"对齐范式（结果级奖励）"和"推理范式（过程级奖励）"两段区间的接缝处</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要看懂这篇论文为什么重要，得先看清 2023 年中这个领域卡在哪三个尴尬的位置上。</p>
+
+  <p>第一，<em>大模型推理的"幻觉"老治不好</em>。<em class="latin">Wei</em> 2022 的思维链（chain-of-thought）证明：让模型"一步一步想"，在数学、逻辑这种多步推理上能大涨。可同年 <em class="latin">Bubeck</em> 等人就指出，哪怕是最强的模型，<em>在不确定的时刻会一本正经地编造</em>——也就是后来被叫作 hallucination 的现象。在多步推理里，这毛病尤其致命：一个逻辑错误，就足以把后面整条解带偏。模型不是不会算，是<em>不知道自己哪一步算错了</em>。</p>
+
+  <p>第二，<em>结果级奖励模型容易被骗</em>。<em class="latin">Cobbe</em> 2021（也就是本论文通讯作者 <em class="latin">Karl Cobbe</em> 自己之前的工作，<em class="latin">Training Verifiers to Solve Math Word Problems</em>）做过一件事：训一个只看最终答案对不对的"验证器"（outcome verifier），用来在 best-of-N 里挑答案。结果发现，验证器自己在测试集上经常<em>给"过程错、答案对"的样本打高分</em>——因为它根本看不到过程。这意味着：奖励模型自己就是一个"会出错的判官"，你拿它去搜索或 RL，整套系统的可靠性<em>不会超过判官自己</em>。</p>
+
+  <p>第三，也是这篇论文要正面回应的——<em>前人的对照实验留了个口子</em>。<em class="latin">Uesato</em> 2022（DeepMind）第一次把"结果监督"和"过程监督"放在一起比，结论却出人意料：在小学数学（<em class="latin">GSM8K</em>）上，<em>两者效果差不多</em>。这给领域里留下了一个模棱两可的印象——"过程监督好像没那么神"。但 <em class="latin">Uesato</em> 的实验有两个关键短板：一是基模型不够强、二是过程监督的数据量不够大。换句话说，那道对照实验<em>做得不够干净</em>。这篇论文的作者们盯上的，正是这道没洗干净的口子。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象你请了两个家教来盯孩子做数学。<em class="latin">ORM</em> 家教只看每道题的最终答案：对就发糖，错就罚站，至于中间步骤怎么算的他不看。<em class="latin">PRM</em> 家教不一样——他坐孩子旁边，每算完一步就拍一下肩："这步对"、"这步错了，重算"。前者省事，但孩子经常抄答案、蒙答案；后者累，但孩子真学会了推理。<em class="latin">Uesato</em> 2022 的结论是"两个家教带出来的孩子差不多"，但<em class="latin">Uesato</em> 的家教只盯了一个学期、孩子也才上小学。OpenAI 这篇干的就是：换一个更强的孩子、让家教盯到高中毕业、再用竞赛题考一次——结论彻底翻过来了。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>把背景剥干净，这篇论文要回答的其实就一个问题：</p>
+  <p><em>在多步推理任务上，"过程监督"（给每一步打分）和"结果监督"（只看最终答案），到底哪个能训出更可靠的奖励模型？以及——过程监督的代价有多贵，能不能用更少的标注拿到同样的效果？</em></p>
+  <p>这个问题拆开有三层。第一层是<em>谁更强</em>：在公平对照下，过程监督究竟是不是真的更强，强多少？第二层是<em>能不能批量</em>：过程监督要给每一步人工打分，80 万条标注的代价吓人，能不能用一个大奖励模型去近似人类监督、从而做大规模的消融实验？第三层是<em>能不能省</em>：同样是过程监督，是不是有些样本比另一些更有信息量？挑着标、主动学，能不能用更少的标注换同样的效果？</p>
+  <p>这三个问题，对应论文摘要里那四条贡献的后三条——而第一条，是把"过程监督显著优于结果监督"这个结论，<em>钉死</em>。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    假如你只能雇人标 1 万条样本，是均匀采样 1 万道题、给每道题标 1 个解？还是<em>专挑模型容易做错的那些题</em>、并且只标那些"看起来对、其实错了"的解？直觉上你大概会选后者——但<em>挑哪种"看起来对、其实错了"的样本</em>，才能让奖励模型学得最快？先想想，再往下看。（提示：和"判官自己会不会被同一类样本骗"有关。）
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>这篇论文的方法骨架其实很干净——它先给两种监督方式下了<em>精确的数学定义</em>，再说明怎么标、怎么训，最后用"主动学习"把标注成本压下来。我们分四步看。</p>
+
+  <h3>第一步：把"结果监督"和"过程监督"摆上同一张台面</h3>
+  <p>作者沿用 <em class="latin">Uesato</em> 2022 的术语，把两种监督方式形式化。给定一个问题 $q$ 和一个被切成 $K$ 步的解 $s = (s_1, s_2, \dots, s_K)$：</p>
+  <ul>
+    <li><em>结果监督</em>（<em class="latin">outcome supervision</em>）：只看最后答案 $s_K$ 对不对，给整个解一个二值标签 $y$。训出来的奖励模型叫 <em class="latin">ORM</em>（outcome-supervised reward model）。</li>
+    <li><em>过程监督</em>（<em class="latin">process supervision</em>）：给每一步都打一个标签 $y_i$，"对 / 错 / 不确定"。训出来的奖励模型叫 <em class="latin">PRM</em>（process-supervised reward model）。</li>
+  </ul>
+
+  <p>这里有个关键细节，是这篇论文把对照实验做"干净"的灵魂——<em>过程监督只标到第一个错步</em>。意思是：一旦某一步被打成"错"，后面的步骤<em>不再标</em>。为什么这么设计？因为如果一条解错了 5 步、你把 5 步全标了，PRM 拿到的监督信号比 ORM 多得多——那对比就不公平了。只标到第一个错步，意味着两种监督方式<em>看到同样多的"错"信息</em>，差异只来自"错在哪一步"这层粒度。这是个干净得不能再干净的对照设计。</p>
+
+  <div class="formula-block">
+    $$ \text{PRM}(q, s) = \prod_{i=1}^{K} p(y_i = \text{correct} \mid q, s_{1:i}) $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>公式（1）写的是 PRM 怎么给整条解打分——把<em>每一步</em>被判对的概率乘起来。这是个朴素但关键的设计：只要任何一步被判错，整条解的得分就被乘成接近 0；只有<em>每一步都对</em>，整条解才拿高分。这正好对应"逻辑链上一步错、全盘输"的多步推理本质。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowA1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrowA2" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+          <path d="M0,0 L7,3.5 L0,7 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="13" fill="#2E2A22">
+        <!-- 一条 5 步的解 -->
+        <text x="30" y="40" font-size="12" fill="#96897A">一条推理解 s = (s₁, s₂, s₃, s₄, s₅)</text>
+
+        <!-- 五个步骤圆点 -->
+        <circle cx="80" cy="100" r="20" fill="#24555A" fill-opacity="0.18" stroke="#24555A"/>
+        <text x="80" y="106" text-anchor="middle" font-size="11" fill="#24555A">s₁</text>
+        <text x="80" y="135" text-anchor="middle" font-size="10" fill="#24555A">对</text>
+
+        <circle cx="200" cy="100" r="20" fill="#24555A" fill-opacity="0.18" stroke="#24555A"/>
+        <text x="200" y="106" text-anchor="middle" font-size="11" fill="#24555A">s₂</text>
+        <text x="200" y="135" text-anchor="middle" font-size="10" fill="#24555A">对</text>
+
+        <!-- 第一个错步：用 accent 高亮 -->
+        <circle cx="320" cy="100" r="22" fill="#B54A2C" fill-opacity="0.20" stroke="#B54A2C" stroke-width="1.5"/>
+        <text x="320" y="106" text-anchor="middle" font-size="11" fill="#B54A2C" font-weight="600">s₃</text>
+        <text x="320" y="138" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">第一个错步</text>
+
+        <!-- 后续步骤：灰色，不标 -->
+        <circle cx="440" cy="100" r="20" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="3 2"/>
+        <text x="440" y="106" text-anchor="middle" font-size="11" fill="#96897A">s₄</text>
+        <text x="440" y="135" text-anchor="middle" font-size="10" fill="#96897A">不再标</text>
+
+        <circle cx="560" cy="100" r="20" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="3 2"/>
+        <text x="560" y="106" text-anchor="middle" font-size="11" fill="#96897A">s₅</text>
+        <text x="560" y="135" text-anchor="middle" font-size="10" fill="#96897A">不再标</text>
+
+        <!-- 箭头串起来 -->
+        <line x1="100" y1="100" x2="180" y2="100" stroke="#96897A" stroke-width="1" marker-end="url(#arrowA1)"/>
+        <line x1="220" y1="100" x2="300" y2="100" stroke="#96897A" stroke-width="1" marker-end="url(#arrowA1)"/>
+        <line x1="342" y1="100" x2="420" y2="100" stroke="#96897A" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#arrowA1)"/>
+        <line x1="460" y1="100" x2="540" y2="100" stroke="#96897A" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#arrowA1)"/>
+
+        <!-- ORM 和 PRM 对同一解的判分 -->
+        <rect x="30" y="170" width="640" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="190" text-anchor="middle" font-weight="600" fill="#24555A">ORM 视角</text>
+        <text x="350" y="208" text-anchor="middle" font-size="11" fill="#2E2A22">只看 s₅ 的最终答案 → 若答案对 → 整条解判"对"（false positive）</text>
+
+        <rect x="30" y="235" width="640" height="65" rx="2" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <text x="350" y="258" text-anchor="middle" font-weight="600" fill="#B54A2C">PRM 视角</text>
+        <text x="350" y="276" text-anchor="middle" font-size="11" fill="#2E2A22">s₁ 对 × s₂ 对 × s₃ 错（=0）= 0</text>
+        <text x="350" y="292" text-anchor="middle" font-size="11" fill="#B54A2C">→ 整条解判"错"，并指出错在 s₃</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · ORM vs PRM：同一条解，PRM 看到 s₃ 错就立刻判零，并定位错步；ORM 只看 s₅ 的最终答案，对"过程错、答案对"的样本会误判为对</figcaption>
+  </figure>
+
+  <h3>第二步：手工打造 80 万条步级标签</h3>
+  <p>接下来是最累人的一步——标数据。作者在 <em class="latin">MATH</em> 数据集上，让自家基模型对每道题生成多个解，再把每条解切成步骤，让人类标注员逐步判断"对 / 错 / 不确定"。最后累计<em>约 80 万条步级标签</em>——这就是后来被反复引用的 <em class="latin">PRM800K</em>。这批数据也是论文四个贡献之一，开放给社区用。</p>
+
+  <p>标注本身有几个被精心设计过的细节。第一，标注员<em>不标到错步以后</em>——这保证了上面那道公平对照；第二，标签不是二值，而是三值："对 / 错 / 不确定"，让标注员在拿不准时<em>不强行选边</em>；第三，对每道题，<em>保留一个"标准答案"轨迹</em>给所有标注员标，用来交叉验证标注质量——谁标得离标准答案太远，就剔除。</p>
+
+  <h3>第三步：用"大奖励模型"近似人类监督，做大消融</h3>
+  <p>80 万条标签听着多，但要做大规模消融（比如"标注量从 1 万到 100 万怎么变"），根本不够。作者的解法很巧妙：先训一个用满 80 万条标签的"大 PRM"（<em class="latin">large PRM</em>），让它<em>替代人工</em>去给新解打分。然后验证——这个大 PRM 在一个独立的小测试集上，和真人标注的<em>一致率</em>够不够高？结论是<em>够高</em>。于是接下来的所有消融，都用这个大 PRM 当"自动标注员"，把"需要多少标注才能训出好 PRM"这类问题，在大规模上跑了一遍。</p>
+
+  <p>这步看似只是个工程技巧，但它把"过程监督能不能规模化"这个生死攸关的问题，给了一个正面回答——能。后来整个推理范式里凡是涉及过程监督的大规模实验，几乎都建立在"用大 PRM 自动标"这个范式上，源头就是这篇论文。</p>
+
+  <h3>第四步：主动学习——挑着标，2.6 倍效率</h3>
+  <p>最后一步，是把标注成本再压下来。直觉是：不是所有样本信息量都一样。一个一眼错的解、和一个"看起来对、其实错了"的解，前者几乎没信息量（PRM 一看就判错），后者信息量极高（PRM 容易被骗，标了就能教会它）。作者的做法是：在多代（generation）标注里，每一代用<em>当前的 PRM</em> 去筛下一批要标的解——专挑那些<em>PRM 自己拿不准</em>、或者<em>看似合理但实际错了</em>的解来标。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowB1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 三个候选样本：一眼错 / 一眼对 / 难分辨 -->
+        <rect x="20" y="40" width="180" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="110" y="62" text-anchor="middle" font-size="11">样本 A：一眼错</text>
+        <text x="110" y="90" text-anchor="middle" font-size="10" fill="#96897A">信息量低，PRM 已会判</text>
+
+        <rect x="260" y="40" width="180" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="62" text-anchor="middle" font-size="11">样本 B：一眼对</text>
+        <text x="350" y="90" text-anchor="middle" font-size="10" fill="#96897A">信息量低，PRM 已会判</text>
+
+        <!-- 高亮：难分辨样本 -->
+        <rect x="500" y="40" width="180" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="590" y="62" text-anchor="middle" font-size="11" fill="#B54A2C" font-weight="600">样本 C：看似对，其实错</text>
+        <text x="590" y="90" text-anchor="middle" font-size="10" fill="#B54A2C">高信息量，PRM 易被骗</text>
+
+        <!-- 当前 PRM 用作筛选器 -->
+        <rect x="180" y="120" width="340" height="34" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="350" y="142" text-anchor="middle" font-weight="600" fill="#24555A">当前 PRM 当筛选器：专挑 C 类</text>
+
+        <line x1="590" y1="74" x2="500" y2="120" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrowB1)"/>
+        <line x1="350" y1="74" x2="350" y2="120" stroke="#96897A" stroke-width="1" stroke-dasharray="3 3"/>
+        <line x1="110" y1="74" x2="180" y2="120" stroke="#96897A" stroke-width="1" stroke-dasharray="3 3"/>
+
+        <!-- 主动学习的收益 -->
+        <rect x="120" y="170" width="460" height="38" rx="2" fill="#ECE4D4" stroke="#B54A2C"/>
+        <text x="350" y="194" text-anchor="middle" fill="#B54A2C" font-weight="600">主动学习：同样效果，标注量省到 1/2.6</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 主动学习流程：每一代用当前 PRM 当筛选器，专挑"看似对、其实错"的高信息量样本标——这把过程监督的数据效率提升了 2.6 倍</figcaption>
+  </figure>
+
+  <p>结果——主动学习把过程监督的<em>数据效率提升了 2.6 倍</em>。也就是说，标同样效果的 PRM，主动学习只需<em>三分之一多</em>的标注量。这一条贡献看似不起眼，但它是后来整个推理范式能不能"用得起"过程监督的关键——80 万条人工标注已是天价，要是不能省着标，PRM 这条路压根走不通。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>把数字摆出来，"过程监督碾压结果监督"这件事更直观。所有实验在 <em class="latin">MATH</em> 测试集的一个"代表性子集"上做，比较三种挑答案的方式：</p>
+  <ul>
+    <li><em>多数投票</em>（<em class="latin">majority voting</em>）：让模型生成 N 个解，看哪个答案出现次数最多。</li>
+    <li><em>ORM 选最优</em>（<em class="latin">best-of-N with ORM</em>）：让 ORM 给每个解打分，挑分最高的。</li>
+    <li><em>PRM 选最优</em>（<em class="latin">best-of-N with PRM</em>）：让 PRM 给每个解的每一步打分，挑总分最高的。</li>
+  </ul>
+
+  <table>
+    <thead>
+      <tr><th>挑答案方式</th><th>监督粒度</th><th>准确率</th><th>相对多数投票</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">多数投票（majority voting）</td><td>无监督</td><td>69.6%</td><td>基线</td></tr>
+      <tr><td class="text">ORM（best-of-N）</td><td>结果级</td><td>72.4%</td><td>+2.8</td></tr>
+      <tr><td class="text">PRM（best-of-N，本文方法）</td><td>过程级</td><td>78.2%</td><td>+8.6</td></tr>
+    </tbody>
+  </table>
+
+  <p>这套数字有三个值得专门点出来的细节。<em>第一</em>，PRM 在 N 增大时<em>涨得最快</em>——给模型更多候选解，PRM 总能挑出更准的；而 ORM 涨得慢，因为它的判分本身就不可靠。<em>第二</em>，PRM 不只总体更准，它<em>还能定位错步</em>——这意味着它不只是个判分器，还能反过来当"教练"，告诉生成模型"你这一步错了"，这正是后续推理范式里把 PRM 接进 RL 训练的入口。<em>第三</em>，主动学习的数据效率 2.6 倍这条结论，<em>独立于</em>主结果，但同样关键——它回答了"过程监督贵不贵"的问题：贵，但有办法省。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 坐标轴 -->
+        <line x1="60" y1="40" x2="60" y2="260" stroke="#96897A"/>
+        <line x1="60" y1="260" x2="660" y2="260" stroke="#96897A"/>
+        <text x="50" y="50" text-anchor="end" font-size="10" fill="#96897A">100</text>
+        <text x="50" y="135" text-anchor="end" font-size="10" fill="#96897A">80</text>
+        <text x="50" y="215" text-anchor="end" font-size="10" fill="#96897A">60</text>
+        <text x="50" y="265" text-anchor="end" font-size="10" fill="#96897A">0</text>
+        <text x="55" y="30" text-anchor="middle" font-size="10" fill="#96897A">acc %</text>
+
+        <!-- N 刻度：1, 4, 16, 64, 256 -->
+        <text x="120" y="278" text-anchor="middle" font-size="10" fill="#96897A">N=1</text>
+        <text x="240" y="278" text-anchor="middle" font-size="10" fill="#96897A">N=4</text>
+        <text x="360" y="278" text-anchor="middle" font-size="10" fill="#96897A">N=16</text>
+        <text x="480" y="278" text-anchor="middle" font-size="10" fill="#96897A">N=64</text>
+        <text x="600" y="278" text-anchor="middle" font-size="10" fill="#96897A">N=256</text>
+        <text x="660" y="295" text-anchor="end" font-size="10" fill="#96897A">候选解数量 →</text>
+
+        <!-- 多数投票曲线：起点约 50%，缓涨到 69.6% -->
+        <path d="M 120 215 Q 240 180 360 152 T 600 130" fill="none" stroke="#96897A" stroke-width="2" stroke-dasharray="5 3"/>
+        <text x="605" y="125" font-size="11" fill="#96897A">majority voting 69.6%</text>
+
+        <!-- ORM 曲线：起点 55%，涨到 72.4% -->
+        <path d="M 120 195 Q 240 160 360 132 T 600 112" fill="none" stroke="#24555A" stroke-width="2"/>
+        <text x="605" y="108" font-size="11" fill="#24555A">ORM 72.4%</text>
+
+        <!-- PRM 曲线：起点 60%，涨到 78.2%，涨得最快 -->
+        <path d="M 120 170 Q 240 130 360 95 T 600 70" fill="none" stroke="#B54A2C" stroke-width="2.5"/>
+        <text x="605" y="68" font-size="11" fill="#B54A2C" font-weight="600">PRM 78.2%</text>
+
+        <!-- N=256 处的三条点 -->
+        <circle cx="600" cy="130" r="3.5" fill="#96897A"/>
+        <circle cx="600" cy="112" r="3.5" fill="#24555A"/>
+        <circle cx="600" cy="70" r="4.5" fill="#B54A2C"/>
+
+        <!-- 注释 -->
+        <text x="350" y="305" text-anchor="middle" font-size="10" fill="#B54A2C">PRM 涨得最快：N 越大，PRM 的优势越明显</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 三种挑答案方式的扩展曲线（示意，按论文 Figure 3 复绘）：随候选解 N 增大，PRM 涨得最快，最终在 N=256 时把准确率顶到 78.2%</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>这篇论文的影响，可以从三层来看。</p>
+  <p>第一层，是<em>把"过程监督"从可选项钉成默认项</em>。在它之前，<em class="latin">Uesato</em> 2022 那道模棱两可的对照实验让社区以为"过程监督不见得有用"；在它之后，"过程监督显著优于结果监督"在数学推理上成了一个<em>基准事实</em>。从此凡是涉及多步推理的奖励建模，几乎都默认走过程监督路线。</p>
+  <p>第二层，是<em>给整个推理范式递了把"判官"</em>。这篇论文造的 PRM，就是 Snell 那篇扩展定律里"验证者轴"的判官，也是 <em class="latin">o1</em> 思维链训练背后那类判分器的源头。后续 <em class="latin">Math-Shepherd</em> 把 PRM 的标注自动化、<em class="latin">DeepSeek-R1</em> 把奖励换成"可验证奖励"绕开 PRM 的脆弱性、<em class="latin">Kimi K1.5</em> 用 PRM-style 评分做长思考——它们要么是这条路的延伸，要么是对这条路的反思，但<em>都绕不开这篇论文立的起点</em>。</p>
+  <p>第三层，是<em>放出 PRM800K，把"过程监督"变成公共基础设施</em>。80 万条步级标签是当时规模最大的过程监督数据集，开放后立刻成了后续所有 PRM 工作的基准训练数据——开源社区、学术团队、工业实验室都拿来训自己的 PRM。一个数据集放出去，等于把这条研究方向的门槛<em>整体拉低</em>。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>这篇论文的局限，和它的贡献一样清楚。</p>
+  <p>首先，<em>人工标注代价惊人</em>。80 万条步级标签——每条都要让人读懂一道竞赛数学题、读完模型生成的多步解、再逐步判断——这是<em>天价</em>的数据成本。即使主动学习把效率提到 2.6 倍，过程监督依然远比结果监督贵。后来 <em class="latin">Math-Shepherd</em> 2023 干的第一件事，就是用模型自己当标注员、把这套流程<em>自动化</em>——它存在的意义，就是来填这道贵的口子。我们下期就拆它。</p>
+  <p>其次，<em>只覆盖了数学</em>。<em class="latin">MATH</em> 是个有标准答案、可验证的基准，过程监督能不能推广到代码、科学、开放性任务，这篇论文没给答案。后来 <em class="latin">DeepSeek-R1</em> 干脆绕开神经 PRM，改用单元测试这种"可验证奖励"（<em class="latin">RLVR</em>）——一个比学人类偏好的 PRM 难骗多了。这恰恰从反面印证了：在<em>可验证</em>的领域，规则奖励比 PRM 更省也更难被骗。</p>
+  <p>再次，<em>PRM 自己也会被骗</em>。神经 PRM 学的是人类偏好，而人类标注员本身在难题上也会判错；PRM 一旦学偏，整套搜索就跟着偏。这是后来推理范式里反复被讨论的"reward hacking"问题——也是 <em class="latin">R1</em> 之类工作放弃 PRM 的核心原因之一。</p>
+  <p>最后，<em>本论文只把 PRM 当判分器，没把它接进 RL 训练</em>。它用 PRM 在 best-of-N 里挑答案，证明了 PRM 比 ORM 强；但 PRM 怎么反过来训练生成模型、怎么接进 <em class="latin">PPO</em> 或后来的 <em class="latin">GRPO</em>，是后续工作才补上的。这篇论文留下的，是一个"判官"和一个数据集；至于"判官怎么反过来当教练"，是接下来一系列推理范式工作的核心议题。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把"过程监督"这条线串起来看，<em class="latin">Let's Verify Step by Step</em> 正好处在"前奏—奠基—延伸—反叛"四幕的<em>奠基</em>那一幕：</p>
+  <ul>
+    <li><em>前奏（2021–2022）</em>：<em class="latin">Cobbe</em> 2021 训出第一个"结果验证器"，发现它在数学上老被骗；<em class="latin">Uesato</em> 2022 第一次比了过程监督 vs 结果监督，结论模棱两可——这两篇为本论文立了一个待回答的问题。</li>
+    <li><em>奠基（2023-05）</em>：<em class="latin">Lightman</em> 这篇一锤定音——换更强的基模型、用 80 万条标注、在竞赛级 <em class="latin">MATH</em> 上把过程监督显著拔到 78.2%，同时放出 <em class="latin">PRM800K</em>，把"过程奖励模型"这个词钉进族谱。</li>
+    <li><em>延伸（2023-12–2024）</em>：<em class="latin">Math-Shepherd</em> 把 PRM 标注自动化、把过程监督从"百万级人工标注"降到"零人工"；Snell 2024-08 把 PRM 当"验证者轴"、画出测试时算力扩展曲线；<em class="latin">o1</em> 2024-09 把"想得更久 + 过程判分"做成产品。</li>
+    <li><em>反叛（2025–）</em>：<em class="latin">DeepSeek-R1</em> 2025-01 干脆放弃神经 PRM，用规则可验证奖励（<em class="latin">RLVR</em>）纯 RL 训出推理——它<em>绕过</em>了本论文那条路，但承认了本论文立的"过程 vs 结果"那道题。<em class="latin">Kimi K1.5</em>、<em class="latin">QwQ</em>、<em class="latin">Sky-T1</em> 等开源推理模型，则各自在这条路上踩出自己的脚印。</li>
+  </ul>
+  <p>本论文自己，就是那个把"前奏"切到"奠基"的开关；而它的 PRM 和 <em class="latin">PRM800K</em>，又成了后续延伸与反叛的<em>共同参照系</em>。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>这篇论文最值得咀嚼的，是它那份"豪华得离谱"的作者名单。第一作者 <em class="latin">Hunter Lightman</em> 当时是 OpenAI 的 Member of Technical Staff，主笔是 <em class="latin">Karl Cobbe</em>——也就是两年前 <em class="latin">Training Verifiers to Solve Math Word Problems</em>（<em class="latin">GSM8K</em> 那篇）的同一人。本论文通讯作者也是 <em class="latin">Cobbe</em>——等于这位老兄先把"结果验证器"造出来、发现它老被骗、再回头造"过程验证器"来填自己的坑。一个研究者在两年内完成"自造问题—自填问题"的闭环，这种学术叙事在本系列里也不多见。</p>
+  <p>更耐人寻味的是后几位署名：<em class="latin">Jan Leike</em>（OpenAI 对齐团队负责人，后跳槽 Anthropic）、<em class="latin">John Schulman</em>（<em class="latin">PPO</em> 作者，OpenAI RL 顶梁柱）、<em class="latin">Ilya Sutskever</em>（OpenAI 首席科学家、后来的诺奖级争议人物）。一篇"标数据训奖励模型"的工程论文，把对齐、RL、首席科学家全挂上名——这本身就说明，OpenAI 内部把"过程监督"看成了对齐与推理双重战略的<em>关键拼图</em>。后来 <em class="latin">o1</em> 系统卡里再次出现 <em class="latin">Lightman</em> 的名字，<em class="latin">GPT-5</em> 系统卡里也有他——他从这篇论文起步，一路走到了 OpenAI 推理范式的核心圈。</p>
+  <p>第二作者 <em class="latin">Vineet Kosaraju</em> 也有一条暗线：他是 <em class="latin">Stanford</em> 出身，本论文之前还参与了 <em class="latin">WebGPT</em> 和 <em class="latin">GSM8K</em>——也就是说，他从"训结果验证器"一路走到"训过程验证器"，和 <em class="latin">Cobbe</em> 走的是同一条职业叙事。这种"两个作者从同一篇前作走到同一篇后作"的连续性，让本论文的"工程连贯"显得格外扎实。</p>
+  <p>最后一个小彩蛋是论文标题——<em class="latin">Let's Verify Step by Step</em>。这其实是 <em class="latin">Kojima</em> 2022 那篇把思维链带火的提示咒语 <em class="latin">let's think step by step</em> 的戏仿。把"想"换成"验证"，一个动词之差，就暗示了整篇论文的核心命题：思维链让模型会"想"，但要让模型"想得对"，还得有人/有模型<em>逐步验证</em>它想的每一步。一个标题，就把"思维链"和"过程监督"两件事勾连在一起——也把这两件事后来的合流（<em class="latin">o1</em> 把过程监督接进思维链训练），埋下了预言。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowC1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 两个家教 -->
+        <circle cx="170" cy="110" r="55" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="170" y="95" text-anchor="middle" font-weight="600">ORM 家教</text>
+        <text x="170" y="115" text-anchor="middle" font-size="11" fill="#96897A">只看答案对错</text>
+        <text x="170" y="133" text-anchor="middle" font-size="11" fill="#96897A">发糖 / 罚站</text>
+        <text x="170" y="195" text-anchor="middle" font-size="11" fill="#96897A">省事，孩子常抄答案</text>
+
+        <circle cx="530" cy="110" r="55" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="530" y="95" text-anchor="middle" fill="#B54A2C" font-weight="600">PRM 家教</text>
+        <text x="530" y="115" text-anchor="middle" font-size="11" fill="#B54A2C">每步拍肩：对 / 错</text>
+        <text x="530" y="133" text-anchor="middle" font-size="11" fill="#B54A2C">并指出错在哪步</text>
+        <text x="530" y="195" text-anchor="middle" font-size="11" fill="#B54A2C">累，孩子真学会推理</text>
+
+        <!-- 中间对照 -->
+        <line x1="225" y1="110" x2="475" y2="110" stroke="#B54A2C" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrowC1)"/>
+        <text x="350" y="100" text-anchor="middle" font-size="11" fill="#B54A2C">换家教</text>
+        <text x="350" y="125" text-anchor="middle" font-size="10" fill="#96897A">MATH 准确率 72.4% → 78.2%</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · "两个家教"类比：ORM 家教只看答案，PRM 家教逐步拍肩——同一道题、同一个孩子，换家教就让准确率跳了一个台阶</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>这篇论文最值得琢磨的，不是它刷了 78.2% 这个数字，而是它把"奖励的粒度"从一个工程旋钮，提升成了一个<em>范式选择</em>。过去十年，RLHF 几乎默认奖励是"结果级"的——人看完一整段回答打一个总体分，奖励模型学着复刻这个总体分。这在闲聊、写作这种"过程无所谓对错"的任务上工作得很好；可一旦碰到多步推理，结果级奖励模型就成了"只看答案的家教"——它会奖励"用错过程蒙对答案"的样本，等于在教模型胡说。这篇论文用一个朴素对照实验告诉整个领域：<em>在推理任务上，奖励的粒度必须从"结果级"换成"过程级"</em>——这不是一个调参问题，是一个范式切换。</p>
+  <p>另一个值得警醒的，是它的<em>代价</em>。80 万条步级人工标注，是这篇论文的代价，也是它的局限。后来整个推理范式的工作，几乎都在和这道代价搏斗：<em class="latin">Math-Shepherd</em> 用模型自动标、<em class="latin">DeepSeek-R1</em> 干脆改用规则可验证奖励绕开 PRM、<em class="latin">Kimi K1.5</em> 用 PRM-style 评分做长思考。每一条路，都是对"过程监督太贵"这道题的不同回答。读懂这篇论文，得同时读懂它的<em>贡献</em>和它的<em>代价</em>——因为后来所有的工作，都是站在贡献上、绕开代价里。</p>
+  <p>至于"过程监督 vs 结果监督"这道题——它今天并没有终结。<em class="latin">DeepSeek-R1</em> 证明，在可验证任务上，规则奖励也能压过神经 PRM；但在不可验证任务（写作、对话、agent）上，PRM 这条路依然不可替代。换言之，这篇论文立的不是一个"终局答案"，而是一个<em>分岔起点</em>——往可验证走，是 <em class="latin">RLVR</em>；往不可验证走，是 <em class="latin">PRM</em> 的各种变体。这两条路至今并行，各自演化。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    本论文证明，过程监督显著优于结果监督——但前提是<em>有 80 万条人工标注</em>。假如你只有 1 万条标注预算，且无法雇人——能不能让模型<em>自己</em>给自己的推理每一步打分、再用这套自标数据训 PRM？这条路听起来像"让考生自己当判卷老师"，可如果模型本身判不准、自标就会"错上加错"。下一篇，我们就去看 DeepMind/北大 怎么用一种叫 <em class="latin">automatic process annotation</em> 的技巧，把这个"考生自判"的悖论破解掉——让 PRM 摆脱人工标注，走向零成本过程监督。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Math-Shepherd: Verify and Reinforce LLMs Step-by-step Without Human Annotations</h3>
+    <p style="margin:0 0 10px; color:var(--muted); font-size:15px;">Math-Shepherd：让模型自己给自己的推理每一步打分——摆脱 80 万条人工标注，PRM 走向零成本过程监督</p>
+    <p style="margin:0;">本篇把过程监督钉在了"显著优于结果监督"的位置上——但代价是 80 万条人工标注的天价。这条路如果不能省着走，PRM 永远只能停留在实验室。下一篇，我们去看 2023 年 12 月那篇 <em class="latin">Math-Shepherd</em> 怎么用一种叫"自动过程标注"的技巧，让模型<em>自己</em>给自己的每一步推理打分——既不用人、又能保证标注质量。它不只把 PRM 的成本砍到接近零，还顺手把 PRM 接进了 RL 训练，让"判官"第一次能反过来当"教练"——这就是后来 <em class="latin">DeepSeek-R1</em> 那条纯 RL 路线的直接思想源头之一。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 022 篇</span>
+    <span>2026-08-21</span>
+  </footer>
+
+</div>
+</body>
+</html>
