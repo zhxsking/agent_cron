@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math-Shepherd 论文精读 · 大模型经典论文系列 #023</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:38px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:21px;
+    color:var(--muted);
+    margin-top:10px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:28px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#023</span>
+  </div>
+
+  <h1 class="title">
+    Math-Shepherd: Verify and Reinforce LLMs Step-by-step without Human Annotations
+    <span class="en">Math-Shepherd：让模型自己给自己的推理每一步打分——摆脱 80 万条人工标注，PRM 走向零成本过程监督</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Peiyi Wang, Lei Li, Zhihong Shao, Runxin Xu, Damai Dai, Yifei Li, Deli Chen, Yu Wu, Zhifang Sui</span>
+    <span>机构：北京大学 · DeepSeek-AI · 香港大学 · 清华大学 · 俄亥俄州立大学</span>
+    <span>发表：2023-12 / arXiv（ACL 2024）</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2312.08935" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://huggingface.co/datasets/peiyi9979/Math-Shepherd" target="_blank" rel="noopener">数据集</a>
+  </div>
+
+  <!-- ============ 上篇回顾 ============ -->
+  <div class="callout">
+    <span class="label">上篇回顾</span>
+    上一篇我们读了 <em class="latin">Lightman</em> 的 <em class="latin">Let's Verify Step by Step</em>：雇人把模型解数学题的每一步打上"对/错"标签，一共打了 80 万条（<em class="latin">PRM800K</em>），训出第一个真正能用的过程奖励模型（PRM），把"过程监督显著优于结果监督"钉死。但我们留了一个钩子——80 万条人工标注是个<em>天价</em>。如果过程监督只能靠人一条条标，PRM 这条路就永远只能停在实验室。当时我们抛了个问题：<em>能不能让模型自己给自己的每一步打分？</em>这篇，我们就去看那群人怎么把"考生自判"这个听起来像悖论的事，变成现实——而且顺手把"判官"接进了强化学习训练，让它第一次能反过来当"教练"。
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">想象一场考试，判卷老师突然宣布："今天我不批改了，你们每位考生<em>自己给自己打分</em>。" 你大概会笑出声——这还叫考试吗？自己给自己打分，谁不会往高了打？可 2023 年 12 月，北大、DeepSeek、港大等机构合作的一篇论文，恰恰干了这件事：让大模型<em>自己</em>给自己的数学推理每一步打"对/错"分，再用这套自标数据训出一个过程奖励模型，名字叫 <em class="latin">Math-Shepherd</em>。</p>
+
+  <p class="lead">听起来像个悖论——模型本来就是因为会算错才需要被监督，那它凭什么能判自己的对错？答案藏在一个朴素得近乎狡猾的技巧里：不要让模型"直接说"自己这步对不对，而是让它<em>从这一步往后继续写很多遍</em>，看能不能写出正确答案。能写出正确答案，这一步就是"对"的；怎么写都写不出，这一步大概率"错"了。就这么一个动作，把"判分"换成了"试一试"——判官不再需要懂题，只需要会"接着写"。结果是：<em class="latin">DeepSeek-67B + Math-Shepherd</em> 在数学基准上把准确率顶到 <em>93.3% / 48.1%</em>，反超了当时的 <em class="latin">GPT-4</em> 早期版本——而这一切，零人工标注。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    这篇论文用一个受 <em class="latin">MCTS</em> 启发的"自动过程标注"技巧，让模型<em>自己</em>给自己的推理每一步打分，把过程奖励模型从"80 万条人工标注的天价"降到"零人工"；并第一次把 PRM 接进 <em class="latin">PPO</em> 强化学习，让"判官"反过来当"教练"——这就是后来 <em class="latin">DeepSeek-R1</em> 纯 RL 路线的直接思想源头之一。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>把这篇论文放进大模型的发展脉络，它的位置非常微妙——它正卡在<em>"过程监督的奠基"</em>和<em>"推理范式 RL 的引爆"</em>之间，是承上启下的那块跳板。</p>
+  <p>承上，它直接接续 <em class="latin">Let's Verify Step by Step</em>：那篇用 80 万条人工标注证明"过程监督碾压结果监督"，但代价惊人；这篇要回答的，正是"<em>过程监督能不能不要人</em>"。启下，它做了一件上篇没做的事——把 PRM 接进强化学习训练，让过程奖励不只是推理时挑答案的"判官"，还能反过来训练生成模型的"教练"。后来 <em class="latin">DeepSeek-R1</em> 那条"纯 RL 训出推理"的路线，其思想源头之一，就是这篇论文里"<em>用过程奖励做 PPO</em>"的设定。可以说：<em class="latin">Let's Verify</em> 立了"过程监督"这杆旗，<em class="latin">Math-Shepherd</em> 把旗插到了"<em>自动化 + RL</em>"两块新阵地上。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="120" x2="660" y2="120" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 两个时代区间 -->
+        <text x="60" y="225" fill="#24555A" font-size="10">对齐范式（人工过程监督）</text>
+        <line x1="60" y1="231" x2="300" y2="231" stroke="#24555A" stroke-width="1.5" opacity="0.5"/>
+        <text x="360" y="225" fill="#B54A2C" font-size="10">推理范式（自动过程监督 + RL）</text>
+        <line x1="360" y1="231" x2="660" y2="231" stroke="#B54A2C" stroke-width="1.5"/>
+
+        <!-- 已解析里程碑：实心 accent2 -->
+        <circle cx="80" cy="120" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="80" y="100" text-anchor="middle">2017</text>
+        <text x="80" y="150" text-anchor="middle" fill="#2E2A22">Transformer</text>
+
+        <circle cx="200" cy="120" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="200" y="100" text-anchor="middle">2022</text>
+        <text x="200" y="150" text-anchor="middle" fill="#2E2A22">InstructGPT</text>
+
+        <circle cx="275" cy="120" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="275" y="100" text-anchor="middle">2023-05</text>
+        <text x="275" y="150" text-anchor="middle" fill="#2E2A22">Let's Verify</text>
+
+        <!-- 本篇：Math-Shepherd，2023-12，跨在两区间分界上 -->
+        <circle cx="345" cy="120" r="9" fill="#B54A2C"/>
+        <circle cx="345" cy="120" r="14" fill="none" stroke="#B54A2C" stroke-width="1" opacity="0.4"/>
+        <text x="345" y="88" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="345" y="150" text-anchor="middle" fill="#2E2A22" font-weight="600">Math-Shepherd</text>
+        <text x="345" y="164" text-anchor="middle" fill="#2E2A22" font-size="9">2023-12</text>
+
+        <!-- 后续里程碑，已解析 -->
+        <circle cx="430" cy="120" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="430" y="100" text-anchor="middle">2024-08</text>
+        <text x="430" y="150" text-anchor="middle" fill="#2E2A22">Snell</text>
+
+        <circle cx="500" cy="120" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="500" y="100" text-anchor="middle">2024-09</text>
+        <text x="500" y="150" text-anchor="middle" fill="#2E2A22">o1</text>
+
+        <circle cx="570" cy="120" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="570" y="100" text-anchor="middle">2025-01</text>
+        <text x="570" y="150" text-anchor="middle" fill="#2E2A22">R1（思想源头之一）</text>
+
+        <circle cx="640" cy="120" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="640" y="100" text-anchor="middle">未来</text>
+        <text x="640" y="150" text-anchor="middle">?</text>
+      </g>
+      <defs/>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的位置：实心点为本系列已解析论文，红色为本篇——它正卡在"对齐范式（人工过程监督）"和"推理范式（自动过程监督 + RL）"的分界上，是 R1 的思想源头之一</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要看懂这篇论文为什么要做，得先看清上一篇留下的那道"贵"的口子，以及它连带出的一连串麻烦。</p>
+
+  <p>第一，<em>过程监督好是好，但人工标注是天价</em>。<em class="latin">Let's Verify Step by Step</em> 用 80 万条步级人工标注，证明了 PRM 碾压 ORM。可这 80 万条，每一条都要让标注员<em>读懂一道竞赛数学题、读完模型的多步解、再逐步判断对错</em>——这要求标注员本身就得是数学高手。代价之大，让 PRM 几乎成了"<em>只有 OpenAI 玩得起</em>"的奢侈品。要是这条路不能"省着走"，过程监督永远只能停留在实验室里的一篇论文。</p>
+
+  <p>第二，<em>上一片其实埋了一个"自动化"的伏笔</em>。<em class="latin">Let's Verify</em> 自己也意识到代价问题，于是先训一个"大 PRM"，再用它<em>替代人工</em>给新解打分、做大规模消融。这等于承认了："<em>用模型当标注员</em>"是可行的。但这只是用 PRM 替代了"打分"这一步——<em>初始的 80 万条标签，依然是人一条条标出来的</em>。换言之，上篇把"判分"自动化了，但"造标签的源头"还在人手里。这篇要刨的，正是这个源头。</p>
+
+  <p>第三，<em>PRM 还只是判官，没当过教练</em>。<em class="latin">Let's Verify</em> 只用 PRM 在 best-of-N 里挑答案，证明了 PRM 比 ORM 强；但 PRM 怎么反过来训练生成模型、怎么接进 <em class="latin">PPO</em>，那篇没碰。这意味着"过程监督"还停留在推理时（inference-time）当裁判，没进到训练时（training-time）当老师。要让推理范式真正成型，PRM 得从"判官"变成"教练"——而教练需要<em>源源不断的训练信号</em>，这又回到"标签太贵"那道题上。两个问题，互为锁链。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象一所补习学校。<em class="latin">Let's Verify</em> 雇了一批<em>真人数学老师</em>，坐在每个学生旁边逐题批改——效果好是好，可全校就请得起这一批老师，没法推广。<em class="latin">Math-Shepherd</em> 的招数是：让一个"会做题的学霸"来当批改员——他不直接判断这步对不对，而是<em>从这步开始重新把题做八遍</em>，看能不能做出正确答案。做出过，这步就算"对"；做八遍都做不对，这步就算"错"。这么一来，批改员的门槛从"懂这道题"降到了"会接着做题"——而模型自己就是那个"会接着做题的学霸"。判官从"真人数学老师"换成了"模型自己接着写"，成本从天价降到几乎为零。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>把背景剥干净，这篇论文要回答的，其实是两个互锁的问题：</p>
+  <p><em>第一，怎么在零人工的前提下，给推理的每一步自动打上"对/错"标签，而且质量还够训 PRM？</em>——这是"自动标注"问题，目标是把 80 万条人工标签换成零人工。</p>
+  <p><em>第二，过程奖励模型能不能接进 RL 训练、反过来强化生成模型？</em>——这是"判官当教练"问题，目标是把 PRM 从推理时的裁判，升级成训练时的老师。</p>
+  <p>这两个问题之所以互锁，是因为：要让 PRM 当教练，需要<em>源源不断</em>的训练信号，而人工标注根本供不上；只有先把"自动标注"解决了，"接进 RL"才在工程上站得住。换句话说，<em>自动标注是钥匙，接进 RL 是锁后面的宝</em>——这篇论文一手拿钥匙，一手取宝。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    假设模型某一步推理其实是<em>对的</em>，但模型本身这道题不会做——从这步往后无论写多少遍都写不出正确答案。按上面"做出过就判对"的规则，这步会被判成"错"（假阴性）。反过来，某一步其实<em>错了</em>，但歪打正着后面还能蒙对，这步会被判"对"（假阳性）。那么——<em>模型本身的能力，会不会反过来污染自动标注的质量？</em>先想想，再往下看。（提示：这恰恰是这篇论文最值得琢磨的局限，也是它后来被 RLVR 路线"反叛"的伏笔。）
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>这篇论文的方法骨架非常干净——核心就一个招数：把"判分"改成"试一试"。我们分四步看：先看那个一招制胜的自动标注，再看怎么训 PRM，再看怎么把 PRM 接进 RL，最后串起整个四阶段流水线。</p>
+
+  <h3>第一步：自动过程标注——把"判分"改成"接着写"</h3>
+  <p>作者受 <em class="latin">Monte Carlo Tree Search</em>（蒙特卡洛树搜索）启发，给"一步推理好不好"下了一个非常巧妙的定义——<em>这一步好不好，看它"还能不能通向正确答案"</em>。具体做法是：对解里的每一步 $s_i$，让一个"补全模型"（completer）<em>从这一步往后接着写 N 次</em>，得到 N 个续写完的答案 $a_1, a_2, \dots, a_N$；拿它们和标准答案 $a^*$ 比，就能给这一步打分。</p>
+
+  <p>打分有两种方式，本质都是"这一步通向正确答案的概率有多大"：</p>
+  <ul>
+    <li><em>硬估计</em>（<em class="latin">hard estimation, HE</em>）：只要 N 次里<em>有至少一次</em>写出正确答案，这一步就判"对"（1）；一次都没有，才判"错"（0）。</li>
+    <li><em>软估计</em>（<em class="latin">soft estimation, SE</em>）：把"写出正确答案的次数"除以 N，得到一个 0 到 1 之间的概率分。</li>
+  </ul>
+
+  <div class="formula-block">
+    $$ y_{s_i}^{HE}=\begin{cases}1 & \text{若 } \exists a_j \in A,\ a_j=a^{*} \\ 0 & \text{否则}\end{cases} \qquad y_{s_i}^{SE}=\frac{\sum_{j=1}^{N}\mathbb{I}(a_j=a^{*})}{N} $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>这步的妙处在于：<em>判官不再需要"懂题"</em>。一个人工标注员要判某步对错，得真懂这道竞赛数学题；而 completer 只需要"会接着写"——而模型自己就是个会接着写的家伙。一个看似需要"高智力"的判分任务，被换成了一个"会写字就能干"的采样任务。这就是"考生自判"悖论被破解的关键——<em>模型不是直接说自己对不对，而是用"接着写"的事实来证明</em>。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 340" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowA1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrowA2" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+          <path d="M0,0 L7,3.5 L0,7 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="30" y="34" font-size="12" fill="#96897A">一条解 S = (s₁, s₂, s₃, s₄, s₅)，标准答案 a*</text>
+
+        <!-- 五个步骤，关注 s₃ -->
+        <circle cx="80" cy="80" r="18" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="85" text-anchor="middle" font-size="11">s₁</text>
+        <circle cx="190" cy="80" r="18" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="190" y="85" text-anchor="middle" font-size="11">s₂</text>
+        <circle cx="300" cy="80" r="20" fill="#B54A2C" fill-opacity="0.20" stroke="#B54A2C" stroke-width="1.5"/>
+        <text x="300" y="85" text-anchor="middle" font-size="11" fill="#B54A2C" font-weight="600">s₃</text>
+        <text x="300" y="115" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">要给这步打分</text>
+        <circle cx="410" cy="80" r="18" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="3 2"/>
+        <text x="410" y="85" text-anchor="middle" font-size="11">s₄</text>
+        <circle cx="520" cy="80" r="18" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="3 2"/>
+        <text x="520" y="85" text-anchor="middle" font-size="11">s₅</text>
+        <line x1="98" y1="80" x2="172" y2="80" stroke="#96897A" marker-end="url(#arrowA1)"/>
+        <line x1="208" y1="80" x2="280" y2="80" stroke="#96897A" marker-end="url(#arrowA1)"/>
+        <line x1="320" y1="80" x2="392" y2="80" stroke="#96897A" stroke-dasharray="3 3" marker-end="url(#arrowA1)"/>
+        <line x1="428" y1="80" x2="502" y2="80" stroke="#96897A" stroke-dasharray="3 3" marker-end="url(#arrowA1)"/>
+
+        <!-- completer 从 s₃ 往后写 N=8 次 -->
+        <text x="300" y="145" text-anchor="middle" font-size="11" fill="#24555A">completer 从 s₃ 接着写 N=8 次</text>
+        <line x1="300" y1="120" x2="300" y2="150" stroke="#24555A" stroke-width="1.2" marker-end="url(#arrowA1)"/>
+
+        <!-- 八个续写结果 -->
+        <g font-size="10">
+          <rect x="40" y="175" width="70" height="22" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="75" y="190" text-anchor="middle">续写1 ✗</text>
+          <rect x="120" y="175" width="70" height="22" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+          <text x="155" y="190" text-anchor="middle" fill="#B54A2C">续写2 ✓</text>
+          <rect x="200" y="175" width="70" height="22" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="235" y="190" text-anchor="middle">续写3 ✗</text>
+          <rect x="280" y="175" width="70" height="22" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+          <text x="315" y="190" text-anchor="middle" fill="#B54A2C">续写4 ✓</text>
+          <rect x="360" y="175" width="70" height="22" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="395" y="190" text-anchor="middle">续写5 ✗</text>
+          <rect x="440" y="175" width="70" height="22" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="475" y="190" text-anchor="middle">续写6 ✗</text>
+          <rect x="520" y="175" width="70" height="22" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="555" y="190" text-anchor="middle">续写7 ✗</text>
+          <rect x="600" y="175" width="70" height="22" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="635" y="190" text-anchor="middle">续写8 ✗</text>
+        </g>
+        <text x="350" y="225" text-anchor="middle" font-size="10" fill="#96897A">其中 2 次写出正确答案 a*，其余错</text>
+
+        <!-- 两种打分 -->
+        <line x1="300" y1="200" x2="300" y2="240" stroke="#96897A" stroke-dasharray="3 3"/>
+        <rect x="40" y="250" width="300" height="60" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="190" y="272" text-anchor="middle" font-weight="600" fill="#24555A">硬估计 HE</text>
+        <text x="190" y="291" text-anchor="middle" font-size="11">有 ≥1 次对 → y = 1（这步判"对"）</text>
+
+        <rect x="360" y="250" width="300" height="60" rx="2" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <text x="510" y="272" text-anchor="middle" font-weight="600" fill="#B54A2C">软估计 SE</text>
+        <text x="510" y="291" text-anchor="middle" font-size="11">y = 2/8 = 0.25（通向正解的概率）</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · 自动过程标注核心招数：要给某一步 s₃ 打分，就让 completer 从 s₃ 往后写 N=8 次，看能否写出正确答案。HE 看"有没有写对过"，SE 看"写对的比例"——判分被换成了"试一试"</figcaption>
+  </figure>
+
+  <p>这里还有个被作者专门验证过的细节：HE 和 SE <em>训出来的 PRM 效果几乎一样</em>。这是个挺反直觉的发现——你以为是更精细的 SE（带概率）会更好，结果发现只要一个二值信号（"这步能不能通向正解"）就足够训出好 PRM。这说明<em>"有没有可能通向正解"这个二值信息，才是过程监督的真正内核</em>，至于"通向的概率多大"，反而是多余的。一句"能/不能"，胜过一个概率分布。</p>
+
+  <h3>第二步：训练过程奖励模型（Math-Shepherd）</h3>
+  <p>拿到每一步的自动标签后，训 PRM 就很标准了——把"问题 + 逐步解 + 每步标签"喂给模型，用交叉熵损失训练它预测每一步的标签。训出来的，就是 <em class="latin">Math-Shepherd</em>：一个能给任意解的每一步打分的过程奖励模型。它的输入是一道题和一条逐步解，输出是每一步"对/错"的判断——本质上就是上篇那个 PRM 的角色，只不过它的训练数据，<em>完全来自模型自己的 rollout</em>，没花一分钱人工。</p>
+
+  <h3>第三步：把 PRM 接进 PPO——判官当教练</h3>
+  <p>这一步是这篇论文相对上篇真正的"启下"贡献。<em class="latin">Let's Verify</em> 只让 PRM 在 best-of-N 里挑答案；<em class="latin">Math-Shepherd</em> 把 PRM 接进了强化学习训练——用 <em class="latin">step-by-step PPO</em>：生成模型每写完一步，PRM 就给这一步一个奖励信号，PPO 据此更新生成模型的权重。这意味着 PRM 不再只当推理时的"判官"，而是变成了训练时的"教练"——<em>它能一边批改、一边教生成模型怎么写得更对</em>。这一设定，正是后来 <em class="latin">DeepSeek-R1</em> 那条"纯 RL 训出推理"路线的直接思想源头之一。</p>
+
+  <h3>第四步：四阶段流水线</h3>
+  <p>把整个工程串起来，是一条干净的四阶段流水线：</p>
+
+  <figure>
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowB1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <rect x="10" y="50" width="150" height="90" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="85" y="78" text-anchor="middle" font-weight="600">阶段1 准备数学LLM</text>
+        <text x="85" y="98" text-anchor="middle" font-size="10" fill="#96897A">生成器 + 补全器</text>
+        <text x="85" y="115" text-anchor="middle" font-size="10" fill="#96897A">LLaMA2/Mistral/</text>
+        <text x="85" y="130" text-anchor="middle" font-size="10" fill="#96897A">DeepSeek-67B</text>
+        <text x="85" y="165" text-anchor="middle" font-size="9" fill="#96897A">在 MetaMath 微调</text>
+
+        <rect x="185" y="50" width="150" height="90" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="260" y="78" text-anchor="middle" font-weight="600">阶段2 构建PRM数据</text>
+        <text x="260" y="98" text-anchor="middle" font-size="10" fill="#96897A">生成器出15条解</text>
+        <text x="260" y="115" text-anchor="middle" font-size="10" fill="#96897A">每步 rollout N=8</text>
+        <text x="260" y="132" text-anchor="middle" font-size="10" fill="#96897A">HE 自动打标签</text>
+        <text x="260" y="165" text-anchor="middle" font-size="9" fill="#96897A">零人工</text>
+
+        <rect x="360" y="50" width="150" height="90" rx="2" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <text x="435" y="78" text-anchor="middle" font-weight="600" fill="#B54A2C">阶段3 训练PRM</text>
+        <text x="435" y="98" text-anchor="middle" font-size="10" fill="#B54A2C">问题+逐步解+</text>
+        <text x="435" y="115" text-anchor="middle" font-size="10" fill="#B54A2C">自动步标签</text>
+        <text x="435" y="132" text-anchor="middle" font-size="10" fill="#B54A2C">→ Math-Shepherd</text>
+        <text x="435" y="165" text-anchor="middle" font-size="9" fill="#B54A2C">交叉熵训练</text>
+
+        <rect x="535" y="50" width="150" height="90" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="610" y="78" text-anchor="middle" font-weight="600" fill="#24555A">阶段4 使用PRM</text>
+        <text x="610" y="98" text-anchor="middle" font-size="10" fill="#24555A">验证：256候选重排</text>
+        <text x="610" y="115" text-anchor="middle" font-size="10" fill="#24555A">RL：step-by-step</text>
+        <text x="610" y="132" text-anchor="middle" font-size="10" fill="#24555A">PPO 训练生成器</text>
+        <text x="610" y="165" text-anchor="middle" font-size="9" fill="#24555A">判官 → 教练</text>
+
+        <line x1="160" y1="95" x2="185" y2="95" stroke="#96897A" marker-end="url(#arrowB1)"/>
+        <line x1="335" y1="95" x2="360" y2="95" stroke="#96897A" marker-end="url(#arrowB1)"/>
+        <line x1="510" y1="95" x2="535" y2="95" stroke="#96897A" marker-end="url(#arrowB1)"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · Math-Shepherd 的四阶段流水线：准备 LLM → 自动构建 PRM 数据（零人工）→ 训练 PRM → 双用途（验证重排 + RL 训练）。判官与教练，一条流水线两用</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>把数字摆出来，"零人工的过程监督"和"判官当教练"两件事，都站住了。先看推理时当判官的验证结果（best-of-256 候选里挑最优）：</p>
+
+  <table>
+    <thead>
+      <tr><th>模型（基座）</th><th>验证方式</th><th>GSM8K</th><th>MATH</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">DeepSeek-67B</td><td>多数投票（SC）</td><td>88.2</td><td>45.4</td></tr>
+      <tr><td class="text">DeepSeek-67B</td><td>ORM 重排</td><td>92.6</td><td>45.3</td></tr>
+      <tr><td class="text">DeepSeek-67B</td><td>Math-Shepherd 重排</td><td>93.3</td><td>47.0</td></tr>
+      <tr><td class="text">DeepSeek-67B</td><td>SC + Math-Shepherd</td><td>92.5</td><td>48.1</td></tr>
+      <tr><td class="text">LLaMA2-70B</td><td>Math-Shepherd 重排</td><td>93.2</td><td>44.5</td></tr>
+    </tbody>
+  </table>
+
+  <p>这套数字有三个值得专门点出来的地方。<em>第一</em>，DeepSeek-67B 配上 Math-Shepherd，在 MATH 上拿到 48.1%——而论文里明确说，这<em>反超了当时的 GPT-4 早期版本</em>。一个开源的 67B 模型 + 一个零人工标注的 PRM，就敢和当时的闭源天花板叫板，这在 2023 年底是相当震撼的叙事。<em>第二</em>，Math-Shepherd 一致地压过 ORM——和上篇的结论遥相呼应：过程监督就是比结果监督强，而且现在它<em>不花人工了</em>。<em>第三</em>，Math-Shepherd 对不同基座都兼容，LLaMA2-70B、Llemma-34B 都能用，说明它学到的是<em>通用的过程判分能力</em>，不是绑死在某个模型上。</p>
+
+  <p>再看训练时当教练的 RL 结果——这才是这篇论文真正的"启下"贡献。以 <em class="latin">Mistral-7B</em> 为基座：</p>
+
+  <table>
+    <thead>
+      <tr><th>训练方式</th><th>GSM8K</th><th>MATH</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">MetaMath 微调（基线）</td><td>77.9</td><td>28.6</td></tr>
+      <tr><td class="text">+ Math-Shepherd 做 PPO（判官当教练）</td><td>84.1</td><td>33.0</td></tr>
+      <tr><td class="text">再 + Math-Shepherd 验证（教练+判官）</td><td>89.1</td><td>43.5</td></tr>
+    </tbody>
+  </table>
+
+  <p>这一套数字比验证结果更值得玩味。<em>把 PRM 接进 RL，让模型在"写每一步时都被打分、被纠正"</em>，GSM8K 从 77.9% 涨到 84.1%，MATH 从 28.6% 涨到 33.0%。这是<em>训练时就让模型变强</em>，不是推理时挑答案。再叠上推理时的验证，MATH 能到 43.5%——一个 7B 的小模型，靠"判官当教练 + 教练回来当判官"的组合拳，把数学能力顶到了远超自身体量的水平。<em>判官与教练，互为增益</em>。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 坐标轴 -->
+        <line x1="60" y1="40" x2="60" y2="260" stroke="#96897A"/>
+        <line x1="60" y1="260" x2="660" y2="260" stroke="#96897A"/>
+        <text x="50" y="50" text-anchor="end" font-size="10" fill="#96897A">100</text>
+        <text x="50" y="150" text-anchor="end" font-size="10" fill="#96897A">50</text>
+        <text x="50" y="265" text-anchor="end" font-size="10" fill="#96897A">0</text>
+        <text x="55" y="30" text-anchor="middle" font-size="10" fill="#96897A">acc %</text>
+
+        <!-- 两个任务分组：GSM8K（左） / MATH（右） -->
+        <text x="200" y="285" text-anchor="middle" font-size="11" fill="#24555A" font-weight="600">GSM8K</text>
+        <text x="480" y="285" text-anchor="middle" font-size="11" fill="#B54A2C" font-weight="600">MATH</text>
+
+        <!-- GSM8K 三根柱：基线 / +RL / +RL+验证 -->
+        <!-- acc 0 在 y=260, 100 在 y=40, 高度=2.2/单位 -->
+        <rect x="110" y="88.2" width="50" height="171.8" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="135" y="80" text-anchor="middle" font-size="11">77.9</text>
+        <text x="135" y="275" text-anchor="middle" font-size="9" fill="#96897A">基线</text>
+
+        <rect x="175" y="75" width="50" height="185" fill="#24555A" fill-opacity="0.5" stroke="#24555A"/>
+        <text x="200" y="67" text-anchor="middle" font-size="11" fill="#24555A">84.1</text>
+        <text x="200" y="275" text-anchor="middle" font-size="9" fill="#24555A">+RL</text>
+
+        <rect x="240" y="64" width="50" height="196" fill="#24555A" stroke="#24555A"/>
+        <text x="265" y="56" text-anchor="middle" font-size="11" fill="#24555A" font-weight="600">89.1</text>
+        <text x="265" y="275" text-anchor="middle" font-size="9" fill="#24555A">+RL+验证</text>
+
+        <!-- MATH 三根柱 -->
+        <rect x="390" y="197" width="50" height="63" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="415" y="189" text-anchor="middle" font-size="11">28.6</text>
+        <text x="415" y="275" text-anchor="middle" font-size="9" fill="#96897A">基线</text>
+
+        <rect x="455" y="187" width="50" height="73" fill="#B54A2C" fill-opacity="0.5" stroke="#B54A2C"/>
+        <text x="480" y="179" text-anchor="middle" font-size="11" fill="#B54A2C">33.0</text>
+        <text x="480" y="275" text-anchor="middle" font-size="9" fill="#B54A2C">+RL</text>
+
+        <rect x="520" y="164" width="50" height="96" fill="#B54A2C" stroke="#B54A2C"/>
+        <text x="545" y="156" text-anchor="middle" font-size="11" fill="#B54A2C" font-weight="600">43.5</text>
+        <text x="545" y="275" text-anchor="middle" font-size="9" fill="#B54A2C">+RL+验证</text>
+
+        <!-- 注释 -->
+        <text x="350" y="305" text-anchor="middle" font-size="10" fill="#96897A">Mistral-7B：判官当教练（+RL）让模型训练时就变强，再叠验证继续涨</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · Mistral-7B 的 RL 增益（按论文数据复绘）：把 PRM 接进 PPO 当教练，GSM8K 涨 6.2、MATH 涨 4.4；再叠推理时验证，MATH 一路顶到 43.5——7B 小模型打出远超自身体量的数学能力</figcaption>
+  </figure>
+
+  <p>最后还有一个最让人安心的发现——<em>自动标注的质量，扛住了和人工标注的对照</em>。作者专门验证了 Math-Shepherd 的自动标签和人工标签的一致性，结论是两者吻合度相当高；而且用自动标签训出来的 PRM，效果<em>不输</em>甚至略胜用人工 <em class="latin">PRM800K</em> 训出来的 PRM。这是个关键结论：它意味着"考生自判"并没有"错上加错"，反而<em>逼近了真人判分的水平</em>——零成本换来了接近满配的效果。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>这篇论文的影响，可以从三层来看。</p>
+  <p>第一层，是<em>把"过程监督"从奢侈品变成公共品</em>。在它之前，PRM 是 OpenAI 靠 80 万条人工标注撑起来的"贵族游戏"；在它之后，"自动过程标注"成了一个<em>可复制的标准动作</em>——任何团队只要有模型，就能自己 rollout、自己打标签、自己训 PRM。后来凡是涉及过程监督的大规模实验，几乎都建立在"用模型自动标"这个范式上，源头就是这篇。它把 PRM 的门槛，<em>整体拉低</em>到了开源社区能玩的水平。</p>
+  <p>第二层，是<em>第一次把 PRM 接进 RL，开启"判官当教练"的范式</em>。<em class="latin">Let's Verify</em> 的 PRM 只在推理时挑答案；<em class="latin">Math-Shepherd</em> 把它接进 <em class="latin">PPO</em>，让过程奖励在<em>训练时</em>塑造生成模型。这一步是整个推理范式成型的关键拼图——后来 <em class="latin">DeepSeek-R1</em> 那条"纯 RL 训出推理"的路线，其思想源头之一，就是这里"用过程奖励做 RL"的设定。<em>判官</em>第一次变成了 <em>教练</em>。</p>
+  <p>第三层，是<em>放出 Math-Shepherd 数据集，给社区递了块拼图</em>。论文把自动标注好的过程监督数据开放在 HuggingFace 上，立刻成了后续 PRM 工作的基准训练数据——连 HuggingFace 的 TRL 库都把它收作 stepwise 监督的标准示例。一个零人工的数据集放出去，等于把这条研究方向的<em>复现门槛</em>也一并抹平。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>这篇论文的局限，恰好藏在它那个"巧妙的招数"里——<em>自动标注的质量，上限被补全模型的能力卡死</em>。</p>
+  <p>第一，<em>模型不会做的题，rollout 给不出信号</em>。回到那个思考题：如果某一步其实对，但补全模型这道题本来就不会，从这步往后写多少遍都写不出正确答案，这一步就会被<em>误判成"错"</em>（假阴性）。也就是说，自动标注的<em>下限</em>，取决于补全模型自身的数学能力——模型越弱，标注越脏。这是个自指的悖论：我们用 PRM 来提升模型，但 PRM 的训练数据又依赖模型本身。后来 RLVR 路线（<em class="latin">DeepSeek-R1</em>）干脆绕开神经 PRM、改用规则可验证奖励，部分原因就是为了摆脱这种"模型自己卡自己"的脆弱性。</p>
+  <p>第二，<em>rollout 代价不低</em>。给每一步采样 N=8 次续写，本身就要烧不少算力——它把"人工标注成本"换成了"推理算力成本"。成本确实降了，但不是零；而且对长解、难题，rollout 的开销会迅速膨胀。这是后来一系列工作（如更高效搜索、隐式 PRM）想继续优化的方向。</p>
+  <p>第三，<em>PRM 仍然可能被 hack</em>。哪怕标签是自动的，Math-Shepherd 终究是个学偏好的神经网络，一旦学偏，整套搜索和 RL 就跟着偏——这是神经 PRM 这条路共通的老毛病。后来 <em class="latin">DeepSeek-R1</em> 在可验证任务上用规则奖励反超神经 PRM，恰恰从反面印证了：在<em>可验证</em>的领域，规则奖励比 PRM 更省也更难被骗。</p>
+  <p>第四，<em>只覆盖了数学</em>。自动标注依赖"有标准答案可比对"，所以它天然局限在数学这类可验证任务上；到了写作、对话、agent 这种<em>不可验证</em>任务，"写出正确答案"这把尺子就失灵了。这道边界，至今仍是过程监督没有跨过去的槛。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把"过程监督"这条线再串一遍，<em class="latin">Math-Shepherd</em> 正好处在"前奏—奠基—延伸—反叛"四幕里的<em>延伸</em>那一幕的开端：</p>
+  <ul>
+    <li><em>前奏（2021–2022）</em>：<em class="latin">Cobbe</em> 2021 训出第一个结果验证器、发现它老被骗；<em class="latin">Uesato</em> 2022 第一次比了过程 vs 结果监督，结论模棱两可。</li>
+    <li><em>奠基（2023-05）</em>：<em class="latin">Let's Verify Step by Step</em> 用 80 万条人工标注一锤定音——过程监督显著优于结果监督，PRM800K 成基准。</li>
+    <li><em>延伸（2023-12–2024）</em>：本篇 <em class="latin">Math-Shepherd</em> 把标注自动化、把 PRM 接进 RL，判官变教练；Snell 2024-08 把 PRM 当"验证者轴"画扩展曲线；<em class="latin">o1</em> 2024-09 把"想得更久 + 过程判分"做成产品。</li>
+    <li><em>反叛（2025–）</em>：<em class="latin">DeepSeek-R1</em> 2025-01 干脆放弃神经 PRM、用规则可验证奖励（<em class="latin">RLVR</em>）纯 RL 训出推理——它<em>绕过</em>了 Math-Shepherd 这条路，但承认了它立的"过程 vs 结果"那道题。<em class="latin">Kimi K1.5</em>、<em class="latin">QwQ</em> 等开源推理模型，则各自在这条路上踩出脚印。</li>
+  </ul>
+  <p>本论文自己，是"奠基"切到"延伸"的<em>第一脚</em>——它让过程监督变得"用得起"，又让 PRM 第一次能"当教练"；而它的局限（模型自卡、神经 PRM 易 hack），又成了"反叛"那一幕要回答的问题。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>这篇论文最值得玩味的，是它那份"跨机构、且暗藏未来主线"的作者名单。第一作者 <em class="latin">Peiyi Wang</em>（王培仪）当时是北京大学的学生，论文脚注里专门写明"在 DeepSeek-AI 实习期间完成"——一个实习生主导的论文，搅动了整个推理范式，这在 LLM 时代不算稀奇，但仍然值得记一笔。</p>
+  <p>更耐人寻味的是第三作者 <em class="latin">Zhihong Shao</em>（邵智宏）。这篇论文里他署名 Tsinghua University，但熟悉后来故事的人会立刻认出他——他正是 <em class="latin">DeepSeek-R1</em> 的核心负责人之一。也就是说，那个在 2023 年底把"用过程奖励做 RL"写进 <em class="latin">Math-Shepherd</em> 的人，一年多以后带着团队造出了 <em class="latin">R1</em>——只不过 <em class="latin">R1</em> 干脆<em>绕开了</em>神经 PRM，改用规则可验证奖励。一个研究者从"造 PRM 当教练"走到"放弃 PRM 用规则奖励"，这种"自我反叛"的学术叙事，和上一篇 <em class="latin">Cobbe</em>"自造问题—自填问题"的闭环，是同一种<em>工程师式的诚实</em>：哪条路跑得通就用哪条，哪怕推翻的是自己。</p>
+  <p>第二作者 <em class="latin">Lei Li</em>（李磊）则是这条线上的老面孔——他早在字节跳动和 UCSB 时期就深耕机器翻译与系统，这篇挂的是香港大学。他从"老派 NLP"一路走到"推理 RL"，恰好折射了整个领域从"统计翻译"到"推理范式"的范式迁移。北大方的 <em class="latin">Zhifang Sui</em>（穗志方）是国内计算语言学的资深学者，他实验室走出的学生，后来散布在 DeepSeek、商汤、阿里等各家推理主线上——这批 2023 年的合作，某种程度上是后来国产推理模型人才网的一个早期节点。</p>
+  <p>最后一个小彩蛋是论文的名字——<em class="latin">Math-Shepherd</em>。"Shepherd"是"牧羊人"的意思。把数学推理过程监督的模型叫"牧羊人"，是个相当传神的隐喻：模型在解题时，像一群容易走散的羊，每一步都可能<em>溜出正轨</em>；而 Math-Shepherd 就是那个拿棍子在后面赶的牧羊人——哪只羊走偏了，它就把它<em>拨回正道</em>。从"逐行批改的判官"，到"赶羊回栏的牧羊人"，再到"边赶边教的教练"——一个名字，就把 PRM 的三种角色全暗示了。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowC1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 三种角色 -->
+        <rect x="30" y="55" width="180" height="70" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="80" text-anchor="middle" font-weight="600">判官</text>
+        <text x="120" y="100" text-anchor="middle" font-size="11" fill="#96897A">推理时挑答案</text>
+        <text x="120" y="116" text-anchor="middle" font-size="10" fill="#96897A">Let's Verify</text>
+
+        <rect x="260" y="55" width="180" height="70" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="350" y="80" text-anchor="middle" font-weight="600" fill="#24555A">牧羊人</text>
+        <text x="350" y="100" text-anchor="middle" font-size="11" fill="#24555A">把走偏的步拨回</text>
+        <text x="350" y="116" text-anchor="middle" font-size="10" fill="#24555A">Math-Shepherd（命名）</text>
+
+        <rect x="490" y="55" width="180" height="70" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="580" y="80" text-anchor="middle" font-weight="600" fill="#B54A2C">教练</text>
+        <text x="580" y="100" text-anchor="middle" font-size="11" fill="#B54A2C">训练时纠正生成</text>
+        <text x="580" y="116" text-anchor="middle" font-size="10" fill="#B54A2C">Math-Shepherd（接进 RL）</text>
+
+        <line x1="210" y1="90" x2="260" y2="90" stroke="#96897A" stroke-width="1.2" marker-end="url(#arrowC1)"/>
+        <line x1="440" y1="90" x2="490" y2="90" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrowC1)"/>
+        <text x="235" y="82" text-anchor="middle" font-size="10" fill="#96897A">自动标注</text>
+        <text x="465" y="82" text-anchor="middle" font-size="10" fill="#B54A2C">接进 PPO</text>
+
+        <!-- R1 反叛 -->
+        <rect x="180" y="160" width="340" height="50" rx="2" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="4 3"/>
+        <text x="350" y="182" text-anchor="middle" font-size="11" fill="#2E2A22">后来 DeepSeek-R1（邵智宏等）</text>
+        <text x="350" y="200" text-anchor="middle" font-size="10" fill="#B54A2C">干脆放弃神经 PRM，改用规则可验证奖励 —— "自我反叛"</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · "牧羊人"的三种角色：判官（挑答案）→ 牧羊人（拨回正轨）→ 教练（训练时纠正）。而当年造 PRM 的邵智宏，后来带团队用 R1"反叛"了 PRM 这条路</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>这篇论文最值得咀嚼的，不是它刷了 93.3% 这个数字，而是它把"标注成本"这个工程问题，提升成了一个<em>范式能否成立的前提</em>。上一篇 <em class="latin">Let's Verify</em> 证明了过程监督更强，但它的代价是 80 万条人工——如果这个代价降不下来，PRM 就只是 OpenAI 的私产，推理范式也无从"民主化"。这篇论文用一个受 MCTS 启发的朴素招数——"<em>把判分改成试一试</em>"——把这道代价砍到接近零。它告诉整个领域：<em>过程监督不是奢侈品，是人人玩得起的公共品</em>。这一个工程上的"省"，恰恰是整条推理范式能铺开的<em>前提</em>。</p>
+  <p>另一个值得琢磨的，是它那个"判官当教练"的设定。把 PRM 接进 RL，听起来只是多接了一根线，但它改变了 PRM 的<em>角色</em>——从推理时的一次性裁判，变成训练时持续塑形的老师。后来 <em class="latin">R1</em>、<em class="latin">o1</em> 这些推理范式的核心，都是"<em>用某种奖励信号在训练时把推理能力训出来</em>"——而 Math-Shepherd 是这条路上最早的明确示范之一。可以说，<em class="latin">Let's Verify</em> 立了"过程监督"这杆旗，<em class="latin">Math-Shepherd</em> 同时把旗插到了"自动化"和"训练时"两块新阵地。</p>
+  <p>但读懂这篇，也得同时读懂它的<em>局限</em>——因为它那个巧妙的招数，本身就埋了被反叛的种子。"让模型自己 rollout 来判对错"，意味着<em>判官的能力被模型自己的能力卡死</em>；模型不会做的题，判官就判不准。这是后来 <em class="latin">R1</em> 放弃神经 PRM、改用规则可验证奖励的根本原因——在可验证任务上，"答案对不对"这把尺子比"模型觉得这步对不对"更硬、更难被骗。换句话说，Math-Shepherd 用模型替代了人，R1 又用规则替代了模型——每一步替代，都是对前一步脆弱性的回应。</p>
+  <p>至于"过程监督 vs 结果监督"这道题——它今天依然没终结。在可验证任务（数学、代码）上，规则奖励正在压过神经 PRM；但在不可验证任务（写作、对话、agent）上，PRM 这条路依然不可替代。Math-Shepherd 立的，不是一个终局答案，而是一个<em>分岔起点</em>——往可验证走是 RLVR，往不可验证走是 PRM 的各种变体。这两条路至今并行，各自演化。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    本篇用"模型自己 rollout 来判对错"，把过程监督自动化了——但它依赖一个前提：<em>解是分步的、且每步能被切片</em>。可模型那种"逐步推理"的写法，到底是天生的，还是被<em>教</em>出来的？换句话说——大模型为什么<em>会</em>一步一步想？这套"分步思维"的源头，到底从哪儿来？下一篇，我们往回溯——回到 2022 年初那篇只用一句提示语就引爆推理能力的论文，看"让我们一步步思考"这八个字，是怎么让大模型第一次"想清楚再说"的。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Chain-of-Thought Prompting Elicits Reasoning in Large Language Models</h3>
+    <p style="margin:0 0 10px; color:var(--muted); font-size:15px;">Chain-of-Thought：一句"让我们一步步思考"如何引爆大模型推理——思维链提示的诞生</p>
+    <p style="margin:0;">本篇把过程监督彻底自动化，但它的整套方法——给"每一步"打分、让模型"分步"推理——都建立在一个更底层的前提上：<em>模型得会一步一步想</em>。可这种"分步思维"并不是大模型天生的能力。下一篇，我们往回溯到 2022 年 1 月，<em class="latin">Jason Wei</em> 在 Google 那篇仅凭一句提示语就改变整个领域的论文——<em class="latin">Chain-of-Thought Prompting</em>。它没改一行模型代码，只在提示里加了"let's think step by step"，就让大模型在数学、逻辑上的推理能力暴涨。后来 Math-Shepherd 逐行打分的"每一步"、o1 的思维链、R1 的自我反思——所有这些，<em>都长在这八个字铺出的地基上</em>。我们去看那块地基是怎么被一句话砸出来的。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 023 篇</span>
+    <span>2026-08-22</span>
+  </footer>
+
+</div>
+</body>
+</html>
