@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chain-of-Thought 论文精读 · 大模型经典论文系列 #024</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:38px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:21px;
+    color:var(--muted);
+    margin-top:10px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13.5px;
+    line-height:1.6;
+    color:var(--ink);
+    white-space:pre;
+  }
+
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+  td.up{ color:var(--accent); font-weight:600; }
+
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:28px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#024</span>
+  </div>
+
+  <h1 class="title">
+    Chain-of-Thought Prompting Elicits Reasoning in Large Language Models
+    <span class="en">Chain-of-Thought：给模型看几个"带推理草稿"的示例，大模型竟自己学会了分步思考——思维链提示的诞生，推理范式时代的火种</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, Brian Ichter, Fei Xia, Ed H. Chi, Quoc V. Le, Denny Zhou</span>
+    <span>机构：Google Research, Brain Team</span>
+    <span>发表：2022-01 / arXiv（NeurIPS 2022）</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2201.11903" target="_blank" rel="noopener">arXiv</a>
+  </div>
+
+  <!-- ============ 上篇回顾 ============ -->
+  <div class="callout">
+    <span class="label">上篇回顾</span>
+    上一篇我们读了 <em class="latin">Math-Shepherd</em>：让模型<em>自己给自己的推理每一步打分</em>，把过程奖励模型从"80 万条人工标注"降到"零人工"，还第一次把 PRM 接进 <em class="latin">PPO</em>，让"判官"反过来当"教练"。但读懂它，就会冒出一个更底层的问题：Math-Shepherd 整套方法——给"每一步"打分、让模型"分步"推理——都建立在一个前提上：<em>模型得会一步一步想</em>。可这种"分步思维"并不是大模型与生俱来的本能。那它<em>究竟从哪儿来</em>？这一篇，我们往回溯到一切的源头——2022 年 1 月，<em class="latin">Jason Wei</em> 在 Google 那篇只用八个示例、没改一行模型代码，就让大模型在数学上暴涨近 40 个百分点的论文。
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">先纠正一个广为流传的小误会。很多人一提"思维链"，脱口而出就是那句魔法咒语"<em class="latin">let's think step by step</em>"。但其实——那句咒语出自另一篇后续论文（下篇就会讲到它）。真正砸开"思维链"这扇门的，是 2022 年 1 月 <em class="latin">Jason Wei</em> 等人在 Google Brain 写下的这篇。它的招数朴素得多：不念咒，只给模型<em>看几个带草稿的解题示例</em>。</p>
+
+  <p class="lead">故事得从一道小学数学题说起："食堂原来有 23 个苹果，做午饭用了 20 个，又买了 6 个，现在有几个？" 2022 年初，哪怕是当时最大的模型 <em class="latin">PaLM 540B</em>，直接回答也常常出错——它会把数字胡乱一加，张口就给答案。可只要在提示里塞进八个"先列式、再算、最后给答案"的范例，同一个模型突然就学会了照着样子一步步推：23 − 20 = 3，3 + 6 = 9，答案是 9。就这一个动作，<em class="latin">GSM8K</em> 小学数学基准的准确率从 <em>17.9%</em> 飙到 <em>56.9%</em>——直接反超了当时<em>专门微调</em>、还<em>带验证器</em>的 <em class="latin">GPT-3</em>。没训练、没微调、没改一行模型代码，只换了提示。这篇论文，就是后来 <em class="latin">o1</em>、<em class="latin">DeepSeek-R1</em>、<em class="latin">Math-Shepherd</em> 所有推理范式的<em>火种</em>。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    给大模型几个"带推理过程"的示例当样板，它会模仿着把复杂问题拆成一步步的中间推理再给答案——这种"思维链提示"只在足够大的模型上<em>涌现</em>，却用零训练、零微调的方式，第一次让大模型在数学、常识、符号推理上爆发，并直接点燃了后来整套推理范式。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>把这篇论文放进大模型的发展脉络，它的位置极其特殊——它是<em>整条"推理范式"主线的起点</em>。后来的 <em class="latin">Let's Verify Step by Step</em>、<em class="latin">Math-Shepherd</em>、<em class="latin">o1</em>、<em class="latin">DeepSeek-R1</em>，它们的"分步思维链"概念，<em>全部</em>长在这篇铺出的地基上。没有 CoT，就没有"逐步推理"这件事可被监督、被奖励、被强化。</p>
+  <p>承上，它接的是 <em class="latin">GPT-3</em>（本系列 #004）开启的"<em>少样本提示</em>"范式——GPT-3 证明了给几个输入输出对就能让模型做新任务；但 <em class="latin">Rae et al. 2021</em> 已经发现，单纯把模型<em>做大</em>，对数学、逻辑这类需要<em>多步推理</em>的任务，几乎<em>不涨点</em>。规模撞上了一堵"推理墙"。CoT 要回答的，正是：能不能不靠继续堆参数，而是靠<em>换个问法</em>翻过这堵墙？启下，它一锤定音——可以。于是后续工作沿着两条岔路展开：一条是"提示侧"的<em>self-consistency</em>、<em>zero-shot CoT</em>、<em>tree of thoughts</em>；另一条是"训练侧"的过程监督、<em>PRM</em>、纯 <em class="latin">RL</em> 推理。两路的源头，都是这篇。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 270" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="130" x2="660" y2="130" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 时代区间 -->
+        <text x="60" y="235" fill="#24555A" font-size="10">规模化探索期（撞上"推理墙"）</text>
+        <line x1="60" y1="241" x2="240" y2="241" stroke="#24555A" stroke-width="1.5" opacity="0.5"/>
+        <text x="260" y="235" fill="#B54A2C" font-size="10">推理范式期（CoT 是火种）</text>
+        <line x1="260" y1="241" x2="660" y2="241" stroke="#B54A2C" stroke-width="1.5"/>
+
+        <!-- 规模化期节点 -->
+        <circle cx="80" cy="130" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="80" y="110" text-anchor="middle">2020-05</text>
+        <text x="80" y="160" text-anchor="middle" fill="#2E2A22">GPT-3</text>
+
+        <circle cx="180" cy="130" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="180" y="110" text-anchor="middle">2022-03</text>
+        <text x="180" y="160" text-anchor="middle" fill="#2E2A22">Chinchilla</text>
+
+        <!-- 本篇：CoT，2022-01，跨在两区间分界上 -->
+        <circle cx="255" cy="130" r="9" fill="#B54A2C"/>
+        <circle cx="255" cy="130" r="14" fill="none" stroke="#B54A2C" stroke-width="1" opacity="0.4"/>
+        <text x="255" y="98" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="255" y="160" text-anchor="middle" fill="#2E2A22" font-weight="600">CoT</text>
+        <text x="255" y="174" text-anchor="middle" fill="#2E2A22" font-size="9">2022-01</text>
+
+        <!-- 推理范式期节点 -->
+        <circle cx="330" cy="130" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="330" y="110" text-anchor="middle">2022-03</text>
+        <text x="330" y="160" text-anchor="middle" fill="#2E2A22">Self-Consistency</text>
+
+        <circle cx="410" cy="130" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="410" y="110" text-anchor="middle">2023-05</text>
+        <text x="410" y="160" text-anchor="middle" fill="#2E2A22">Let's Verify</text>
+
+        <circle cx="475" cy="130" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="475" y="110" text-anchor="middle">2024-09</text>
+        <text x="475" y="160" text-anchor="middle" fill="#2E2A22">o1</text>
+
+        <circle cx="545" cy="130" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="545" y="110" text-anchor="middle">2025-01</text>
+        <text x="545" y="160" text-anchor="middle" fill="#2E2A22">DeepSeek-R1</text>
+
+        <circle cx="635" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="635" y="110" text-anchor="middle">未来</text>
+        <text x="635" y="160" text-anchor="middle">?</text>
+
+        <!-- 虚线连接 CoT 到 R1，强调传承 -->
+        <path d="M 255 178 Q 400 210 545 178" fill="none" stroke="#B54A2C" stroke-width="1" stroke-dasharray="3 3" opacity="0.6"/>
+        <text x="400" y="210" text-anchor="middle" font-size="9" fill="#B54A2C" opacity="0.8">"分步推理"概念一路传承</text>
+      </g>
+      <defs/>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的位置：实心点为本系列已解析论文，红色为本篇。CoT 正卡在"规模化撞墙"和"推理范式爆发"的分界上，是后来 Self-Consistency、Let's Verify、Math-Shepherd、o1、R1 全线的火种</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要看懂这篇论文为什么要做，得先看清 2022 年初横在大模型面前的两堵墙，以及前人留下的两块半成品。</p>
+
+  <p>第一堵墙，是<em>规模撞墙</em>。<em class="latin">Kaplan</em> 的 scaling laws 和 <em class="latin">GPT-3</em> 让整个领域相信：只要把模型做大，能力就会涨。可 <em class="latin">Rae et al. 2021</em>（DeepMind）专门测了算术推理，发现一个尴尬的事实——模型从几十亿做到几千亿，小学数学准确率<em>几乎不动</em>。<em class="latin">BIG-bench</em> 也证实：在需要多步推理的任务上，单纯加大规模<em>解不开</em>。也就是说，"更大就更强"这条定律，在推理任务上<em>失灵</em>了。整个领域隐约意识到：推理不是"规模"问题，是"<em>方法</em>"问题。</p>
+
+  <p>第二堵墙，是<em>提示失灵</em>。<em class="latin">GPT-3</em> 开创的"少样本提示"——给几个 ⟨输入, 输出⟩ 对，让模型照着做——在翻译、问答这类"一步到位"的任务上神勇；可一旦遇到数学题，模型直接给答案就经常错。问题不在模型懂不懂加减法，而在于它<em>把整个推理过程塞进了一次性输出</em>，中间步骤没地方放，错了也回不了头。</p>
+
+  <p>前人也留下了两块半成品。<em class="latin">Ling et al. 2017</em> 早就发现，让模型<em>生成自然语言理由</em>（rationale）再给答案，比直接给答案强——但他们是从头训练。更近的是 <em class="latin">Cobbe et al. 2021</em>（OpenAI，本系列推理线的前奏）：他们用带<em>推理过程</em>的标注数据<em>微调</em> GPT-3，还训了个验证器挑答案，把 <em class="latin">GSM8K</em> 顶到约 55%。另一块是 <em class="latin">Nye et al. 2021</em> 的 <em class="latin">scratchpad</em>——让模型在"草稿区"写中间步骤。思路都对，但它们<em>都要训练</em>：要么从头训，要么微调，要么造大量标注。代价高，且每来一个新任务就得重训一遍。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象一个天才学生，脑子够用，但答题习惯极差——老师念完题，他张口就报答案，难题一急就乱猜。怎么救？<em class="latin">Cobbe</em> 的办法是<em>送他去补习班</em>，用几万道带步骤的题<em>重新训练</em>他做题的习惯——有效，但贵，而且换个科目又得重训。<em class="latin">Jason Wei</em> 的办法是：不训练，只在考前<em>给他看几份带草稿的满分卷子</em>，告诉他"你就照这个样子写"。学生照葫芦画瓢，先把中间步骤写出来再给答案——难题的正确率立刻翻倍。前者改"脑子"，后者只改"<em>答题格式</em>"。
+  </div>
+
+  <p>CoT 的洞察，恰恰是把两块半成品的优点合起来、缺点丢掉：保留"生成中间推理步骤"这个关键动作（来自 rationale / scratchpad），但用 GPT-3 的"<em>少样本提示</em>"来注入——既不用训练，也一个模型通吃所有任务。思路简单到让人觉得"这不该是个 trick 吗？"——可它就是 work，而且 work 得惊天动地。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>把背景剥干净，这篇论文要回答的，是一个问得极其朴素、却没人正面回答过的问题：</p>
+  <p><em>能不能不改模型、不训练、不微调，只靠在提示里给几个"带推理过程的示例"，就让大模型学会分步推理，从而在数学、常识、符号推理上大幅涨点？</em></p>
+  <p>这个问题的潜台词，是和当时主流对着干——主流要么堆规模，要么微调+验证器。CoT 押的是另一条路：<em>能力其实早就在模型里了，只是没被"唤醒"</em>；唤醒它不需要训练，只需要给对"样板"。如果这条路成立，意义远不止涨点——它意味着推理是<em>可被提示激发的潜在能力</em>，而不必非得靠训练注入。这正是后来"涌现能力"（<em class="latin">emergent abilities</em>）这条理论线的实证起点。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    假设你给模型看了带推理步骤的示例，它真的就<em>模仿着一步步推</em>了。那这里头的功劳，到底是"模型学会了推理"，还是"模型只是在<em>背格式</em>"？换句话说——如果示例里的推理步骤<em>故意写错</em>（但答案对），模型还会照着错步骤推吗？先想想，再往下看。（提示：这个质疑后来真有人做了实验，结论出乎意料——我们会在"局限性"和"趣味延伸"里两次回到这个问题。）
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>这篇论文的方法干净到几乎"没有方法"——核心就一个动作：把提示里的示例，从 ⟨输入, 输出⟩ 换成 ⟨输入, 思维链, 输出⟩。我们分三步看：先看这个动作本身，再看那个被论文反复引用的经典示例，最后看它最反直觉的发现——为什么这能力是"<em>涌现</em>"的。</p>
+
+  <h3>第一步：标准提示 vs 思维链提示</h3>
+  <p>标准少样本提示（standard prompting）长这样：给几个 ⟨问题, 答案⟩ 对，模型照着直接给答案。思维链提示（chain-of-thought prompting）只在答案<em>前面</em>插了一段自然语言推理过程。就这么一点差别。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowA1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 左：标准提示 -->
+        <text x="170" y="24" text-anchor="middle" font-weight="600">标准提示 Standard</text>
+        <rect x="30" y="40" width="280" height="48" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="45" y="62" font-size="11">Q: 食堂有 23 个苹果…</text>
+        <text x="45" y="80" font-size="11" fill="#96897A">A: 9</text>
+
+        <rect x="30" y="100" width="280" height="48" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="45" y="122" font-size="11">Q: [示例 2]</text>
+        <text x="45" y="140" font-size="11" fill="#96897A">A: [直接答案]</text>
+
+        <rect x="30" y="160" width="280" height="48" fill="#F4EFE4" stroke="#96897A" stroke-dasharray="3 2"/>
+        <text x="45" y="182" font-size="11">Q: 罗杰有 5 个网球…</text>
+        <text x="45" y="200" font-size="11" fill="#96897A">A: ?（模型直接猜）</text>
+
+        <text x="170" y="240" text-anchor="middle" font-size="11" fill="#96897A">答案常错：没处放中间步骤</text>
+
+        <!-- 右：CoT 提示 -->
+        <text x="525" y="24" text-anchor="middle" font-weight="600" fill="#B54A2C">思维链提示 CoT</text>
+        <rect x="385" y="40" width="280" height="48" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <text x="400" y="62" font-size="11">Q: 食堂有 23 个苹果…</text>
+        <text x="400" y="80" font-size="11" fill="#B54A2C">A: 原来 23 个，用 20 个，剩 3</text>
+
+        <rect x="385" y="100" width="280" height="48" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <text x="400" y="122" font-size="11">Q: [示例 2]</text>
+        <text x="400" y="140" font-size="11" fill="#B54A2C">A: [带推理步骤]</text>
+
+        <rect x="385" y="160" width="280" height="48" fill="#F4EFE4" stroke="#B54A2C" stroke-dasharray="3 2"/>
+        <text x="400" y="182" font-size="11">Q: 罗杰有 5 个网球…</text>
+        <text x="400" y="200" font-size="11" fill="#B54A2C">A: 先 5+2×3=11，再答 11 ✓</text>
+
+        <text x="525" y="240" text-anchor="middle" font-size="11" fill="#B54A2C">示例里多了"推理草稿"</text>
+
+        <!-- 中间对比箭头 -->
+        <text x="350" y="130" text-anchor="middle" font-size="10" fill="#24555A">关键差别</text>
+        <line x1="315" y1="140" x2="380" y2="140" stroke="#24555A" stroke-width="1.2" marker-end="url(#arrowA1)"/>
+        <text x="350" y="158" text-anchor="middle" font-size="9" fill="#24555A">+ 推理步骤</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · 标准 prompting 与 CoT prompting 的唯一差别：示例的答案前面，多了一段"推理草稿"。模型照葫芦画瓢，遇到新题也会先把中间步骤写出来再给答案</figcaption>
+  </figure>
+
+  <p>就这么一点改动，背后却换了一个根本性的机制——<em>把答案的计算从"一次性映射"变成了"多步生成"</em>。标准提示下，模型要把"读题→列式→算→给答案"全压在一次前向传播里；CoT 下，每生成一个中间步骤都是一次完整的前向传播，模型可以<em>看到自己上一步写了什么</em>再决定下一步。这是个计算复杂度的跃迁——后面"趣味延伸"会专门讲。</p>
+
+  <h3>第二步：那个经典的示例——食堂的苹果</h3>
+  <p>论文 Figure 1 给了一个被后世反复引用的示例（餐厅苹果题）。它的结构是思维链提示的标准样板：</p>
+
+  <pre><code>Q: The cafeteria had 23 apples originally.
+   They used 20 to make lunch. They bought 6 more apples.
+   How many apples do they have now?
+
+A: The cafeteria had 23 apples originally.
+   They used 20 to make lunch. So they have 23 - 20 = 3.
+   They bought 6 more apples, so they have 3 + 6 = 9.
+   The answer is 9.</code></pre>
+
+  <p>注意三个细节。<em>第一</em>，推理过程用的是<em>最朴素的自然语言</em>，不是方程、不是代码——这是 CoT 区别于"neuro-symbolic"路线的关键：它要的是人话，不是公式。<em>第二</em>，每一步都把"算式"嵌在句子里（<em class="latin">23 - 20 = 3</em>），既给了文字说明，又给了数值演算——模型可以照着拆。<em>第三</em>，最后一句"<em class="latin">The answer is 9.</em>"把答案固定到一个可被正则抓出来的格式里，方便评估。<em>整套思维链，就是一份"带过程的满分卷子"</em>。论文里一共用了八个这样的示例，覆盖各种题型；模型见完这八个，就开始模仿着写自己的草稿。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowA2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 八个示例 -->
+        <text x="350" y="24" text-anchor="middle" font-size="11" fill="#24555A" font-weight="600">提示里塞 8 个带推理的示例（few-shot CoT）</text>
+        <g font-size="10">
+          <rect x="30" y="40" width="70" height="34" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+          <text x="65" y="60" text-anchor="middle">示例1</text>
+          <rect x="110" y="40" width="70" height="34" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+          <text x="145" y="60" text-anchor="middle">示例2</text>
+          <rect x="190" y="40" width="70" height="34" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+          <text x="225" y="60" text-anchor="middle">示例3</text>
+          <rect x="270" y="40" width="70" height="34" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+          <text x="305" y="60" text-anchor="middle">示例4</text>
+          <rect x="350" y="40" width="70" height="34" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+          <text x="385" y="60" text-anchor="middle">示例5</text>
+          <rect x="430" y="40" width="70" height="34" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+          <text x="465" y="60" text-anchor="middle">示例6</text>
+          <rect x="510" y="40" width="70" height="34" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+          <text x="545" y="60" text-anchor="middle">示例7</text>
+          <rect x="590" y="40" width="70" height="34" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+          <text x="625" y="60" text-anchor="middle">示例8</text>
+        </g>
+
+        <line x1="345" y1="80" x2="345" y2="110" stroke="#96897A" stroke-width="1.2" marker-end="url(#arrowA2)"/>
+
+        <!-- 新题 -->
+        <rect x="200" y="120" width="300" height="40" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="145" text-anchor="middle" font-size="11">新题：罗杰有 5 个网球，买 2 罐×3 个…</text>
+
+        <line x1="345" y1="160" x2="345" y2="180" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrowA2)"/>
+
+        <rect x="150" y="190" width="400" height="0" fill="none"/>
+
+        <text x="350" y="200" text-anchor="middle" font-size="11" fill="#B54A2C" font-weight="600">模型自己写出：5 + 2×3 = 11，答案 11 ✓</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · few-shot CoT 的完整流程：八个带推理的示例 + 一道新题 → 模型照着样板，自己生成中间推理再给答案。零训练，纯提示</figcaption>
+  </figure>
+
+  <h3>第三步：为什么是"涌现"的——CoT 最反直觉的发现</h3>
+  <p>这篇论文最让人吃惊的，不是"CoT 让 PaLM 540B 涨了点"，而是它对<em>不同规模模型</em>的表现——CoT <em>不是普遍有效</em>的，它只在<em>足够大</em>的模型上爆发，在小模型上<em>几乎没用，甚至更差</em>。这是个"<em>涌现能力</em>"（emergent ability）的活样本：能力不是随着规模<em>线性</em>涨上来的，而是跨过某个规模阈值<em>突然</em>出现。Jason Wei 同年另一篇 <em class="latin">Emergent Abilities of Large Language Models</em>，就把 CoT 当成涌现能力的代表案例。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 坐标轴 -->
+        <line x1="70" y1="40" x2="70" y2="240" stroke="#96897A"/>
+        <line x1="70" y1="240" x2="650" y2="240" stroke="#96897A"/>
+        <!-- y 轴刻度 -->
+        <text x="60" y="50" text-anchor="end" font-size="10" fill="#96897A">60</text>
+        <text x="60" y="140" text-anchor="end" font-size="10" fill="#96897A">30</text>
+        <text x="60" y="240" text-anchor="end" font-size="10" fill="#96897A">0</text>
+        <line x1="68" y1="140" x2="650" y2="140" stroke="#96897A" stroke-dasharray="2 3" opacity="0.4"/>
+        <text x="50" y="30" text-anchor="middle" font-size="10" fill="#96897A">acc %</text>
+        <!-- x 轴刻度 -->
+        <text x="180" y="258" text-anchor="middle" font-size="10" fill="#96897A">8B</text>
+        <text x="370" y="258" text-anchor="middle" font-size="10" fill="#96897A">62B</text>
+        <text x="580" y="258" text-anchor="middle" font-size="10" fill="#96897A">540B</text>
+        <text x="370" y="278" text-anchor="middle" font-size="10" fill="#96897A">模型规模（PaLM）</text>
+
+        <!-- standard 折线：8B~19, 62B~21, 540B~18 -->
+        <polyline points="180,180 370,173 580,180" fill="none" stroke="#96897A" stroke-width="1.8"/>
+        <circle cx="180" cy="180" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="370" cy="173" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="580" cy="180" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="180" y="170" text-anchor="middle" font-size="10" fill="#96897A">17</text>
+        <text x="370" y="163" text-anchor="middle" font-size="10" fill="#96897A">21</text>
+        <text x="600" y="180" font-size="10" fill="#96897A">18</text>
+
+        <!-- CoT 折线：8B~17(更低), 62B~33, 540B~57 -->
+        <polyline points="180,186 370,127 580,50" fill="none" stroke="#B54A2C" stroke-width="2"/>
+        <circle cx="180" cy="186" r="5" fill="#B54A2C"/>
+        <circle cx="370" cy="127" r="5" fill="#B54A2C"/>
+        <circle cx="580" cy="50" r="6" fill="#B54A2C"/>
+        <text x="180" y="205" text-anchor="middle" font-size="10" fill="#B54A2C">17 ↓</text>
+        <text x="370" y="117" text-anchor="middle" font-size="10" fill="#B54A2C">33</text>
+        <text x="580" y="40" text-anchor="middle" font-size="11" fill="#B54A2C" font-weight="600">57</text>
+
+        <!-- 涌现标注 -->
+        <text x="280" y="220" text-anchor="middle" font-size="10" fill="#24555A">小模型：CoT 反而更差</text>
+        <text x="280" y="234" text-anchor="middle" font-size="9" fill="#24555A">（8B 处 CoT 低于 standard）</text>
+
+        <text x="490" y="95" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">跨过阈值 → 涌现</text>
+        <path d="M 460 100 Q 520 80 575 55" fill="none" stroke="#B54A2C" stroke-width="1" stroke-dasharray="2 2" opacity="0.7"/>
+
+        <!-- 图例 -->
+        <rect x="430" y="200" width="14" height="3" fill="#96897A"/>
+        <text x="450" y="205" font-size="10" fill="#2E2A22">标准提示</text>
+        <rect x="530" y="198" width="14" height="3" fill="#B54A2C"/>
+        <text x="550" y="205" font-size="10" fill="#2E2A22">CoT 提示</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · GSM8K 上 CoT 的"涌现"现象（按论文数据复绘）：8B 时 CoT 反而比标准提示略低，62B 才开始反超，540B 一飞冲天到 57%。能力不是线性涨上来的，是跨过规模阈值突然出现的</figcaption>
+  </figure>
+
+  <p>这个发现的意义，远超"涨点"本身。它说明了三件事。<em>第一</em>，推理能力<em>不是被训练注入的</em>，而是<em>本来就潜伏在大模型里</em>，只是小模型没"长大"到能被唤醒的程度——CoT 只是那把钥匙。<em>第二</em>，"涌现"这件事第一次有了<em>可复现的实证样本</em>：你可以眼看着同一种方法，在 8B 上没用、在 540B 上爆发。这成了后来 scaling 与能力关系讨论的基石。<em>第三</em>，它给整个领域提了个醒：<em>别在小模型上轻易否定一个方法</em>——很多能力只是还没"长出来"。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>把数字摆出来，CoT 在三大类推理任务上，都给了大模型一次"质变"。先看算术推理（PaLM 540B）：</p>
+
+  <table>
+    <thead>
+      <tr><th>数据集</th><th>标准提示</th><th>CoT 提示</th><th>提升</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">GSM8K（小学数学）</td><td>17.9</td><td>56.9</td><td class="up">+39.0</td></tr>
+      <tr><td class="text">SVAMP（应用题）</td><td>24.0</td><td>79.0</td><td class="up">+55.0</td></tr>
+      <tr><td class="text">ASDiv（应用题）</td><td>48.0</td><td>76.0</td><td class="up">+28.0</td></tr>
+      <tr><td class="text">MAWPS（应用题）</td><td>58.0</td><td>93.0</td><td class="up">+35.0</td></tr>
+      <tr><td class="text">AQuA（代数）</td><td>17.0</td><td>35.0</td><td class="up">+18.0</td></tr>
+    </tbody>
+  </table>
+
+  <p>这套数字最炸眼的是 <em class="latin">GSM8K</em>——PaLM 540B 用八个示例冲到 <em>56.9%</em>，而当时 <em class="latin">Cobbe et al.</em> 用<em>专门微调</em>的 GPT-3 加上<em>训练出来的验证器</em>，才做到约 55%。也就是说：<em>零训练的提示，反超了带验证器的微调</em>。这是论文摘要里那句"surpassing even finetuned GPT-3 with a verifier"的来历——一句话，把"训练 vs 提示"的天平，狠狠压向了提示这一侧。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <line x1="70" y1="40" x2="70" y2="220" stroke="#96897A"/>
+        <line x1="70" y1="220" x2="650" y2="220" stroke="#96897A"/>
+        <text x="60" y="50" text-anchor="end" font-size="10" fill="#96897A">60</text>
+        <text x="60" y="130" text-anchor="end" font-size="10" fill="#96897A">30</text>
+        <text x="60" y="220" text-anchor="end" font-size="10" fill="#96897A">0</text>
+        <line x1="68" y1="130" x2="650" y2="130" stroke="#96897A" stroke-dasharray="2 3" opacity="0.4"/>
+
+        <!-- GPT-3 175B -->
+        <text x="170" y="240" text-anchor="middle" font-size="10" fill="#96897A">GPT-3 175B</text>
+        <rect x="130" y="180" width="32" height="40" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="146" y="172" text-anchor="middle" font-size="9">17.9</text>
+        <text x="146" y="258" text-anchor="middle" font-size="8" fill="#96897A">标准</text>
+        <rect x="166" y="150" width="32" height="70" fill="#96897A" fill-opacity="0.5" stroke="#96897A"/>
+        <text x="182" y="142" text-anchor="middle" font-size="9">21.0</text>
+        <text x="182" y="258" text-anchor="middle" font-size="8" fill="#96897A">CoT</text>
+
+        <!-- LaMDA 137B -->
+        <text x="320" y="240" text-anchor="middle" font-size="10" fill="#96897A">LaMDA 137B</text>
+        <rect x="280" y="180" width="32" height="40" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="296" y="172" text-anchor="middle" font-size="9">17.0</text>
+        <text x="296" y="258" text-anchor="middle" font-size="8" fill="#96897A">标准</text>
+        <rect x="316" y="160" width="32" height="60" fill="#96897A" fill-opacity="0.5" stroke="#96897A"/>
+        <text x="332" y="152" text-anchor="middle" font-size="9">27.0</text>
+        <text x="332" y="258" text-anchor="middle" font-size="8" fill="#96897A">CoT</text>
+
+        <!-- PaLM 540B -->
+        <text x="500" y="240" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">PaLM 540B</text>
+        <rect x="460" y="180" width="32" height="40" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="476" y="172" text-anchor="middle" font-size="9">17.9</text>
+        <text x="476" y="258" text-anchor="middle" font-size="8" fill="#96897A">标准</text>
+        <rect x="496" y="32" width="32" height="188" fill="#B54A2C" stroke="#B54A2C"/>
+        <text x="512" y="24" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">56.9</text>
+        <text x="512" y="258" text-anchor="middle" font-size="8" fill="#B54A2C">CoT</text>
+
+        <!-- 微调 GPT-3 + verifier 基线 -->
+        <line x1="555" y1="55" x2="600" y2="55" stroke="#24555A" stroke-dasharray="3 2"/>
+        <text x="615" y="59" font-size="9" fill="#24555A">微调GPT-3+验证器 ≈55</text>
+
+        <text x="350" y="278" text-anchor="middle" font-size="10" fill="#96897A">GSM8K 准确率（%）：PaLM 540B + CoT 零训练反超带验证器的微调 GPT-3</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · GSM8K 跨模型对比（按论文数据复绘）：CoT 在 GPT-3、LaMDA 上仅小幅提升，在 PaLM 540B 上才爆发——再次印证"涌现"。而 56.9% 这条线，直接越过"微调+验证器"的旧 SOTA</figcaption>
+  </figure>
+
+  <p>再看常识推理（commonsense）和符号推理（symbolic），CoT 同样在 PaLM 540B 上显著有效：</p>
+
+  <table>
+    <thead>
+      <tr><th>数据集</th><th>类型</th><th>标准</th><th>CoT</th><th>提升</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">CommonsenseQA</td><td>常识</td><td>71.0</td><td>75.0</td><td class="up">+4.0</td></tr>
+      <tr><td class="text">StrategyQA</td><td>常识</td><td>60.0</td><td>67.0</td><td class="up">+7.0</td></tr>
+      <tr><td class="text">Last Letter（2 示例）</td><td>符号</td><td>28.0</td><td>73.0</td><td class="up">+45.0</td></tr>
+      <tr><td class="text">Coin Flip</td><td>符号</td><td>87.0</td><td>100.0</td><td class="up">+13.0</td></tr>
+    </tbody>
+  </table>
+
+  <p>这里有两个细节值得专门点出。<em>第一</em>，<em>符号推理的暴涨</em>——"末字母拼接"任务从 28% 直冲 73%，"硬币翻转"几乎满分。这两类任务<em>模型本来几乎不可能靠记忆答对</em>（拼接四个词的末字母、连翻三次硬币的正反），但只要照着示例一步步推，就能稳稳算对。这等于证明了 CoT 不只是"会做数学"，而是<em>通用的多步推理开关</em>。<em>第二</em>，作者还做了一组特别狡猾的"超出示例长度"实验：让测试题比示例里的题更长（比如示例是翻 2 次硬币，测试翻 4 次），CoT 依然有效——说明模型学到的<em>不是"背长度"，而是"分步推的套路"</em>，能外推到更长的序列。这是 CoT 区别于"模式匹配"的关键证据。</p>
+
+  <p>还有一组消融实验，把"CoT 为什么有效"剥得相当干净。<em>关键发现</em>：把示例里的推理步骤<em>换成等长但无意义的 "..."</em>（即只增加输出长度、不增加推理内容），<em>几乎不涨点</em>——这排除了"只是给了更多算 token"的解释。把推理步骤的<em>顺序打乱</em>，效果也大幅下降——说明"中间步骤要按逻辑顺序"是关键。换句话说，CoT 之所以有用，不是因为模型"多说几句话"，而是因为它真的在<em>按顺序做中间计算</em>。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>这篇论文的影响，怎么强调都不为过——它是过去五年大模型领域被引用最多的论文之一，且<em>直接定义了一个范式</em>。可以从三层来看。</p>
+  <p>第一层，是<em>用提示而非训练，解锁了推理</em>。在它之前，要让模型会推理，要么从头训（<em class="latin">Ling</em>），要么微调加验证器（<em class="latin">Cobbe</em>）——都重、都贵、都绑定任务。CoT 用八个示例、零训练，就反超了带验证器的微调。这一下把"推理"从"训练问题"重定义为"<em>提示问题</em>"，直接催生了整个 <em class="latin">prompt engineering</em> 领域，也让"推理"成了<em>人人可玩</em>的能力。</p>
+  <p>第二层，是<em>点燃了一整条研究主线</em>。CoT 一出，立刻沿两条岔路爆发。<em>提示侧</em>：同年 3 月 <em class="latin">Wang et al.</em> 的 <em class="latin">self-consistency</em>（采样多条思维链投票，GSM8K 再涨 17.9%）；5 月 <em class="latin">Kojima et al.</em> 的 <em class="latin">zero-shot CoT</em>（连示例都不要，一句"let's think step by step"就够）；之后 <em class="latin">least-to-most</em>、<em class="latin">tree of thoughts</em>、<em class="latin">program-of-thoughts</em> 一路长出来。<em>训练侧</em>：因为 CoT 证明了"分步推理"可以被生成，<em class="latin">Let's Verify Step by Step</em> 才有"逐步"可监督，<em class="latin">Math-Shepherd</em> 才有"每一步"可打分，<em class="latin">o1</em> 才有"思维链"可被强化学习训练，<em class="latin">DeepSeek-R1</em> 才有"反思链"可自发涌现。可以说，<em>没有 CoT，就没有后来这一整条推理范式</em>。</p>
+  <p>第三层，是<em>给"涌现能力"提供了第一个干净的实证样本</em>。CoT 在 8B 没用、在 540B 爆发，这种"跨过阈值突然出现"的现象，成了 Jason Wei 同年 <em class="latin">Emergent Abilities</em> 论文的核心论据，也彻底改变了整个领域对"规模"的理解——能力不只是连续涨上来的，有时是<em>相变</em>出来的。这一观念，至今影响着 scaling 与能力关系的所有讨论。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>这篇论文的局限，藏在它那个"朴素到像 trick"的方法里——也正因为朴素，留下了几道后来者要补的口子。</p>
+  <p>第一，<em>严重依赖规模，小模型白搭</em>。CoT 只在 ~100B 以上的模型上才显著有效，8B、62B 几乎没用甚至更差。这意味着开源小模型早期根本用不上 CoT——直到后来 <em class="latin">distill</em>（蒸馏大模型的思维链给小模型）出现，才让小模型也能"学着分步想"。这个局限，直接催生了后来"思维链蒸馏"这条子线（本系列的 <em class="latin">Sky-T1</em> #017 就是它的延伸）。</p>
+  <p>第二，<em>示例得人工写，且对写法敏感</em>。八个示例是手工挑、手工写的，换一组示例效果会浮动。这让 CoT 的效果不稳定、不可复现到细节——后来 <em class="latin">auto-CoT</em>（自动生成示例）就是来补这道口子的。</p>
+  <p>第三，也是最深的那个质疑——<em>模型到底是在"推理"，还是在"背格式"？</em>前面那个思考题，后来被 <em class="latin">Wang et al. 2022</em>（<em class="latin">Towards Understanding Chain-of-Thought Prompting</em>）正面做了实验：把示例里的推理步骤<em>故意写成错的</em>（但答案对），模型依然能达到 CoT 80–90% 的效果，而且<em>自己生成的推理是连贯的</em>。这是个相当震撼的结论——它说明 CoT 的"示例推理对不对"<em>没那么重要</em>，真正重要的是示例<em>规定了"分步输出"这个格式</em>。这反过来支持了一种解读：模型<em>本来就有推理能力</em>（来自预训练），示例主要作用是<em>把它"逼"成分步输出的形式</em>，而不是真的"教会"它推理。CoT 是钥匙，不是老师——能力一直在屋里，钥匙只是开了门。但这道门到底开得多开得多浅，至今仍是开放问题。</p>
+  <p>第四，<em>CoT 会编造看似合理实则错误的推理</em>。模型一步步推得很像样，但中间步骤可能是错的——这就是后来 <em class="latin">Let's Verify</em> 要"逐步打分"、<em class="latin">Math-Shepherd</em> 要"逐步监督"的根本原因。CoT 让模型<em>会分步</em>了，但没保证它<em>分步得对</em>。这道"对不对"的口子，正是上两篇论文的来由。</p>
+  <p>第五，<em>贪心解码，一条路走到黑</em>。原始 CoT 用贪心解码，只生成一条思维链——错了就错了，没回头路。这直接被 <em class="latin">self-consistency</em> 补上：采样多条链、投票选最一致的答案，GSM8K 再涨 17.9%。但 self-consistency 又带出"贵"的问题（要跑多次），这个权衡一路延续到 <em class="latin">Scaling Test-Time Compute</em>（#021）和 <em class="latin">o1</em>（#020）。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把"推理范式"这条线再串一遍，CoT 正好处在"撞墙—点燃—提示侧爆发—训练侧爆发—产品化—反叛"六幕里的<em>点燃</em>那一幕：</p>
+  <ul>
+    <li><em>撞墙（2020–2021）</em>：<em class="latin">GPT-3</em> 把规模推到 175B，但 <em class="latin">Rae et al. 2021</em> 发现规模对多步推理几乎不涨点；<em class="latin">Cobbe et al. 2021</em> 用微调+验证器把 GSM8K 顶到 55%，但代价高、绑定任务。<em class="latin">Nye et al.</em> 的 <em class="latin">scratchpad</em> 已经摸到"中间步骤"的边，但还要训练。</li>
+    <li><em>点燃（2022-01）</em>：本篇 <em class="latin">CoT</em> 一锤定音——零训练、纯提示，PaLM 540B 在 GSM8K 反超带验证器的微调 GPT-3；并揭示这是"涌现能力"。</li>
+    <li><em>提示侧爆发（2022）</em>：<em class="latin">Self-Consistency</em>（2022-03）采样多条链投票再涨 17.9%；<em class="latin">Zero-shot CoT</em>（2022-05）连示例都不要；<em class="latin">least-to-most</em>、<em class="latin">tree of thoughts</em> 一路涌现。</li>
+    <li><em>训练侧爆发（2023–2024）</em>：<em class="latin">Let's Verify</em>（2023-05，#022）给每步打分，过程监督碾压结果监督；<em class="latin">Math-Shepherd</em>（2023-12，#023）把监督自动化、PRM 接进 RL；<em class="latin">Scaling Test-Time Compute</em>（2024-08，#021）为"想得更久"画扩展曲线。</li>
+    <li><em>产品化（2024-09）</em>：<em class="latin">o1</em>（#020）把"训练时就让模型学会分步推理"做成产品，推理范式正式进入大众视野。</li>
+    <li><em>反叛（2025–）</em>：<em class="latin">DeepSeek-R1</em>（2025-01，#013）干脆放弃神经 PRM，用规则可验证奖励纯 RL 训出推理——它绕过了 CoT 衍生的一些脆弱点，但承认了 CoT 立的"分步推理"这道地基。</li>
+  </ul>
+  <p>本论文自己，是整条主线的<em>火种</em>——它让"分步推理"第一次成为可被注入、可被复现的能力；之后无论是提示侧还是训练侧，所有工作都在回答 CoT 留下的两个问题：<em>"怎么让它推得更对"</em>和<em>"怎么让它推得更稳"</em>。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>这篇论文背后的故事，是 LLM 时代一段堪称传奇的"作者轨迹"——第一作者 <em class="latin">Jason Wei</em> 的个人路线，几乎就是半部推理范式发展史。</p>
+  <p>Jason Wei 写这篇论文时，是 Google Brain 的年轻研究员。他在 2022 年这一年里，一个人名字挂在了三篇决定性论文上：<em class="latin">Chain-of-Thought</em>（1 月）、<em class="latin">Emergent Abilities</em>（6 月，TMLR）、以及 <em class="latin">Self-Consistency</em> 的合作者（3 月，<em class="latin">Wang et al.</em> 一作，他是二作）。一个研究员，一年之内，既定义了"推理怎么被提示"、又定义了"涌现能力"这个理论概念、还参与了"推理怎么被改进"——这种密度，在 LLM 时代也属罕见。更有意思的是他的"出走"：2023 年底，他从 Google 跳到了 <em class="latin">OpenAI</em>，加入了后来打造 <em class="latin">o1</em> 的团队——也就是说，那个在 2022 年初用八个示例点燃"分步推理"火种的人，两年后加入了把"分步推理"做成产品的团队。<em>造钥匙的人，最后去开了锁</em>。</p>
+  <p>论文的资深作者、最后一作 <em class="latin">Denny Zhou</em>，则是 Google Brain 这条"推理 + 提示"研究线的灵魂人物。CoT、Self-Consistency、Zero-shot CoT、least-to-most、MGSM（多语言思维链）……2022 年 Google Brain 那一波横扫推理的论文，几乎都挂了他的名字。他本人是那种"偏爱用最简单的招数解决最硬的问题"的研究者——CoT 就是这种审美的极致体现：不训练、不微调、不念咒，只给几个带草稿的示例。这种"朴素胜过精巧"的工程师式审美，后来成了 Google Brain 这条线的标志。</p>
+  <p>论文的发表本身也有一段小波折。CoT 在 2022 年 1 月挂上 arXiv 时，反响其实不温不火——毕竟"换个提示就涨 40 个点"听起来太像民间偏方。真正引爆它的是同年底 NeurIPS 接收、以及紧随其后的 <em class="latin">Self-Consistency</em> 和 <em class="latin">Zero-shot CoT</em> 两篇强化——三篇连发，把"思维链"从一个 trick 抬成了一个范式。后来 OpenAI 在 <em class="latin">o1</em> 发布时，专门回溯把 CoT 列为"推理模型"概念的源头之一——这个 2022 年初被视为"民间偏方"的招数，两年后成了整个推理范式的起点叙事。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowA3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- Transformer 固定深度 -->
+        <text x="160" y="30" text-anchor="middle" font-weight="600">无 CoT：固定深度 L</text>
+        <g font-size="10">
+          <rect x="40" y="50" width="240" height="22" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="160" y="65" text-anchor="middle">输入 token</text>
+          <rect x="40" y="78" width="240" height="22" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="160" y="93" text-anchor="middle">Transformer 层 1</text>
+          <rect x="40" y="106" width="240" height="22" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="160" y="121" text-anchor="middle">Transformer 层 2</text>
+          <text x="160" y="146" text-anchor="middle" fill="#96897A">…</text>
+          <rect x="40" y="154" width="240" height="22" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="160" y="169" text-anchor="middle">Transformer 层 L</text>
+          <rect x="40" y="182" width="240" height="22" fill="#F4EFE4" stroke="#96897A" stroke-dasharray="3 2"/>
+          <text x="160" y="197" text-anchor="middle">直接出答案（一步到位）</text>
+        </g>
+
+        <!-- CoT 多步前向 -->
+        <text x="525" y="30" text-anchor="middle" font-weight="600" fill="#B54A2C">有 CoT：深度 L × T 步</text>
+        <g font-size="10">
+          <rect x="380" y="50" width="290" height="22" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+          <text x="525" y="65" text-anchor="middle" fill="#B54A2C">输入 + 示例（带草稿）</text>
+          <rect x="380" y="78" width="290" height="22" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+          <text x="525" y="93" text-anchor="middle" fill="#B54A2C">第 1 步推理：23-20=3（前向 1）</text>
+          <rect x="380" y="106" width="290" height="22" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+          <text x="525" y="121" text-anchor="middle" fill="#B54A2C">第 2 步推理：3+6=9（前向 2）</text>
+          <text x="525" y="146" text-anchor="middle" fill="#96897A">…（每步一次完整前向）</text>
+          <rect x="380" y="154" width="290" height="22" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+          <text x="525" y="169" text-anchor="middle" fill="#B54A2C">第 T 步：The answer is 9（前向 T）</text>
+          <rect x="380" y="182" width="290" height="22" fill="#F4EFE4" stroke="#B54A2C" stroke-dasharray="3 2"/>
+          <text x="525" y="197" text-anchor="middle" fill="#B54A2C">答案（T 次前向后给出）</text>
+        </g>
+
+        <text x="350" y="120" text-anchor="middle" font-size="10" fill="#24555A">有效深度</text>
+        <line x1="295" y1="130" x2="375" y2="130" stroke="#24555A" stroke-width="1.2" marker-end="url(#arrowA3)"/>
+        <text x="335" y="148" text-anchor="middle" font-size="9" fill="#24555A">× T</text>
+
+        <text x="350" y="225" text-anchor="middle" font-size="10" fill="#96897A">Transformer 固定深度 L，CoT 让模型"想 T 步" → 有效计算深度 = L × T</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 6</span> · 为什么 CoT 能"想得更久"：Transformer 的层数 L 是固定的，一次前向只能算固定深度；CoT 让模型生成 T 步中间推理，每步都是一次完整前向——有效计算深度从 O(L) 变成 O(L×T)，等于给模型"借"了更长的思考时间</figcaption>
+  </figure>
+
+  <p>最后一个小彩蛋，回到那句广为流传的"<em class="latin">let's think step by step</em>"——它其实根本不在这篇论文里。这篇用的是<em>八个手写的带推理示例</em>（few-shot）。那句魔法咒语，出自三个月后 <em class="latin">Kojima et al.</em> 的 <em class="latin">Zero-shot CoT</em> 论文——他们发现连示例都不要，只要在题后面加一句"让我们一步步思考"，大模型就自己开始写草稿了。这俩常被混为一谈，但其实是 CoT 故事的<em>上集和下集</em>：上集证明"示例能唤醒推理"，下集证明"连示例都不用，一句话就够"。下一篇，我们就去看那句魔法咒语是怎么把示例也省掉的。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>这篇论文最值得咀嚼的，不是它刷了 56.9% 这个数字，而是它把"推理"从一个<em>训练问题</em>重新定义成了一个<em>提示问题</em>——这一个重定义，价值远超涨点本身。在 CoT 之前，整个领域默认"要让模型会推理，就得训练它"——要么从头训，要么微调，要么造验证器。CoT 用八个示例、零训练反超带验证器的微调，硬是把这道默认掀翻了：原来能力<em>早就在模型里</em>，只是没被"唤醒"。这一个视角转换，直接催生了后来的 prompt engineering、涌现能力理论，以及"用提示而非训练解锁能力"这整套思路。</p>
+  <p>另一个值得琢磨的，是它那个"涌现"发现背后的哲学意味。CoT 在 8B 没用、在 540B 爆发——这意味着<em>能力不是连续涨出来的，是相变出来的</em>。这像物理里的"水到冰"——单个水分子不"湿"，凑够量才"湿"。模型的"推理能力"也类似：小模型里那些组件都在，但没到临界质量，CoT 这把钥匙插进去转不动；到了 540B，钥匙一转，门就开了。这给后来所有 scaling 讨论定了个基调：<em>别在小模型上轻言不可能</em>——很多能力只是还没长出来。</p>
+  <p>但读懂这篇，也得同时读懂它的<em>边界</em>——因为 CoT 最大的局限，恰恰是它太"轻"了。正因为零训练、纯提示，它<em>无法保证推理正确</em>——模型会写出看似合理实则错误的中间步骤。这正是后来 <em class="latin">Let's Verify</em>、<em class="latin">Math-Shepherd</em>、<em class="latin">o1</em> 要补的口子：CoT 让模型<em>会分步</em>了，但"分步得对"得靠监督、靠奖励、靠 RL 去塑形。可以说，CoT 立了"分步推理"这杆旗，后续所有工作都在回答"怎么让这杆旗不倒"。</p>
+  <p>至于"模型到底是在推理还是在背格式"这道哲学题——它至今没完全定论。但 CoT 的真正贡献，或许不在于回答这个问题，而在于<em>把它变成了一个可被实证的问题</em>。在 CoT 之前，"大模型会不会推理"是个口水战；在 CoT 之后，它成了一个可以用八个示例、一个基准、一条曲线去丈量的科学问题。让模糊的哲学之争，落地成可复现的实验——这本身，就是一种了不起的进步。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    CoT 用<em>八个带推理的示例</em>唤醒了大模型的分步推理。可这八个示例，是人手工挑、手工写的——贵、且不稳定。那么——能不能<em>连示例都不要</em>，只用一句话就让模型自己开始分步思考？换句话说，"样板"这把钥匙，能不能再简化成"一句话的咒语"？下一篇，我们去看 <em class="latin">Kojima et al.</em> 怎么把八个示例砍成一句"<em class="latin">let's think step by step</em>"，并发现这句咒语同样只在足够大的模型上才灵验——零样本 CoT，同样是涌现的。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Large Language Models are Zero-Shot Reasoners</h3>
+    <p style="margin:0 0 10px; color:var(--muted); font-size:15px;">Zero-shot CoT：一句"让我们一步步思考"如何零样本引爆大模型推理——不用任何示例的魔法提示</p>
+    <p style="margin:0;">本篇用八个带推理的示例，让大模型学会分步思考。可示例得人工写、且对写法敏感——这把"样板钥匙"能不能再简化？三个月后，<em class="latin">Kojima et al.</em> 在 Google 给出了惊人答案：连示例都不要，只在题后面加一句"<em class="latin">Let's think step by step</em>"，大模型就<em>自己</em>开始写草稿了。零样本 CoT 同样只在足够大的模型上才灵验——又一例"涌现"。它和本篇的 few-shot CoT 是一对，共同把"思维链"从 trick 抬成范式。下一篇，我们去看那句最广为流传的魔法咒语，到底是怎么"零样本"撬开推理大门的。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 024 篇</span>
+    <span>2026-08-24</span>
+  </footer>
+
+</div>
+</body>
+</html>

@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 23,
-  "last_run_date": "2026-08-22",
+  "last_index": 24,
+  "last_run_date": "2026-08-24",
   "papers_covered": [
     {
       "index": 1,
@@ -186,10 +186,18 @@
       "date": "2023-12-14",
       "era": "对齐与应用期 2022–2023",
       "filename": "23_20260822_Math_Shepherd.html"
+    },
+    {
+      "index": 24,
+      "title_en": "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models",
+      "title_zh": "Chain-of-Thought：给模型看几个“带推理草稿”的示例，大模型竟自己学会了分步思考——思维链提示的诞生，推理范式时代的火种",
+      "date": "2022-01-10",
+      "era": "对齐与应用期 2022–2023",
+      "filename": "24_20260824_CoT.html"
     }
   ],
   "next_preview": {
-    "title_en": "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models",
-    "title_zh": "Chain-of-Thought：一句“让我们一步步思考”如何引爆大模型推理——思维链提示的诞生"
+    "title_en": "Large Language Models are Zero-Shot Reasoners",
+    "title_zh": "Zero-shot CoT：一句“让我们一步步思考”如何零样本引爆大模型推理——不用任何示例的魔法提示"
   }
 }
