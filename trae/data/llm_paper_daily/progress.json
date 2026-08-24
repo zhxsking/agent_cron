@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 24,
-  "last_run_date": "2026-08-24",
+  "last_index": 25,
+  "last_run_date": "2026-08-25",
   "papers_covered": [
     {
       "index": 1,
@@ -194,10 +194,18 @@
       "date": "2022-01-10",
       "era": "对齐与应用期 2022–2023",
       "filename": "24_20260824_CoT.html"
+    },
+    {
+      "index": 25,
+      "title_en": "Large Language Models are Zero-Shot Reasoners",
+      "title_zh": "Zero-shot CoT：一句“让我们一步步思考”如何零样本引爆大模型推理——不用任何示例的魔法提示",
+      "date": "2022-05-24",
+      "era": "对齐与应用期 2022–2023",
+      "filename": "25_20260825_Zero_Shot_CoT.html"
     }
   ],
   "next_preview": {
-    "title_en": "Large Language Models are Zero-Shot Reasoners",
-    "title_zh": "Zero-shot CoT：一句“让我们一步步思考”如何零样本引爆大模型推理——不用任何示例的魔法提示"
+    "title_en": "Self-Consistency Improves Chain of Thought Reasoning in Language Models",
+    "title_zh": "Self-Consistency：让模型“多想几遍再投票”——一条思维链会出错，采多条路径取多数票，CoT 准确率再上一个台阶"
   }
 }
