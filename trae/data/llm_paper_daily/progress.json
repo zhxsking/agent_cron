@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 25,
-  "last_run_date": "2026-08-25",
+  "last_index": 26,
+  "last_run_date": "2026-08-26",
   "papers_covered": [
     {
       "index": 1,
@@ -202,10 +202,18 @@
       "date": "2022-05-24",
       "era": "对齐与应用期 2022–2023",
       "filename": "25_20260825_Zero_Shot_CoT.html"
+    },
+    {
+      "index": 26,
+      "title_en": "Self-Consistency Improves Chain of Thought Reasoning in Language Models",
+      "title_zh": "Self-Consistency：让模型“多想几遍再投票”——一条思维链会出错，采多条路径取多数票，CoT 准确率再上一个台阶",
+      "date": "2022-03-21",
+      "era": "对齐与应用期 2022–2023",
+      "filename": "26_20260826_Self_Consistency.html"
     }
   ],
   "next_preview": {
-    "title_en": "Self-Consistency Improves Chain of Thought Reasoning in Language Models",
-    "title_zh": "Self-Consistency：让模型“多想几遍再投票”——一条思维链会出错，采多条路径取多数票，CoT 准确率再上一个台阶"
+    "title_en": "Tree of Thoughts: Deliberate Problem Solving with Large Language Models",
+    "title_zh": "Tree of Thoughts：把自洽的“平行投票”升级成“树形探索与回溯”——让大模型像下棋一样在思维树上前瞻、评估、再决策"
   }
 }

@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Self-Consistency 论文精读 · 大模型经典论文系列 #026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#026</span>
+  </div>
+
+  <h1 class="title">
+    Self-Consistency Improves Chain of Thought Reasoning in Language Models
+    <span class="en">Self-Consistency：让模型"多想几遍再投票"——一条思维链会出错，采多条路径取多数票，CoT 准确率再上一个台阶</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Xuezhi Wang, Jason Wei, Dale Schuurmans, Quoc Le, Ed Chi, Sharan Narang, Aakanksha Chowdhery, Denny Zhou</span>
+    <span>机构：Google Research, Brain Team</span>
+    <span>发表：2022-03 / ICLR 2023（arXiv:2203.11171）</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2203.11171" target="_blank" rel="noopener">arXiv</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">想象你给三个数学不错的同学出了同一道题："停车场原来有 3 辆车，又来了 2 辆，一共几辆？"三个人各自埋头算。甲这样想：3 加 2 等于 5，答案是 5；乙绕了个弯：原来 3 辆，新增 2 辆，总数 5；丙脑子一抽：3 减 2 等于 1，答案是 1。三个人三条路，两条通向 5，一条通向 1。你信谁？当然是 5。</p>
+
+  <p class="lead">这篇论文讲的，就是把这套"多人独立解题、再少数服从多数"的朴素智慧，搬进了大模型的世界。它发现：与其让模型只走一条"最自信"的思维链（贪婪解码），不如让它<em>多想几遍、各走各的，最后投票</em>。就这么一个看似平凡的动作，把上一期 CoT 的准确率又硬生生拔高了一截——GSM8K 小学数学题从 56.5% 一路冲到 74.4%，近乎白捡的 17.9 个百分点。而更妙的是：它不调一个参数、不标一条数据、不训一个新模型，全靠"换个解码方式"实现。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    把 CoT 的"贪婪取一条最可能路径"换成"采样一堆路径、对最终答案做多数表决"——一种无训练、无标注、即插即用的解码策略，靠"多条路殊途同归"的直觉，给推理准确率加了一个稳稳的增益。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>这是"思维链提示"这条支线上的第三个关键节点。我们刚走过两篇：第 024 期的 <em class="latin">Chain-of-Thought</em>（CoT，Wei 等，2022-01）证明了"塞几个带草稿的范例，模型就会分步推理"；第 025 期的 <em class="latin">Zero-shot CoT</em>（Kojima 等，2022-05）把范例省掉、只留一句"让我们一步步思考"，照样能引爆推理。</p>
+
+  <p>但这两篇有一个共同的、被默认接受的设定：模型只生成<em>一条</em>思维链。无论你是少样本还是零样本，最后那一步解码都是"贪婪"的——每一步都挑当前概率最高的词往下走，一条道走到黑。本文（Wang 等，2022-03）恰恰盯上了这个"只走一条"的设定，做了件四两拨千斤的事：<em>让模型走很多条，再投票</em>。它承接了 CoT 打开的"思维链"大门，又把注意力从"怎么写提示"转向了"怎么解码"——这是"测试时算力"（<em class="latin">test-time compute</em>）思想的早期雏形，后来一路通向 o1、R1 那一整套"多想一会儿"的推理范式。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="135" x2="660" y2="135" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 2022-01 CoT -->
+        <circle cx="120" cy="135" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="120" y="113" text-anchor="middle" fill="#24555A">2022-01</text>
+        <text x="120" y="163" text-anchor="middle" fill="#2E2A22">CoT (few-shot)</text>
+        <text x="120" y="177" text-anchor="middle" fill="#96897A">#024 ✓</text>
+
+        <!-- 2022-03 Self-Consistency 本篇 -->
+        <circle cx="270" cy="135" r="9" fill="#B54A2C"/>
+        <circle cx="270" cy="135" r="14" fill="none" stroke="#B54A2C" stroke-width="1" opacity="0.4"/>
+        <text x="270" y="103" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="270" y="163" text-anchor="middle" fill="#B54A2C" font-weight="600">Self-Consistency</text>
+        <text x="270" y="177" text-anchor="middle" fill="#B54A2C">#026</text>
+
+        <!-- 2022-05 Zero-shot CoT -->
+        <circle cx="420" cy="135" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="420" y="113" text-anchor="middle" fill="#24555A">2022-05</text>
+        <text x="420" y="163" text-anchor="middle" fill="#2E2A22">Zero-shot CoT</text>
+        <text x="420" y="177" text-anchor="middle" fill="#96897A">#025 ✓</text>
+
+        <!-- 2023-05 Tree of Thoughts -->
+        <circle cx="540" cy="135" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="540" y="113" text-anchor="middle">2023-05</text>
+        <text x="540" y="163" text-anchor="middle" fill="#2E2A22">Tree of Thoughts</text>
+        <text x="540" y="177" text-anchor="middle" fill="#96897A">下期预告</text>
+
+        <!-- 2024 o1 -->
+        <circle cx="620" cy="135" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="620" y="113" text-anchor="middle" fill="#24555A">2024</text>
+        <text x="620" y="163" text-anchor="middle" fill="#2E2A22">o1</text>
+        <text x="620" y="177" text-anchor="middle" fill="#96897A">#020 ✓</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 推理范式支线的发展脉络：实心节点为已解析论文，红圈为本篇，空心节点为下期预告</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>2022 年初，CoT 让大家兴奋之余，也留下一个不太被关注的"默认设定"。CoT 做推理时，最后一步解码用的是最朴素的<em>贪婪解码</em>（<em class="latin">greedy decoding</em>）：每生成一个词，都从模型给的概率分布里挑<em>概率最大的那个</em>，一步步拼出唯一的一条思维链和唯一的一个答案。</p>
+
+  <p>贪婪解码对"直觉型"任务没什么问题——翻译、摘要这种，最可能的那条路径通常就是好答案。可推理任务不一样：它<em>分步、长链、容错率低</em>，中间任何一步走偏，后面的答案就全错。而贪婪解码偏偏只走一条路，等于把宝全押在"最可能的那条链"上。问题在于，最可能的链不等于<em>正确</em>的链——模型可能在第一步就因为某个高频但错误的词而偏航，后面再"自信"也是错下去。</p>
+
+  <p>另一个容易被忽视的细节是：贪婪解码还会陷入<em>重复和局部最优</em>。模型有时会在某个地方打转、说车轱辘话，因为"重复自己"在概率上反而是局部最稳妥的选择。而当时提升生成质量的常见思路，要么是<em>训练一个额外的验证器</em>（<em class="latin">verifier</em>）去给候选答案打分，要么是训练一个重排序器——这些都需要额外的人工标注和训练成本。本文要解决的，就是：能不能<em>不训练、不标注</em>，只靠换个解码法子，就把推理准确率抬上去？</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    把贪婪解码想象成一个"独断的优等生"：每道题他都只给自己一次机会，写下最先想到的解法就交卷。问题是，越难的题他越容易在第一步就跑偏，而一旦偏了，后面再"自信"也回不来。Self-Consistency 则像是把这个优等生"克隆"成一群：让一群人各自独立解同一道题，谁也不许偷看谁，最后看大家的答案——多数人殊途同归的那个，大概率就是对的那条。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>一句话：能不能用一个<em>完全无监督、零训练、零标注</em>的解码策略，替换掉 CoT 里的贪婪解码，让大模型在推理任务上稳定地更准？更具体地——既然一道复杂推理题往往"条条大路通罗马"，正确的答案可以从多条不同的推理路径抵达，那我们能否<em>把这些路径都采出来，再从答案里挑最一致的那个</em>，而不是孤注一掷地押宝最可能的那一条？</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果"多条路径取多数票"这么朴素就能涨点，那为什么之前没人这么干？给你一个提示：换个角度看，这要求模型的"采样路径"既要有<em>足够的多样性</em>（不然投出来的全是同一个答案，没意义），又不能<em>乱到全部跑题</em>（不然投票也救不回来）。换句话说，多样性从哪来、又该如何控制？带着这个问题往下看。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>作者把这个方法命名为 <em class="latin">self-consistency</em>（自洽），并把它概括成一个三步走的"采样—边缘化"（<em class="latin">sample-and-marginalize</em>）流程。先说人话，再给术语。</p>
+
+  <h3>第一步：照旧用 CoT 提示</h3>
+  <p>提示部分一个字都不用改。CoT 用什么少样本示范、Zero-shot CoT 用什么"让我们一步步思考"，这里原样照搬。Self-Consistency <em>不碰提示、不碰模型</em>，它只动最后那一步——解码。这意味着它是一个"即插即用"的替换件，能套在任何已有的 CoT 流程外面。</p>
+
+  <h3>第二步：采样多条推理路径，而不是贪婪取一条</h3>
+  <p>关键就在这里。贪婪解码每步取概率最大的词，路径是唯一的、确定的；Self-Consistency 改用<em>随机采样</em>解码——每步按模型给出的概率分布<em>随机抽</em>一个词（而不是总挑最大那个）。由于每步都带随机性，同一个问题、同一个提示，反复采样就能得到<em>一串各不相同</em>的思维链。作者通常采 40 条（<em class="latin">n = 40</em>），用温度采样 <em class="latin">T</em> 在 0.5–0.7 之间、配合 <em class="latin">top-k = 40</em> 来控制多样性：温度太低路径都一样、投票没意义，太高又全跑题、投票救不回，<em class="latin">T</em> ≈ 0.5–0.7 是兼顾多样性与靠谱的甜点区。</p>
+
+  <p>用概率的语言写，给定提示和问题，第 <em class="latin">i</em> 条采样路径 <em class="latin">r</em><sub><em class="latin">i</em></sub> 和它导向的答案 <em class="latin">a</em><sub><em class="latin">i</em></sub> 的联合概率，就是把路径上每个词的生成概率乘起来：</p>
+
+  <div class="formula-block">
+    $$P(r_i, a_i \mid \text{prompt, question}) = \prod_{k} P(t_k \mid \text{prompt, question}, t_1, \dots, t_{k-1})$$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <h3>第三步：边缘化掉路径，对最终答案投票</h3>
+  <p>理论上最干净的做法，是把所有可能的推理路径都"积分"掉（边缘化），直接求每个答案的总概率：</p>
+
+  <div class="formula-block">
+    $$P(a \mid q) = \sum_{r \in \mathcal{R}} P(a \mid r, q)\, P(r \mid q)$$
+    <span class="eqn mono">(2)</span>
+  </div>
+
+  <p>但路径空间无穷大，没法精确算。于是用蒙特卡洛近似：采 <em class="latin">m</em> 条路径，把导向同一答案的路径"票数"加起来，取票最多的答案：</p>
+
+  <div class="formula-block">
+    $$\hat{a} = \mathop{\arg\max}\limits_{a} \sum_{i=1}^{m} \mathbf{1}[\,a_i = a\,]$$
+    <span class="eqn mono">(3)</span>
+  </div>
+
+  <p>注意一个反直觉的细节：作者其实试了六种聚合方式——从"按路径概率加权求和"到"归一化加权平均"再到"完全不看概率、纯数人头"。<em>纯多数投票</em>（公式 3）效果最好，和"归一化加权求和"几乎打平。为什么？因为模型<em>不擅长区分正确与错误的推理路径</em>——一条错的链，它给的概率未必比对的链低。既然模型自己的概率"校准"得不好，那加权反而会被带偏，倒不如干脆只数人头。这背后藏着大模型一个更深的毛病：<em>它对自己推理质量的自评，并不靠谱</em>。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 340" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="13" fill="#2E2A22">
+        <!-- 问题输入 -->
+        <rect x="270" y="16" width="160" height="46" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="36" text-anchor="middle">问题 + CoT 提示</text>
+        <text x="350" y="52" text-anchor="middle" fill="#96897A" font-size="11">（提示不变，只改解码）</text>
+
+        <line x1="350" y1="62" x2="350" y2="92" stroke="#96897A" stroke-width="1" marker-end="url(#arrow3)"/>
+
+        <!-- 采样三条路径 -->
+        <rect x="60" y="96" width="170" height="86" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="145" y="118" text-anchor="middle" fill="#24555A" font-weight="600">路径 1  (T≈0.7)</text>
+        <text x="145" y="138" text-anchor="middle" font-size="11">3 + 2 = 5 → 答案 5</text>
+        <text x="145" y="158" text-anchor="middle" fill="#96897A" font-size="10">采样自解码器</text>
+
+        <rect x="265" y="96" width="170" height="86" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="118" text-anchor="middle" fill="#24555A" font-weight="600">路径 2  (T≈0.7)</text>
+        <text x="350" y="138" text-anchor="middle" font-size="11">原来3辆，来2辆 → 5</text>
+        <text x="350" y="158" text-anchor="middle" fill="#96897A" font-size="10">采样自解码器</text>
+
+        <rect x="470" y="96" width="170" height="86" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="555" y="118" text-anchor="middle" fill="#24555A" font-weight="600">路径 3  (T≈0.7)</text>
+        <text x="555" y="138" text-anchor="middle" font-size="11">3 − 2 = 1 → 答案 1</text>
+        <text x="555" y="158" text-anchor="middle" fill="#96897A" font-size="10">采样自解码器</text>
+
+        <line x1="145" y1="182" x2="300" y2="216" stroke="#96897A" stroke-width="1" marker-end="url(#arrow3)"/>
+        <line x1="350" y1="182" x2="350" y2="216" stroke="#96897A" stroke-width="1" marker-end="url(#arrow3)"/>
+        <line x1="555" y1="182" x2="400" y2="216" stroke="#96897A" stroke-width="1" marker-end="url(#arrow3)"/>
+
+        <!-- 投票 -->
+        <rect x="220" y="220" width="260" height="56" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="350" y="242" text-anchor="middle" fill="#B54A2C" font-weight="600">边缘化路径 · 多数投票</text>
+        <text x="350" y="260" text-anchor="middle" font-size="12">5 出现 2 次 ＞ 1 出现 1 次</text>
+
+        <line x1="350" y1="276" x2="350" y2="300" stroke="#96897A" stroke-width="1" marker-end="url(#arrow3)"/>
+
+        <!-- 最终答案 -->
+        <rect x="290" y="304" width="120" height="34" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="350" y="326" text-anchor="middle" fill="#24555A" font-weight="600">最终答案：5</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · Self-Consistency 三步流程：同一问题采样多条思维链，对最终答案做多数表决，取最自洽者</figcaption>
+  </figure>
+
+  <figure>
+    <svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <rect x="20" y="50" width="150" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="95" y="73" text-anchor="middle">① CoT 提示</text>
+        <text x="95" y="90" text-anchor="middle" fill="#96897A" font-size="10">提示与模型都不动</text>
+
+        <rect x="210" y="50" width="150" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="285" y="73" text-anchor="middle">② 采样 N 条路径</text>
+        <text x="285" y="90" text-anchor="middle" fill="#96897A" font-size="10">温度 T≈0.5–0.7, top-k=40</text>
+
+        <rect x="400" y="50" width="150" height="50" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="475" y="73" text-anchor="middle" fill="#B54A2C">③ 多数投票</text>
+        <text x="475" y="90" text-anchor="middle" fill="#96897A" font-size="10">边缘化推理路径</text>
+
+        <rect x="560" y="50" width="120" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="620" y="80" text-anchor="middle" fill="#24555A">最自洽答案</text>
+
+        <line x1="170" y1="75" x2="210" y2="75" stroke="#96897A" marker-end="url(#arrow2)"/>
+        <line x1="360" y1="75" x2="400" y2="75" stroke="#96897A" marker-end="url(#arrow2)"/>
+        <line x1="550" y1="75" x2="560" y2="75" stroke="#96897A" marker-end="url(#arrow2)"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 方法的"采样—边缘化"数据流：从提示到采样到投票，全程无训练、无标注</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>作者在四个模型（UL2-20B、GPT-3-175B、LaMDA-137B、PaLM-540B）和一长串算术 / 常识 / 符号推理基准上做了大规模实验。结论一致得惊人：<em>在所有模型、所有任务上，Self-Consistency 都稳定地超过了贪婪 CoT</em>，而且提升幅度大得不像"白捡的"。下表是 PaLM-540B 在几个算术基准上的表现：</p>
+
+  <table>
+    <thead>
+      <tr><th>基准（PaLM-540B）</th><th>贪婪 CoT</th><th>Self-Consistency</th><th>提升</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">GSM8K（小学数学）</td><td>56.5%</td><td>74.4%</td><td>+17.9</td></tr>
+      <tr><td class="text">SVAMP（应用题）</td><td>79.0%</td><td>86.6%</td><td>+7.6</td></tr>
+      <tr><td class="text">AQuA（数学题）</td><td>35.8%</td><td>48.3%</td><td>+12.5</td></tr>
+      <tr><td class="text">MultiArith（多步算术）</td><td>94.7%</td><td>99.3%</td><td>+4.6</td></tr>
+    </tbody>
+  </table>
+
+  <p>更值得关注的是<em>规模效应</em>：模型越大，Self-Consistency 的增益越显著。以 GSM8K 为例，LaMDA-137B 从 41.4% 涨到 58.1%（+16.7），GPT-3-175B 从 40.7% 涨到 57.4%（+16.7），而 PaLM-540B 直接从 56.5% 拔到 74.4%（+17.9）。模型越强，单条路径越接近正确，"多条路径殊途同归"的概率就越高，投票的纠错威力也就越大。</p>
+
+  <p>还有几个意外发现值得一提。其一，<em>当 CoT 反而拖后腿时，Self-Consistency 能把它救回来</em>。当时有研究指出，在某些少样本任务上，加 CoT 反而比标准提示更差——但叠上 Self-Consistency 后，性能不再下降，反而回升。其二，它<em>对糟糕的提示相当鲁棒</em>：哪怕手写的 CoT 示范不太理想，多采样投票也能把精度拉回来，等于给"提示工程"上了一道保险。其三，它<em>能和 Zero-shot CoT 联用</em>，连范例都不用也能涨点；甚至对非自然语言的推理路径（比如直接生成方程式）也有效。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="175" y="28" text-anchor="middle" font-weight="600">贪婪 CoT</text>
+        <text x="525" y="28" text-anchor="middle" font-weight="600" fill="#B54A2C">Self-Consistency</text>
+        <line x1="350" y1="18" x2="350" y2="230" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <rect x="60" y="50" width="230" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="72" text-anchor="middle">只走一条最可能路径</text>
+
+        <rect x="60" y="100" width="230" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="122" text-anchor="middle">一步偏，全程错（不可逆）</text>
+
+        <rect x="60" y="150" width="230" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="172" text-anchor="middle">易陷重复 / 局部最优</text>
+
+        <rect x="60" y="200" width="230" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="222" text-anchor="middle">对提示质量敏感</text>
+
+        <rect x="410" y="50" width="230" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="72" text-anchor="middle" fill="#B54A2C">采样多条独立路径</text>
+
+        <rect x="410" y="100" width="230" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="122" text-anchor="middle" fill="#B54A2C">单条偏航可被多数票纠正</text>
+
+        <rect x="410" y="150" width="230" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="172" text-anchor="middle" fill="#B54A2C">靠多样性化解重复陷阱</text>
+
+        <rect x="410" y="200" width="230" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="222" text-anchor="middle" fill="#B54A2C">对不完美提示更鲁棒</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 贪婪 CoT 与 Self-Consistency 的关键差异：从"孤注一掷"到"集思广益"</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>这篇论文的价值，远不止"涨了十几个点"那么简单。它贡献了几个被后续反复引用的洞见。</p>
+
+  <p>第一，它把"提升推理"这件事从<em>训练侧</em>拽到了<em>解码侧</em>。此前大家默认"要让模型更会推理，就得改训练——加数据、加验证器、加奖励"。Self-Consistency 证明了：换个解码方式，<em>一个参数都不动</em>就能拿到大增益。这打开了一整片"测试时"的研究空间，是后来 <em class="latin">test-time compute</em> scaling 思想的直接前身之一。</p>
+
+  <p>第二，它提出了"自集成"（<em class="latin">self-ensemble</em>）的概念。传统集成要训练多个不同模型再汇总，成本高昂；Self-Consistency 却在<em>同一个模型</em>上，靠采样的随机性制造出"多个虚拟求解者"再投票，零额外训练。这种"用单一模型模拟集成"的思路，后来被广泛借鉴。</p>
+
+  <p>第三，它那个"纯多数投票胜过加权"的实验结论，意外戳中了 LLM 的一个深层缺陷：<em>模型对自己推理路径的概率校准很差</em>——它分不清哪条链对、哪条链错。这个观察成了后续过程奖励模型（PRM）、验证器研究的动机之一：既然模型自己评不准，那就<em>专门训练一个能逐步打分的验证器</em>。这条线我们已经在第 022 期 <em class="latin">Let's Verify Step by Step</em>、第 023 期 <em class="latin">Math-Shepherd</em> 里见过它的回响了。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>Self-Consistency 并非万能。它最硬的约束是：<em>只适用于有唯一确定答案的任务</em>。数学题、选择题、符号推理——答案是个离散的、可比较的对象，投票才有意义。可一旦换到开放文本生成（写故事、写代码、做摘要），"答案"不再是一个可数人头的对象，"多数票"就没了着力点。作者自己也坦言：要推广到开放生成，得先想办法衡量<em>两条路径之间的语义一致性</em>，而不是简单比对最终字符串——这成了后来一票工作的起点。</p>
+
+  <p>第二个局限是<em>算力代价</em>。采 40 条路径，意味着推理时要做 40 次前向传播，时间和算力成本线性增长。对实时应用来说，这笔账并不便宜。这也直接催生了后续的折中路线：能不能少采几条、能不能自适应地决定采多少、能不能在置信度高时早停——这些都在后来的 <em class="latin">test-time compute</em> scaling 研究里被系统化地回答了（见第 021 期）。</p>
+
+  <p>第三个，也是最有意思的局限：它<em>强化</em>了"模型不自知"这个问题，却没解决它。Self-Consistency 用投票绕开了校准差，但模型依然不知道<em>自己哪一步错了</em>。它只是"碰巧"让对的路径占了多数。真正想治本，还得回到过程奖励、逐步验证那条路——这正是后来者补上的拼图。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把这条支线拉长看，会更清楚 Self-Consistency 的位置。2022 年 1 月，<em class="latin">CoT</em> 用"带草稿的范例"教会模型分步推理，但只走一条贪婪路径；两个月后，Self-Consistency 把"一条"换成"多条 + 投票"，把推理准确率往上抬了一截，同时埋下"测试时算力"的种子。紧接着 5 月，<em class="latin">Zero-shot CoT</em> 把范例也省掉，证明推理能力早就在模型里"睡着"，只等一句咒语唤醒——而 Self-Consistency 同样能套在它外面，零样本也能再涨点。</p>
+
+  <p>再往后，这条路分出两条岔。一条往"更聪明的搜索"走：<em class="latin">Tree of Thoughts</em> 把 Self-Consistency 那种"平行投票"升级成"树形探索 + 评估 + 回溯"，让模型像下棋一样前瞻；再往后就是 o1 / R1 用强化学习把"多想几步"内化成模型自己的能力。另一条往"更可靠的验证"走：<em class="latin">Let's Verify Step by Step</em>、<em class="latin">Math-Shepherd</em> 试图给推理的<em>每一步</em>打分，从根本上补上 Self-Consistency 暴露的"模型不自知"缺陷。本篇恰好处在这两条岔的<em>分叉点</em>上——它既启发了"搜得更深"，也暴露了"评得更准"的必要性。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>这篇论文的作者名单里有个熟悉的名字：<em class="latin">Jason Wei</em>——没错，他就是两个月前 CoT 那篇的第一作者。等于说，CoT 刚把"思维链"这扇门推开，两个月后同一拨人（加上王学治、Denny Zhou 等）就回来给门装上了"投票"这把锁。这种"前脚奠基、后脚加固"的紧凑节奏，在学术圈其实并不常见，足见当时 Google Brain 内部对"推理"这条线投入之密集。值得一提的是，Denny Zhou 后来还参与了 <em class="latin">Let's Verify Step by Step</em>——他像是横跨"提示—解码—验证"三阶段的纽带人物。</p>
+
+  <p>另一个有趣的点是它的"出身"。Self-Consistency 的灵感，作者明确引用自认知心理学里 Stanovich 与 West 的"双系统"理论：复杂问题往往能被<em>多条不同的思路</em>同时抵达正确答案，思路越需要深思熟虑，能通向答案的路径就越多样。换句话说，这个看似工程的小 trick，骨子里是从<em>人是怎么思考</em>里偷来的——只不过把"多个人想"换成了"一个模型多采几次样"。</p>
+
+  <p>还有个被低估的细节：作者把它叫作"自集成"（<em class="latin">self-ensemble</em>），因为传统集成要养一窝不同的模型，而它只<em>一个模型</em>就模拟出了"一群虚拟求解者"。这名字起得妙——既蹭了集成的热度，又点明了"自我"的省成本本质。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 同一个大脑，三个分身 -->
+        <circle cx="350" cy="100" r="34" fill="#ECE4D4" stroke="#24555A"/>
+        <text x="350" y="96" text-anchor="middle" fill="#24555A" font-weight="600">同一个模型</text>
+        <text x="350" y="112" text-anchor="middle" fill="#96897A" font-size="10">（零额外训练）</text>
+
+        <circle cx="140" cy="100" r="20" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="140" y="104" text-anchor="middle" fill="#B54A2C" font-size="10">分身 1</text>
+
+        <circle cx="560" cy="70" r="20" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="560" y="74" text-anchor="middle" fill="#B54A2C" font-size="10">分身 2</text>
+
+        <circle cx="560" cy="130" r="20" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="560" y="134" text-anchor="middle" fill="#B54A2C" font-size="10">分身 3</text>
+
+        <line x1="170" y1="100" x2="316" y2="100" stroke="#96897A" stroke-dasharray="3 3"/>
+        <line x1="384" y1="92" x2="540" y2="72" stroke="#96897A" stroke-dasharray="3 3"/>
+        <line x1="384" y1="108" x2="540" y2="128" stroke="#96897A" stroke-dasharray="3 3"/>
+
+        <text x="350" y="178" text-anchor="middle" fill="#96897A">一个模型 = 一群投票者（self-ensemble）</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · "自集成"的趣味示意：用采样把一个模型克隆成一群虚拟求解者，再少数服从多数</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>我读这篇论文最大的感触是：<em>好点子往往就藏在被默认接受的设定里</em>。整个社区默认了"推理就用贪婪解码"好几年，没人质疑"为什么只走一条"。Self-Consistency 几乎没动什么——提示不变、模型不变、甚至公式都简单到一行——却撬动了十几个点的提升。它提醒我们：在冲去堆参数、堆数据之前，先回头看看流程里那些"理所当然"的环节，说不定就藏着一座金矿。</p>
+
+  <p>把它放进更大的图景看，Self-Consistency 其实是在问一个根本问题：<em>算力该花在训练时，还是推理时？</em>在它之前，主流答案是"花在训练时"——把模型做大、把数据喂多。而它用最直白的方式展示了另一种可能：推理时多花点算力（多采几次样），也能换来可观的精度。这个"测试时算力"的口子一旦撕开，后面 o1 用 RL 训练"思考得更久"、R1 让模型自发学会反思、s1 用 26 分钟训练加一个"Wait"控制思考时长——都是顺着这个方向往下走。从这个意义上，Self-Consistency 不只是一篇解码策略论文，它是<em>推理范式转向</em>的最早信号之一。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    Self-Consistency 靠"多数票"纠错，前提是<em>对的路径比错的路径多</em>。可如果一道题太难，模型采 40 条里 39 条都走偏、只有 1 条对，投票照样会把那 1 条淹没——多数票反而成了"集体自信地犯错"。你觉得，这种"集体翻车"的场景，该怎么破？是采更多条？还是换一种不靠"数人头"的聚合方式？带着这个疑问，我们下期见。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Tree of Thoughts: Deliberate Problem Solving with Large Language Models</h3>
+    <p style="margin:0;">Self-Consistency 让模型"平行地多想几遍再投票"，可这些路径彼此不交流、不能回溯。下一篇，Tree of Thoughts 把"平行投票"升级成"树形探索"——让模型像下棋一样，在每个分岔点前瞻、评估、必要时退回去重选。当推理从"一群人各算各的"变成"一棵会回溯的思维树"，复杂任务的解法会变成什么样？</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 026 篇</span>
+    <span>2026-08-26</span>
+  </footer>
+
+</div>
+</body>
+</html>
