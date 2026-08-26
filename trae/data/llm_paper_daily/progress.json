@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 26,
-  "last_run_date": "2026-08-26",
+  "last_index": 27,
+  "last_run_date": "2026-08-27",
   "papers_covered": [
     {
       "index": 1,
@@ -210,10 +210,18 @@
       "date": "2022-03-21",
       "era": "对齐与应用期 2022–2023",
       "filename": "26_20260826_Self_Consistency.html"
+    },
+    {
+      "index": 27,
+      "title_en": "Tree of Thoughts: Deliberate Problem Solving with Large Language Models",
+      "title_zh": "Tree of Thoughts：把自洽的"平行投票"升级成"树形探索与回溯"——让大模型像下棋一样在思维树上前瞻、评估、再决策",
+      "date": "2023-05-17",
+      "era": "对齐与应用期 2022–2023",
+      "filename": "27_20260827_Tree_of_Thoughts.html"
     }
   ],
   "next_preview": {
-    "title_en": "Tree of Thoughts: Deliberate Problem Solving with Large Language Models",
-    "title_zh": "Tree of Thoughts：把自洽的“平行投票”升级成“树形探索与回溯”——让大模型像下棋一样在思维树上前瞻、评估、再决策"
+    "title_en": "Graph of Thoughts: Solving Elaborate Problems with Large Language Models",
+    "title_zh": "Graph of Thoughts：把思维树升级成思维图——允许不同分支的思路合并、回溯与重用，让推理从树形探索走向网状协同"
   }
 }

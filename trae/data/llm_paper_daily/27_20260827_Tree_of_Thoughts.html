@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tree of Thoughts 论文精读 · 大模型经典论文系列 #027</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#027</span>
+  </div>
+
+  <h1 class="title">
+    Tree of Thoughts: Deliberate Problem Solving with Large Language Models
+    <span class="en">Tree of Thoughts：把自洽的"平行投票"升级成"树形探索与回溯"——让大模型像下棋一样在思维树上前瞻、评估、再决策</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Shunyu Yao, Dian Yu, Jeffrey Zhao, Izhak Shafran, Thomas L. Griffiths, Yuan Cao, Karthik Narasimhan</span>
+    <span>机构：Princeton University, Google DeepMind</span>
+    <span>发表：2023-05 / NeurIPS 2023（Oral, arXiv:2305.10601）</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2305.10601" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/princeton-nlp/tree-of-thought-llm" target="_blank" rel="noopener">GitHub</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">想象你在下一盘国际象棋。走到中盘，你不会只凭直觉摆一步棋就完事——你会在脑子里推演："如果我把马跳到这儿，对手可能走车、走象、还是走兵？"每一步你都在<em>前瞻</em>，估量哪个分支更有利；如果某条路走下去发现被将死了，你会<em>退回来</em>换一条。这套"分支—评估—前进或回退"的功夫，正是人类下棋、解题、做决策时的看家本领。</p>
+
+  <p class="lead">可到了 2023 年，最强大的大模型在做推理时，却还像一只只会"一条道走到黑"的独轮车：从左到右，逐词生成，写下的每一步都无法回头。上一篇 Self-Consistency 让模型"多想几遍再投票"，可那些路径彼此不交流、不能中途纠偏、更不能退回去重选。这篇来自普林斯顿和 Google DeepMind 的论文，给大模型装上了那颗下棋时才会启动的"系统 2"大脑——让它在思维<em>树</em>上前瞻、自评、回溯，像棋手一样<em>深思熟虑</em>地解题。结果，在经典的 24 点游戏上，GPT-4 的解题率从可怜的 4% 一路飙到 74%。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    把 CoT 的"单条线性思维链"升级成"一棵可探索、可评估、可回溯的思维树"——让大模型在每个分岔点生成多个候选思路、自我打分，再用 BFS/DFS 在树上搜索，从而具备类似人类"深思熟虑"的规划能力。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>这是"思维链提示"支线上的第四个关键节点。我们刚走过三篇：第 024 期的 <em class="latin">Chain-of-Thought</em>（CoT，2022-01）证明了"塞几个带草稿的范例，模型就会分步推理"；第 025 期的 <em class="latin">Zero-shot CoT</em>（2022-05）把范例省掉、只留一句"让我们一步步思考"，照样引爆推理；第 026 期的 <em class="latin">Self-Consistency</em>（2022-03）让模型"多采几条路径、对答案投票"，把准确率又抬了一截。</p>
+
+  <p>但这三篇共享同一个底层假设：推理是一条<em>线性的、从左到右、不可回头</em>的序列。无论你走一条还是走多条，每条链一旦开始就<em>只能往前</em>，中间哪步走错了，后面全盘皆错，没法退回去重来。本文（Yao 等，2023-05）要打破的正是这个假设：它把"链"升级成"树"，让模型在分岔处<em>前瞻多个选项、自我评估哪个更靠谱、走不通还能回溯</em>。它承接了 CoT 打开的"分步思考"大门，又把推理从"线性生成"推进到"搜索式规划"——这是"测试时算力"（<em class="latin">test-time compute</em>）思想在提示工程领域的又一次跃升，后来一路通向 o1、R1 那套"系统 2 式"的深度推理。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="135" x2="660" y2="135" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 2022-01 CoT -->
+        <circle cx="100" cy="135" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="100" y="113" text-anchor="middle" fill="#24555A">2022-01</text>
+        <text x="100" y="163" text-anchor="middle" fill="#2E2A22">CoT (few-shot)</text>
+        <text x="100" y="177" text-anchor="middle" fill="#96897A">#024 ✓</text>
+
+        <!-- 2022-03 Self-Consistency -->
+        <circle cx="220" cy="135" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="220" y="113" text-anchor="middle" fill="#24555A">2022-03</text>
+        <text x="220" y="163" text-anchor="middle" fill="#2E2A22">Self-Consistency</text>
+        <text x="220" y="177" text-anchor="middle" fill="#96897A">#026 ✓</text>
+
+        <!-- 2022-05 Zero-shot CoT -->
+        <circle cx="340" cy="135" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="340" y="113" text-anchor="middle" fill="#24555A">2022-05</text>
+        <text x="340" y="163" text-anchor="middle" fill="#2E2A22">Zero-shot CoT</text>
+        <text x="340" y="177" text-anchor="middle" fill="#96897A">#025 ✓</text>
+
+        <!-- 2023-05 Tree of Thoughts 本篇 -->
+        <circle cx="470" cy="135" r="9" fill="#B54A2C"/>
+        <circle cx="470" cy="135" r="14" fill="none" stroke="#B54A2C" stroke-width="1" opacity="0.4"/>
+        <text x="470" y="103" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="470" y="163" text-anchor="middle" fill="#B54A2C" font-weight="600">Tree of Thoughts</text>
+        <text x="470" y="177" text-anchor="middle" fill="#B54A2C">#027</text>
+
+        <!-- 2024 o1 -->
+        <circle cx="600" cy="135" r="5" fill="#24555A" stroke="#24555A"/>
+        <text x="600" y="113" text-anchor="middle" fill="#24555A">2024</text>
+        <text x="600" y="163" text-anchor="middle" fill="#2E2A22">o1</text>
+        <text x="600" y="177" text-anchor="middle" fill="#96897A">#020 ✓</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 推理范式支线的发展脉络：实心节点为已解析论文，红圈为本篇 ToT，处在"线性思维链"向"系统 2 搜索式推理"过渡的枢纽位置</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>到 2023 年初，CoT 和 Self-Consistency 已经让大家见识到"让模型分步思考"的威力。但姚顺雨（<em class="latin">Shunyu Yao</em>）和同事们注意到了一个被忽视的事实：无论 CoT 还是 Self-Consistency，模型的推理始终是<em>自回归的、从左到右的、token 级别的</em>。说白了，模型每生成一个词，都是基于前面已生成的词往下"猜"下一个最可能的词——它从不在中途停下来想"还有没有别的走法"，更不会说"这条思路好像不对，我退回去换一条"。</p>
+
+  <p>这种"线性直行"在简单任务上够用，可一旦遇到需要<em>探索</em>（这步不行换那步）、<em>前瞻</em>（往后多看几步再决定现在怎么走）、或者<em>初始决策至关重要</em>的任务，模型就容易翻车。一个极端的例子是 24 点游戏：给你四个数字，用加减乘除凑出 24。GPT-4 用 CoT 做，成功率只有<em>4%</em>——因为第一步选错了运算，后面就再也凑不回来了，而模型还傻乎乎地一路写到尾。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    把标准的 CoT 想象成一个只会"埋头赶路"的旅行者：他从起点出发，每到一个路口就看一眼路牌、挑一条看起来最对的方向，然后头也不回地走下去。哪怕走进了死胡同，他也只会继续往前撞墙。Self-Consistency 像是派了一群这样的旅行者各自独立走、最后比谁先到——可每个人还是只走一条路、互不交流、进了死胡同照样不回头。而 Tree of Thoughts 则给旅行者配上了地图和判断力：每到一个路口他会<em>同时看好几条路</em>，估量哪条更靠谱，真走错了还能<em>退回上一个路口</em>换条道。
+  </div>
+
+  <p>作者们从两个源头找到了灵感。第一是认知心理学里的"双系统"理论：人有"系统 1"（快、自动、直觉）和"系统 2"（慢、深思熟虑、有意识）两种思考模式。大模型当时的 token 级生成像极了系统 1——快但不深思；它需要被一个类似系统 2 的规划过程来增强，这个规划过程要能<em>维持多种备选、评估当前状态、前瞻或回溯</em>。第二是人工智能的源头本身：上世纪 50 年代，Newell、Shaw 和 Simon 就把"问题求解"定义为<em>在一个组合问题空间里的搜索</em>，而这个空间天然表示为一棵树。ToT 正是把这套经典思想搬进了大模型。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>一句话：能不能把大模型推理从"线性生成"升级成"树形搜索"，让它能像下棋一样<em>在多个候选思路间前瞻、自我评估、必要时回溯</em>，从而解决那些"初始决策至关重要"的复杂规划任务？更具体地——既然 CoT 的"想法"（<em class="latin">thought</em>）是一段连贯的中间推理步骤，我们能否把一串想法组织成一棵<em>树</em>，让模型自己充当"想法生成器"和"状态评估器"，再用经典的搜索算法在树上找到通往答案的路径？</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    Self-Consistency 也让模型"多想几条路"，可它和 ToT 有个本质区别：那几条路彼此<em>独立</em>，只在最后投票时才碰面，中途谁也不帮谁、谁也不能回头。而 ToT 的思路之间是<em>一棵树</em>——它们共享前半段、在分岔点分叉、还能回溯。你觉得，这个"共享前半段 + 可回溯"的结构，为什么能比"各走各的"更厉害？带着这个问题往下看方法。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>ToT 把问题求解建模成<em>在一棵思维树上的搜索</em>。树的每个节点是一个"状态" <em class="latin">s</em>，它由原始问题 <em class="latin">x</em> 和到目前为止的思路 <em class="latin">z</em><sub>1..i</sub> 组成。每条边代表"再多想一步"。整个框架由四个可替换的模块拼成，作者把它们拆开来讲，我们先说人话，再给术语。</p>
+
+  <h3>模块一：想法分解（Thought Decomposition）</h3>
+  <p>CoT 的想法是"顺着往下写一段话"，没有显式的颗粒度。ToT 要求针对不同任务，<em>事先设计好"一步想法"是什么</em>。在 24 点里，一步想法是一次运算（比如"13−9=4，剩 4、4、10"）；在创意写作里，一步想法是一份写作提纲；在填字游戏里，一步想法是给某条线索填一个词。颗粒度选对了，搜索树才有意义——太细了树太大搜不完，太粗了又失去了"分步探索"的意义。</p>
+
+  <h3>模块二：想法生成器（Thought Generator）</h3>
+  <p>给定当前状态 <em class="latin">s</em>，要生成 <em class="latin">k</em> 个候选的下一步想法。作者提供了两种生成策略，按任务的搜索空间特性选用：</p>
+  <ul>
+    <li><em>采样</em>（<em class="latin">Sample</em>）：从模型里独立采 <em class="latin">k</em> 条。适合搜索空间丰富、多样的任务，比如创意写作——你可以让模型自由发散出多种不同的写作提纲。</li>
+    <li><em>提议</em>（<em class="latin">Propose</em>）：用一个"提议提示"让模型一次性顺序吐出 <em class="latin">k</em> 个候选。适合搜索空间受限的任务，比如 24 点——可选的下一步运算就那么几种，与其随机采，不如让模型直接列出来。</li>
+  </ul>
+
+  <h3>模块三：状态评估器（State Evaluator）</h3>
+  <p>这是 ToT 最有意思的地方：谁来评判"这个状态靠不靠谱"？答案是<em>让大模型自己当裁判</em>。用同一个 <em class="latin">LLM</em>，通过提示让它对每个候选状态打分。作者也给了两种评估方式：</p>
+  <ul>
+    <li><em>打分</em>（<em class="latin">Value</em>）：让模型给每个状态一个数值或分类（如"sure / likely / impossible"），必要时还做几次前瞻模拟来辅助判断。</li>
+    <li><em>投票</em>（<em class="latin">Vote</em>）：当直接打分不好拿捏时，让模型在多个候选里"投票"选出最看好的那个——这其实是 Self-Consistency 思路在树内部的复用。</li>
+  </ul>
+  <p>用作者的话说，这种"用模型自身的语言推理来实现搜索启发式"是全新的——以前的搜索启发式要么是人手写的规则，要么是训练出来的，而 ToT 让<em>大模型自己给自己当启发函数</em>。</p>
+
+  <h3>模块四：搜索算法（Search Algorithm）</h3>
+  <p>有了生成器和评估器，最后套上经典的树搜索算法，就能系统性地探索思维树了。作者主要用了两种：</p>
+
+  <p><strong>广度优先搜索（BFS）</strong>：一层一层地往下展开。在每一层，先为当前所有状态各生成 <em class="latin">k</em> 个候选想法（共 <em class="latin">k×b</em> 个），评估后只保留得分最高的 <em class="latin">b</em> 个（叫"广度限制"），再进入下一层。共搜 <em class="latin">T</em> 层。用公式写，第 <em class="latin">t</em> 层保留的状态是：</p>
+
+  <div class="formula-block">
+    $$S_t = \mathop{\arg\max}\limits_{S \subset S'_t,\; |S|=b} \sum_{s \in S} V(p_\theta, S)(s)$$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>其中 <em class="latin">S'</em><sub><em class="latin">t</em></sub> 是这一层生成的所有候选，<em class="latin">V</em> 是评估器打的分。BFS 适合搜索深度不大、但需要在每一层横向比较的任务，比如 24 点（只需 3 步）。</p>
+
+  <p><strong>深度优先搜索（DFS）</strong>：一条路走到黑，走不通就退回来。从当前状态生成 <em class="latin">k</em> 个候选，对每个候选先评估它是否"够格"（得分超过阈值 <em class="latin">v</em><sub>th</sub>），够格才往下深入；如果一条路走到了步数上限 <em class="latin">T</em>，就记下结果；如果所有候选都不够格，就回溯到上一层。DFS 适合搜索树较深、需要纵向探索的任务，比如填字游戏。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 根节点：问题 -->
+        <rect x="290" y="10" width="120" height="40" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="350" y="35" text-anchor="middle" fill="#24555A" font-weight="600">问题（根节点）</text>
+
+        <!-- 第一层：3个候选想法 -->
+        <rect x="80" y="90" width="140" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="150" y="112" text-anchor="middle">想法 A: 13−9=4</text>
+        <text x="150" y="128" text-anchor="middle" fill="#24555A">评估: sure</text>
+
+        <rect x="280" y="90" width="140" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="112" text-anchor="middle">想法 B: 10×13=130</text>
+        <text x="350" y="128" text-anchor="middle" fill="#96897A">评估: impossible</text>
+
+        <rect x="480" y="90" width="140" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="550" y="112" text-anchor="middle">想法 C: 9+10=19</text>
+        <text x="550" y="128" text-anchor="middle" fill="#B54A2C">评估: likely</text>
+
+        <!-- 连线 根→第一层 -->
+        <line x1="350" y1="50" x2="150" y2="88" stroke="#96897A" stroke-width="1" marker-end="url(#arrow3)"/>
+        <line x1="350" y1="50" x2="350" y2="88" stroke="#96897A" stroke-width="1" marker-end="url(#arrow3)"/>
+        <line x1="350" y1="50" x2="550" y2="88" stroke="#96897A" stroke-width="1" marker-end="url(#arrow3)"/>
+
+        <!-- 回溯标记 on B -->
+        <text x="350" y="170" text-anchor="middle" fill="#96897A" font-size="11">↑ impossible → 剪枝回溯</text>
+
+        <!-- 第二层：从 A 展开 -->
+        <rect x="40" y="200" width="140" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="110" y="222" text-anchor="middle">A1: 10−4=6</text>
+        <text x="110" y="238" text-anchor="middle" fill="#24555A">评估: sure</text>
+
+        <rect x="200" y="200" width="140" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="270" y="222" text-anchor="middle">A2: 4×4=16</text>
+        <text x="270" y="238" text-anchor="middle" fill="#96897A">评估: likely</text>
+
+        <line x1="150" y1="140" x2="110" y2="198" stroke="#96897A" stroke-width="1" marker-end="url(#arrow3)"/>
+        <line x1="150" y1="140" x2="270" y2="198" stroke="#96897A" stroke-width="1" marker-end="url(#arrow3)"/>
+
+        <!-- 第三层：叶子，A1→4×6=24 成功 -->
+        <rect x="40" y="300" width="140" height="50" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="110" y="322" text-anchor="middle" fill="#B54A2C" font-weight="600">A1→4×6=24</text>
+        <text x="110" y="338" text-anchor="middle" fill="#B54A2C">✓ 成功！</text>
+
+        <line x1="110" y1="250" x2="110" y2="298" stroke="#B54A2C" stroke-width="1" marker-end="url(#arrow3)"/>
+
+        <!-- 从 C 展开（likely，也探索） -->
+        <rect x="470" y="200" width="140" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="540" y="222" text-anchor="middle">C1: 19+13=32</text>
+        <text x="540" y="238" text-anchor="middle" fill="#96897A">评估: impossible</text>
+
+        <line x1="550" y1="140" x2="540" y2="198" stroke="#96897A" stroke-width="1" marker-end="url(#arrow3)"/>
+        <text x="540" y="278" text-anchor="middle" fill="#96897A" font-size="11">↑ 剪枝回溯</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · ToT 思维树示意：以 24 点为例，模型在每个节点生成多个候选运算，自我评估后剪掉"impossible"的分支，保留"sure"的继续深入，直到找到答案</figcaption>
+  </figure>
+
+  <figure>
+    <svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <rect x="20" y="50" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="73" text-anchor="middle">① 问题输入</text>
+        <text x="80" y="90" text-anchor="middle" fill="#96897A" font-size="10">分解想法粒度</text>
+
+        <rect x="170" y="50" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="230" y="73" text-anchor="middle">② 生成 k 个想法</text>
+        <text x="230" y="90" text-anchor="middle" fill="#96897A" font-size="10">sample / propose</text>
+
+        <rect x="320" y="50" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="380" y="73" text-anchor="middle">③ 自我评估</text>
+        <text x="380" y="90" text-anchor="middle" fill="#96897A" font-size="10">value / vote</text>
+
+        <rect x="470" y="50" width="120" height="50" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="530" y="73" text-anchor="middle" fill="#B54A2C">④ 树搜索</text>
+        <text x="530" y="90" text-anchor="middle" fill="#96897A" font-size="10">BFS / DFS + 回溯</text>
+
+        <rect x="620" y="50" width="60" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="650" y="80" text-anchor="middle" fill="#24555A">答案</text>
+
+        <line x1="140" y1="75" x2="170" y2="75" stroke="#96897A" marker-end="url(#arrow2)"/>
+        <line x1="290" y1="75" x2="320" y2="75" stroke="#96897A" marker-end="url(#arrow2)"/>
+        <line x1="440" y1="75" x2="470" y2="75" stroke="#96897A" marker-end="url(#arrow2)"/>
+        <line x1="590" y1="75" x2="620" y2="75" stroke="#96897A" marker-end="url(#arrow2)"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · ToT 四模块数据流：从问题到想法生成到自我评估再到树搜索，全程无额外训练，靠提示与搜索完成</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>作者在三个精心设计的、需要规划或搜索的任务上做了实验，全部用 GPT-4。结果之悬殊，让"线性推理够不够用"这个问题有了明确答案：<em>不够</em>。</p>
+
+  <h3>任务一：24 点游戏（Game of 24）</h3>
+  <p>给四个数字，用加减乘除凑出 24。这个任务的狠之处在于：第一步选错运算，后面几乎注定失败，所以它<em>极度考验初始决策和回溯能力</em>。ToT 用 BFS（广度 <em class="latin">b</em>=5），每步生成候选运算、自我评估"sure/likely/impossible"、剪掉不可能的分支。结果：</p>
+
+  <table>
+    <thead>
+      <tr><th>方法</th><th>24 点成功率</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">标准输入输出（IO）</td><td>7.3%</td></tr>
+      <tr><td class="text">CoT 提示</td><td>4.0%</td></tr>
+      <tr><td class="text">CoT + Self-Consistency (k=100)</td><td>9.0%</td></tr>
+      <tr><td class="text">IO + 迭代修正 (k=10)</td><td>27.0%</td></tr>
+      <tr><td class="text">CoT（100 次取最好）</td><td>33.0%</td></tr>
+      <tr><td class="text">IO（100 次取最好）</td><td>49.0%</td></tr>
+      <tr><td class="text">ToT (b=1)</td><td>45.0%</td></tr>
+      <tr><td class="text" style="color:#B54A2C;font-weight:600">ToT (b=5)</td><td style="color:#B54A2C;font-weight:600">74.0%</td></tr>
+    </tbody>
+  </table>
+
+  <p>4% 到 74%，这是将近 19 倍的差距。更值得注意的是：哪怕是"CoT 跑 100 次取最好的那个"（33%）也远远不如 ToT 的 b=5——说明问题不在"试得不够多"，而在<em>线性推理本身就没有纠错和回溯的结构</em>。ToT 之所以强，是因为它在每一步都会评估"这条路值不值得继续"，而不是傻乎乎地走到底再说。</p>
+
+  <h3>任务二：创意写作（Creative Writing）</h3>
+  <p>给四个随机句子，要求写一篇四段文章，每段结尾恰好是指定句子。这个任务考验的是全局规划和连贯性。ToT 用两步 BFS：先生成多份写作提纲、模型投票选出最好的，再据此生成正文。评估方式是让 GPT-4 打分（1–10）和人类评判对比。结果显示 ToT 生成的文章<em>连贯性显著更好</em>，GPT-4 和人类评判的一致率也更高。有意思的是，哪怕只是"提纲"这一层的搜索，效果就比直接生成正文好不少。</p>
+
+  <h3>任务三：迷你填字游戏（Mini Crosswords）</h3>
+  <p>5×5 的填字游戏，需要反复试错、改主意、回溯——简直是 ToT 的主场。这里用 DFS，每步为一条线索填一个词，评估后走不通就退回。结果：</p>
+
+  <table>
+    <thead>
+      <tr><th>指标（5×5 填字）</th><th>IO</th><th>CoT</th><th>ToT (DFS)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">字母级正确率</td><td>38.7%</td><td>40.6%</td><td style="color:#B54A2C;font-weight:600">78.0%</td></tr>
+      <tr><td class="text">单词级正确率</td><td>14.0%</td><td>15.6%</td><td style="color:#B54A2C;font-weight:600">60.0%</td></tr>
+      <tr><td class="text">整局解出率</td><td>0%</td><td>1%</td><td style="color:#B54A2C;font-weight:600">20.0%</td></tr>
+    </tbody>
+  </table>
+
+  <p>IO 和 CoT 几乎解不出任何一整局（0%–1%），而 ToT 解出了 20 局中的 4 局。差距的根源很清楚：填字游戏里，一个词填错了会影响好几条交叉线索，必须能<em>改主意、退回去换词</em>——而这恰恰是线性推理做不到、ToT 专门擅长的。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="116" y="28" text-anchor="middle" font-weight="600">CoT（线性）</text>
+        <text x="350" y="28" text-anchor="middle" font-weight="600">Self-Consistency（平行）</text>
+        <text x="584" y="28" text-anchor="middle" font-weight="600" fill="#B54A2C">ToT（树形）</text>
+
+        <!-- CoT: 一条线 -->
+        <rect x="40" y="50" width="50" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="65" y="72" text-anchor="middle" font-size="10">步骤1</text>
+        <rect x="100" y="50" width="50" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="125" y="72" text-anchor="middle" font-size="10">步骤2</text>
+        <rect x="160" y="50" width="50" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="185" y="72" text-anchor="middle" font-size="10">答案</text>
+        <line x1="90" y1="67" x2="100" y2="67" stroke="#96897A"/>
+        <line x1="150" y1="67" x2="160" y2="67" stroke="#96897A"/>
+        <text x="116" y="105" text-anchor="middle" fill="#96897A" font-size="11">一条道走到黑</text>
+        <text x="116" y="120" text-anchor="middle" fill="#96897A" font-size="11">走错无法回头</text>
+
+        <!-- Self-Consistency: 多条平行线 -->
+        <rect x="270" y="40" width="40" height="20" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="290" y="54" text-anchor="middle" font-size="9">路径1→答</text>
+        <rect x="270" y="65" width="40" height="20" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="290" y="79" text-anchor="middle" font-size="9">路径2→答</text>
+        <rect x="270" y="90" width="40" height="20" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="290" y="104" text-anchor="middle" font-size="9">路径3→答</text>
+        <rect x="330" y="65" width="60" height="20" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="360" y="79" text-anchor="middle" font-size="10">投票</text>
+        <line x1="310" y1="50" x2="330" y2="72" stroke="#96897A"/>
+        <line x1="310" y1="75" x2="330" y2="75" stroke="#96897A"/>
+        <line x1="310" y1="100" x2="330" y2="78" stroke="#96897A"/>
+        <text x="350" y="130" text-anchor="middle" fill="#96897A" font-size="11">各走各的，最后投票</text>
+        <text x="350" y="145" text-anchor="middle" fill="#96897A" font-size="11">中途不交流、不回溯</text>
+
+        <!-- ToT: 树形 -->
+        <rect x="540" y="55" width="50" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="565" y="74" text-anchor="middle" font-size="10" fill="#B54A2C">根</text>
+        <rect x="500" y="105" width="40" height="24" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="520" y="121" text-anchor="middle" font-size="9">A</text>
+        <rect x="550" y="105" width="40" height="24" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="570" y="121" text-anchor="middle" font-size="9">B</text>
+        <rect x="600" y="105" width="40" height="24" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="620" y="121" text-anchor="middle" font-size="9">C</text>
+        <line x1="555" y1="85" x2="520" y2="103" stroke="#96897A"/>
+        <line x1="565" y1="85" x2="570" y2="103" stroke="#96897A"/>
+        <line x1="575" y1="85" x2="620" y2="103" stroke="#96897A"/>
+        <!-- 回溯箭头 -->
+        <rect x="560" y="145" width="50" height="24" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="585" y="161" text-anchor="middle" font-size="9" fill="#B54A2C">回溯</text>
+        <path d="M620,129 Q640,140 610,145" fill="none" stroke="#B54A2C" stroke-width="1" marker-end="url(#ar)"/>
+        <path d="M570,129 Q555,135 585,145" fill="none" stroke="#B54A2C" stroke-width="1" marker-end="url(#ar)" stroke-dasharray="3 3"/>
+        <text x="584" y="190" text-anchor="middle" fill="#B54A2C" font-size="11">前瞻·评估·回溯</text>
+        <text x="584" y="205" text-anchor="middle" fill="#96897A" font-size="11">走错能退回去换</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 三种推理结构的关键差异：CoT 是一条线（不可回头），Self-Consistency 是平行线（互不交流），ToT 是一棵树（可分叉、可评估、可回溯）</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>这篇论文的价值，远远不止"24 点从 4% 涨到 74%"这个漂亮的数字。它贡献了几个被后续反复引用的洞见。</p>
+
+  <p>第一，它把"推理"从<em>生成</em>重新定义成了<em>搜索</em>。在 ToT 之前，大模型推理就是"自回归地生成一段话"，唯一的自由度是"怎么提示"和"怎么解码"。ToT 把经典 AI 里的<em>问题空间搜索</em>——那个从 50 年代 Newell 和 Simon 那儿就有的老思想——重新嫁接回了语言模型，让推理变成了"在思维树上找路"。这个视角的转换影响深远：后来一整批"搜索式推理"工作都是顺着它往下走的。</p>
+
+  <p>第二，它证明了<em>大模型自己可以当自己的启发函数</em>。经典搜索算法（A*、Minimax）的威力，取决于启发函数好不好；以前启发函数要么靠人写、要么靠训练。ToT 展示了一条新路：直接用提示让模型评估"这个状态靠不靠谱"，效果出奇地好。这种"用语言模型的语言推理来实现搜索启发式"，成了后来 LLM 搜索类研究的标配。</p>
+
+  <p>第三，它给"系统 2 思考"提供了一个具体、可操作的技术载体。双系统理论提了好几年，但"怎么让大模型有系统 2"一直停留在口号。ToT 用树搜索 + 自评给出了一个落地方案：系统 1 是模型的快速生成，系统 2 是套在外面的"生成—评估—搜索—回溯"循环。这个"在系统 1 之上叠一层系统 2"的架构思路，后来在 o1 那里以强化学习的形式被内化——但思想源头可以追溯到这儿。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>ToT 最硬的局限是<em>代价</em>。BFS 在每一层要为每个状态生成 <em class="latin">k</em> 个候选、再逐一评估，<em class="latin">b</em>=5 时一次 24 点题大约要调 50 次 GPT-4，而 CoT 只调 1 次。搜索越深、广度越大，调用次数线性甚至指数增长。论文附录里也专门讨论了成本与效率的权衡——对实时应用来说，这笔账不算便宜。这也直接催生了后续的折中路：能不能自适应地决定搜多深、能不能在置信度高时早停——这些后来在 <em class="latin">test-time compute</em> scaling 的研究里被系统化回答（见第 021 期）。</p>
+
+  <p>第二个局限是<em>需要针对任务手工设计</em>。想法分解的粒度、生成策略用 sample 还是 propose、评估用 value 还是 vote、搜索用 BFS 还是 DFS——这些都要根据任务特性来选，没有一个全自动的方案。换句话说，ToT 是个"框架"而非"即插即用"的工具，用好它需要不少工程判断。后来者试图把它自动化（比如让模型自己决定搜索策略），但那是后话了。</p>
+
+  <p>第三个，也是最有意思的局限：它依赖模型<em>自评的准确性</em>。ToT 的剪枝和选择全靠模型给状态打分，可我们在上一篇 Self-Consistency 里已经看到——模型对自己推理质量的自评并不靠谱。如果评估器把一条好路判成了"impossible"剪掉，或者把死胡同判成"sure"一路深入，ToT 反而可能比 CoT 更糟。如何让评估更准，正是后来过程奖励模型（PRM）那条线要补的拼图——我们在第 022、023 期已经见过它的回响了。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把这条支线拉长看，ToT 的位置格外清晰。2022 年 1 月，<em class="latin">CoT</em> 用"带草稿的范例"教会模型分步推理，但只走一条贪婪路径。两个月后，<em class="latin">Self-Consistency</em> 把"一条"换成"多条平行采样 + 投票"，却依然不能中途纠偏。5 月，<em class="latin">Zero-shot CoT</em> 证明推理能力早已"睡"在模型里，一句"让我们一步步思考"就能唤醒。这三篇共享一个设定：<em>推理是线性的、不可回头的</em>。</p>
+
+  <p>ToT 在 2023 年 5 月打破了这个设定。它把"链"升级成"树"，让模型能分叉、能评估、能回溯，第一次给大模型装上了"系统 2 式"的搜索规划能力。再往后，这条路继续延伸：有人把"树"进一步推广成"图"（<em class="latin">Graph of Thoughts</em>），允许不同分支的思路合并复用；有人把搜索策略自动化；直到 o1 / R1 用强化学习把"多想几步、必要时反思"这套能力<em>内化</em>进模型自身，不再需要外挂搜索框架。从这个意义上，ToT 是"测试时搜索"这条线的<em>承上启下</em>之篇——它上承 CoT 的分步思考，下启 o1 的系统 2 推理。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>这篇论文的第一作者姚顺雨（<em class="latin">Shunyu Yao</em>），当时还是普林斯顿的博士生，但他已经在大模型圈子里名声响亮——因为半年前他写了另一篇赫赫有名的论文 <em class="latin">ReAct</em>（让模型"边推理边行动"）。一个"推理 + 行动"（ReAct），一个"推理 + 搜索"（ToT），姚顺雨像是专门给大模型的"系统 2"添砖加瓦的人。更有意思的是，ToT 的合作者里有 <em class="latin">Thomas Griffiths</em>——普林斯顿的认知科学家，长期研究人类决策与"双系统"理论。这篇论文把认知心理学的洞察搬进大模型，背后有这位认知科学家的影子。</p>
+
+  <p>还有个容易被混淆的"乌龙"。在 ToT 发到 arXiv 的<em>前两天</em>（2023 年 5 月 15 日），另一个人 Jieyi Long 也发了一篇标题几乎一样的论文，叫 <em class="latin">Large Language Model Guided Tree-of-Thought</em>（arXiv:2305.08291）。两篇是独立工作，思路相近但框架不同。后来大家在说"ToT"时，默认指的都是姚顺雨这篇——因为它更系统、实验更扎实，还拿了 NeurIPS 2023 的 Oral（口头报告，录取率极低）。这大概是学术圈里"同名同姓、隔天出生"的经典误会了。</p>
+
+  <p>最后说个实验里的小细节。在 24 点任务上，作者发现了一个有趣的现象：哪怕把 ToT 的广度设成 <em class="latin">b</em>=1（每层只保留一个最优候选，相当于"贪心 + 评估 + 回溯"），成功率也有 45%——远超 CoT 的 4%。这说明<em>真正救场的不是"广撒网"，而是"能评估、能回溯"</em>。光会回头看一眼自己走得对不对、走错了能退回来，就已经甩开线性推理一大截了。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 系统1 vs 系统2 对比 -->
+        <text x="175" y="30" text-anchor="middle" font-weight="600">系统 1（快思考）</text>
+        <text x="525" y="30" text-anchor="middle" font-weight="600" fill="#B54A2C">系统 2（慢思考）</text>
+        <line x1="350" y1="20" x2="350" y2="200" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <rect x="60" y="50" width="230" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="70" text-anchor="middle">token 级，从左到右生成</text>
+
+        <rect x="60" y="90" width="230" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="110" text-anchor="middle">一条道走到黑</text>
+
+        <rect x="60" y="130" width="230" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="150" text-anchor="middle">直觉、自动、不瞻前顾后</text>
+
+        <rect x="410" y="50" width="230" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="70" text-anchor="middle" fill="#B54A2C">在思维树上搜索</text>
+
+        <rect x="410" y="90" width="230" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="110" text-anchor="middle" fill="#B54A2C">前瞻·评估·回溯</text>
+
+        <rect x="410" y="130" width="230" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="150" text-anchor="middle" fill="#B54A2C">深思熟虑、有意识地规划</text>
+
+        <text x="175" y="190" text-anchor="middle" fill="#96897A" font-size="11">= CoT / 标准 LM 生成</text>
+        <text x="525" y="190" text-anchor="middle" fill="#B54A2C" font-size="11">= Tree of Thoughts</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 双系统视角下的 ToT：把大模型从"快思考的系统 1"升级到"会搜索的系统 2"</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读这篇论文我最深的感触是：<em>经典思想永远不会过时，只是等待合适的载体回来</em>。搜索算法、问题空间、启发函数——这些是上世纪 50 年代 AI 的看家本领，后来被深度学习的"端到端学习"压了十几年风头。ToT 把它们从故纸堆里捞出来，和语言模型的生成能力一结合，立刻迸发出惊人的效果。这提醒我们：在追逐新范式时，别忘了回头看看老祖宗的智慧，很多"新问题"其实早有"旧答案"，只差一个合适的接口。</p>
+
+  <p>把它放进更大的图景里，ToT 其实是在回答一个越来越紧迫的问题：<em>大模型的智能，到底该来自训练时还是推理时？</em>训练派说"把模型做大、把数据喂多"；推理派说"在推理时多花算力搜索"。ToT 用最直白的方式站了推理派一边——同一个 GPT-4，套不套 ToT，24 点成功率差 19 倍。这个信号后来被 o1、R1 放大到极致：用强化学习训练模型"在推理时自己学会搜索和反思"，把 ToT 外挂的搜索循环<em>内化</em>成模型自身的能力。从这个意义上，ToT 不只是一篇提示工程论文，它是<em>推理范式从训练侧向推理侧迁移</em>的关键里程碑之一。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    ToT 的搜索靠模型<em>自评</em>来决定剪哪条、留哪条。可如果模型评估不准——把好路判成死胡同剪掉了，或把死胡同当成光明大道一路深入——搜索反而可能比直接走还差。你觉得，该怎么让这个"自我裁判"更可靠？是让模型多投几次票取平均？是训练一个专门的评估器？还是干脆不靠评估、用别的策略来探索？带着这个疑问，我们下期见。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Graph of Thoughts: Solving Elaborate Problems with Large Language Models</h3>
+    <p style="margin:0;">ToT 把推理从"一条链"升级成了"一棵树"，可树有个局限——不同分支的思路<em>不能合并</em>，只能各自走到底。下一篇，Graph of Thoughts 把"思维树"再升级成"思维图"：允许不同分支的中间想法互相融合、回溯、复用，让推理从树形探索走向网状协同。当思路不再只能分叉、还能交汇，复杂任务的解法会变成什么样？</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 027 篇</span>
+    <span>2026-08-27</span>
+  </footer>
+
+</div>
+</body>
+</html>
