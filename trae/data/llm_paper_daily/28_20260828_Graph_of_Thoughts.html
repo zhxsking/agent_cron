@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graph of Thoughts 论文精读 · 大模型经典论文系列 #028</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#028</span>
+  </div>
+
+  <h1 class="title">
+    Graph of Thoughts: Solving Elaborate Problems with Large Language Models
+    <span class="en">Graph of Thoughts：把思维树升级成思维图——允许不同分支的思路合并、回溯与重用，让推理从树形探索走向网状协同</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Maciej Besta, Nils Blach, Ales Kubicek, Robert Gerstenberger, Michał Podstawski, Lukas Gianinazzi, Joanna Gajda, Tomasz Lehmann, Hubert Niewiadomski, Piotr Nyczyk, Torsten Hoefler（共 11 位）</span>
+    <span>机构：ETH Zürich (SPCL) / Warsaw University of Technology / Cledar</span>
+    <span>发表：2023-08 / arXiv（AAAI-24 收录）</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2308.09687" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/spcl/graph-of-thoughts" target="_blank" rel="noopener">GitHub</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">设想你在策划一场复杂的多日旅行：行程、预算、景点、同伴偏好、天气……你会在纸上列出几条候选路线，比较它们；写着写着发现路线 A 的"住宿段"其实可以塞进路线 B 里，于是你把两段思路合并成一个更优的方案；接着你回头改掉了第一晚的住处，又把删掉的旧想法捡回来重新评估。一通操作下来，纸上不是一条直线，也不是一棵规整的树，而是一张涂涂改改、互相勾连的网。</p>
+
+  <p class="lead">这恰恰是 2023 年以前大语言模型最难做到的事。从思维链到思维树，模型要么只能"一条道走到黑"，要么只能在树形分叉里探索、回退——每个中间想法都<em>有且只有一个父亲</em>，谁也没法把两条岔路上的好点子<em>合并</em>成一个新答案。这篇来自 ETH 苏黎世高性能计算实验室的论文，要解决的就是这件"司空见惯却一直被结构封印"的小事。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    把 LLM 的推理过程建模成一张<em class="latin">任意图</em>，让"合并、精炼、回溯"成为一等公民——在排序任务上比思维树质量高约 62%、成本低 31% 以上，并首次给出"思维体积"这个衡量提示策略潜力的指标。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>把目光从"模型本身"挪开，只看<em>提示范式</em>这条暗线，它的形状演化极其优雅：先是一条链（<em class="latin">Chain-of-Thought</em>，让模型把推理拆成步骤），再是一束平行链（<em class="latin">Self-Consistency</em>，多想几遍再投票），接着长成一棵树（<em class="latin">Tree of Thoughts</em>，分叉、评分、回溯）。每一步都在"解锁更复杂的拓扑结构"。</p>
+  <p>而 <em class="latin">Graph of Thoughts</em>（下文简称 GoT）站在这条演化的下一站：把树彻底松绑成<em>任意图</em>，允许一个想法同时被好几条思路"喂养成型"，也允许它回头精炼自己。它承接了 ToT 的搜索与回溯，开启了"网状协同推理"这一族——后来 LangGraph 这类 agent 编排框架、以及同一团队的 <em class="latin">Topologies of Reasoning</em>、<em class="latin">Knowledge Graph of Thoughts</em>，都能看到它的影子。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 240" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="130" x2="680" y2="130" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 2017 Transformer -->
+        <circle cx="70" cy="130" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="70" y="108" text-anchor="middle">2017</text>
+        <text x="70" y="160" text-anchor="middle" fill="#2E2A22">Transformer</text>
+
+        <!-- 2020 GPT-3 -->
+        <circle cx="190" cy="130" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="190" y="108" text-anchor="middle">2020</text>
+        <text x="190" y="160" text-anchor="middle" fill="#2E2A22">GPT-3</text>
+
+        <!-- 2022 CoT -->
+        <circle cx="310" cy="130" r="6" fill="#24555A"/>
+        <text x="310" y="108" text-anchor="middle">2022</text>
+        <text x="310" y="160" text-anchor="middle" fill="#24555A">CoT / SC</text>
+
+        <!-- 2023 ToT -->
+        <circle cx="430" cy="130" r="6" fill="#24555A"/>
+        <text x="430" y="108" text-anchor="middle">2023.05</text>
+        <text x="430" y="160" text-anchor="middle" fill="#24555A">Tree of Thoughts</text>
+
+        <!-- 2023 GoT 本篇 -->
+        <circle cx="510" cy="130" r="9" fill="#B54A2C"/>
+        <text x="510" y="98" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="510" y="160" text-anchor="middle" fill="#2E2A22" font-weight="600">Graph of Thoughts</text>
+        <text x="510" y="178" text-anchor="middle">2023.08</text>
+
+        <!-- 2024-2025 推理范式 -->
+        <circle cx="620" cy="130" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="620" y="108" text-anchor="middle">2024-25</text>
+        <text x="620" y="160" text-anchor="middle" fill="#2E2A22">o1 / R1 推理范式</text>
+
+        <!-- 图例 -->
+        <circle cx="60" cy="210" r="5" fill="#24555A"/>
+        <text x="72" y="214" fill="#2E2A22">已解析</text>
+        <circle cx="160" cy="210" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="172" y="214" fill="#2E2A22">未解析 / 后续</text>
+        <circle cx="290" cy="210" r="6" fill="#B54A2C"/>
+        <text x="302" y="214" fill="#2E2A22">本篇</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 提示范式拓扑演化：链 → 平行链 → 树 → 图（GoT）。绿色为系列已解析节点，本篇以红色高亮。</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>GoT 出现前，结构化提示已经走过三代，但每一代都背着同一个隐含约束：<em>每个想法只有一个来源</em>。</p>
+  <ul>
+    <li><em class="latin">IO prompting</em>：一道题、一个答案，单点。</li>
+    <li><em class="latin">Chain-of-Thought</em>：把推理显式拆成一串中间步骤，形成一条链——但只能走直线，错了没法回头。</li>
+    <li><em class="latin">Self-Consistency (CoT-SC)</em>：多采几条链再投票，仍是<em>互不相交的平行链</em>，链与链之间不交换信息。</li>
+    <li><em class="latin">Tree of Thoughts</em>：把链长成树，能分叉、能评分、能回溯——但树上每个节点<em>依旧只有一个父亲</em>，两条岔路走到一半想"合流"？做不到。</li>
+  </ul>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    把推理想成<em>在白板上解一道大题</em>。CoT 像只能从上往下写一列算式，写错了只能划掉重来；CoT-SC 像在白板边贴了好多张小纸条、最后数哪张票多；ToT 像画了一棵决策树，可以回到上一层换条岔路。可现实里解题的人会做一件它们都做不了的事——<em>把左半边的思路和右半边的思路圈在一起，合成一段新解</em>。GoT 就是把这块白板的拓扑从"树"松绑成"网"，让"合流"成为合法动作。
+  </div>
+
+  <p>更妙的是，作者把动机挂回了三个本就在"成网"的现象：人类推理会跨链合并点子、大脑神经元以递归回路相连、算法执行天然就是有向无环图（DAG）。换句话说，<em>图才是更自然的推理骨架</em>，链和树只是它的退化特例。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>一句话：如何在<em>不动模型权重</em>的前提下，让 LLM 的中间想法能<em>合并、精炼、回溯、复用</em>，并且把这套机制做成一个可扩展、可复用的工程框架，而不是某道题的临时手抖？</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果树已经能分叉、能回溯了，那从"树"到"图"到底多出了什么能力？换个问法：有没有什么任务，是<em>树结构在原理上就表达不了</em>的？
+  </div>
+
+  <p>提示在前文类比里：树表达不了"两条独立岔路的<em>合流</em>"，也表达不了"一个想法反复精炼自己"的<em>自环</em>。这正是 GoT 要补的两块拼图。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>GoT 的方法可以拆成三层：先把推理<em>建模成图</em>，再定义<em>图上的一组操作</em>，最后用一套<em>静态/动态双图架构</em>把它工程化。</p>
+
+  <h3>步骤一：把推理过程建模成有向图</h3>
+  <p>推理过程被抽象成一个四元组 $(G, T, E, R)$：</p>
+  <ul>
+    <li><em>顶点</em> $V$ 是一个个 LLM 思想（一段段中间解，可以是一段话、一个排好序的数列、一段代码草稿）；</li>
+    <li><em>有向边</em> $(u,v) \in E$ 表示"想 $v$ 是把 $u$ 当直接输入生成出来的"；</li>
+    <li>$T$ 是可施加的<em>思想变换</em>集合；$E$ 是给某个思想打分的评估函数；$R$ 是按分数挑出前 $h$ 名的排名函数。</li>
+  </ul>
+  <p>关键在于：这里的图<em>不限定是树</em>，可以是 DAG，甚至可以有自环。一个节点可以有任意条入边——这正是"合流"得以发生的数学基础。</p>
+
+  <h3>步骤二：四种思想变换</h3>
+  <p>每次变换 $T(G, p_\theta)$ 都在<em>重写图</em>：加入新点和新边、必要时删掉旧点旧边。形式化写作：</p>
+  <div class="formula-block">
+    $$ V' = (V \cup V^{+}) \setminus V^{-}, \qquad E' = (E \cup E^{+}) \setminus E^{-} $$
+    <span class="eqn mono">(1)</span>
+  </div>
+  <p>其中 $V^{+}, E^{+}$ 是新增的点和边，$V^{-}, E^{-}$ 是被移除的。围绕这套重写，论文重点定义了三种"图原生"变换（外加由删边达成的回溯）：</p>
+
+  <figure>
+    <svg viewBox="0 0 720 380" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrG" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrA" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <text x="20" y="22" font-size="13" font-weight="600" fill="#24555A">① Aggregation 聚合：k 个想法 → 1 个新想法（合流）</text>
+        <circle cx="70" cy="80" r="11" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="70" y="84" text-anchor="middle">v1</text>
+        <circle cx="70" cy="120" r="11" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="70" y="124" text-anchor="middle">v2</text>
+        <circle cx="70" cy="160" r="11" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="70" y="164" text-anchor="middle">vk</text>
+        <text x="70" y="105" text-anchor="end" font-size="13" fill="#96897A">⋮</text>
+        <circle cx="200" cy="120" r="13" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C"/>
+        <text x="200" y="124" text-anchor="middle" fill="#B54A2C" font-weight="600">v+</text>
+        <line x1="82" y1="80" x2="187" y2="115" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrA)"/>
+        <line x1="82" y1="120" x2="187" y2="120" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrA)"/>
+        <line x1="82" y1="160" x2="187" y2="125" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrA)"/>
+        <text x="280" y="116" fill="#96897A">取多条独立思路的精华，融合成更强的一段</text>
+
+        <text x="20" y="200" font-size="13" font-weight="600" fill="#24555A">② Refinement 精炼：一个想法 → 改良后的自己（自环/反馈）</text>
+        <circle cx="120" cy="250" r="13" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="254" text-anchor="middle">v</text>
+        <path d="M108,242 C90,225 150,225 132,242" fill="none" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrA)"/>
+        <text x="120" y="226" text-anchor="middle" fill="#B54A2C" font-size="10">改</text>
+        <text x="280" y="254" fill="#96897A">基于反馈反复打磨同一个想法，边是自环</text>
+
+        <text x="20" y="300" font-size="13" font-weight="600" fill="#24555A">③ Generation 生成：1 个想法 → k 个新子想法（分叉，兼容 ToT/CoT-SC）</text>
+        <circle cx="100" cy="350" r="13" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="100" y="354" text-anchor="middle">v</text>
+        <circle cx="220" cy="332" r="11" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="220" y="336" text-anchor="middle">c1</text>
+        <circle cx="220" cy="350" r="11" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="220" y="354" text-anchor="middle">c2</text>
+        <circle cx="220" cy="368" r="11" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="220" y="372" text-anchor="middle">ck</text>
+        <line x1="113" y1="345" x2="207" y2="334" stroke="#96897A" marker-end="url(#arrG)"/>
+        <line x1="113" y1="350" x2="207" y2="350" stroke="#96897A" marker-end="url(#arrG)"/>
+        <line x1="113" y1="355" x2="207" y2="366" stroke="#96897A" marker-end="url(#arrG)"/>
+        <text x="300" y="354" fill="#96897A">从一个父想法分叉出多个候选（ToT 的分叉是它的特例）</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · 三种核心思想变换：聚合（合流）、精炼（自环）、生成（分叉）。回溯由"删边"实现。</figcaption>
+  </figure>
+
+  <p>把它们的形式化写出来：</p>
+  <ul>
+    <li><em>聚合</em>：$V^{+}=\{v^{+}\}$，$E^{+}=\{(v_1,v^{+}),\dots,(v_k,v^{+})\}$——把 $k$ 个想法汇入一个新节点，这是树结构<em>在原理上表达不了</em>的动作。</li>
+    <li><em>精炼</em>：$E^{+}=\{(v,v)\}$——一条自环，代表"基于反馈再改一遍它自己"。</li>
+    <li><em>生成</em>：从一个父节点生出 $k$ 个子节点，ToT 的分叉、CoT-SC 的多次采样都被它涵盖。</li>
+  </ul>
+
+  <div class="callout">
+    <span class="label">为什么这是真正的"升级"</span>
+    ToT 的分叉 = 生成；ToT 的回溯 = 删边。也就是说<em>树是图的退化特例</em>。GoT 真正新增的是"聚合"和"自环"——前者让独立岔路能合流，后者让一个想法能被反复打磨。论文把这两类操作称作<em class="latin">graph-enabled transformations</em>，是链和树"天然表达不了"的。
+  </div>
+
+  <h3>步骤三：思维体积——为何"图"能赢</h3>
+  <p>论文给了一个漂亮的理论指标：<em>思维体积</em>。一个想法 $v$ 的体积，等于<em>能通过有向路径走到 $v$ 的、它之前的所有想法数量</em>——直观说就是"最终答案能吸收多少上游信息"。</p>
+  <p>在总预算 $\Theta(N)$ 个想法下，四种拓扑的延迟与体积对比如下：</p>
+
+  <table>
+    <thead>
+      <tr><th>拓扑</th><th>结构</th><th>延迟</th><th>最终想法体积</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">IO</td><td class="text">单点</td><td>1</td><td>1</td></tr>
+      <tr><td class="text">CoT</td><td class="text">一条链</td><td>N</td><td>N</td></tr>
+      <tr><td class="text">CoT-SC</td><td class="text">k 条平行链</td><td>N/k</td><td>N/k</td></tr>
+      <tr><td class="text">ToT</td><td class="text">树</td><td>log<sub>k</sub> N</td><td>log<sub>k</sub> N</td></tr>
+      <tr><td class="text">GoT</td><td class="text">图（含聚合）</td><td>log<sub>k</sub> N</td><td>N</td></tr>
+    </tbody>
+  </table>
+
+  <figure>
+    <svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrT" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="10.5" fill="#2E2A22">
+        <!-- CoT 链 -->
+        <text x="20" y="30" font-weight="600" fill="#24555A">CoT：一条链（体积=N，延迟=N）</text>
+        <g transform="translate(20,40)">
+          <circle cx="10" cy="20" r="9" fill="#ECE4D4" stroke="#96897A"/><text x="10" y="23" text-anchor="middle">1</text>
+          <line x1="19" y1="20" x2="31" y2="20" stroke="#96897A" marker-end="url(#arrT)"/>
+          <circle cx="40" cy="20" r="9" fill="#ECE4D4" stroke="#96897A"/><text x="40" y="23" text-anchor="middle">2</text>
+          <line x1="49" y1="20" x2="61" y2="20" stroke="#96897A" marker-end="url(#arrT)"/>
+          <circle cx="70" cy="20" r="9" fill="#ECE4D4" stroke="#96897A"/><text x="70" y="23" text-anchor="middle">3</text>
+          <line x1="79" y1="20" x2="91" y2="20" stroke="#96897A" marker-end="url(#arrT)"/>
+          <circle cx="100" cy="20" r="9" fill="#ECE4D4" stroke="#96897A"/><text x="100" y="23" text-anchor="middle">N</text>
+        </g>
+
+        <!-- CoT-SC 平行链 -->
+        <text x="20" y="95" font-weight="600" fill="#24555A">CoT-SC：k 条平行链（体积=N/k，延迟=N/k）</text>
+        <g transform="translate(20,105)">
+          <line x1="10" y1="10" x2="100" y2="10" stroke="#96897A" marker-end="url(#arrT)"/>
+          <line x1="10" y1="22" x2="100" y2="22" stroke="#96897A" marker-end="url(#arrT)"/>
+          <line x1="10" y1="34" x2="100" y2="34" stroke="#96897A" marker-end="url(#arrT)"/>
+          <text x="112" y="26" fill="#96897A">… 互不相交，链间不交换信息</text>
+        </g>
+
+        <!-- ToT 树 -->
+        <text x="20" y="165" font-weight="600" fill="#24555A">ToT：树（体积=log N，延迟=log N）</text>
+        <g transform="translate(20,175)" fill="none">
+          <circle cx="60" cy="10" r="8" fill="#ECE4D4" stroke="#96897A"/>
+          <line x1="55" y1="17" x2="40" y2="40" stroke="#96897A"/><circle cx="38" cy="42" r="7" fill="#ECE4D4" stroke="#96897A"/>
+          <line x1="65" y1="17" x2="82" y2="40" stroke="#96897A"/><circle cx="84" cy="42" r="7" fill="#ECE4D4" stroke="#96897A"/>
+          <line x1="35" y1="49" x2="22" y2="70" stroke="#96897A"/><circle cx="20" cy="72" r="6" fill="#ECE4D4" stroke="#96897A"/>
+          <line x1="41" y1="49" x2="54" y2="70" stroke="#96897A"/><circle cx="56" cy="72" r="6" fill="#ECE4D4" stroke="#96897A"/>
+          <line x1="81" y1="49" x2="68" y2="70" stroke="#96897A"/><circle cx="66" cy="72" r="6" fill="#ECE4D4" stroke="#96897A"/>
+          <line x1="87" y1="49" x2="100" y2="70" stroke="#96897A"/><circle cx="102" cy="72" r="6" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="130" y="50" fill="#96897A">叶子只看根→叶那条路，吸收信息有限</text>
+        </g>
+
+        <!-- GoT 图 -->
+        <text x="380" y="165" font-weight="600" fill="#B54A2C">GoT：图（体积=N，延迟=log N）★ 兼顾</text>
+        <g transform="translate(380,175)">
+          <circle cx="40" cy="10" r="8" fill="#ECE4D4" stroke="#96897A"/>
+          <line x1="35" y1="17" x2="20" y2="40" stroke="#96897A"/><circle cx="18" cy="42" r="7" fill="#ECE4D4" stroke="#96897A"/>
+          <line x1="45" y1="17" x2="62" y2="40" stroke="#96897A"/><circle cx="64" cy="42" r="7" fill="#ECE4D4" stroke="#96897A"/>
+          <line x1="22" y1="49" x2="40" y2="68" stroke="#B54A2C" marker-end="url(#arrT)"/>
+          <line x1="60" y1="49" x2="44" y2="68" stroke="#B54A2C" marker-end="url(#arrT)"/>
+          <circle cx="46" cy="74" r="9" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C"/>
+          <text x="46" y="78" text-anchor="middle" fill="#B54A2C" font-weight="600">合</text>
+          <text x="20" y="105" fill="#96897A">用聚合边把两条岔路合流，</text>
+          <text x="20" y="118" fill="#96897A">叶子也能吸收全部上游信息</text>
+        </g>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 四种拓扑对比：ToT 用分叉换来低延迟，却丢了信息体积；GoT 靠"聚合边"把体积补回来。</figcaption>
+  </figure>
+
+  <p>读这张表的重点在最后两行：ToT 用分叉把延迟压到对数级，但代价是<em>每个叶子只能看到根到叶那一条路</em>，体积也只剩对数；GoT 在同一棵"分叉树"上<em>额外加几条聚合边</em>，就让最终答案能依赖全部 $N$ 个想法——低延迟与高体积<em>兼得</em>。这是 GoT 最核心的理论卖点。</p>
+
+  <h3>步骤四：静态 GoO + 动态 GRS 的工程架构</h3>
+  <p>要把上面的抽象跑起来，论文给了一套模块化架构，核心是<em>两张图</em>：</p>
+  <ul>
+    <li><em class="latin">Graph of Operations (GoO)</em>——<em>静态图</em>，由用户事先写好：节点是要执行的操作（<em class="latin">Generate / Aggregate / Score / KeepBestN / Improve / GroundTruth</em> 等），边是数据流向。相当于"推理的剧本"。</li>
+    <li><em class="latin">Graph Reasoning State (GRS)</em>——<em>动态图</em>，运行时由控制器边走边搭：真正生成的那些思想节点、它们的依赖、分数、合法性。</li>
+  </ul>
+  <p>围绕它们的有四个组件：<em class="latin">Prompter</em>（把当前 GRS 编码成发给 LLM 的提示）、<em class="latin">Parser</em>（把 LLM 回复解析回结构化思想并更新 GRS）、<em class="latin">Scoring & Validation</em>（打分校验，可由 LLM 或人来做）、<em class="latin">Controller</em>（按 GoO 调度、决定何时停、何时换变换）。整套流程还把每次 LLM 调用序列化成 JSON，方便事后审计成本与中间想法。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrS" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- GoO 静态 -->
+        <rect x="30" y="40" width="200" height="70" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="130" y="62" text-anchor="middle" font-weight="600" fill="#24555A">GoO（静态剧本）</text>
+        <text x="130" y="82" text-anchor="middle" font-size="10.5" fill="#96897A">Generate→Aggregate→</text>
+        <text x="130" y="97" text-anchor="middle" font-size="10.5" fill="#96897A">Score→KeepBestN→…</text>
+
+        <!-- Controller -->
+        <rect x="280" y="40" width="160" height="70" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="360" y="62" text-anchor="middle" font-weight="600" fill="#B54A2C">Controller</text>
+        <text x="360" y="82" text-anchor="middle" font-size="10.5" fill="#96897A">按 GoO 调度，决定</text>
+        <text x="360" y="97" text-anchor="middle" font-size="10.5" fill="#96897A">下一步/何时停</text>
+
+        <!-- LLM -->
+        <rect x="490" y="40" width="200" height="70" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="590" y="62" text-anchor="middle" font-weight="600" fill="#24555A">LLM（pθ）</text>
+        <text x="590" y="82" text-anchor="middle" font-size="10.5" fill="#96897A">GPT-3.5 / GPT-4 / Llama 2</text>
+        <text x="590" y="97" text-anchor="middle" font-size="10.5" fill="#96897A">冻结，不训练</text>
+
+        <line x1="230" y1="75" x2="280" y2="75" stroke="#96897A" marker-end="url(#arrS)"/>
+        <line x1="440" y1="75" x2="490" y2="75" stroke="#96897A" marker-end="url(#arrS)"/>
+
+        <!-- Prompter/Parser 中间层 -->
+        <rect x="280" y="150" width="80" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="320" y="170" text-anchor="middle" font-size="11">Prompter</text>
+        <text x="320" y="184" text-anchor="middle" font-size="9.5" fill="#96897A">GRS→提示</text>
+        <rect x="360" y="150" width="80" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="400" y="170" text-anchor="middle" font-size="11">Parser</text>
+        <text x="400" y="184" text-anchor="middle" font-size="9.5" fill="#96897A">回复→GRS</text>
+
+        <line x1="360" y1="110" x2="320" y2="150" stroke="#96897A" marker-end="url(#arrS)"/>
+        <line x1="590" y1="110" x2="400" y2="150" stroke="#96897A" marker-end="url(#arrS)"/>
+        <line x1="400" y1="150" x2="360" y2="110" stroke="#96897A" stroke-dasharray="3 3" marker-end="url(#arrS)"/>
+
+        <!-- GRS 动态 -->
+        <rect x="30" y="240" width="660" height="48" rx="2" fill="#24555A" fill-opacity="0.10" stroke="#24555A"/>
+        <text x="360" y="262" text-anchor="middle" font-weight="600" fill="#24555A">GRS（动态状态图）：运行时生成的一个个思想节点 + 依赖 + 分数 + 合法性</text>
+        <text x="360" y="280" text-anchor="middle" font-size="10.5" fill="#96897A">每次 LLM 调用都序列化成 JSON，可审计成本与中间想法</text>
+
+        <line x1="320" y1="194" x2="200" y2="240" stroke="#24555A" stroke-dasharray="3 3" marker-end="url(#arrS)"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · GoT 工程架构：静态 GoO（剧本）+ 动态 GRS（状态），Controller 编排，LLM 始终冻结。</figcaption>
+  </figure>
+
+  <p>这套设计把"用图编排推理"变成了<em>可声明、可扩展</em>的工程问题：换任务只需重写 GoO，换模型只需替换 LLM 包装器，新增变换只需加一个操作类——这也是它区别于"某道题的 prompt 技巧"的关键。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>论文在四个<em>天然需要"合流"</em>的任务上对比 IO、CoT、CoT-SC、ToT 与 GoT，主力模型是 <em class="latin">GPT-3.5</em>（预算考虑，GPT-4 与 <em class="latin">Llama 2</em> 有限验证；Llama 2 表现通常不及 GPT-3.5）。每任务 100 个样本（文档合并为 50），温度 1.0，4k 上下文（文档合并 16k）。</p>
+
+  <table>
+    <thead>
+      <tr><th>任务</th><th>GoT 关键优势</th><th>对比基线</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">排序（32/64/128 元素）</td><td class="text">中位错误数比 ToT 降约 62%</td><td class="text">同时成本降 &gt;31%</td></tr>
+      <tr><td class="text">集合交（32/64/128 元）</td><td class="text">集合越大优势越明显</td><td class="text">IO/CoT 随规模快速崩</td></tr>
+      <tr><td class="text">关键词计数</td><td class="text">正确样本数 25</td><td class="text">CoT 仅 1，ToT 为 0</td></tr>
+      <tr><td class="text">文档合并（多份 NDA）</td><td class="text">冗余×保留率调和均值≈8.5/10</td><td class="text">随输入文档增多差距拉大</td></tr>
+    </tbody>
+  </table>
+
+  <p>排序任务最能体现 GoT 的"分治+合流"哲学，也是头条数字来源：</p>
+
+  <figure>
+    <svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrP" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrM" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <text x="20" y="22" font-weight="600" fill="#24555A">① 切块：把 128 个数切成若干段</text>
+        <g transform="translate(20,32)">
+          <rect x="0" y="0" width="60" height="26" fill="#ECE4D4" stroke="#96897A"/><text x="30" y="17" text-anchor="middle">段1</text>
+          <rect x="64" y="0" width="60" height="26" fill="#ECE4D4" stroke="#96897A"/><text x="94" y="17" text-anchor="middle">段2</text>
+          <rect x="128" y="0" width="60" height="26" fill="#ECE4D4" stroke="#96897A"/><text x="158" y="17" text-anchor="middle">段3</text>
+          <text x="200" y="17" fill="#96897A">…</text>
+        </g>
+
+        <text x="20" y="92" font-weight="600" fill="#24555A">② 各段并行排序（Generate）</text>
+        <g transform="translate(20,102)">
+          <rect x="0" y="0" width="60" height="26" fill="#ECE4D4" stroke="#96897A"/><text x="30" y="17" text-anchor="middle">排好1</text>
+          <rect x="64" y="0" width="60" height="26" fill="#ECE4D4" stroke="#96897A"/><text x="94" y="17" text-anchor="middle">排好2</text>
+          <rect x="128" y="0" width="60" height="26" fill="#ECE4D4" stroke="#96897A"/><text x="158" y="17" text-anchor="middle">排好3</text>
+          <text x="200" y="17" fill="#96897A">…</text>
+        </g>
+        <line x1="50" y1="58" x2="50" y2="102" stroke="#96897A" marker-end="url(#arrP)"/>
+        <line x1="94" y1="58" x2="94" y2="102" stroke="#96897A" marker-end="url(#arrP)"/>
+        <line x1="158" y1="58" x2="158" y2="102" stroke="#96897A" marker-end="url(#arrP)"/>
+
+        <text x="20" y="162" font-weight="600" fill="#24555A">③ 两两聚合（Aggregate：合流！）</text>
+        <g transform="translate(20,172)">
+          <rect x="0" y="0" width="90" height="26" fill="#B54A2C" fill-opacity="0.14" stroke="#B54A2C"/><text x="45" y="17" text-anchor="middle" fill="#B54A2C">合[1+2]</text>
+          <rect x="100" y="0" width="90" height="26" fill="#B54A2C" fill-opacity="0.14" stroke="#B54A2C"/><text x="145" y="17" text-anchor="middle" fill="#B54A2C">合[3+4]</text>
+          <text x="210" y="17" fill="#96897A">…</text>
+        </g>
+        <line x1="50" y1="128" x2="40" y2="172" stroke="#B54A2C" marker-end="url(#arrM)"/>
+        <line x1="94" y1="128" x2="55" y2="172" stroke="#B54A2C" marker-end="url(#arrM)"/>
+        <line x1="158" y1="128" x2="140" y2="172" stroke="#B54A2C" marker-end="url(#arrM)"/>
+
+        <text x="20" y="232" font-weight="600" fill="#24555A">④ 逐层合流 → 最终一条有序序列（Score/KeepBestN 贯穿）</text>
+        <g transform="translate(20,242)">
+          <rect x="0" y="0" width="180" height="26" fill="#24555A" fill-opacity="0.16" stroke="#24555A"/><text x="90" y="17" text-anchor="middle" fill="#24555A">全局有序输出</text>
+        </g>
+        <line x1="65" y1="198" x2="80" y2="242" stroke="#B54A2C" marker-end="url(#arrM)"/>
+        <line x1="145" y1="198" x2="110" y2="242" stroke="#B54A2C" marker-end="url(#arrM)"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 排序用例的 GoO：切块→并行排序→逐层聚合。红色"合流"边是 ToT 表达不了、却正是省成本提质量的关键。</figcaption>
+  </figure>
+
+  <p>四个任务呈现出同一种<em>模式</em>：凡是能"拆成独立子块、各解其解、再合流"的问题（排序、集合交、关键词计数、文档合并），GoT 都把质量顶上去、把成本压下来；而越是规模变大、答案塞不进单条链的任务，它相对 IO/CoT/ToT 的优势越大。关键词计数那条"GoT 解对 25 题 vs CoT 1 题 vs ToT 0 题"的反差，几乎是一张图就能说服你"为什么合流这么重要"。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>GoT 的贡献不止于"又一个 prompting 技巧"，它至少在三条线上留下了痕迹：</p>
+  <ul>
+    <li><em>理论语言</em>：它给"提示策略"配了一组可比较的术语——拓扑、变换、思维体积。同一团队后来的综述 <em class="latin">Topologies of Reasoning</em> 把链/树/图排进一个统一分类法，GoT 是其中"最一般的拓扑"。</li>
+    <li><em>工程范式</em>：<em class="latin">GoO + GRS + Controller</em> 这套"声明式编排 + 动态状态图"的思路，几乎就是后来 LangGraph 这类 agent 编排框架的雏形——把 LLM 调用组织成一张可遍历的状态机图。</li>
+    <li><em>后续研究</em>：衍生出分层版 <em class="latin">HGoT</em>（用于检索增强事实性评估）和持久知识图版 <em class="latin">Knowledge Graph of Thoughts</em>，把"图"从单次推理延展到跨轮记忆。</li>
+  </ul>
+  <p>更重要的是，它把一个<em>直觉</em>钉进了社区共识：链和树只是退化，<em>网状协同</em>才是更接近人脑/算法执行本质的推理骨架。这个直觉后来在 agent 时代被反复验证。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>表达力的代价也很实在，论文与后续实践都点出了几处：</p>
+  <ul>
+    <li><em>图要人手画</em>：GoO 由用户事先指定，分解点、聚合时机、$N$ 取多少都得人工调，没有自动合成器——一次性任务里"设计图"的成本可能盖过收益。</li>
+    <li><em>评分是命门</em>：每个 Aggregate/KeepBestN 都依赖评分函数，打分一旦跑偏，错误会沿图传播。</li>
+    <li><em>对"合不了"的任务收益有限</em>：在难以干净分块的问题上，头条质量与成本增益会缩水；GoT 最值当的场景是<em>结构天然可分、可合流</em>的。</li>
+    <li><em>模型覆盖有限</em>：主体实验在 GPT-3.5，GPT-4 受预算限制，Llama 2 表现更差，跨模型族的迁移性留了口子。</li>
+    <li><em>调参旋钮多</em>：何时聚合、何时生成、KeepBestN 留几个，都是 CoT 没有的新旋钮，流水线容易变脆。</li>
+  </ul>
+  <p>未来方向也清晰：自动合成 GoO、更鲁棒的评分、把"图"从单次推理延展到持久记忆与多 agent 协作——后两者已被 KGoT 与 agent 框架部分接住。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把镜头拉远，这条"思想结构"的演化脉络是这样一脉相承的：CoT 证明"把推理显式拆步"有用 → CoT-SC 证明"多想几遍再投票"更稳 → ToT 证明"分叉+评分+回溯"能在搜索类任务上更强 → <em>GoT 把结构松绑成图，证明"合流+自环"能兼顾低延迟与高信息体积</em>。再往后，这条线并未终结于"提示期"：当 o1、R1 把推理搬进训练阶段、用强化学习让模型<em>自发</em>产生长思维链，"思想结构"的编排权部分从人手里交还给了模型本身——但 GoT 留下的"网状协同"直觉，依然是 agent 时代编排多步推理的底色。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>这篇论文最有意思的"出身"，是它<em>不在 NLP 实验室诞生</em>。作者团队来自 ETH 苏黎世的 <em class="latin">SPCL</em>（Scalable Parallel Computing Laboratory）——一个高性能计算与图计算的研究组，资深作者 <em class="latin">Torsten Hoefler</em> 是 HPC 领域的顶尖学者，第一作者 <em class="latin">Maciej Besta</em> 本行做稀疏图计算。对一个整天和 DAG、并行调度、计算图打交道的人来说，"把推理组织成一张可遍历的图"几乎是肌肉记忆——所以 GoT 读起来有种<em>系统人的干净利落</em>：不调权重、不炼丹，直接把推理当分布式系统来编排。Besta 也凭这条线的工作连拿 IEEE TCSC 与 TCHPC 两个早期职业奖。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 220" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrF" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 人类大脑/网络 -->
+        <text x="120" y="30" text-anchor="middle" font-weight="600" fill="#B54A2C">人类思路</text>
+        <g transform="translate(40,40)" fill="none">
+          <circle cx="40" cy="40" r="9" fill="#ECE4D4" stroke="#B54A2C"/>
+          <circle cx="90" cy="20" r="9" fill="#ECE4D4" stroke="#B54A2C"/>
+          <circle cx="140" cy="50" r="9" fill="#ECE4D4" stroke="#B54A2C"/>
+          <circle cx="70" cy="90" r="9" fill="#ECE4D4" stroke="#B54A2C"/>
+          <circle cx="130" cy="110" r="9" fill="#ECE4D4" stroke="#B54A2C"/>
+          <line x1="46" y1="34" x2="84" y2="24" stroke="#B54A2C"/>
+          <line x1="99" y1="24" x2="135" y2="46" stroke="#B54A2C"/>
+          <line x1="46" y1="46" x2="64" y2="84" stroke="#B54A2C"/>
+          <line x1="78" y1="90" x2="123" y2="106" stroke="#B54A2C"/>
+          <line x1="136" y1="56" x2="132" y2="103" stroke="#B54A2C"/>
+          <line x1="140" y1="50" x2="78" y2="90" stroke="#B54A2C" stroke-dasharray="3 3"/>
+          <line x1="40" y1="49" x2="130" y2="110" stroke="#B54A2C" stroke-dasharray="3 3"/>
+          <text x="90" y="140" text-anchor="middle" fill="#96897A">涂改、合并、回环</text>
+        </g>
+
+        <line x1="300" y1="90" x2="400" y2="90" stroke="#96897A" stroke-width="1.4" marker-end="url(#arrF)"/>
+        <text x="350" y="80" text-anchor="middle" fill="#24555A" font-size="10">GoT 借镜</text>
+
+        <!-- HPC/计算图 -->
+        <text x="560" y="30" text-anchor="middle" font-weight="600" fill="#24555A">HPC / DAG</text>
+        <g transform="translate(470,40)" fill="none">
+          <rect x="20" y="20" width="40" height="26" fill="#ECE4D4" stroke="#24555A"/><text x="40" y="37" text-anchor="middle" font-size="10" fill="#24555A">op1</text>
+          <rect x="90" y="20" width="40" height="26" fill="#ECE4D4" stroke="#24555A"/><text x="110" y="37" text-anchor="middle" font-size="10" fill="#24555A">op2</text>
+          <rect x="160" y="55" width="40" height="26" fill="#B54A2C" fill-opacity="0.14" stroke="#B54A2C"/><text x="180" y="72" text-anchor="middle" font-size="10" fill="#B54A2C">合</text>
+          <line x1="60" y1="33" x2="90" y2="33" stroke="#24555A"/>
+          <line x1="130" y1="33" x2="165" y2="60" stroke="#24555A"/>
+          <line x1="60" y1="46" x2="165" y2="62" stroke="#24555A" stroke-dasharray="3 3"/>
+          <text x="110" y="120" text-anchor="middle" fill="#96897A">分叉 + 合流</text>
+        </g>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 6</span> · GoT 的灵感双重来源：人脑的网状回路 × 高性能计算的 DAG 编排。一个 HPC 实验室，恰好最懂"图怎么调度"。</figcaption>
+  </figure>
+
+  <p>另一桩趣事是<em>撞名</em>：2023 年前后叫 <em class="latin">Graph of Thoughts</em> 的论文有好几篇（有偏模型内部图编码的、有偏逻辑推理的），但 Besta 这篇凭借"框架 + 开源 + AAAI 收录"成了被引用最多、社区默认指代的那一个。开源仓库 <em class="latin">spcl/graph-of-thoughts</em> 还贴心地支持你用它<em>复刻</em> CoT、ToT——毕竟在它眼里，链和树都只是图的特例。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读 GoT 我最深的感受是：它把"提示"从<em>文案技巧</em>抬升成了<em>系统设计</em>。一旦你接受"推理是一张可遍历的图"，就再难满足于线性地写一段 prompt——你会开始问：这条子任务能不能并行？那个中间结果要不要回头精炼？两个 agent 的输出该在哪一层合流？这套思维在今天的 multi-agent 与 LangGraph 里几乎成了默认姿势。</p>
+  <p>但也要清醒：GoT 的收益<em>强依赖问题结构</em>。它对"可分治、可合流"的任务是降维打击，对"一锤子买卖"的线性任务反而是过度工程。把它当成万能开关，不如把它当成一个<em>拓扑选择器</em>——先问"这问题的天然形状是链、是树、还是网"，再决定要不要上 GoT。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果模型本身已经被 RL 训得会自发反思、验证、回溯（想想 o1、R1），那"人手画一张 GoO"还有必要吗？还是说，GoT 的未来恰恰是<em>让模型自己学会生成这张图</em>？欢迎你带着这个问题往下读。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Self-Refine: Iterative Refinement with Self-Feedback</h3>
+    <p style="margin:0;">GoT 把"精炼"列为图上的一种变换；下一篇，有人干脆把整个推理压成一件事——<em>自己生成、自己批评、自己改</em>，反复循环直到满意，无需任何额外训练。当"精炼"从图的一个边，变成整条流水线，会发生什么？</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 28 篇</span>
+    <span>2026-08-28</span>
+  </footer>
+
+</div>
+</body>
+</html>
