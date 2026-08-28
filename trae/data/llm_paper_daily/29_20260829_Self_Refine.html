@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Self-Refine 论文精读 · 大模型经典论文系列 #029</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#029</span>
+  </div>
+
+  <h1 class="title">
+    Self-Refine: Iterative Refinement with Self-Feedback
+    <span class="en">Self-Refine：让模型给自己当"导师"——生成、自我批评、再修改的迭代闭环，无需任何额外训练就能把答案打磨到位</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Aman Madaan, Niket Tandon, Prakhar Gupta, Skyler Hallinan, Luyu Gao, Sarah Wiegreffe, Uri Alon, Nouha Dziri, Shrimai Prabhumoye, Yiming Yang, Shashank Gupta, Bodhisattwa Prasad Majumder, Katherine Hermann, Sean Welleck, Amir Yazdanbakhsh, Peter Clark（共 16 位）</span>
+    <span>机构：Carnegie Mellon University / Allen Institute for AI / University of Washington / NVIDIA / UC San Diego / Google Research</span>
+    <span>发表：2023-03 / arXiv（NeurIPS 2023 收录）</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2303.17651" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/madaan/self-refine" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://selfrefine.info/" target="_blank" rel="noopener">Project</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">设想你给同事写了封邮件，张口就是"Send me the data ASAP"。写完你重读一遍，眉头一皱——这语气太冲了，于是改成了"Hi Ashley, could you please send me the data at your earliest convenience?"。再读一遍，又发现少了点上下文，补一句"for tomorrow's meeting"。前后三稿，一封邮件才定下来。</p>
+
+  <p class="lead">这恰恰是 2023 年以前大语言模型做不到的事：它一次生成、一锤定音，写完了就写完了，没有"重读、皱眉、改稿"这一环。哪怕你给它接上 RLHF，它也只是<em>在训练时</em>学过"哪种写法好"，推理时照样不回头。一个朴素到极点的问题被人提了出来——<em>能不能不训练，就让模型自己给自己当导师，反复打磨自己的草稿？</em></p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    用<em>同一个冻结的 LLM</em>同时扮演生成者、批评者、精炼者三个角色，靠几条 few-shot 提示把"草稿→反馈→改稿"循环跑起来，无需任何训练或强化学习，在 7 个任务上平均提升约 20 个百分点。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>把镜头对准"<em>提示范式</em>"这条暗线，它的演化有两条腿在走：一条腿在<em>扩搜索结构</em>——从一条链（<em class="latin">Chain-of-Thought</em>），到一束平行链（<em class="latin">Self-Consistency</em>），到一棵树（<em class="latin">Tree of Thoughts</em>），再到一张图（<em class="latin">Graph of Thoughts</em>），结构越来越能"分叉、合流、回溯"。另一条腿在<em>加深单条思路的精炼</em>——这恰恰是 Self-Refine 站的位置。</p>
+  <p>有趣的是时间线：Self-Refine（2023-03）其实<em>早于</em> Tree of Thoughts（2023-05）和 Graph of Thoughts（2023-08）出现在 arXiv 上。它和"扩结构"那一脉几乎同时破土，却走向了正交的另一个方向——不增加候选路径，而是<em>把同一条草稿反复打磨</em>。如果说 GoT 把"精炼"列为图上的一种变换，那 Self-Refine 干脆把整个推理压成一件事：精炼。它开启了"自反馈 / 自我批评"这一族，后来的 Reflexion（加环境反馈）、CRITIC（加外部工具验证）以及对推理自纠错可靠性的大讨论，都能追溯到它。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="140" x2="680" y2="140" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 2017 Transformer -->
+        <circle cx="70" cy="140" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="70" y="118" text-anchor="middle">2017</text>
+        <text x="70" y="170" text-anchor="middle" fill="#2E2A22">Transformer</text>
+
+        <!-- 2020 GPT-3 -->
+        <circle cx="180" cy="140" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="180" y="118" text-anchor="middle">2020</text>
+        <text x="180" y="170" text-anchor="middle" fill="#2E2A22">GPT-3</text>
+
+        <!-- 2022 CoT / SC 已解析 -->
+        <circle cx="290" cy="140" r="6" fill="#24555A"/>
+        <text x="290" y="118" text-anchor="middle">2022</text>
+        <text x="290" y="170" text-anchor="middle" fill="#24555A">CoT / SC</text>
+
+        <!-- 2023.03 Self-Refine 本篇 -->
+        <circle cx="400" cy="140" r="9" fill="#B54A2C"/>
+        <text x="400" y="108" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="400" y="170" text-anchor="middle" fill="#2E2A22" font-weight="600">Self-Refine</text>
+        <text x="400" y="188" text-anchor="middle">2023.03</text>
+
+        <!-- 2023.05 ToT 已解析 -->
+        <circle cx="510" cy="140" r="6" fill="#24555A"/>
+        <text x="510" y="118" text-anchor="middle">2023.05</text>
+        <text x="510" y="170" text-anchor="middle" fill="#24555A">ToT / GoT</text>
+
+        <!-- 2024-25 推理范式 -->
+        <circle cx="620" cy="140" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="620" y="118" text-anchor="middle">2024-25</text>
+        <text x="620" y="170" text-anchor="middle" fill="#2E2A22">o1 / R1</text>
+
+        <!-- 双轨注释 -->
+        <text x="180" y="225" fill="#24555A" font-size="10.5">↑ 扩搜索结构：链→平行链→树→图</text>
+        <text x="430" y="225" fill="#B54A2C" font-size="10.5">↑ 加深精炼：草稿→反馈→改稿（本篇）</text>
+
+        <!-- 图例 -->
+        <circle cx="60" cy="40" r="5" fill="#24555A"/>
+        <text x="72" y="44" fill="#2E2A22">已解析</text>
+        <circle cx="160" cy="40" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="172" y="44" fill="#2E2A22">未解析 / 后续</text>
+        <circle cx="290" cy="40" r="6" fill="#B54A2C"/>
+        <text x="302" y="44" fill="#2E2A22">本篇</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 提示范式两条演化腿：扩搜索结构（绿）vs 加深精炼（红，本篇）。Self-Refine 在时间上早于 ToT/GoT，是"自反馈"一脉的起点。</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>2023 年初，LLM 单步生成的局限越来越显眼。问题不在于"它写不出像样的句子"，而在于<em>多目标、多约束</em>的任务它一次写不到位：对话既要合人设又要礼貌又要推进话题；代码既要可读又要高效又要正确；缩写既要好念又要贴题又要正面。这些任务的"好"是<em>多维度的</em>，模型一口气满足不全。</p>
+  <p>那"迭代精炼"这条路以前没人走吗？走过，但都背着沉重的行囊：</p>
+  <ul>
+    <li><em class="latin">PEER</em>、<em class="latin">Self-Correction</em>（Welleck et al.）：要训练专门的 refiner 模型，或要监督数据里的"坏稿→好稿"对照对。</li>
+    <li><em class="latin">RLHF / InstructGPT</em>：要人类标注 + 奖励模型 + PPO，重得像座山（参见本系列第 6 篇）。</li>
+    <li>各种任务特定的精炼流水线：换任务就得重训，扩展性差。</li>
+  </ul>
+  <p>换句话说，2023 年前的"迭代精炼"几乎都默认<em>"改"这个动作需要学习</em>——要么学一个 refiner，要么学一个奖励模型。问题是 GPT-3.5、GPT-4 这种闭源大模型根本<em>动不了权重</em>。于是论文的开场白直戳痛点：<em>既然这些模型已经在人类语料里见过无数次"草稿→批评→修改"的过程，那它们为什么不能在推理时直接做这件事？</em></p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    把生成想成<em>"写作文"</em>，把精炼想成<em>"改作文"</em>。以前的路线是：你得先训一个"会改作文的老师"（训 refiner），或者训一个"能给作文打分的判官"（训奖励模型），才能让"学生"被改。Self-Refine 的洞察是——<em>同一个学生，戴上一顶"老师帽"，对着自己的作文挑错，再戴回"学生帽"改</em>。帽子是 prompt 换的，学生本身没变。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>一句话：在<em>不训练、不强化学习、不依赖人类标注</em>的前提下，能否让一个冻结的 LLM 通过"<em>自己生成反馈 → 自己改稿</em>"的循环，在多种任务上把输出质量显著抬升？更进一步——这能不能对<em>已经在 SOTA 上的 GPT-4</em>也奏效？</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果模型第一次没写好，凭什么它<em>第二次就能看出自己哪里没写好</em>？同样是这个模型、同样的权重，只是换了个 prompt，它能"扮批评者"扮得比"扮生成者"更好吗？换句话说——<em>批评比生成容易</em>这件事，在 LLM 身上也成立吗？
+  </div>
+
+  <p>这正是论文背后最反直觉、也最关键的一个假设。后文会用"为什么这条路能成"给出答案，也会在局限性里诚实地说明：它在<em>推理</em>任务上未必成立——这恰好是下一篇要拆的台。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>Self-Refine 的方法可以拆成三件事：<em>一个三步循环</em>、<em>一个模型三个角色</em>、<em>四条让反馈有用的设计原则</em>。</p>
+
+  <h3>步骤一：FEEDBACK → REFINE 的循环</h3>
+  <p>给定输入 $x$，先用生成提示 $p_{\text{gen}}$ 让模型写出第一稿 $y^{(0)}$。然后把这一稿连同反馈提示 $p_{\text{fb}}$ 喂回去，让模型输出一段<em>自然语言反馈</em> $\text{fb}^{(t)}$；再把反馈连同精炼提示 $p_{\text{ref}}$ 喂回去，得到改稿 $y^{(t+1)}$。两步交替，直到停止。</p>
+
+  <div class="formula-block">
+    $$ y^{(0)} = \mathrm{LLM}(p_{\text{gen}},\, x) $$
+    <span class="eqn mono">(1)</span>
+  </div>
+  <div class="formula-block">
+    $$ \text{fb}^{(t)} = \mathrm{LLM}(p_{\text{fb}},\, x,\, y^{(t)}) $$
+    <span class="eqn mono">(2)</span>
+  </div>
+  <div class="formula-block">
+    $$ y^{(t+1)} = \mathrm{LLM}(p_{\text{ref}},\, x,\, y^{(t)},\, \text{fb}^{(t)}) $$
+    <span class="eqn mono">(3)</span>
+  </div>
+
+  <p>停止条件有两种：要么跑固定轮数（论文实验里最多 4 轮），要么让反馈提示里包含一句"是否已经足够好？"，模型自己说"够了"就停。论文在代码里把它写得极其干净：</p>
+
+  <pre><code>def self_refine(prompt):
+    answer = ChatGPT(prompt)                  # 生成第一稿
+    while True:
+        feedback = ChatGPT(feedback_prompt, answer)   # 自己给反馈
+        refined  = ChatGPT(refiner_prompt, feedback, answer)  # 自己改稿
+        if is_refinement_sufficient(prompt, feedback, answer, refined):
+            break
+        answer = refined
+    return refined</code></pre>
+
+  <figure>
+    <svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrS1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrA1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 输入 -->
+        <rect x="20" y="120" width="100" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="70" y="138" text-anchor="middle">输入 x</text>
+        <text x="70" y="154" text-anchor="middle" font-size="10" fill="#96897A">待解决的问题</text>
+
+        <!-- 模型 M（同一模型） -->
+        <rect x="200" y="80" width="160" height="120" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="280" y="102" text-anchor="middle" font-weight="600" fill="#24555A">同一个模型 M</text>
+        <text x="280" y="118" text-anchor="middle" font-size="10" fill="#96897A">（GPT-3.5 / GPT-4，冻结）</text>
+        <text x="280" y="142" text-anchor="middle" font-size="10.5" fill="#24555A">生成</text>
+        <text x="280" y="160" text-anchor="middle" font-size="10.5" fill="#B54A2C">反馈 ←</text>
+        <text x="280" y="178" text-anchor="middle" font-size="10.5" fill="#B54A2C">精炼 ←</text>
+
+        <!-- 三个产物 -->
+        <rect x="420" y="40" width="180" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="510" y="58" text-anchor="middle">草稿 y(t)</text>
+        <text x="510" y="72" text-anchor="middle" font-size="9.5" fill="#96897A">第 t 版答案</text>
+
+        <rect x="420" y="120" width="180" height="40" rx="2" fill="#B54A2C" fill-opacity="0.14" stroke="#B54A2C"/>
+        <text x="510" y="138" text-anchor="middle" fill="#B54A2C">反馈 fb(t)</text>
+        <text x="510" y="152" text-anchor="middle" font-size="9.5" fill="#96897A">自然语言批评</text>
+
+        <rect x="420" y="200" width="180" height="40" rx="2" fill="#B54A2C" fill-opacity="0.14" stroke="#B54A2C"/>
+        <text x="510" y="218" text-anchor="middle" fill="#B54A2C">改稿 y(t+1)</text>
+        <text x="510" y="232" text-anchor="middle" font-size="9.5" fill="#96897A">改良版答案</text>
+
+        <!-- 输入→模型 -->
+        <line x1="120" y1="142" x2="200" y2="142" stroke="#96897A" marker-end="url(#arrS1)"/>
+        <!-- 模型→草稿 -->
+        <line x1="360" y1="120" x2="420" y2="60" stroke="#96897A" marker-end="url(#arrS1)"/>
+        <!-- 草稿→模型(求反馈) -->
+        <line x1="420" y1="80" x2="360" y2="150" stroke="#B54A2C" marker-end="url(#arrA1)"/>
+        <!-- 模型→反馈 -->
+        <line x1="360" y1="150" x2="420" y2="140" stroke="#B54A2C" marker-end="url(#arrA1)"/>
+        <!-- 反馈→模型(求改稿) -->
+        <line x1="420" y1="160" x2="360" y2="170" stroke="#B54A2C" marker-end="url(#arrA1)"/>
+        <!-- 模型→改稿 -->
+        <line x1="360" y1="170" x2="420" y2="220" stroke="#B54A2C" marker-end="url(#arrA1)"/>
+        <!-- 改稿→回到草稿位置（循环） -->
+        <path d="M510,200 C560,160 560,100 510,80" fill="none" stroke="#96897A" stroke-dasharray="4 4" marker-end="url(#arrS1)"/>
+        <text x="610" y="140" fill="#96897A" font-size="10">循环</text>
+        <text x="610" y="154" fill="#96897A" font-size="10">最多 4 轮</text>
+
+        <!-- 输出 -->
+        <rect x="640" y="200" width="60" height="40" rx="2" fill="#24555A" fill-opacity="0.16" stroke="#24555A"/>
+        <text x="670" y="218" text-anchor="middle" fill="#24555A">输出</text>
+        <text x="670" y="232" text-anchor="middle" font-size="9.5" fill="#24555A">y(T)</text>
+        <line x1="600" y1="220" x2="640" y2="220" stroke="#24555A" marker-end="url(#arrS1)"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · Self-Refine 三步循环：同一个冻结模型 M 切换 prompt，串起"草稿→反馈→改稿"闭环，红色为模型自反馈链路。</figcaption>
+  </figure>
+
+  <h3>步骤二：一个模型三个角色</h3>
+  <p>Self-Refine 最经济的设计是<em>不引入第二个模型</em>。生成者、反馈者、精炼者全是同一个 $M$，靠<em>切换 few-shot prompt</em>来"换帽子"。这三个 prompt 各带两三个示例（带反馈的草稿、带改动的草稿），告诉模型"在这种任务里，反馈长这样、改稿长这样"。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrS2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 旧范式：三个模型 -->
+        <text x="20" y="30" font-weight="600" fill="#24555A">旧范式：三个分开的模型（都要训练）</text>
+        <rect x="20" y="50" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="72" text-anchor="middle">生成模型</text>
+        <text x="80" y="88" text-anchor="middle" font-size="9.5" fill="#96897A">需监督数据</text>
+        <rect x="180" y="50" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="240" y="72" text-anchor="middle">批评 / 奖励模型</text>
+        <text x="240" y="88" text-anchor="middle" font-size="9.5" fill="#96897A">需人类标注</text>
+        <rect x="340" y="50" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="400" y="72" text-anchor="middle">精炼模型</text>
+        <text x="400" y="88" text-anchor="middle" font-size="9.5" fill="#96897A">需坏稿→好稿对</text>
+        <line x1="140" y1="75" x2="180" y2="75" stroke="#96897A" marker-end="url(#arrS2)"/>
+        <line x1="300" y1="75" x2="340" y2="75" stroke="#96897A" marker-end="url(#arrS2)"/>
+        <text x="490" y="78" fill="#96897A" font-size="10.5">权重各异，换任务重训</text>
+
+        <!-- 新范式：一个模型 -->
+        <text x="20" y="155" font-weight="600" fill="#B54A2C">Self-Refine：一个冻结模型，三顶 prompt 帽子</text>
+        <rect x="160" y="170" width="280" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="300" y="192" text-anchor="middle" font-weight="600" fill="#24555A">同一个 M（GPT-4，冻结）</text>
+        <text x="300" y="208" text-anchor="middle" font-size="10" fill="#96897A">权重不动，只切 prompt</text>
+        <text x="180" y="245" text-anchor="middle" font-size="10.5" fill="#96897A">p_gen</text>
+        <text x="300" y="245" text-anchor="middle" font-size="10.5" fill="#96897A">p_fb</text>
+        <text x="420" y="245" text-anchor="middle" font-size="10.5" fill="#96897A">p_ref</text>
+        <line x1="180" y1="220" x2="190" y2="170" stroke="#96897A" stroke-dasharray="3 3"/>
+        <line x1="300" y1="220" x2="300" y2="170" stroke="#96897A" stroke-dasharray="3 3"/>
+        <line x1="420" y1="220" x2="410" y2="170" stroke="#96897A" stroke-dasharray="3 3"/>
+        <text x="470" y="198" fill="#96897A" font-size="10.5">零训练</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 范式对比：旧路线要训三个分开的模型，Self-Refine 只用一个冻结模型 + 三条 prompt。</figcaption>
+  </figure>
+
+  <h3>步骤三：让反馈"有用"的四条原则</h3>
+  <p>循环骨架很简单，但论文强调：能不能跑出效果，<em>几乎全看反馈提示怎么写</em>。作者总结了四条经验，这也是它区别于"随便问一句好不好"的关键：</p>
+  <ul>
+    <li><em>具体不抽象</em>：反馈提示要让模型沿<em>多个明确维度</em>评估，比如代码任务问"可读性 / 效率 / 正确性"各打几分，缩写任务问"好念 / 好拼 / 贴题 / 正面 / 知名"各打几分。<em class="latin">"Is this good?"</em> 这种泛问得到的反馈模糊无用。</li>
+    <li><em>可定位</em>：反馈要指出<em>具体哪一处</em>不达标，而不是"整体不好"。能定位，模型才知道改哪里。</li>
+    <li><em>带改进指令</em>：除了点出问题，还要给"<em>该怎么改</em>"的方向，让精炼步骤有 actionable 信号。</li>
+    <li><em>留历史</em>：把前几轮的草稿和反馈都留在 prompt 里，让模型"记住"自己改过哪里，避免反复横跳。</li>
+  </ul>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    反馈提示写得具体 vs 模糊，差别就像编辑给稿子的批注——一种编辑只写"<em>这章不行，重写</em>"，另一种写"<em>第 3 段第 2 句的主语指代不清，把'他'改成角色名；末尾缺一句过渡到第 4 段</em>"。前者让作者抓瞎，后者让作者知道下笔处。Self-Refine 干的事，就是<em>用 prompt 把模型逼成第二种编辑</em>。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>论文在 7 个<em>目标多维 / 约束多样</em>的任务上对比"同模型单步生成"与"同模型 + Self-Refine"，主力是 <em class="latin">GPT-3.5</em>（text-davinci-003 / gpt-3.5-turbo）和 <em class="latin">GPT-4</em>，迭代最多 4 轮。结论一锤定音：所有任务上，Self-Refine 的输出在人工偏好和自动指标上都<em>胜过同模型的第一稿</em>，平均绝对提升约 20 个百分点。</p>
+
+  <table>
+    <thead>
+      <tr><th>任务（GPT-4）</th><th>单步基线</th><th>Self-Refine</th><th>绝对提升</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">对话响应生成（偏好）</td><td>25.4</td><td>74.6</td><td>+49.2</td></tr>
+      <tr><td class="text">情感反转（Yelp）</td><td>3.8</td><td>36.2</td><td>+32.4</td></tr>
+      <tr><td class="text">代码可读性提升（偏好）</td><td>27.4</td><td>56.2</td><td>+28.8</td></tr>
+      <tr><td class="text">代码优化（PIE，% 改进）</td><td>27.3</td><td>36.0</td><td>+8.7</td></tr>
+      <tr><td class="text">缩写生成 / 约束生成</td><td class="text" colspan="2">较大提升（多维评分）</td><td>显著</td></tr>
+      <tr><td class="text">数学推理（GSM8K）</td><td class="text" colspan="2">增益有限</td><td>小</td></tr>
+    </tbody>
+  </table>
+
+  <figure>
+    <svg viewBox="0 0 720 320" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 坐标轴 -->
+        <line x1="200" y1="30" x2="200" y2="280" stroke="#96897A" stroke-width="1"/>
+        <line x1="200" y1="280" x2="690" y2="280" stroke="#96897A" stroke-width="1"/>
+        <!-- 刻度 -->
+        <text x="195" y="284" text-anchor="end" font-size="9.5" fill="#96897A">0</text>
+        <text x="195" y="224" text-anchor="end" font-size="9.5" fill="#96897A">25</text>
+        <text x="195" y="164" text-anchor="end" font-size="9.5" fill="#96897A">50</text>
+        <text x="195" y="104" text-anchor="end" font-size="9.5" fill="#96897A">75</text>
+        <line x1="200" y1="220" x2="690" y2="220" stroke="#96897A" stroke-dasharray="2 4" opacity="0.4"/>
+        <line x1="200" y1="160" x2="690" y2="160" stroke="#96897A" stroke-dasharray="2 4" opacity="0.4"/>
+        <line x1="200" y1="100" x2="690" y2="100" stroke="#96897A" stroke-dasharray="2 4" opacity="0.4"/>
+        <text x="160" y="40" font-size="10" fill="#96897A">指标值（%）</text>
+
+        <!-- 每组：基线灰 + Self-Refine 红 -->
+        <!-- 对话响应：25.4 vs 74.6 -->
+        <g transform="translate(0,0)">
+          <rect x="225" y="218.96" width="20" height="61.04" fill="#ECE4D4" stroke="#96897A"/>
+          <rect x="247" y="101.92" width="20" height="178.08" fill="#B54A2C" fill-opacity="0.55" stroke="#B54A2C"/>
+          <text x="246" y="295" text-anchor="middle">对话响应</text>
+        </g>
+        <!-- 情感反转：3.8 vs 36.2 -->
+        <g transform="translate(95,0)">
+          <rect x="225" y="270.88" width="20" height="9.12" fill="#ECE4D4" stroke="#96897A"/>
+          <rect x="247" y="193.12" width="20" height="86.88" fill="#B54A2C" fill-opacity="0.55" stroke="#B54A2C"/>
+          <text x="246" y="295" text-anchor="middle">情感反转</text>
+        </g>
+        <!-- 代码可读性：27.4 vs 56.2 -->
+        <g transform="translate(190,0)">
+          <rect x="225" y="214.16" width="20" height="65.84" fill="#ECE4D4" stroke="#96897A"/>
+          <rect x="247" y="145.12" width="20" height="134.88" fill="#B54A2C" fill-opacity="0.55" stroke="#B54A2C"/>
+          <text x="246" y="295" text-anchor="middle">代码可读性</text>
+        </g>
+        <!-- 代码优化：27.3 vs 36.0 -->
+        <g transform="translate(285,0)">
+          <rect x="225" y="214.4" width="20" height="65.6" fill="#ECE4D4" stroke="#96897A"/>
+          <rect x="247" y="193.6" width="20" height="86.4" fill="#B54A2C" fill-opacity="0.55" stroke="#B54A2C"/>
+          <text x="246" y="295" text-anchor="middle">代码优化</text>
+        </g>
+        <!-- GSM8K：示意小增益 -->
+        <g transform="translate(380,0)">
+          <rect x="225" y="200" width="20" height="80" fill="#ECE4D4" stroke="#96897A"/>
+          <rect x="247" y="190" width="20" height="90" fill="#B54A2C" fill-opacity="0.55" stroke="#B54A2C"/>
+          <text x="246" y="295" text-anchor="middle">GSM8K</text>
+        </g>
+
+        <!-- 图例 -->
+        <rect x="430" y="20" width="14" height="10" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="450" y="29" font-size="10.5">单步基线</text>
+        <rect x="540" y="20" width="14" height="10" fill="#B54A2C" fill-opacity="0.55" stroke="#B54A2C"/>
+        <text x="560" y="29" font-size="10.5">+ Self-Refine</text>
+
+        <!-- 标注：增益越大 = 评判越明确 -->
+        <text x="380" y="310" text-anchor="middle" fill="#96897A" font-size="10">← 增益大（评判标准明确可描述）   |   增益小（自验证难） →</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · GPT-4 上 Self-Refine vs 单步基线的关键任务对比（数值取自论文）。规律一眼可见：评判越"可自然语言描述"，增益越大。</figcaption>
+  </figure>
+
+  <p>读这组数据最关键的不是哪个绝对数字，而是<em>它揭示的规律</em>：</p>
+  <ul>
+    <li><em>评判标准越"明确可描述"，Self-Refine 增益越大</em>。情感反转（要把差评改成好评，目标清晰）、缩写生成（多维评分维度清楚）增益最大；代码可读性、对话响应次之。</li>
+    <li><em>评判标准越"需要逻辑验证"，增益越小</em>。GSM8K 数学推理几乎不动——因为模型<em>自己也判断不了自己算得对不对</em>，反馈就跑了空转。这个"推理任务增益有限"的观察，是下一篇论文拆台的直接入口。</li>
+    <li><em>GPT-4 也吃这一套</em>。哪怕已经是当时的 SOTA，Self-Refine 仍能把它再抬一截——这打破了"模型够强就不需要 test-time 改进"的迷思。</li>
+  </ul>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>Self-Refine 的贡献不止于"又一个 prompting 技巧"，它在三条线上留下了实在的痕迹：</p>
+  <ul>
+    <li><em>把"测试时改进"从"需要训练"中解放出来</em>。它证明了一个足够强的指令遵循模型，光靠切换 prompt 就能当自己的批评者和精炼者——这把 test-time 改进的门槛从"训得动模型的人"降到了"会写 prompt 的人"。</li>
+    <li><em>开启"自反馈 / 自我批评"一脉</em>。Reflexion（同年的 Shinn et al.）把自反馈扩展到 agent 场景、加入环境反馈让反思更可靠；CRITIC（Gou et al.）更进一步，让模型用<em>外部工具</em>（解释器、检索）来校验自己的批评——都是 Self-Refine 思想的延伸。</li>
+    <li><em>埋下"推理自纠错可靠性"这场辩论的火种</em>。它声称 GSM8K 上有小幅提升，但同年的 "LLMs Cannot Self-Correct Reasoning Yet"（Huang et al.）用更严格的对照证明：没有外部反馈时，推理自纠错<em>反而会降级</em>。这场辩论直接催生了后来 o1/R1 走"用 RL 把反思训练进权重"的路线。</li>
+  </ul>
+  <p>更有意思的是，它把一个<em>直觉</em>钉进了社区共识：<em>批评比生成容易</em>——同一个模型当"审稿人"往往比当"作者"更能发现问题。这个直觉后来被反复验证，也成为"为什么 test-time compute 值得花在反思上"的理论底座。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>论文自己、NeurIPS 审稿人、以及后来的批判者，都很清醒地点出了它的边界：</p>
+  <ul>
+    <li><em>成本翻倍</em>：每多一轮，LLM 调用次数线性增长，token 成本和延迟都翻几番。论文最多跑 4 轮，实际部署里这是真金白银的开销。</li>
+    <li><em>弱模型不行</em>：Self-Refine 强依赖模型"会批评"的能力。论文实测在 Vicuna-13B 这类较弱模型上效果崩——模型给不出有用的反馈，改稿自然越改越糟。</li>
+    <li><em>推理任务存疑</em>：这是被后续工作最猛烈质疑的一点。Huang et al. 2023 证明，没有外部反馈时，模型自我纠正推理<em>会降级</em>——因为模型对自己算错的地方没有"判别力"，反馈等于幻觉。</li>
+    <li><em>反馈幻觉</em>：模型可能"一本正经地"指出根本不存在的问题，或者反复坚持同一个错误。反馈质量没有保障机制。</li>
+    <li><em>停止条件脆弱</em>：让模型自己说"够了"，有时它会过早停手，有时又死循环——这是后来工作要补的工程坑。</li>
+  </ul>
+  <p>未来方向也清晰：让反馈<em>有外部锚点</em>（CRITIC 走的路）、让反思<em>进入训练阶段</em>（o1/R1 走的路）、让循环<em>能跨轮累积教训</em>（Reflexion 走的路）——这三条后续都被接住了。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把镜头拉远，提示范式有两条腿在并行：一条扩搜索结构——CoT 链 → CoT-SC 平行链 → ToT 树 → GoT 图；另一条加深精炼——<em>Self-Refine 把"草稿→反馈→改稿"循环立成一等公民</em>。两条腿在 2023 年同时破土，却几乎不互相引用，像两个独立发现"测试时还能这么玩"的团队。</p>
+  <p>但精炼这条腿后来分了叉：一叉走向"加外部锚点"（Reflexion、CRITIC），承认"自我批评不够可靠"；另一叉走向"把反思训练进权重"（o1、R1），让模型<em>自发</em>产生长思维链、自我验证。回头看，Self-Refine 是这条分叉的<em>共同起点</em>——它既证明了"自反馈有用"，也暴露了"自反馈对推理不可靠"，两面性都被后来者继承。再往后，"测试时算力扩展"被总结成统一框架（参见本系列第 21 篇 Scaling Test-Time Compute），Self-Refine 和 ToT/GoT 一起被收编为它的具体实例。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>这篇论文最有意思的"出身"，是它的<em>作者阵容</em>。16 位作者横跨六家机构——CMU、Allen Institute for AI、华盛顿大学、NVIDIA、UC San Diego、Google Research，是一份典型的"跨海岸大合作"。第一作者 <em class="latin">Aman Madaan</em> 当时是 CMU 的博士生，资深作者 <em class="latin">Peter Clark</em> 来自 AI2（没错，就是本系列第 22 篇 "Let's Verify Step by Step" 那篇 OpenAI 过程奖励模型论文里反复出现的 AI2，Clark 本人是过程监督思路的早期推动者）。Madaan 后来去了 Google DeepMind，"自我反馈"这条线他一直没放下。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 220" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrF1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 作者 -->
+        <text x="100" y="30" text-anchor="middle" font-weight="600" fill="#B54A2C">人类作者</text>
+        <g transform="translate(40,45)">
+          <circle cx="40" cy="30" r="22" fill="#ECE4D4" stroke="#B54A2C"/>
+          <text x="40" y="34" text-anchor="middle" font-size="10" fill="#B54A2C">作者</text>
+          <text x="40" y="65" text-anchor="middle" font-size="9" fill="#96897A">写稿</text>
+          <circle cx="120" cy="30" r="22" fill="#ECE4D4" stroke="#B54A2C"/>
+          <text x="120" y="34" text-anchor="middle" font-size="10" fill="#B54A2C">作者</text>
+          <text x="120" y="65" text-anchor="middle" font-size="9" fill="#96897A">自批</text>
+          <circle cx="200" cy="30" r="22" fill="#ECE4D4" stroke="#B54A2C"/>
+          <text x="200" y="34" text-anchor="middle" font-size="10" fill="#B54A2C">作者</text>
+          <text x="200" y="65" text-anchor="middle" font-size="9" fill="#96897A">改稿</text>
+          <path d="M62,30 L98,30" stroke="#B54A2C" marker-end="url(#arrF1)"/>
+          <path d="M142,30 L178,30" stroke="#B54A2C" marker-end="url(#arrF1)"/>
+          <text x="120" y="100" text-anchor="middle" font-size="10" fill="#96897A">同一个人，戴不同帽子</text>
+        </g>
+
+        <line x1="280" y1="75" x2="380" y2="75" stroke="#96897A" stroke-width="1.4" marker-end="url(#arrF1)"/>
+        <text x="330" y="65" text-anchor="middle" fill="#24555A" font-size="10">Self-Refine 借镜</text>
+
+        <!-- LLM -->
+        <text x="560" y="30" text-anchor="middle" font-weight="600" fill="#24555A">同一个 LLM</text>
+        <g transform="translate(440,45)">
+          <rect x="40" y="8" width="40" height="44" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+          <text x="60" y="34" text-anchor="middle" font-size="10" fill="#24555A">M</text>
+          <text x="60" y="68" text-anchor="middle" font-size="9" fill="#96897A">p_gen</text>
+          <rect x="100" y="8" width="40" height="44" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+          <text x="120" y="34" text-anchor="middle" font-size="10" fill="#24555A">M</text>
+          <text x="120" y="68" text-anchor="middle" font-size="9" fill="#96897A">p_fb</text>
+          <rect x="160" y="8" width="40" height="44" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+          <text x="180" y="34" text-anchor="middle" font-size="10" fill="#24555A">M</text>
+          <text x="180" y="68" text-anchor="middle" font-size="9" fill="#96897A">p_ref</text>
+          <path d="M80,30 L100,30" stroke="#24555A" marker-end="url(#arrF1)"/>
+          <path d="M140,30 L160,30" stroke="#24555A" marker-end="url(#arrF1)"/>
+          <text x="120" y="100" text-anchor="middle" font-size="10" fill="#96897A">同一个模型，切 prompt</text>
+        </g>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · Self-Refine 的灵感来源：人类作者写稿→自批→改稿的循环，被搬进 LLM——只是"作者"换成了"同一个模型戴不同 prompt 帽子"。</figcaption>
+  </figure>
+
+  <p>另一桩趣事是<em>速度</em>：2023 年 3 月 30 日上 arXiv，5 月 25 日出 v2，9 月就被 NeurIPS 2023 接收为 poster——从初稿到顶会收录只用了不到半年。配套的 demo 站 <em class="latin">selfrefine.info</em> 也极为贴心，可以让你在线试"草稿→反馈→改稿"的全过程。后来作者还搞了个 <em>Visual Self-Refine</em>——让 GPT-4V 反复改 TikZ 代码画图，连 Stokes 定理示意图、独角兽插图都能迭代着画好，把"自我精炼"从文本扩到了视觉。这种"用同一思路反复打磨产物"的延展性，本身就是 Self-Refine 哲学的最好注脚。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读 Self-Refine 我最深的感受是：它把"测试时改进"从一个<em>重工程</em>（训 refiner、训奖励模型、跑 PPO）压成了一个<em>轻提示</em>。一旦你接受"同一个模型可以靠切换 prompt 当批评者"，就再难满足于"模型一次写完就交付"——你会本能地想：这个输出能不能让模型自己再挑一遍刺？这套思维在今天几乎所有 LLM 应用里都成了默认姿势：写完代码让模型自审一遍、写完文档让模型自校一遍、答完题让模型自验一遍。</p>
+  <p>但也要清醒：Self-Refine 的收益<em>强依赖评判标准的可描述性</em>。它对"目标多维但可自然语言描述"的任务（写作、代码风格、对话）是降维打击；对"需要逻辑验证"的推理任务反而是镜花水月——这正是下一篇要戳破的。把它当成万能开关，不如把它当成一个<em>任务适配器</em>——先问"这个任务的'好'能不能用自然语言讲清楚"，再决定要不要上 Self-Refine。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果模型已经能用 RL 自发反思、自我验证（想想 o1、R1），那"用 prompt 让模型自我批评"还有必要吗？还是说，Self-Refine 的未来恰恰是<em>把这套自反馈循环训练进模型权重</em>，让"反思"成为模型的本能而非外加的提示？欢迎你带着这个问题，往下读下一篇——它正是 Self-Refine 在推理任务上的"翻车报告"。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Large Language Models Cannot Self-Correct Reasoning Yet</h3>
+    <p style="margin:0;">Self-Refine 把"自反馈"捧上了天，但对 GSM8K 增益有限已经露出马脚。下一篇直接戳穿——<em>没有外部反馈时，模型自我纠正推理反而越改越糟</em>。当"自我批评"遇上没有外部裁判的推理任务，会发生什么？答案出乎意料。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 29 篇</span>
+    <span>2026-08-29</span>
+  </footer>
+
+</div>
+</body>
+</html>

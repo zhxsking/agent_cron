@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 28,
-  "last_run_date": "2026-08-28",
+  "last_index": 29,
+  "last_run_date": "2026-08-29",
   "papers_covered": [
     {
       "index": 1,
@@ -226,10 +226,18 @@
       "date": "2023-08-18",
       "era": "对齐与应用期 2022–2023",
       "filename": "28_20260828_Graph_of_Thoughts.html"
+    },
+    {
+      "index": 29,
+      "title_en": "Self-Refine: Iterative Refinement with Self-Feedback",
+      "title_zh": "Self-Refine：让模型给自己当'导师'——生成、自我批评、再修改的迭代闭环，无需任何额外训练就能把答案打磨到位",
+      "date": "2023-03-30",
+      "era": "对齐与应用期 2022–2023",
+      "filename": "29_20260829_Self_Refine.html"
     }
   ],
   "next_preview": {
-    "title_en": "Self-Refine: Iterative Refinement with Self-Feedback",
-    "title_zh": "Self-Refine：让模型给自己当'导师'——生成、自我批评、再修改的迭代闭环，无需任何额外训练就能把答案打磨到位"
+    "title_en": "Large Language Models Cannot Self-Correct Reasoning Yet",
+    "title_zh": "LLM 还不会自我纠正推理：当'自我批评'遇上没有外部反馈的推理任务，模型越改越糟——戳穿 Self-Refine 推理增益的关键对照实验"
   }
 }
