@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM Cannot Self-Correct Reasoning Yet 论文精读 · 大模型经典论文系列 #030</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#030</span>
+  </div>
+
+  <h1 class="title">
+    Large Language Models Cannot Self-Correct Reasoning Yet
+    <span class="en">LLM 还不会自我纠正推理：当"自我批评"遇上没有外部反馈的推理任务，模型越改越糟——戳穿 Self-Refine 推理增益的关键对照实验</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Jie Huang, Xinyun Chen, Swaroop Mishra, Huaixiu Steven Zheng, Adams Wei Yu, Xinying Song, Denny Zhou</span>
+    <span>机构：Google DeepMind · University of Illinois at Urbana-Champaign</span>
+    <span>发表：2023-10 / ICLR 2024</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2310.01798" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/google-deepmind/" target="_blank" rel="noopener">GitHub</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">上一篇我们刚讲完 <em>Self-Refine</em>：模型给自己当导师，生成、自我批评、再修改，无需任何额外训练就能把答案打磨到位。读完后你是不是产生了一个非常自然的疑问——</p>
+  <p class="lead">如果模型真的能在第二轮"看出自己第一轮哪里错了"，那它为什么不在第一轮就答对？这不就相当于一个学生能轻松找到自己试卷里的错，却偏偏在交卷时把这些错写上去吗？Google DeepMind 的 Jie Huang 和 Xinyun Chen 也被这个悖论困扰，于是他们做了一个最朴素也最致命的实验：把所有"作弊信号"全部拿掉，只让模型靠自己的脑子改答案。结果让人跌破眼镜——<em>越改越糟</em>。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    没有 oracle 标签、没有外部反馈、纯靠模型自己审自己，LLM 在推理任务上不仅改不动，反而会把正确答案改成错误答案——所谓"自我纠正"的增益其实是偷偷塞进来的标准答案在作弊。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>要理解这篇论文的位置，得先把它放回我们这条线索里。从第 24 篇 <em>CoT</em> 给模型看带推理草稿的示例开始，到第 25 篇 <em>Zero-shot CoT</em> 用一句"让我们一步步思考"零样本引爆推理，再到第 26 篇 <em>Self-Consistency</em> 让模型多想几遍再投票，第 27、28 篇 <em>Tree of Thoughts / Graph of Thoughts</em> 把思维从链条升级成树和图，第 29 篇 <em>Self-Refine</em> 让模型自己批评自己再修改——这条"提示工程 + 推理增强"的路线一路走来，几乎每一篇都报告了显著提升。</p>
+  <p>这一篇正是这条路线上的<em>刹车片</em>。它没有提出新模型、没有造新数据集、没有发明新提示词，做的是<em>把整条路线最关键的方法论假设拎出来做对照实验</em>：到底是模型真的"会"自我纠正，还是过去那些让人兴奋的数字背后藏着一个大家都默认忽略的小把戏？答案是后者——而这个答案，直接重塑了之后整个推理增强社区的研究范式。</p>
+
+  <figure>
+    <!-- 图 1：大模型领域发展时间线，标注本篇位置（高亮），并标记已解析部分 -->
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="140" x2="660" y2="140" stroke="#96897A" stroke-width="1"/>
+
+      <g font-family="JetBrains Mono" font-size="10" fill="#96897A">
+        <!-- 2017 Transformer -->
+        <circle cx="70" cy="140" r="4" fill="#24555A" fill-opacity="0.5" stroke="#96897A"/>
+        <text x="70" y="125" text-anchor="middle">2017</text>
+        <text x="70" y="160" text-anchor="middle">Transformer</text>
+
+        <!-- 2018 BERT -->
+        <circle cx="140" cy="140" r="4" fill="#24555A" fill-opacity="0.5" stroke="#96897A"/>
+        <text x="140" y="125" text-anchor="middle">2018</text>
+        <text x="140" y="160" text-anchor="middle">BERT</text>
+
+        <!-- 2019 GPT-2 -->
+        <circle cx="200" cy="140" r="4" fill="#24555A" fill-opacity="0.5" stroke="#96897A"/>
+        <text x="200" y="125" text-anchor="middle">2019</text>
+        <text x="200" y="160" text-anchor="middle">GPT-2</text>
+
+        <!-- 2020 GPT-3 -->
+        <circle cx="250" cy="140" r="4" fill="#24555A" fill-opacity="0.5" stroke="#96897A"/>
+        <text x="250" y="125" text-anchor="middle">2020</text>
+        <text x="250" y="160" text-anchor="middle">GPT-3</text>
+
+        <!-- 2022 CoT -->
+        <circle cx="340" cy="140" r="4" fill="#24555A" fill-opacity="0.5" stroke="#96897A"/>
+        <text x="340" y="125" text-anchor="middle">2022</text>
+        <text x="340" y="160" text-anchor="middle">CoT</text>
+
+        <!-- 2023 Self-Refine -->
+        <circle cx="430" cy="140" r="5" fill="#24555A" stroke="#96897A"/>
+        <text x="430" y="125" text-anchor="middle">2023</text>
+        <text x="430" y="160" text-anchor="middle">Self-Refine</text>
+
+        <!-- 2023.10 本篇：高亮 -->
+        <circle cx="475" cy="140" r="9" fill="#B54A2C"/>
+        <text x="475" y="105" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇</text>
+        <text x="475" y="170" text-anchor="middle" fill="#2E2A22" font-weight="600">Cannot Self-Correct</text>
+
+        <!-- 2024 o1 -->
+        <circle cx="560" cy="140" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="560" y="125" text-anchor="middle">2024</text>
+        <text x="560" y="160" text-anchor="middle">o1</text>
+
+        <!-- 2025 DeepSeek-R1 -->
+        <circle cx="630" cy="140" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="630" y="125" text-anchor="middle">2025</text>
+        <text x="630" y="160" text-anchor="middle">R1</text>
+      </g>
+
+      <!-- 已解析区间标识：从 2017 到本篇 -->
+      <g>
+        <line x1="70" y1="220" x2="475" y2="220" stroke="#24555A" stroke-width="2"/>
+        <circle cx="70" cy="220" r="3" fill="#24555A"/>
+        <circle cx="475" cy="220" r="3" fill="#24555A"/>
+        <text x="270" y="245" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#24555A">已解析 30 篇 · 从 Transformer 到 Self-Correct 反思</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的位置示意。深蓝小圆点为本系列已解析论文，红色大圆点为本篇，浅色节点为后续路线</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>2023 年前后，"自我纠正"几乎成了 LLM 推理增强的标配配方。Self-Refine、Reflexion、Self-Critique、CRITIC，一篇接一篇地报告：让模型先生成、再批评、再修改，性能稳稳地涨。当时社区里流传着一种乐观叙事——"LLM 知道的比它说的多"，给它一个回头看的机会，它就能把潜在能力释放出来。</p>
+  <p>但作者敏锐地注意到，这套叙事里藏着一个所有人都默认跳过的小细节：<em>不少论文在评测时，是用数据集自带的标准答案来决定要不要采纳模型修改后的结果</em>。也就是说，模型改对了才记一分，改错了就丢掉，只保留原始答案。论文里把这个东西叫 <em class="latin">oracle label</em>——神谕标签，即标准答案。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象老师让你做一道数学题，做完后让你自己检查一遍改一次。但老师在旁边偷偷看你的草稿纸：如果你改成正确答案，他就把这张收上去；如果改成错的，他就让你把原来那张交上来——最后你的卷面分当然会涨。但这能说明你的"自我检查"起作用了吗？显然不能，这是老师在帮你筛。
+  </div>
+
+  <p>更要命的是，之前 Self-Refine 类的工作为了公平比较，常常<em>不</em>做这种筛选——可它们报告的增益又从哪儿来呢？作者怀疑是另一类"隐藏信号"在起作用：要么提示词在第二轮悄悄塞了更多信息，要么比较的 baseline 本身就被故意写得弱。这些怀疑没法靠口舌之争解决，唯一办法是做一个最干净的对照实验。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>这篇论文要回答的，是看上去最简单却最被回避的那个问题：<em>当没有任何外部反馈、没有标准答案、没有任何"作弊信号"，只让 LLM 凭自己脑子里已有的知识去批判并修改自己之前的推理答案时，它的准确率会上升吗？</em></p>
+  <p>作者把这种设定命名为 <em class="latin">intrinsic self-correction</em>——<em>内在自我纠正</em>。一旦把这个定义立起来，整条论文的逻辑就清晰了：把所有过去的"自我纠正"实验重新跑一遍，把 oracle 信号拿掉，看增益是不是还在。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    先别往下读，凭直觉猜一下：如果让 GPT-4 在 GSM8K 上做完题再"自己审一遍改一遍"，你觉得它的准确率会升、降、还是基本不变？大多数人会猜"升一点或者不变"——很少有人猜"降"。这正是这篇论文最反直觉的地方。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>这篇论文的"方法"其实<em>不是发明什么新算法</em>，而是<em>设计一套严格到几乎残酷的对照实验范式</em>。作者把每一个看似理所当然的实验设置都拎出来重新审视，让自我纠正无处遁形。</p>
+
+  <h3>第一步：把"自我纠正"拆成三种来源</h3>
+  <p>作者首先澄清了一个被社区混淆的概念：反馈从哪里来，决定了"自我纠正"是真本事还是作弊。三种来源如下——</p>
+  <ul>
+    <li><em>外部反馈</em>：来自人、其他模型、工具、知识库。例如代码能否运行、单元测试是否通过。</li>
+    <li><em>参数化知识</em>：模型自身权重里已经存下的知识，没有新信息进入。</li>
+    <li><em>oracle 标签</em>：标准答案本身。用它来决定"什么时候停"或者"改对了没"，本质上是一种隐蔽的外部信号。</li>
+  </ul>
+  <p>本论文聚焦中间这一种——<em>仅靠模型参数化知识的内在自我纠正</em>，这是最纯粹、也最贴近真实使用场景的设定。</p>
+
+  <figure>
+    <!-- 图 2：内在自我纠正 vs 外部反馈自我纠正 对比 -->
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="175" y="30" text-anchor="middle" font-weight="600" fill="#B54A2C">内在自我纠正（本篇研究对象）</text>
+        <text x="525" y="30" text-anchor="middle" font-weight="600" fill="#24555A">外部反馈自我纠正</text>
+        <line x1="350" y1="20" x2="350" y2="240" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <!-- 左侧：内在 -->
+        <rect x="60" y="55" width="230" height="38" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="79" text-anchor="middle">模型生成初始答案</text>
+
+        <rect x="60" y="110" width="230" height="38" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="134" text-anchor="middle">同一个模型自己批评</text>
+
+        <rect x="60" y="165" width="230" height="38" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="175" y="189" text-anchor="middle" fill="#B54A2C" font-weight="600">无新信息进入 → 越改越糟</text>
+
+        <line x1="175" y1="93" x2="175" y2="110" stroke="#96897A" marker-end="url(#a1)"/>
+        <line x1="175" y1="148" x2="175" y2="165" stroke="#96897A" marker-end="url(#a1)"/>
+
+        <!-- 右侧：外部 -->
+        <rect x="410" y="55" width="230" height="38" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="525" y="79" text-anchor="middle">模型生成初始答案</text>
+
+        <rect x="410" y="110" width="230" height="38" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="525" y="134" text-anchor="middle" fill="#24555A">外部信号进入（测试/工具/检索）</text>
+
+        <rect x="410" y="165" width="230" height="38" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="525" y="189" text-anchor="middle" fill="#24555A" font-weight="600">有新信息 → 真正可纠错</text>
+
+        <line x1="525" y1="93" x2="525" y2="110" stroke="#96897A" marker-end="url(#a1)"/>
+        <line x1="525" y1="148" x2="525" y2="165" stroke="#96897A" marker-end="url(#a1)"/>
+      </g>
+      <defs>
+        <marker id="a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · 自我纠正的两种范式：左边只有模型自己的知识循环，右边有外部信号注入。本篇研究的是左边</figcaption>
+  </figure>
+
+  <h3>第二步：三步提示范式 + 最多两轮</h3>
+  <p>为了让结果可复现、且和过去的 Self-Correct、Self-Refine 严格可比，作者用了社区最常见的三步提示流程：</p>
+  <ol>
+    <li>初始生成：让模型解一道题，要求最后用 <code>\boxed{}</code> 包住答案。</li>
+    <li>自我批评：同一个模型，被提示去"review previous answer and find problems"。</li>
+    <li>修正回答：基于自己刚找到的"问题"，重新给出答案。</li>
+  </ol>
+  <p>最多跑两轮（即 1 次原始 + 2 次修正）。模型覆盖 GPT-3.5-Turbo、GPT-4、GPT-4-Turbo 和 Llama-2-70b-chat。数据集覆盖三个经典推理基准：GSM8K（小学数学）、CommonSenseQA（常识推理）、HotpotQA（多跳问答）。</p>
+
+  <figure>
+    <!-- 图 3：三步自我纠正流程 -->
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <rect x="20" y="75" width="150" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="95" y="100" text-anchor="middle">初始生成</text>
+        <text x="95" y="118" text-anchor="middle" font-size="10" fill="#96897A">答 + \boxed{}</text>
+
+        <rect x="220" y="75" width="150" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="295" y="100" text-anchor="middle">自我批评</text>
+        <text x="295" y="118" text-anchor="middle" font-size="10" fill="#96897A">"find problems"</text>
+
+        <rect x="420" y="75" width="150" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="495" y="100" text-anchor="middle">修正回答</text>
+        <text x="495" y="118" text-anchor="middle" font-size="10" fill="#96897A">improve your answer</text>
+
+        <rect x="600" y="75" width="90" height="50" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="645" y="100" text-anchor="middle" fill="#B54A2C" font-weight="600">结果</text>
+        <text x="645" y="118" text-anchor="middle" font-size="10" fill="#B54A2C">↓ 准确率</text>
+
+        <line x1="170" y1="100" x2="220" y2="100" stroke="#96897A" marker-end="url(#a2)"/>
+        <line x1="370" y1="100" x2="420" y2="100" stroke="#96897A" marker-end="url(#a2)"/>
+        <line x1="570" y1="100" x2="600" y2="100" stroke="#96897A" marker-end="url(#a2)"/>
+
+        <!-- 循环箭头：第二轮 -->
+        <path d="M495 125 Q 495 165 295 165 Q 95 165 95 125" stroke="#96897A" fill="none" stroke-dasharray="3 3" marker-end="url(#a2)"/>
+        <text x="295" y="180" text-anchor="middle" font-size="10" fill="#96897A">最多再来一轮（round 2）</text>
+      </g>
+      <defs>
+        <marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 三步自我纠正提示流程，最多两轮。看上去合理，但实际效果令人意外</figcaption>
+  </figure>
+
+  <h3>第三步：四个对照条件，逐个堵漏</h3>
+  <p>为了让"自我纠正到底有没有用"这个结论经得起反驳，作者设了四组对照——</p>
+  <ol>
+    <li><em>带 oracle 标签的版本</em>：用标准答案决定要不要采纳修改，重现过去论文里的"漂亮结果"。</li>
+    <li><em>纯内在版本</em>：模型自己决定改不改，这是真实部署场景。</li>
+    <li><em>对照 self-consistency</em>：消耗同等推理成本（比如都跑 9 次）下，多智能体辩论 vs 投票谁更强？</li>
+    <li><em>对照提示词</em>：把第一轮提示写得更强，看自我纠正的"增益"是不是只是补了第一轮提示的弱。</li>
+  </ol>
+  <p>四组对照跑下来，结论非常一致：自我纠正的"魔法"，要么来自 oracle 标签，要么来自更弱的初始提示被"自然修正"了，<em>没有一种增益是真正来自模型自己识别错误的能力</em>。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>结果是这篇论文最让人目瞪口呆的部分。三句话总结：带 oracle 时全面上涨、去掉 oracle 后几乎全部下跌、多智能体辩论在同等算力下输给 self-consistency。</p>
+
+  <table>
+    <thead>
+      <tr><th>设定</th><th>GSM8K</th><th>CommonSenseQA</th><th>HotpotQA</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">GPT-3.5 标准提示</td><td>75.9</td><td>75.8</td><td>26.0</td></tr>
+      <tr><td class="text">GPT-3.5 + oracle 自我纠正</td><td>84.3</td><td>89.7</td><td>29.0</td></tr>
+      <tr><td class="text">GPT-3.5 内在自我纠正（2 轮）</td><td>74.7</td><td>41.8</td><td>25.0</td></tr>
+      <tr><td class="text">GPT-4 标准提示</td><td>95.5</td><td>82.0</td><td>49.0</td></tr>
+      <tr><td class="text">GPT-4 + oracle 自我纠正</td><td>97.5</td><td>85.5</td><td>59.0</td></tr>
+      <tr><td class="text">GPT-4 内在自我纠正（2 轮）</td><td>89.0</td><td>80.0</td><td>43.0</td></tr>
+    </tbody>
+  </table>
+
+  <p>表格里藏着一组数据堪称整篇论文最戏剧化的一幕：GPT-3.5 在 CommonSenseQA 上，标准提示准确率是 75.8%，让它"自我纠正"一轮，<em>直接掉到 38.1%</em>——腰斩还多。第二轮稍微回升到 41.8%，但仍然不到原始水平的一半。GPT-4 在 GSM8K 上也从 95.5% 一路跌到 89.0%。<em>模型的"再想想"，几乎稳定地意味着"想错了"。</em></p>
+
+  <figure>
+    <!-- 图 4：实验结果对比柱状图 -->
+    <svg viewBox="0 0 700 340" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 坐标轴 -->
+        <line x1="60" y1="40" x2="60" y2="260" stroke="#96897A"/>
+        <line x1="60" y1="260" x2="680" y2="260" stroke="#96897A"/>
+
+        <!-- Y 轴刻度 -->
+        <text x="55" y="265" text-anchor="end" font-size="10" fill="#96897A">0</text>
+        <text x="55" y="220" text-anchor="end" font-size="10" fill="#96897A">25</text>
+        <text x="55" y="170" text-anchor="end" font-size="10" fill="#96897A">50</text>
+        <text x="55" y="120" text-anchor="end" font-size="10" fill="#96897A">75</text>
+        <text x="55" y="65" text-anchor="end" font-size="10" fill="#96897A">100</text>
+
+        <line x1="60" y1="220" x2="680" y2="220" stroke="#96897A" stroke-opacity="0.3" stroke-dasharray="2 3"/>
+        <line x1="60" y1="170" x2="680" y2="170" stroke="#96897A" stroke-opacity="0.3" stroke-dasharray="2 3"/>
+        <line x1="60" y1="120" x2="680" y2="120" stroke="#96897A" stroke-opacity="0.3" stroke-dasharray="2 3"/>
+        <line x1="60" y1="65" x2="680" y2="65" stroke="#96897A" stroke-opacity="0.3" stroke-dasharray="2 3"/>
+
+        <!-- GPT-4 GSM8K 三组 -->
+        <text x="160" y="280" text-anchor="middle" font-size="10" fill="#96897A">GPT-4 GSM8K</text>
+        <rect x="95"  y="69"  width="40" height="191" fill="#24555A" fill-opacity="0.85"/>
+        <text x="115" y="63" text-anchor="middle" font-size="10">95.5</text>
+        <rect x="140" y="86"  width="40" height="174" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="160" y="80" text-anchor="middle" font-size="10">91.5</text>
+        <rect x="185" y="96"  width="40" height="164" fill="#B54A2C" fill-opacity="0.85"/>
+        <text x="205" y="90" text-anchor="middle" font-size="10" fill="#B54A2C">89.0</text>
+        <text x="160" y="300" text-anchor="middle" font-size="9" fill="#96897A">原 → R1 → R2</text>
+
+        <!-- GPT-3.5 GSM8K 三组 -->
+        <text x="350" y="280" text-anchor="middle" font-size="10" fill="#96897A">GPT-3.5 GSM8K</text>
+        <rect x="285" y="108" width="40" height="152" fill="#24555A" fill-opacity="0.85"/>
+        <text x="305" y="102" text-anchor="middle" font-size="10">75.9</text>
+        <rect x="330" y="111" width="40" height="149" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="105" text-anchor="middle" font-size="10">74.7</text>
+        <rect x="375" y="118" width="40" height="142" fill="#B54A2C" fill-opacity="0.85"/>
+        <text x="395" y="112" text-anchor="middle" font-size="10" fill="#B54A2C">71.x</text>
+        <text x="350" y="300" text-anchor="middle" font-size="9" fill="#96897A">原 → R1 → R2</text>
+
+        <!-- GPT-3.5 CommonSenseQA 三组（最戏剧化） -->
+        <text x="540" y="280" text-anchor="middle" font-size="10" fill="#96897A">GPT-3.5 CSQA</text>
+        <rect x="475" y="108" width="40" height="152" fill="#24555A" fill-opacity="0.85"/>
+        <text x="495" y="102" text-anchor="middle" font-size="10">75.8</text>
+        <rect x="520" y="183" width="40" height="77"  fill="#B54A2C" fill-opacity="0.85"/>
+        <text x="540" y="177" text-anchor="middle" font-size="10" fill="#B54A2C">38.1</text>
+        <rect x="565" y="176" width="40" height="84"  fill="#B54A2C" fill-opacity="0.65"/>
+        <text x="585" y="170" text-anchor="middle" font-size="10" fill="#B54A2C">41.8</text>
+        <text x="540" y="300" text-anchor="middle" font-size="9" fill="#96897A">原 → R1 → R2</text>
+
+        <!-- 图例 -->
+        <g font-size="10">
+          <rect x="80" y="320" width="12" height="12" fill="#24555A" fill-opacity="0.85"/>
+          <text x="98" y="330" fill="#2E2A22">标准提示</text>
+          <rect x="200" y="320" width="12" height="12" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="218" y="330" fill="#2E2A22">内在纠正 R1</text>
+          <rect x="340" y="320" width="12" height="12" fill="#B54A2C" fill-opacity="0.85"/>
+          <text x="358" y="330" fill="#2E2A22">内在纠正 R2</text>
+        </g>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 三种模型在 GSM8K 与 CommonSenseQA 上的对照。深蓝是原始提示，红是内在自我纠正（R1/R2）。GPT-3.5 在 CSQA 上的腰斩最为戏剧化</figcaption>
+  </figure>
+
+  <h3>多智能体辩论：在同等算力下完败 self-consistency</h3>
+  <p>论文顺手把另一个当时很火的方法——多智能体辩论（Du et al. 2023，多个 LLM 实例互相挑刺）——也打回原形。在 9 次响应的同等预算下：GSM8K 上 self-consistency 是 88.2%，多智能体辩论只有 83.0%。<em>多个 agent 互相挑刺的"集体智慧"，不如同一模型多采几次再投票</em>。原因是辩论里所有 agent 共享同一个上下文，并没有真正引入新信息，本质上还是同一个脑子在打转。</p>
+
+  <h3>为什么越改越糟？</h3>
+  <p>作者做了行为层面分析，找到了一个反直觉但极其关键的现象：模型把<em>正确答案改成错误</em>的次数，远远多于把<em>错误答案改成正确</em>的次数。以 GSM8K 为例，GPT-3.5 在自我纠正后，错误增加的比例显著高于错误修正的比例。模型在改答案时，其实并不知道哪个改对了、哪个改坏了——它只是被"要修改"的指令推动着修改，于是把对的也改坏了。</p>
+
+  <figure>
+    <!-- 图 5：行为模式转移图 -->
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 两个状态圆 -->
+        <circle cx="180" cy="120" r="60" fill="#24555A" fill-opacity="0.18" stroke="#24555A" stroke-width="2"/>
+        <text x="180" y="115" text-anchor="middle" font-weight="600" fill="#24555A">初始答对</text>
+        <text x="180" y="135" text-anchor="middle" font-size="10" fill="#24555A">GPT-3.5 GSM8K</text>
+
+        <circle cx="520" cy="120" r="60" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C" stroke-width="2"/>
+        <text x="520" y="115" text-anchor="middle" font-weight="600" fill="#B54A2C">初始答错</text>
+        <text x="520" y="135" text-anchor="middle" font-size="10" fill="#B54A2C">GPT-3.5 GSM8K</text>
+
+        <!-- 上箭头：对 → 错（粗，红色） -->
+        <path d="M 220 95 Q 350 30 480 95" stroke="#B54A2C" stroke-width="3" fill="none" marker-end="url(#a3)"/>
+        <text x="350" y="40" text-anchor="middle" font-weight="600" fill="#B54A2C">对 → 错（更频繁）</text>
+        <text x="350" y="58" text-anchor="middle" font-size="10" fill="#B54A2C">把对的改成错的更多</text>
+
+        <!-- 下箭头：错 → 对（细，绿色） -->
+        <path d="M 480 145 Q 350 220 220 145" stroke="#24555A" stroke-width="1.5" fill="none" marker-end="url(#a4)" stroke-dasharray="4 3"/>
+        <text x="350" y="240" text-anchor="middle" font-weight="600" fill="#24555A">错 → 对（较少）</text>
+        <text x="350" y="258" text-anchor="middle" font-size="10" fill="#24555A">真正修正错误的次数更少</text>
+      </g>
+      <defs>
+        <marker id="a3" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+        <marker id="a4" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="#24555A"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 行为模式转移：模型把"对的改成错的"远多于"错的改成对的"，整体准确率被向下拖</figcaption>
+  </figure>
+
+  <div class="callout question">
+    <span class="label">反直觉发现</span>
+    论文里还有一个让人意外的细节：GPT-4 和 GPT-4-Turbo 表现得<em>更"懒"</em>——它们在自我纠正时倾向于保留初始答案，所以下跌幅度比 GPT-3.5 小得多。换句话说，越强的模型越不愿意改，越弱的模型越爱瞎改。这并不是说强模型"会自我纠正"，而是它学会了一种近似保身的策略——少动，少出错。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>这篇论文的影响远比它"不提出新方法"这件事听起来更大。它至少做了三件事——</p>
+  <p>第一，<em>给"内在自我纠正"立了一个清晰定义</em>。从此之后，整个社区讨论"自我纠正"，都得先回答一个问题：你的反馈从哪儿来？没有外部信号？那你不在做内在自我纠正——你不是真本事，只是漏写了 oracle 标签。</p>
+  <p>第二，<em>给方法论提了个标准</em>：任何自我纠正实验，都必须和同等推理成本的 baseline 比。你跑了 5 次修正，那就和 self-consistency 跑 5 次投票比，不是和单次生成比。这条规矩后来被几乎所有严肃的推理评测采纳。</p>
+  <p>第三，<em>把研究重心从"提示工程自我纠正"转向"外部反馈自我纠正"</em>。后面一年的工作——Reflexion 用单元测试、CRITIC 用工具调用、SCoRe 用强化学习训练——都在这条新轨道上。换句话说，正是这篇"泼冷水"的论文，让整个领域从一条死胡同里走出来，找到了真正能涨点的新路。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>这篇论文本身也有局限。最大的一点是它的结论非常<em>情境绑定</em>——它只覆盖了 2023 年当时的几个模型（GPT-3.5、GPT-4、GPT-4-Turbo、Llama-2-70b）和三个推理数据集。它没法回答一个更长远的问题：未来更强的模型、用 RL 训练过的推理模型（比如 o1、DeepSeek-R1），是不是会具备真正的内在自我纠正能力？</p>
+  <p>事实上，2025 年的 SCoRe 论文（DeepMind 自己后续的工作）就给出了不同答案：用 RL 两阶段训练后，GPT-4 级模型在 MATH 上获得了 4.4% 的净正自我纠正增益。同年的另一项研究也发现，给推理模型的思维链注入扰动后，它能在一个回合内自发纠正回来——这说明<em>"内在自我纠正"不是模型能力的天花板，而是默认训练目标下没被激活的能力</em>。</p>
+  <p>第二个局限是它没有给出"什么时候自我纠正真的有用"的判据。论文只说"在推理任务上没有证据支持它有用"，但风格类、安全类、约束类任务（论文里也提到了 CommonGen-Hard）自我纠正仍然有效。边界到底画在哪里，留给了后来人。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把本篇放回我们的演进时间线，能看到一条非常清晰的"自我纠正三部曲"——</p>
+  <ul>
+    <li>第 29 篇 <em>Self-Refine</em>：把自我批评当作"无需训练就能用"的提示工程法宝，开篇立论。</li>
+    <li>第 30 篇（本篇）<em>Cannot Self-Correct Reasoning Yet</em>：把这块招牌砸了，指出内在自我纠正的增益其实是作弊。</li>
+    <li>第 31 篇 <em>Reflexion</em>（下期预告）：把"作弊"变成"合理"——既然要有外部反馈，那就老实用工具、用测试、用检索作为外部信号，把自我纠正做成"言语强化学习"。</li>
+  </ul>
+  <p>放在更宏观的脉络里，这条线最终在 2024 年 9 月汇入了 o1 开启的"推理范式期"——把"测试时多想一会儿"从提示工程升级为模型本身被 RL 训练出的能力。本篇正是这条河从提示工程走向 RL 训练的<em>转折点</em>：它逼着所有人承认"光靠提示词让模型自己改没用"，于是大家开始认真想，怎么训练一个真的会改的模型。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>这篇论文的诞生本身就像一个微型侦探故事。Jie Huang 当时还在伊利诺伊大学香槟分校（UIUC）读博，Xinyun Chen 和 Denny Zhou 都在 Google DeepMind。他们并没有专门立项去做这个研究——是被社区里越来越多的"自我纠正涨 5 个点"的论文倒逼，觉得"这事得有人出来管管"。</p>
+  <p>最有意思的是论文里那句被反复引用的反问：<em class="latin">If an LLM possesses the ability to self-correct, why doesn't it simply offer the correct answer in its initial attempt?</em>——"如果模型真的能自我纠正，那它为什么不在第一次就把答案答对？"这个看似耍赖的悖论，恰恰是整篇论文的支点：它把"模型能不能改"和"模型知道什么"两个问题绑在了一起。如果你承认模型知识是固定的（在推理时权重不变），那么"改对了"和"答对了"在数学上是同一件事，只是时机不同。于是"自我纠正"必须是"模型用同一个脑子审同一个脑子"——在没有新信息的情况下，期望它走出新结论，本质上就是违背贝叶斯直觉的。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    让一个学生闭卷考试时，做完再回头检查一遍。他没带书、没问老师、没看别人的卷子，只有自己脑子里的知识。他能改对的题，必然是他第一次就该会的题；他改错的题，必然是脑子里的错误被他自己重新确认了。在严格闭卷下，自我纠正的数学期望是零——除非他第一次"留力"了，但模型没有"留力"的动机。
+  </div>
+
+  <p>还有一个有趣的副产品：这篇论文发表后，被一波"反思反思"的论文浪潮追赶。比如有人发现，给推理模型的 CoT 注入人为扰动，模型能在一句话内纠正回来，说明<em>"自我纠正"对训练过的推理模型不是不存在，而是被激活在了"单回合内的内省"里</em>，而不是"先生成-再批评-再修改"的多回合流程里。本篇作者后来没有直接回应这些后续研究，但他们在论文结尾留了一句意味深长的话："<em class="latin">we encourage the community to be realistic about self-correction</em>"——他们没有把话说死，只是请社区诚实。这句话，后来成了自我纠正领域被引用最多的一句金句。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>我读这篇论文最大的收获，不是"哦原来自我纠正没用"这种结论本身——而是一种<em>审视任何"涨点"的方法论直觉</em>：看到一个方法报告了显著提升，第一反应应该是去问，它的 baseline 是怎么设定的、有没有偷偷塞了额外信号、是不是同等算力下的比较。这个直觉一旦养成，你会发现自己看 AI 论文的能力提高了一个台阶。</p>
+  <p>落到工程实践上，本篇的启示其实非常具体：如果你在生产环境里搭一个 agent，想让它"自我纠正"——先问自己，它有什么外部信号？如果只是让同一个模型回头批评自己，又没有外部工具，那就别期待增益，反而要做"如果改坏了就回退"的兜底逻辑。如果你能给外部信号——代码能跑、能调用搜索、能查数据库——那就大方地用，那是真正会涨点的路径。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果未来某个推理模型，在没有任何外部信号的情况下，纯靠自我批评就能稳定涨点——那它要么打破了我们这里说的"贝叶斯直觉"，要么它一定在训练时被某种奖励信号悄悄塞了"先答错、再答对"的策略。你更愿意相信是哪一种？为什么？
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Reflexion: Language Agents with Verbal Reinforcement Learning</h3>
+    <p style="margin:0;">既然纯靠模型自己改没用，那"自我纠正"该往哪儿走？下一篇我们就讲被本篇点名表扬的那条路——Reflexion 让 agent 把每次失败写进"语言记忆"，下一轮带着这条教训再试，靠外部反馈信号撑起真正的"言语强化学习"。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 030 篇</span>
+    <span>2026-08-30</span>
+  </footer>
+
+</div>
+</body>
+</html>
