@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reflexion 论文精读 · 大模型经典论文系列 #031</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#031</span>
+  </div>
+
+  <h1 class="title">
+    Reflexion: Language Agents with Verbal Reinforcement Learning
+    <span class="en">Reflexion：把每次失败写进"语言记忆"——靠外部反馈信号撑起真正的"言语强化学习"，让自我纠正走出纯内在循环</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Noah Shinn, Federico Cassano, Edward Berman, Ashwin Gopinath, Karthik Narasimhan, Shunyu Yao</span>
+    <span>机构：Northeastern University · MIT · Princeton University</span>
+    <span>发表：2023-03 / NeurIPS 2023</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2303.11366" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/noahshinn024/reflexion" target="_blank" rel="noopener">GitHub</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">上一篇我们刚听完一句让人有点泄气的结论：<em>没有外部反馈、纯靠模型自己审自己，LLM 越改越糟</em>。如果内在自我纠正是一条死胡同，那"自我纠正"这件事是不是就此被判了死刑？东北大学的 Noah Shinn 和普林斯顿的 Shunyu Yao（对，就是 ReAct 的那位 Yao）显然不甘心。他们沿着同一片战场往前走了半步，给出了一个朴素到近乎狡黠的回答——</p>
+  <p class="lead">既然问题出在"没有新信息进入"，那就给它新信息。但不是用昂贵的强化学习去重写模型的权重，而是用一种几乎零成本的方式：让 agent 把"这次为什么失败"用自然语言写成一段反思，存进一个记忆本子，下一轮带着这条教训再试一次。这，就是 <em class="latin">Reflexion</em>。它在 HumanEval 上把 GPT-4 自己的 80% 干到了 91%——<em>套着 GPT-4 的壳，竟然打败了 GPT-4 本身</em>。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    不更新任何权重，只让 agent 把每次失败浓缩成一段"反思笔记"塞进记忆，下一轮带着这条教训重试——Reflexion 用"外部反馈 + 语言记忆"把自我纠正从纯内在循环里救了出来，在编程任务上让 GPT-4 的 pass@1 从 80% 飙到 91%。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>要看懂这篇论文的位置，得把它放回我们这条"自我纠正三部曲"里。第 29 篇 <em>Self-Refine</em> 把"自我批评"当成无需训练就能用的提示工程法宝，开篇立论；第 30 篇 <em>Cannot Self-Correct Reasoning Yet</em> 把这块招牌砸了，指出纯内在自我纠正的增益其实是偷偷塞了标准答案在作弊。那么问题来了：自我纠正这条路，到底还能不能走？</p>
+  <p>这一篇就是那个回答：<em>能，但得换条腿走路</em>。不能靠"同一个脑子审同一个脑子"的内在循环，得靠外部反馈——环境告诉你对没对、单测跑没跑过、搜索查到没查到——然后把这些外部信号翻译成一段自然语言的"反思"，存进一个可编辑的长期记忆。它正好卡在两条线索的交叉口：往回看，它是 ReAct（Yao 等人 2022）这条 agent 主线的直接延续，作者都有 Shunyu Yao；往前看，它把"外部反馈自我纠正"这条新路彻底走通，直接喂出了后来一整波 agent 论文——CRITIC、Voyager、Self-RAG 都站在它肩膀上。</p>
+
+  <figure>
+    <!-- 图 1：大模型领域发展时间线，标注本篇位置（高亮），并标记已解析部分 -->
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="140" x2="660" y2="140" stroke="#96897A" stroke-width="1"/>
+
+      <g font-family="JetBrains Mono" font-size="10" fill="#96897A">
+        <!-- 2017 Transformer -->
+        <circle cx="70" cy="140" r="4" fill="#24555A" fill-opacity="0.5" stroke="#96897A"/>
+        <text x="70" y="125" text-anchor="middle">2017</text>
+        <text x="70" y="160" text-anchor="middle">Transformer</text>
+
+        <!-- 2018 BERT -->
+        <circle cx="140" cy="140" r="4" fill="#24555A" fill-opacity="0.5" stroke="#96897A"/>
+        <text x="140" y="125" text-anchor="middle">2018</text>
+        <text x="140" y="160" text-anchor="middle">BERT</text>
+
+        <!-- 2019 GPT-2 -->
+        <circle cx="200" cy="140" r="4" fill="#24555A" fill-opacity="0.5" stroke="#96897A"/>
+        <text x="200" y="125" text-anchor="middle">2019</text>
+        <text x="200" y="160" text-anchor="middle">GPT-2</text>
+
+        <!-- 2020 GPT-3 -->
+        <circle cx="250" cy="140" r="4" fill="#24555A" fill-opacity="0.5" stroke="#96897A"/>
+        <text x="250" y="125" text-anchor="middle">2020</text>
+        <text x="250" y="160" text-anchor="middle">GPT-3</text>
+
+        <!-- 2022 CoT / ReAct -->
+        <circle cx="335" cy="140" r="4" fill="#24555A" fill-opacity="0.5" stroke="#96897A"/>
+        <text x="335" y="125" text-anchor="middle">2022</text>
+        <text x="335" y="160" text-anchor="middle">CoT / ReAct</text>
+
+        <!-- 2023.03 本篇：高亮 -->
+        <circle cx="425" cy="140" r="9" fill="#B54A2C"/>
+        <text x="425" y="105" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇</text>
+        <text x="425" y="170" text-anchor="middle" fill="#2E2A22" font-weight="600">Reflexion</text>
+
+        <!-- 2023.10 Cannot Self-Correct -->
+        <circle cx="475" cy="140" r="4" fill="#24555A" stroke="#96897A"/>
+        <text x="475" y="125" text-anchor="middle">2023.10</text>
+        <text x="475" y="160" text-anchor="middle">Cannot-Self-Correct</text>
+
+        <!-- 2024 o1 -->
+        <circle cx="560" cy="140" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="560" y="125" text-anchor="middle">2024</text>
+        <text x="560" y="160" text-anchor="middle">o1</text>
+
+        <!-- 2025 DeepSeek-R1 -->
+        <circle cx="630" cy="140" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="630" y="125" text-anchor="middle">2025</text>
+        <text x="630" y="160" text-anchor="middle">R1</text>
+      </g>
+
+      <!-- 已解析区间标识：从 2017 到本篇 -->
+      <g>
+        <line x1="70" y1="220" x2="425" y2="220" stroke="#24555A" stroke-width="2"/>
+        <circle cx="70" cy="220" r="3" fill="#24555A"/>
+        <circle cx="425" cy="220" r="3" fill="#24555A"/>
+        <text x="247" y="245" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#24555A">已解析 31 篇 · 从 Transformer 到语言记忆型 agent</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的位置示意。深蓝小圆点为本系列已解析论文，红色大圆点为本篇，浅色节点为后续路线</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>2022 年到 2023 年初，"LLM agent"成了最热的词。ReAct 让模型交替输出"思考"和"动作"，Toolformer 教模型自己学会调工具，HuggingGPT 把一整套模型串起来干活，generative agents 让 25 个虚拟小镇居民在沙盒里过起了日子。这些工作证明了一件事：把 LLM 当成"大脑"，外面套一层能调用 API、能跑代码、能看环境的躯壳，agent 真的能动起来。</p>
+  <p>但它们都有同一个致命短板：<em>不会从失败里学</em>。一个 ReAct agent 这次走错了房间、写崩了代码，下一次同样的任务它还会走错、还会写崩——因为它的"工作记忆"只活在当前这一回合的上下文窗口里，回合一结束，上下文一清空，经验就蒸发了。本质上，这些 agent 只是"带着环境交互的、一次性的评估任务"，没有试错学习的能力。</p>
+  <p>那为什么不直接套传统强化学习？作者列了三条硬伤：LLM 参数太大，在线微调又贵又不稳；标量 reward 信息量太少，复杂任务里根本分不清是哪一步错了（信用分配难题）；而且白白浪费了 LLM 已经很强的规划、分析能力——传统 RL 把模型当黑盒只看 reward，等于让一个会写诗的人去搬砖。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象一个失忆的主厨。他今天把汤熬咸了，客人骂了一顿；可他第二天醒来什么都不记得，照样放一大勺盐。传统 RL 的解法是"重接他的神经"——动手术改写大脑连接，让他本能地少放盐，但手术又贵又危险。Reflexion 的解法朴素得多：给他一本小本子，让他写下"今天盐放多了"，第二天开工前翻一翻。脑子一个字没动，手却听话了。
+  </div>
+
+  <p>作者抓住的就是这个直觉：<em>自然语言本身就是一种比标量 reward 信息密度高得多的学习信号</em>。一句"你失败是因为没先检查肥皂是不是已经在兜里"比一个 reward=0 能教给 agent 的东西多得多。于是他们提出把环境的标量反馈翻译成一段文本反思，存进长期记忆，作为下一回合的额外上下文——一种不碰权重、只动语言的"强化学习"。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>论文要回答的问题可以一句话讲清：<em>一个固定权重、不可微调的 LLM agent，能不能靠"语言反思 + 记忆"这种不动权重的方式，从自己上一回合的失败里学到东西，在下一回合真正变强？</em></p>
+  <p>注意这里有两个关键词。第一是<em>不动权重</em>——它必须和传统 RL 划清界限，不能靠梯度更新作弊；第二是<em>真正变强</em>——不是靠偷偷塞了标准答案，而是靠环境本身给的反馈（测试通没通过、目标到没到达、答案对不对）转化出来的语言信号。这正是上一篇 <em>Cannot Self-Correct</em> 留下的缺口：内在自我纠正不行，那加上外部反馈行不行？</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    先别往下读，凭直觉猜：让 GPT-4 写代码、写错了不让它看正确答案、只告诉它"测试没过"，再让它自己写一段"我哪儿错了、下次怎么改"的反思，第二轮重写——你觉得它能在 HumanEval 上把自己涨多少？很多人会猜"可能涨几个点"。答案是 +11 个百分点，从 80% 直接到 91%。这就是这篇论文最让人意外的地方。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>Reflexion 的方法可以用一句话概括：<em>把传统 RL 里"用梯度更新权重"这一步，换成"用自然语言更新一个记忆本子"</em>。这个替换看似简单，背后是一整套重新设计的学习循环。我们分三步拆开看。</p>
+
+  <h3>第一步：把"强化学习"重新定义成"言语强化学习"</h3>
+  <p>传统策略梯度里，agent 跑完一条轨迹 $\tau$、拿到累积奖励 $R(\tau)$，然后按下面这个式子去挪动参数 $\theta$：</p>
+
+  <div class="formula-block">
+    $$\theta_{t+1} = \theta_t + \alpha \,\nabla_\theta \,\mathbb{E}_{\tau \sim \pi_\theta}\big[R(\tau)\big]$$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>Reflexion 干的事是把左边的 $\theta$ 换成一个"语言记忆" $\text{mem}$。agent 同样跑完一条轨迹、拿到奖励，但不去算梯度，而是让一个"自我反思模型"生成一段文本反思 $\text{ref}_t$，塞进记忆，下一回合的 actor 就读着这个记忆去行动：</p>
+
+  <div class="formula-block">
+    $$\text{mem}_t = \text{mem}_{t-1} \cup \big\{\text{M}_{sr}(\tau_t,\, r_t)\big\}, \qquad a_{t+1} \sim \pi_{\text{LLM}}\!\left(s_{t+1},\, \text{mem}_t\right)$$
+    <span class="eqn mono">(2)</span>
+  </div>
+
+  <p>作者把这种自我反思式反馈称作一种<em>"语义梯度信号"</em>——它不像标量 reward 只能说"好/坏"，而是能给 agent 一个<em>具体的改进方向</em>。参数一个没动，但策略变了。这正好是上一篇指出的"内在自我纠正"缺的那块拼图：<em>新信息从外部进入</em>了。</p>
+
+  <figure>
+    <!-- 图 2：传统 RL vs Reflexion 的"更新对象"对比 -->
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="175" y="30" text-anchor="middle" font-weight="600" fill="#96897A">传统强化学习</text>
+        <text x="525" y="30" text-anchor="middle" font-weight="600" fill="#B54A2C">Reflexion（言语强化学习）</text>
+        <line x1="350" y1="20" x2="350" y2="260" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <!-- 左：传统 RL -->
+        <rect x="60" y="55" width="230" height="40" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="80" text-anchor="middle">跑轨迹 τ，拿到标量奖励 r</text>
+
+        <rect x="60" y="120" width="230" height="40" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="145" text-anchor="middle">算梯度 ∇R(τ)</text>
+
+        <rect x="60" y="185" width="230" height="40" fill="#96897A" fill-opacity="0.2" stroke="#96897A"/>
+        <text x="175" y="210" text-anchor="middle">更新权重 θ（贵、不稳）</text>
+
+        <line x1="175" y1="95" x2="175" y2="120" stroke="#96897A" marker-end="url(#ar2a)"/>
+        <line x1="175" y1="160" x2="175" y2="185" stroke="#96897A" marker-end="url(#ar2a)"/>
+
+        <!-- 右：Reflexion -->
+        <rect x="410" y="55" width="230" height="40" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="525" y="80" text-anchor="middle">跑轨迹 τ，拿到反馈信号 r</text>
+
+        <rect x="410" y="120" width="230" height="40" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="525" y="145" text-anchor="middle" fill="#24555A">反思模型生成语言 ref</text>
+
+        <rect x="410" y="185" width="230" height="40" fill="#B54A2C" fill-opacity="0.14" stroke="#B54A2C"/>
+        <text x="525" y="210" text-anchor="middle" fill="#B54A2C" font-weight="600">更新记忆 mem（轻、可解释）</text>
+
+        <line x1="525" y1="95" x2="525" y2="120" stroke="#96897A" marker-end="url(#ar2a)"/>
+        <line x1="525" y1="160" x2="525" y2="185" stroke="#96897A" marker-end="url(#ar2a)"/>
+      </g>
+      <defs>
+        <marker id="ar2a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · 同样是"试错学习"，传统 RL 更新的是权重 θ，Reflexion 更新的是一段语言记忆 mem。代价从"微调大模型"降到"写一段文字"</figcaption>
+  </figure>
+
+  <h3>第二步：四个零件，搭出一个反思闭环</h3>
+  <p>Reflexion 的骨架是四个组件，全都可以用同一个 LLM 扮演，不需要额外训练任何角色：</p>
+  <ul>
+    <li><em>Actor（行动器）</em>：负责生成动作。输入是任务描述、当前观测、以及记忆本子；输出是一条轨迹。它在不同任务里换不同皮——决策任务用 ReAct 风格（思考/动作交替），编程任务直接生成 Python 函数，推理任务用 CoT。</li>
+    <li><em>Evaluator（评估器）</em>：给轨迹打分，输出一个奖励信号。它就是 Reflexion 的"外部反馈入口"：编程靠跑单元测试的通/不通，决策靠有没有到达目标状态，推理靠和标准答案的精确匹配（exact match）。</li>
+    <li><em>Self-Reflection（自我反思模型）</em>：整篇论文的<em>核心创新</em>。它吃进"失败的轨迹 + 奖励信号 + 已有记忆"，吐出一段文本——哪儿错了、下次该怎么改。这段文字才是真正被存进记忆、影响下一回合的东西。</li>
+    <li><em>Memory（记忆）</em>：分两层。短期记忆是当前回合的完整轨迹；长期记忆是一个滑动窗口，装着最近几条反思文本（论文里一般留最近 3 条，受上下文长度所限）。</li>
+  </ul>
+
+  <figure>
+    <!-- 图 3：Reflexion 架构与反思闭环 -->
+    <svg viewBox="0 0 700 360" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- Actor -->
+        <rect x="40" y="40" width="150" height="56" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="115" y="64" text-anchor="middle" font-weight="600">Actor</text>
+        <text x="115" y="82" text-anchor="middle" font-size="10" fill="#96897A">生成轨迹 τ</text>
+
+        <!-- Environment / Evaluator -->
+        <rect x="270" y="40" width="160" height="56" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="64" text-anchor="middle" font-weight="600">Evaluator</text>
+        <text x="350" y="82" text-anchor="middle" font-size="10" fill="#96897A">外部反馈 → 奖励 r</text>
+
+        <!-- 决策菱形 -->
+        <polygon points="350,140 410,180 350,220 290,180" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="178" text-anchor="middle" font-size="11">成功?</text>
+
+        <!-- 成功出口 -->
+        <rect x="540" y="155" width="120" height="50" rx="2" fill="#24555A" fill-opacity="0.14" stroke="#24555A"/>
+        <text x="600" y="180" text-anchor="middle" fill="#24555A" font-weight="600">完成 ✓</text>
+
+        <!-- Self-Reflection -->
+        <rect x="40" y="270" width="200" height="60" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="140" y="296" text-anchor="middle" fill="#B54A2C" font-weight="600">Self-Reflection</text>
+        <text x="140" y="314" text-anchor="middle" font-size="10" fill="#B54A2C">τ + r → 语言反思 ref</text>
+
+        <!-- Memory -->
+        <rect x="300" y="270" width="180" height="60" rx="2" fill="#B54A2C" fill-opacity="0.08" stroke="#B54A2C"/>
+        <text x="390" y="296" text-anchor="middle" fill="#B54A2C" font-weight="600">长期记忆 mem</text>
+        <text x="390" y="314" text-anchor="middle" font-size="10" fill="#96897A">滑动窗口（最近 3 条）</text>
+
+        <!-- 连线 -->
+        <line x1="190" y1="68" x2="270" y2="68" stroke="#96897A" marker-end="url(#ar3)"/>
+        <line x1="350" y1="96" x2="350" y2="140" stroke="#96897A" marker-end="url(#ar3)"/>
+        <line x1="410" y1="180" x2="540" y2="180" stroke="#24555A" marker-end="url(#ar3)"/>
+        <line x1="350" y1="220" x2="200" y2="300" stroke="#96897A" marker-end="url(#ar3)" stroke-dasharray="4 3"/>
+        <text x="268" y="262" font-size="10" fill="#96897A">失败</text>
+        <line x1="240" y1="300" x2="300" y2="300" stroke="#96897A" marker-end="url(#ar3)"/>
+
+        <!-- 反馈回路：记忆回灌 Actor -->
+        <path d="M 390 270 Q 390 200 115 96" stroke="#B54A2C" fill="none" marker-end="url(#ar4)" stroke-width="1.5"/>
+        <text x="250" y="200" font-size="10" fill="#B54A2C">下一回合带记忆重试</text>
+      </g>
+      <defs>
+        <marker id="ar3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="ar4" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · Reflexion 的反思闭环：Actor 跑轨迹 → Evaluator 给外部反馈 → 失败则 Self-Reflection 生成语言反思 → 写入长期记忆 → 下一回合回灌 Actor。红色路径就是"不动权重、只动语言"的那条学习回路</figcaption>
+  </figure>
+
+  <h3>第三步：三种外部反馈，按任务挑着用</h3>
+  <p>反思模型要生成有用的反思，前提是它能搞清楚"哪儿错了"——这本质上是 RL 里著名的<em>信用分配问题</em>。论文探索了三种把环境信号放大成语言反馈的方式，对应不同任务：</p>
+  <ul>
+    <li><em>简单的二元环境反馈</em>：最朴素。推理任务直接看答案和标准答案精确匹配对不对，对就过、错就反思。信号最弱，但最通用。</li>
+    <li><em>预定义启发式</em>：决策任务里写一些"常见失败模式"的触发条件——比如同一个动作连续重复超过 3 次、或者总动作数超过 30 步，就触发反思。用来抓"卡死循环""原地打转"这类典型错误。</li>
+    <li><em>自评估</em>：最有意思的一种。决策任务里让 LLM 自己做二元分类判断成败；编程任务里更狠——让模型<em>自己给自己写单元测试</em>，跑测试当反馈。这条路线后来被证明是 Reflexion 在 HumanEval 上能打到 91% 的关键。</li>
+  </ul>
+
+  <figure>
+    <!-- 图 4：三种外部反馈信号汇入反思 -->
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 三种反馈源 -->
+        <rect x="40" y="50" width="180" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="130" y="72" text-anchor="middle">二元环境反馈</text>
+        <text x="130" y="90" text-anchor="middle" font-size="10" fill="#96897A">答案精确匹配 / 目标到达</text>
+
+        <rect x="40" y="120" width="180" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="130" y="142" text-anchor="middle">预定义启发式</text>
+        <text x="130" y="160" text-anchor="middle" font-size="10" fill="#96897A">重复动作 / 步数超限</text>
+
+        <rect x="40" y="190" width="180" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="130" y="212" text-anchor="middle">自评估</text>
+        <text x="130" y="230" text-anchor="middle" font-size="10" fill="#96897A">LLM 分类 / 自写单元测试</text>
+
+        <!-- 汇入反思 -->
+        <rect x="430" y="115" width="220" height="60" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="540" y="142" text-anchor="middle" fill="#B54A2C" font-weight="600">Self-Reflection</text>
+        <text x="540" y="160" text-anchor="middle" font-size="10" fill="#B54A2C">放大成语言反思 ref</text>
+
+        <line x1="220" y1="75"  x2="430" y2="130" stroke="#96897A" marker-end="url(#ar5)"/>
+        <line x1="220" y1="145" x2="430" y2="145" stroke="#96897A" marker-end="url(#ar5)"/>
+        <line x1="220" y1="215" x2="430" y2="160" stroke="#96897A" marker-end="url(#ar5)"/>
+
+        <text x="325" y="108" text-anchor="middle" font-size="10" fill="#96897A">外部信号</text>
+      </g>
+      <defs>
+        <marker id="ar5" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 三种外部反馈信号汇入自我反思模型，被翻译成同一种东西——一段自然语言反思。这是 Reflexion"信号源灵活"的核心</figcaption>
+  </figure>
+
+  <p>把这三步合起来，Reflexion 的全貌就清楚了：<em>它没发明新模型，也没造新数据集，它造的是一种"学习协议"</em>——一种让固定权重的 LLM agent 也能像人一样"试一次、想一下、再试一次"的协议。作者也老实承认它的代价：能力上限被 LLM 自我评估的水平卡住，也没有成功的形式化保证。但他们补了一句意味深长的话——<em>随着 LLM 能力提升，这条路只会越走越宽</em>。后来的事，证明他们没说错。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>实验覆盖三类任务：顺序决策（AlfWorld 文本游戏）、编程（HumanEval）、语言推理（HotpotQA 多跳问答）。结果干净利落地回答了开篇那个问题——<em>能，而且涨得让人意外</em>。</p>
+
+  <table>
+    <thead>
+      <tr><th>任务 / 指标</th><th>强基线</th><th>+ Reflexion</th><th>提升</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">HumanEval · pass@1（GPT-4）</td><td>80%</td><td>91%</td><td>+11pt</td></tr>
+      <tr><td class="text">AlfWorld · 成功率（ReAct 基线）</td><td>~75%</td><td>~97%</td><td>+~22pt</td></tr>
+      <tr><td class="text">HotpotQA · EM（ReAct 基线）</td><td>~30%</td><td>~51%</td><td>+~20pt</td></tr>
+    </tbody>
+  </table>
+
+  <p>最抓眼球的是 HumanEval 那一行：GPT-4 单独跑 80%，套上 Reflexion 之后 91%——<em>套壳的打败了被套的</em>。这在 2023 年 3 月是个炸裂的标题，因为当时 GPT-4 本身就是编程能力的天花板，一个不动权重的 wrapper 居然把它自己又抬高了 11 个点。AlfWorld 上 Reflexion 在 134 个环境、6 类任务里拿到约 97% 的成功率，比 ReAct 基线提升约 22 个百分点；HotpotQA 的精确匹配从约 30% 翻到约 51%。三个截然不同的任务（走房间、写代码、查百科），同一套框架，全面上涨。</p>
+
+  <figure>
+    <!-- 图 5：三类任务结果对比柱状图 -->
+    <svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 坐标轴 -->
+        <line x1="60" y1="40" x2="60" y2="240" stroke="#96897A"/>
+        <line x1="60" y1="240" x2="680" y2="240" stroke="#96897A"/>
+
+        <!-- Y 轴刻度 -->
+        <text x="55" y="244" text-anchor="end" font-size="10" fill="#96897A">0</text>
+        <text x="55" y="194" text-anchor="end" font-size="10" fill="#96897A">25</text>
+        <text x="55" y="144" text-anchor="end" font-size="10" fill="#96897A">50</text>
+        <text x="55" y="94" text-anchor="end" font-size="10" fill="#96897A">75</text>
+        <text x="55" y="44" text-anchor="end" font-size="10" fill="#96897A">100</text>
+
+        <line x1="60" y1="194" x2="680" y2="194" stroke="#96897A" stroke-opacity="0.3" stroke-dasharray="2 3"/>
+        <line x1="60" y1="144" x2="680" y2="144" stroke="#96897A" stroke-opacity="0.3" stroke-dasharray="2 3"/>
+        <line x1="60" y1="94" x2="680" y2="94" stroke="#96897A" stroke-opacity="0.3" stroke-dasharray="2 3"/>
+
+        <!-- HumanEval：80 -> 91 -->
+        <text x="160" y="260" text-anchor="middle" font-size="10" fill="#96897A">HumanEval pass@1</text>
+        <rect x="95"  y="80"  width="45" height="160" fill="#24555A" fill-opacity="0.85"/>
+        <text x="118" y="74" text-anchor="middle" font-size="10">80</text>
+        <rect x="145" y="58"  width="45" height="182" fill="#B54A2C" fill-opacity="0.85"/>
+        <text x="168" y="52" text-anchor="middle" font-size="10" fill="#B54A2C">91</text>
+        <text x="160" y="280" text-anchor="middle" font-size="9" fill="#96897A">GPT-4 → +Reflexion</text>
+
+        <!-- AlfWorld：75 -> 97 -->
+        <text x="350" y="260" text-anchor="middle" font-size="10" fill="#96897A">AlfWorld 成功率</text>
+        <rect x="285" y="90"  width="45" height="150" fill="#24555A" fill-opacity="0.85"/>
+        <text x="308" y="84" text-anchor="middle" font-size="10">~75</text>
+        <rect x="335" y="46"  width="45" height="194" fill="#B54A2C" fill-opacity="0.85"/>
+        <text x="358" y="40" text-anchor="middle" font-size="10" fill="#B54A2C">~97</text>
+        <text x="350" y="280" text-anchor="middle" font-size="9" fill="#96897A">ReAct → +Reflexion</text>
+
+        <!-- HotpotQA：30 -> 51 -->
+        <text x="540" y="260" text-anchor="middle" font-size="10" fill="#96897A">HotpotQA EM</text>
+        <rect x="475" y="180" width="45" height="60"  fill="#24555A" fill-opacity="0.85"/>
+        <text x="498" y="174" text-anchor="middle" font-size="10">~30</text>
+        <rect x="525" y="138" width="45" height="102" fill="#B54A2C" fill-opacity="0.85"/>
+        <text x="548" y="132" text-anchor="middle" font-size="10" fill="#B54A2C">~51</text>
+        <text x="540" y="280" text-anchor="middle" font-size="9" fill="#96897A">ReAct → +Reflexion</text>
+
+        <!-- 图例 -->
+        <g font-size="10">
+          <rect x="200" y="300" width="12" height="12" fill="#24555A" fill-opacity="0.85"/>
+          <text x="218" y="310" fill="#2E2A22">强基线</text>
+          <rect x="360" y="300" width="12" height="12" fill="#B54A2C" fill-opacity="0.85"/>
+          <text x="378" y="310" fill="#2E2A22">+ Reflexion</text>
+        </g>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 三类任务上 Reflexion 的提升。HumanEval 上"套壳的 91% 打败被套的 80%"是整篇论文最广为传播的一组数字</figcaption>
+  </figure>
+
+  <h3>消融：真正起作用的是那段反思，不是"再来一次"</h3>
+  <p>作者做了关键的消融实验，把 Reflexion 拆开看哪块在起作用。结论很清晰：<em>只让 agent 失败后简单重试，不写反思，几乎不涨点</em>；真正带来增益的是那段被存进记忆的自我反思文本。换句话说，是"语言里承载的具体改进方向"在起作用，不是"多跑几遍"本身。还有一个发现尤其重要——在编程任务上，让模型<em>自己给自己写单元测试</em>当外部信号，比单纯看通/不通强得多，这正是 HumanEval 那个 +11 点的主要来源。</p>
+
+  <div class="callout question">
+    <span class="label">反直觉发现</span>
+    还有一个让很多人意外的细节：Reflexion 的增益是<em>逐轮累积</em>的，但不是无限涨——一般在头几轮（论文里大多在 2-3 轮内）冲到一个高点后就平台化，甚至偶尔回落。原因是记忆滑窗塞满了，或者反思开始"原地打转"重复同一句教训。这说明语言记忆也有它的容量上限，和上下文窗口绑死是它的硬约束。
+  </div>
+
+  <p>把消融和主实验放一起读，能读出这篇论文真正的主张：<em>不是"自我纠正"没用，而是"没有外部信号 + 没有可累积记忆"的自我纠正没用</em>。一旦把外部反馈翻译成语言、存进可跨回合读取的记忆，自我纠正立刻就活过来了——这正好从正面补上了上一篇的结论。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>Reflexion 的影响远超它"一个 wrapper 涨 11 点"这个表面数字。它至少做了三件大事——</p>
+  <p>第一，<em>给"不动权重的 agent 学习"立了一个范式</em>。在它之前，agent 要么靠 in-context 示例（一次性）、要么靠昂贵的 RL 微调（不可及）。Reflexion 证明存在第三条路：用语言当梯度、用记忆当参数、用反思当反向传播。这个范式后来被叫作 <em class="latin">test-time learning</em> 或 <em class="latin">verbal RL</em>，成了 agent 领域的基础设施级思路。</p>
+  <p>第二，<em>把"外部反馈自我纠正"这条路彻底走通</em>。它和上一篇 <em>Cannot Self-Correct</em> 形成了一对精妙的正反命题：内在自我纠正不行（反方），外部反馈 + 语言记忆就行（正方）。两篇合在一起，把整个社区的研究重心从"提示工程自我纠正"硬生生拽到了"外部反馈自我纠正"这条新轨道上。</p>
+  <p>第三，<em>直接喂出了一整波后续工作</em>。CRITIC 把外部反馈从"环境奖励"扩展成"工具批判"（搜索引擎、代码解释器）；Voyager 把反思升级成可复用的技能库，让 agent 在 Minecraft 里无限探索；Self-RAG 把反思和检索绑在一起。可以说 2023 年下半年那批最有想象力的 agent 论文，几乎都在 Reflexion 画的这条延长线上。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>Reflexion 也并非没有破绽，作者自己也很坦诚。最根本的一条是：<em>它的上限被 LLM 自我评估的能力卡死</em>。如果反思模型本身判断错了"哪儿错了"，存进记忆的就会是一条错误的教训，下一回合不但不会进步，反而会强化错误——这是语言记忆版的"reward hacking"。论文也没有成功的形式化保证，理论上不收敛。</p>
+  <p>第二条是<em>记忆被上下文窗口绑死</em>。长期记忆是个滑动窗口，只能留最近 3 条左右，再多就装不下。这意味着它没法做"长期、跨任务、跨会话"的真·终身学习——它是个短期记忆型选手，不是个能记一辈子事的选手。后来的工作（比如用向量库、知识图给记忆外挂硬盘）正是在补这块。</p>
+  <p>第三条更微妙：后续研究发现，在<em>某些任务上</em>，Reflexion 的增益其实主要来自那个外部 Evaluator（尤其自写单元测试），反思文本本身的边际贡献没那么大——也就是说，有时是"外部信号"在起作用，不是"语言化"在起作用。这让"言语强化学习"这个故事在某些设定下没那么干净。但换个角度，这恰恰印证了 Reflexion 和上一篇共同的内核：<em>真正要紧的是有没有外部新信息进来，至于它以语言还是以工具形式进来，是次要的</em>。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把本篇放回我们的演进时间线，能看到一条非常工整的"自我纠正三部曲"——</p>
+  <ul>
+    <li>第 29 篇 <em>Self-Refine</em>：把自我批评当成无需训练的提示工程法宝，开篇立论。</li>
+    <li>第 30 篇 <em>Cannot Self-Correct Reasoning Yet</em>：把这块招牌砸了，指出纯内在自我纠正的增益其实是作弊。</li>
+    <li>第 31 篇（本篇）<em>Reflexion</em>：给出正解——加上外部反馈 + 语言记忆，自我纠正立刻活过来。</li>
+  </ul>
+  <p>但 Reflexion 的意义不止于"自我纠正"这条小线。它同时是 agent 主线上的关键一环：往回接 ReAct（Yao 等人 2022，给 agent 加了工作记忆），往前开 Voyager、CRITIC、Self-RAG（把记忆和反馈升级成技能库、工具、检索）。再往远看，这条"测试时多想一会儿、多试几遍"的思路，最终在 2024 年 9 月汇入 o1 开启的"推理范式期"——把"测试时学习"从提示工程协议升级成模型本身被 RL 训练出的能力。Reflexion 正是这条河从"提示协议"流向"RL 训练"的中途站：它先证明了"测试时学习"有用，大家才肯花大力气去把它训进权重里。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>这篇论文背后有几个挺有意思的细节。第一个是<em>血统</em>：Reflexion 的 Actor 直接就是 ReAct，而 ReAct 的一作 Shunyu Yao 正是 Reflexion 的共同作者。所以社区里有人开玩笑说 Reflexion 全名应该叫 <em class="latin">ReAct + reflective memory</em>——同一个团队把自家上一作往前推了半步，从"有工作记忆的 agent"推成"有长期可编辑记忆的 agent"。这个血统也让它的叙事格外顺畅：ReAct 解决了"动起来"，Reflexion 解决了"能从失败里学"。</p>
+  <p>第二个是<em>名字</em>。<em class="latin">Reflexion</em> 是个有点复古的哲学词——它是 <em class="latin">reflection</em> 的古早拼法，自带"自我审视"的意味（杜威讲反思就用这个词）。但也有人说这是个双关：<em>reflex</em>（反射/本能）+ <em>reflection</em>（反思），agent "本能地反思"。不管哪种，都比直白的 <em class="latin">Self-Refine</em> 多了一层回味——毕竟它要强调的，正是反思要<em>落到记忆里、能被下一回合本能地调出来</em>，而不是想想就过。</p>
+  <p>第三个是<em>改名史</em>。论文 v1 的标题其实是 <em class="latin">Reflexion: an autonomous agent with dynamic memory and self-reflection</em>，到 v2 才改成后来广为人知的 <em class="latin">Reflexion: Language Agents with Verbal Reinforcement Learning</em>。这次改名不是文字游戏——团队把卖点从"动态记忆 + 自我反思"重新框定成"言语强化学习"，等于主动去坐了 RL 那把更大的椅子，宣称自己做的是"不碰梯度的强化学习"。一个标题改写，折射出这批研究者多想让 agent 圈接受"语言即梯度"这个野心。</p>
+
+  <figure>
+    <!-- 图 6（趣味）：套壳打败被套的——"主厨与小本子" -->
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- GPT-4 单独 -->
+        <circle cx="170" cy="110" r="58" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="170" y="100" text-anchor="middle" font-weight="600">GPT-4</text>
+        <text x="170" y="120" text-anchor="middle" font-size="11" fill="#96897A">独自答题</text>
+        <text x="170" y="185" text-anchor="middle" font-size="13" fill="#24555A" font-weight="600">HumanEval 80%</text>
+
+        <!-- 加号 -->
+        <text x="350" y="118" text-anchor="middle" font-size="22" fill="#96897A">+</text>
+
+        <!-- Reflexion 小本子 -->
+        <rect x="430" y="70" width="160" height="80" rx="3" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <text x="510" y="100" text-anchor="middle" fill="#B54A2C" font-weight="600">小本子</text>
+        <text x="510" y="120" text-anchor="middle" font-size="10" fill="#B54A2C">"上次盐放多了"</text>
+        <text x="510" y="135" text-anchor="middle" font-size="10" fill="#B54A2C">"先查兜里有没有肥皂"</text>
+        <text x="510" y="185" text-anchor="middle" font-size="13" fill="#B54A2C" font-weight="600">不动一个权重</text>
+
+        <!-- 等号 + 结果 -->
+        <text x="640" y="118" text-anchor="middle" font-size="18" fill="#96897A">→</text>
+        <text x="640" y="185" text-anchor="middle" font-size="13" fill="#B54A2C" font-weight="600">91%</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 6</span> · "套壳的打败被套的"：GPT-4 + 一本小本子，居然高过 GPT-4 自己。这是 2023 年 3 月最广为传播的 agent 名场面</figcaption>
+  </figure>
+
+  <p>第四个细节有点人情味。一作 Noah Shinn 投出 v1 时还是东北大学的本科生，那个 <em class="latin">noahshinn024/reflexion</em> 的 GitHub 仓库后来几乎成了"参考级 agent 实现"——无数人 fork 它来学怎么搭一个会反思的 agent。一个本科生的一份课程级别的工作，撞上 GPT-4 刚发布的窗口期，就成了 agent 时代最常被引用的几篇之一。AI 圈的运气和时机，有时候比什么都重要。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读这篇论文，我最想留给你的是两个判断。第一个是<em>关于"学习"的定义放宽了</em>。我们习惯把"学习"等同于"改权重"，所以一提 agent 学习就想到昂贵的微调。Reflexion 把"学习"重新定义成"更新任何能让下一回合行为变好的状态"——而一段自然语言记忆，恰恰是这种状态里最便宜、最可解释、最易编辑的一种。这个视角一旦打开，你会看到一堆新可能：知识库是学习、检索缓存是学习、技能库是学习——只要它能让 agent 下次更好，都算。后来 Voyager 的技能库、各种 agent 的 episodic memory，都是这个放宽定义下的产物。</p>
+  <p>第二个判断更实操：<em>在生产里搭 agent，先问"它有什么外部反馈"</em>。如果你只是让同一个模型回头批评自己，又没有工具、没有测试、没有检索，那就别期待增益——这是上一篇已经用数据钉死的事。但如果你能给外部信号——代码能跑、能调搜索、能查库——那就大方地用，并且给它一段可跨回合的记忆去沉淀这些反馈。Reflexion 给的不是一个算法，而是一种<em>搭 agent 的卫生习惯</em>：让失败被命名、被记住、被下一回合读到。光这一条，就能让你的 agent 比同行聪明一截。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    Reflexion 的记忆是一段自然语言，存在上下文窗口里。如果未来我们把这段记忆换成"一个向量"或者"一段可被检索的小模型参数"，它还算不算"言语强化学习"？学习的本质，到底在"用语言"这件事上，还是在"用一个可更新的外部状态"这件事上？你怎么分？
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>CRITIC: Large Language Models Can Self-Correct with Tool-Interactive Critiquing</h3>
+    <p style="margin:0;">Reflexion 证明了"外部反馈 + 语言记忆"能涨点，但它的外部反馈主要还是"环境奖励"——测试通没过、目标到没到。那如果反馈不是环境给的奖励，而是 agent 主动调来的工具批判呢？下一篇我们讲 CRITIC：让模型像人一样调用搜索引擎查事实、调代码解释器查 bug、调毒性 API 查安全，把 Reflexion 的"外部反馈"从"被动环境奖励"扩展成"主动工具批判"——也顺手再证一遍上一篇的结论：去掉外部工具，自我纠正立刻又瘪回去。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 031 篇</span>
+    <span>2026-08-31</span>
+  </footer>
+
+</div>
+</body>
+</html>
