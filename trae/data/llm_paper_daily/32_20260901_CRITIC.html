@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRITIC 论文精读 · 大模型经典论文系列 #032</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#032</span>
+  </div>
+
+  <h1 class="title">
+    CRITIC: Large Language Models Can Self-Correct with Tool-Interactive Critiquing
+    <span class="en">CRITIC：自我纠正的"工具派"解法——让模型像人一样调搜索引擎查事实、调代码解释器查 bug，把"外部反馈"从环境奖励升级成"主动工具批判"</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Zhibin Gou, Zhihong Shao, Yeyun Gong, Yelong Shen, Yujiu Yang, Nan Duan, Weizhu Chen</span>
+    <span>机构：Tsinghua University · Microsoft Research Asia · Microsoft Azure AI</span>
+    <span>发表：2023-05 / ICLR 2024</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2305.11738" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/microsoft/ProphetNet/tree/master/CRITIC" target="_blank" rel="noopener">GitHub</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">上一篇 Reflexion 给自我纠正留了条活路：只要把环境的标量奖励翻译成一段语言反思、塞进记忆，下一回合就能涨点。但它有个隐含的瓶颈——Evaluator 还是只能输出"通没通过、对没对"，至多告诉你<em>结果错了</em>，却没法告诉你<em>哪句话错了、哪个数字错了</em>。换句话说，Reflexion 的反馈仍然粗糙、仍然只能事后追责。</p>
+  <p class="lead">那人类是怎么"自我纠正"的？一个真正有经验的写作者，写完一段不会立刻自我陶醉——他会去打开 Google 查一下那个数字、去 Stack Overflow 跑一下那段代码、去问一句"这话会不会冒犯谁"。他从不靠"我自己的感觉"，他靠的是<em>外部工具给他的客观信号</em>。CRITIC 的作者们就盯住了这一点：既然人靠工具纠正自己，那大模型为什么不能？这就是 <em class="latin">CRITIC</em>——让一个不调权重的黑盒 LLM，像人一样主动调搜索引擎、调代码解释器、调毒性 API 来<em>批判自己的初稿</em>，再据此改写。它在 ChatGPT 上把 QA 涨 7.7 F1、数学涨 7.0%、毒性降 79.2%——顺便又狠狠证了一遍上一篇的结论：把工具一撤，自我纠正立刻又瘪回去。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    不调一个权重的自我纠正？CRITIC 让 ChatGPT 自己调搜索引擎查事实、调 Python 跑代码、调毒性 API 评分，再用这些工具反馈挑自己的错、改自己的答案——QA +7.7 F1、数学 +7.0%、毒性 -79.2%；同时戳穿：把工具一撤，自我纠正立刻又瘪回去。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>把 CRITIC 放回我们这条"自我纠正四部曲"里看，位置清晰得不能再清晰——</p>
+  <ul>
+    <li>第 29 篇 <em>Self-Refine</em>：自我批评当成提示工程法宝，立论"自己改自己"。</li>
+    <li>第 30 篇 <em>Cannot Self-Correct Reasoning Yet</em>：把招牌砸了——纯内在自我纠正其实是作弊。</li>
+    <li>第 31 篇 <em>Reflexion</em>：救回来——加上外部环境反馈 + 语言记忆，自我纠正活过来。</li>
+    <li>第 32 篇（本篇）<em>CRITIC</em>：再进一步——把外部反馈从"环境奖励"升级成"主动工具批判"。</li>
+  </ul>
+  <p>Reflexion 的 Evaluator 主要是<em>被动接收</em>：跑测试看通没通、查答案对没对，环境主动告诉 agent 一个标量。CRITIC 把这个 Evaluator 拓成了一组<em>主动调用的外部工具</em>：搜索引擎查证每条事实、代码解释器跑通每段程序、毒性 API 评估每段输出。反馈从"环境喊一声对错"升级成"工具喊出一堆证据"。这看似只是把 Reflexion 的反馈信号变丰富了，但它的真正野心是<em>把"工具调用"和"自我纠正"焊死</em>——任何能写成 text-to-text API 的工具，都能塞进这个 verify-then-correct 的回路。往回看它接 ReAct（Yao 等人 2022）和 Toolformer（Schick 等人 2023）这条"工具使用"主线；往前看，它直接喂出了 Self-RAG（Asai 等人 2023，下一篇预告）、Voyager、CRITIC 家族自己的 CriticBench——把"工具批判自我纠正"从一个提示协议演化成模型被训练的能力。</p>
+
+  <figure>
+    <!-- 图 1：大模型领域发展时间线，标注本篇位置（高亮），并标记已解析部分 -->
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="140" x2="660" y2="140" stroke="#96897A" stroke-width="1"/>
+
+      <g font-family="JetBrains Mono" font-size="10" fill="#96897A">
+        <!-- 2017 Transformer -->
+        <circle cx="70" cy="140" r="4" fill="#24555A" fill-opacity="0.5" stroke="#96897A"/>
+        <text x="70" y="125" text-anchor="middle">2017</text>
+        <text x="70" y="160" text-anchor="middle">Transformer</text>
+
+        <!-- 2018 BERT -->
+        <circle cx="140" cy="140" r="4" fill="#24555A" fill-opacity="0.5" stroke="#96897A"/>
+        <text x="140" y="125" text-anchor="middle">2018</text>
+        <text x="140" y="160" text-anchor="middle">BERT</text>
+
+        <!-- 2019 GPT-2 -->
+        <circle cx="200" cy="140" r="4" fill="#24555A" fill-opacity="0.5" stroke="#96897A"/>
+        <text x="200" y="125" text-anchor="middle">2019</text>
+        <text x="200" y="160" text-anchor="middle">GPT-2</text>
+
+        <!-- 2020 GPT-3 -->
+        <circle cx="250" cy="140" r="4" fill="#24555A" fill-opacity="0.5" stroke="#96897A"/>
+        <text x="250" y="125" text-anchor="middle">2020</text>
+        <text x="250" y="160" text-anchor="middle">GPT-3</text>
+
+        <!-- 2022 CoT / ReAct -->
+        <circle cx="335" cy="140" r="4" fill="#24555A" fill-opacity="0.5" stroke="#96897A"/>
+        <text x="335" y="125" text-anchor="middle">2022</text>
+        <text x="335" y="160" text-anchor="middle">CoT / ReAct</text>
+
+        <!-- 2023.03 Reflexion -->
+        <circle cx="395" cy="140" r="4" fill="#24555A" stroke="#96897A"/>
+        <text x="395" y="125" text-anchor="middle">2023.03</text>
+        <text x="395" y="160" text-anchor="middle">Reflexion</text>
+
+        <!-- 2023.05 本篇：高亮 -->
+        <circle cx="455" cy="140" r="9" fill="#B54A2C"/>
+        <text x="455" y="105" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇</text>
+        <text x="455" y="170" text-anchor="middle" fill="#2E2A22" font-weight="600">CRITIC</text>
+
+        <!-- 2023.10 Self-RAG -->
+        <circle cx="515" cy="140" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="515" y="125" text-anchor="middle">2023.10</text>
+        <text x="515" y="160" text-anchor="middle">Self-RAG</text>
+
+        <!-- 2024 o1 -->
+        <circle cx="590" cy="140" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="590" y="125" text-anchor="middle">2024</text>
+        <text x="590" y="160" text-anchor="middle">o1</text>
+
+        <!-- 2025 DeepSeek-R1 -->
+        <circle cx="630" cy="140" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="630" y="125" text-anchor="middle">2025</text>
+        <text x="630" y="160" text-anchor="middle">R1</text>
+      </g>
+
+      <!-- 已解析区间标识：从 2017 到本篇 -->
+      <g>
+        <line x1="70" y1="220" x2="455" y2="220" stroke="#24555A" stroke-width="2"/>
+        <circle cx="70" cy="220" r="3" fill="#24555A"/>
+        <circle cx="455" cy="220" r="3" fill="#24555A"/>
+        <text x="262" y="245" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#24555A">已解析 32 篇 · 从 Transformer 到工具交互型自我纠正</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的位置示意。深蓝小圆点为本系列已解析论文，红色大圆点为本篇，浅色节点为后续路线</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>2023 年上半年，ChatGPT 让全世界第一次真切地用上了"会说话的机器"。但用得越熟，问题越显眼：它会<em>一本正经地编造</em>不存在的事实（hallucination），会<em>写出看似能跑实则崩溃</em>的代码，甚至会<em>顺嘴吐出</em>带偏见或攻击性的话。这三类毛病——事实幻觉、代码错误、内容毒性——是 2023 年 LLM 部署的三块最大绊脚石，它们卡的不是"模型有多强"，而是"模型有多可信"。</p>
+  <p>传统解法是<em>再训练</em>：行为克隆、强化学习、自训练、RLHF（上一篇 InstructGPT 那条路线）。但这条路又贵又脏——需要海量人工标注、需要专门构数据、需要为每类毛病单独训一个纠正器。更尴尬的是，模型一旦发布就只能调用 API，权重摸不着，想训练也训不动。2023 年 3 月的 ChatGPT 就是这样一个<em>巨大的、闭源的、不可调的</em>黑盒——你既不能让它变好，也不能让它自查，只能眼看着它犯错。</p>
+  <p>另一条线是<em>自我纠正</em>：不调权重，让模型自己回头批评自己。Self-Refine（第 29 篇）开了头，但很快被 Cannot Self-Correct（第 30 篇）戳穿——纯靠"同一个脑子审同一个脑子"，没新信息进来，越改越糟。Reflexion（第 31 篇）补了一条缝——加上外部环境反馈、塞进语言记忆，问题就活过来。但 Reflexion 的外部反馈本质还是<em>标量</em>：测试通没过、目标到没到。它能告诉你<em>这次失败了</em>，却没法告诉你<em>哪一句说错了、哪个变量算错了</em>。反馈仍然太粗，仍然只能事后追责，没法精准定位。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象一个闭着眼睛写新闻稿的实习生。Self-Refine 让他自己念给自己听——念错了也听不出来；Reflexion 让他写完之后，主编告诉他"这一版不行"——他知道不行，但不知道哪儿不行；CRITIC 给他配了三件工具：一个 Google 搜索框、一个 Python 计算器、一个"攻击性词汇探测器"。他写完一段，自己用这三件工具去验证——查不到的事实他会犹豫、跑不通的代码他会改、太毒的句子他会重写。<em>工具给了他原本没有的"客观感官"</em>。
+  </div>
+
+  <p>CRITIC 抓住的就是这个直觉：把 LLM 当黑盒，外部给它一套 text-to-text 的工具 API，让 LLM 自己学会<em>像人一样调工具去查证、再用工具反馈去改</em>。不训任何参数，全靠 in-context learning 的几个示例，就把一个不会自我反思的 ChatGPT 改造成了一个会自己给自己审稿的"事实核验员 + 程序调试员 + 内容审查员"。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>论文要回答的问题可以一句话讲清：<em>一个不可微调、只能调 API 的黑盒 LLM，能不能靠"模仿人类用工具交叉验证"的方式，从外部工具反馈里学到东西，把自己的初稿改得更准、更对、更安全？</em></p>
+  <p>这里有两个关键词。第一是<em>黑盒不可训</em>——和 Reflexion 一样，它必须只靠 in-context learning，不碰权重；第二是<em>工具批判</em>——它要的不只是 Reflexion 那种"环境奖励"，而是<em>具体到事实、代码、毒性三个维度的工具反馈</em>，反馈能告诉模型"这句错了，因为 Google 上查不到"，而不只是"这次错了"。作者赌的就是这一条：<em>只要反馈信息密度够高，纯提示协议也能驱动可信的自我纠正</em>。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    先别往下读，凭直觉猜：让 ChatGPT 写一段数学题的解题程序，跑出来答案不对，然后让它自己再回头改一遍，不给它任何工具反馈、只让它"再想想"——你觉得它的正确率会涨还是会跌？很多人会猜"涨一点点，多想一遍总能改对几个"。CRITIC 论文给的数据是<em>跌</em>。Text-Davinci-003 在 GSM8k 上不调工具自纠正，solve rate 从 69.7% 跌到 67.9%——少了 1.8 个点。这就是开篇那句"自我纠正瘪回去"的来由。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>CRITIC 的方法可以一句话概括：<em>把"自我纠正"重新定义成"先用工具验证、再用验证反馈改写"的迭代循环</em>。听上去朴素，背后是把"自我批评"这件虚的事，绑定到了"工具调用"这件实在的事上。我们分三步拆开。</p>
+
+  <h3>第一步：一个 verify-then-correct 的算法骨架</h3>
+  <p>论文给出 Algorithm 1，整个流程写得极简：</p>
+
+<pre><code>Input: 输入 x, 提示 wp, 模型 M, 外部工具集 T = {T1, T2, ..., Tk}, 迭代次数 n
+Output: 修正后的输出 ŷ
+
+1:  ŷ0 ∼ P_M(·|wp ⊕ x)                       ▷ 用模型先出初稿
+2:  for i = 0 to n-1 do
+3:      ci ∼ P_M(·|wp ⊕ x ⊕ ŷi, T)           ▷ 调工具验证，得到批判 ci
+4:      if ci 表示 ŷi 正确 then
+5:          return ŷi                          ▷ 工具都点头，停
+6:      ŷ(i+1) ∼ P_M(·|wp ⊕ x ⊕ ŷi ⊕ ci)     ▷ 据批判改写
+7:  return ŷn</code></pre>
+
+  <p>翻译成人话：模型先按 in-context learning 出一个初稿；然后<em>主动调外部工具</em>去验证初稿的某些方面（事实对不对、代码跑不跑、毒性高不高），把验证得到的反馈<em>拼成一段 critique</em>，再用这段 critique 当上下文，让模型改写初稿。如果工具都点头说"没问题"，就停；否则再验证、再改写，直到收敛或迭代上限。整个流程<em>只动 prompt 里的文本，不动一个参数</em>。</p>
+
+  <figure>
+    <!-- 图 2：CRITIC 的 verify-then-correct 闭环 -->
+    <svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 初稿 -->
+        <rect x="40" y="40" width="160" height="56" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="64" text-anchor="middle" font-weight="600">LLM 生成初稿 ŷ0</text>
+        <text x="120" y="82" text-anchor="middle" font-size="10" fill="#96897A">in-context few-shot</text>
+
+        <!-- 工具验证 -->
+        <rect x="270" y="40" width="180" height="56" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="360" y="64" text-anchor="middle" fill="#24555A" font-weight="600">调外部工具验证</text>
+        <text x="360" y="82" text-anchor="middle" font-size="10" fill="#24555A">Search / Code / Toxicity API</text>
+
+        <!-- 批判 -->
+        <rect x="500" y="40" width="160" height="56" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="580" y="64" text-anchor="middle" fill="#24555A" font-weight="600">生成 critique c</text>
+        <text x="580" y="82" text-anchor="middle" font-size="10" fill="#24555A">"这句查不到 / 代码崩了"</text>
+
+        <!-- 决策菱形 -->
+        <polygon points="360,170 425,210 360,250 295,210" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="360" y="208" text-anchor="middle" font-size="11">工具都点头?</text>
+
+        <!-- 改写 -->
+        <rect x="40" y="180" width="180" height="60" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="130" y="206" text-anchor="middle" fill="#B54A2C" font-weight="600">改写 ŷ(i+1)</text>
+        <text x="130" y="224" text-anchor="middle" font-size="10" fill="#B54A2C">用 critique 当上下文重生成</text>
+
+        <!-- 完成 -->
+        <rect x="540" y="180" width="120" height="60" rx="2" fill="#24555A" fill-opacity="0.14" stroke="#24555A"/>
+        <text x="600" y="206" text-anchor="middle" fill="#24555A" font-weight="600">返回 ŷ ✓</text>
+        <text x="600" y="224" text-anchor="middle" font-size="10" fill="#24555A">停止条件触发</text>
+
+        <!-- 迭代回路 -->
+        <path d="M 130 180 Q 130 110 270 68" stroke="#96897A" fill="none" marker-end="url(#ar1)" stroke-dasharray="4 3"/>
+        <text x="155" y="120" font-size="10" fill="#96897A">下一轮再验证</text>
+
+        <!-- 连线 -->
+        <line x1="200" y1="68" x2="270" y2="68" stroke="#96897A" marker-end="url(#ar1)"/>
+        <line x1="450" y1="68" x2="500" y2="68" stroke="#96897A" marker-end="url(#ar1)"/>
+        <line x1="580" y1="96" x2="420" y2="180" stroke="#96897A" marker-end="url(#ar1)"/>
+        <line x1="295" y1="210" x2="220" y2="210" stroke="#96897A" marker-end="url(#ar1)"/>
+        <text x="252" y="200" font-size="10" fill="#96897A">否</text>
+        <line x1="425" y1="210" x2="540" y2="210" stroke="#24555A" marker-end="url(#ar1)"/>
+        <text x="475" y="200" font-size="10" fill="#24555A">是</text>
+
+        <!-- 标题 -->
+        <text x="350" y="295" text-anchor="middle" font-size="11" fill="#96897A">红色路径：改写 → 再验证 → 收敛；蓝色路径：工具全点头 → 输出</text>
+      </g>
+      <defs>
+        <marker id="ar1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · CRITIC 的 verify-then-correct 闭环。模型先用 in-context 提示出初稿，再调外部工具集去验证得到 critique，再据 critique 改写。红色虚线表示迭代回路：改完再验证，直到工具都点头或达到迭代上限</figcaption>
+  </figure>
+
+  <h3>第二步：三件工具，对应三种毛病</h3>
+  <p>CRITIC 没有发明任何新工具，它的聪明之处是<em>把每类毛病和一类现成工具精准匹配</em>——这样反馈既能拼成一段统一的自然语言 critique，又能从外部客观世界拿到信号。三对对应关系如下：</p>
+  <ul>
+    <li><em>事实幻觉 ↔ 搜索引擎</em>：QA 任务（AmbigNQ、TriviaQA、HotpotQA）让模型自己写出验证查询、调 Google Search API，把检索回来的片段作为证据，让它判断初稿里的事实能不能被外部证据支持。</li>
+    <li><em>数学/代码错误 ↔ Python 解释器</em>：数学程序合成任务（GSM8k、SVAMP、TabMWP）让模型把解题写成 Python 代码，调代码解释器执行，看返回的结果或报错。代码跑通且答案对就是点头，跑崩或答错就把报错拼进 critique。</li>
+    <li><em>内容毒性 ↔ Perspective API</em>：毒性降低任务（RealToxicityPrompts）调 Google 的 Perspective API 给输出打毒性分，分数拼进 critique，让模型据此重写。</li>
+  </ul>
+  <p>统一在 text-to-text 接口下，意味着这套框架<em>插什么工具就修什么毛病</em>——只要新工具能写成"输入文本、输出文本"，就能塞进 CRITIC。这是它"plug-and-play"的关键，也是后来 Self-RAG、CRITIC 家族各种变体得以快速长出来的原因。</p>
+
+  <figure>
+    <!-- 图 3：三任务 ↔ 三工具映射 -->
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 三类毛病 -->
+        <rect x="40" y="40" width="200" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="140" y="62" text-anchor="middle">事实幻觉</text>
+        <text x="140" y="80" text-anchor="middle" font-size="10" fill="#96897A">AmbigNQ · TriviaQA · HotpotQA</text>
+
+        <rect x="40" y="110" width="200" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="140" y="132" text-anchor="middle">数学/代码错误</text>
+        <text x="140" y="150" text-anchor="middle" font-size="10" fill="#96897A">GSM8k · SVAMP · TabMWP</text>
+
+        <rect x="40" y="180" width="200" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="140" y="202" text-anchor="middle">内容毒性</text>
+        <text x="140" y="220" text-anchor="middle" font-size="10" fill="#96897A">RealToxicityPrompts</text>
+
+        <!-- 三类工具 -->
+        <rect x="460" y="40" width="200" height="50" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="560" y="62" text-anchor="middle" fill="#B54A2C" font-weight="600">Google Search API</text>
+        <text x="560" y="80" text-anchor="middle" font-size="10" fill="#B54A2C">检索事实证据</text>
+
+        <rect x="460" y="110" width="200" height="50" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="560" y="132" text-anchor="middle" fill="#B54A2C" font-weight="600">Python 代码解释器</text>
+        <text x="560" y="150" text-anchor="middle" font-size="10" fill="#B54A2C">跑代码 · 拿结果/报错</text>
+
+        <rect x="460" y="180" width="200" height="50" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="560" y="202" text-anchor="middle" fill="#B54A2C" font-weight="600">Perspective API</text>
+        <text x="560" y="220" text-anchor="middle" font-size="10" fill="#B54A2C">客观毒性分</text>
+
+        <!-- 对应关系连线 -->
+        <line x1="240" y1="65"  x2="460" y2="65"  stroke="#96897A" stroke-dasharray="4 3"/>
+        <line x1="240" y1="135" x2="460" y2="135" stroke="#96897A" stroke-dasharray="4 3"/>
+        <line x1="240" y1="205" x2="460" y2="205" stroke="#96897A" stroke-dasharray="4 3"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · CRITIC 的"毛病↔工具"精准配对：每类毛病对应一类现成工具，工具反馈拼成统一格式的 critique 喂回模型</figcaption>
+  </figure>
+
+  <h3>第三步：不用训练，全靠 in-context 演示</h3>
+  <p>整套 CRITIC 的最妙之处是<em>实现成本极低</em>。作者没有为任何一类任务训练专门的模型，所有工具交互、critique 生成、改写，全部通过给 LLM 提供<em>few-shot demonstration</em> 来教会——演示里写明"看到这种答案，怎么写出搜索查询、怎么把检索结果拼进 critique、怎么据此改写"。模型靠 in-context learning 的涌现能力，照着示例就学会跑这套流程了。</p>
+  <p>具体来说，CRITIC 的 prompt 由三部分组成：</p>
+  <ul>
+    <li><em>初稿生成演示</em>：教模型先按任务出初稿（QA 用 CoT、数学用 Program-of-Thoughts、毒性任务直接续写）。</li>
+    <li><em>验证 + critique 生成演示</em>：教模型在初稿后，调相应工具，把工具返回结果拼进上下文，再生成一段"What's the problem with the above answer?"的 critique。所有 critique 都用同一个触发句，意味着这个机制<em>对任意工具都是同一个接口</em>。</li>
+    <li><em>改写演示</em>：教模型根据 critique 直接给出修正后的输出。</li>
+  </ul>
+  <p>把这三段演示拼起来喂给 ChatGPT、Text-Davinci-003 或 LLaMA-2 7B/13B/70B，它们就都成了"会自己审稿的 CRITIC agent"。模型本身一字没动，调的是 prompt 里的世界。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>实验覆盖三类任务，模型从黑盒（ChatGPT、Text-Davinci-003）到开源（LLaMA-2 7B/13B/70B）。结果干净利落地回答了开篇那个问题——<em>能，而且涨得稳</em>。</p>
+
+  <table>
+    <thead>
+      <tr><th>任务类型</th><th>ChatGPT 基线</th><th>+ CRITIC</th><th>提升</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">QA · 平均 F1（3 个数据集）</td><td>基线</td><td>+7.7 F1</td><td>+7.7</td></tr>
+      <tr><td class="text">数学 · 平均 solve rate（3 个数据集）</td><td>基线</td><td>+7.0%</td><td>+7.0pt</td></tr>
+      <tr><td class="text">毒性 · 概率降低</td><td>基线</td><td>-79.2%</td><td>-79.2%</td></tr>
+      <tr><td class="text">数学 · GSM8k（具体）</td><td>基线</td><td>+5.7%</td><td>+5.7pt</td></tr>
+      <tr><td class="text">TabMWP · LLaMA-2 7B → 13B → 70B</td><td>基线</td><td>+4.7% / +9.4% / +16.0%</td><td>规模越大，CRITIC 涨得越多</td></tr>
+    </tbody>
+  </table>
+
+  <p>三个任务里最抓眼球的是<em>毒性降 79.2%</em>——一个不调权重的提示框架，居然在 RealToxicityPrompts 上把 ChatGPT 的毒性概率砍掉了将近八成，已经接近专门用监督学习训练的 SOTA 毒性缓解方法。QA 平均涨 7.7 F1，全面碾压 CoT 提示、甚至胜过 ReAct 这种"边推理边调工具"的强基线。数学任务平均涨 7.0 个百分点，GSM8k 单项涨 5.7pt。而且最值得说的是<em>规模 scaling</em>：在 TabMWP 上，LLaMA-2 从 7B 到 13B 到 70B，CRITIC 带来的增益依次是 +4.7%、+9.4%、+16.0%——模型越大，CRITIC 涨得越多。这意味着这套框架<em>和模型能力正交且互补</em>：基础越强，工具批判的效果越好。</p>
+
+  <figure>
+    <!-- 图 4：ChatGPT 三任务提升柱状图 -->
+    <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 坐标轴 -->
+        <line x1="60" y1="40" x2="60" y2="220" stroke="#96897A"/>
+        <line x1="60" y1="220" x2="680" y2="220" stroke="#96897A"/>
+
+        <!-- 三组柱子 -->
+        <!-- QA: +7.7 F1 -->
+        <text x="180" y="240" text-anchor="middle" font-size="10" fill="#96897A">QA · F1 提升</text>
+        <rect x="120" y="190" width="60" height="30" fill="#24555A" fill-opacity="0.2" stroke="#24555A"/>
+        <text x="150" y="184" text-anchor="middle" font-size="10" fill="#96897A">基线 0</text>
+        <rect x="180" y="82" width="60" height="138" fill="#B54A2C" fill-opacity="0.85"/>
+        <text x="210" y="76" text-anchor="middle" font-size="11" fill="#B54A2C" font-weight="600">+7.7</text>
+        <text x="180" y="262" text-anchor="middle" font-size="9" fill="#96897A">3 个 QA 数据集平均</text>
+
+        <!-- Math: +7.0% -->
+        <text x="380" y="240" text-anchor="middle" font-size="10" fill="#96897A">Math · solve rate 提升</text>
+        <rect x="320" y="190" width="60" height="30" fill="#24555A" fill-opacity="0.2" stroke="#24555A"/>
+        <text x="350" y="184" text-anchor="middle" font-size="10" fill="#96897A">基线 0</text>
+        <rect x="380" y="95" width="60" height="125" fill="#B54A2C" fill-opacity="0.85"/>
+        <text x="410" y="89" text-anchor="middle" font-size="11" fill="#B54A2C" font-weight="600">+7.0%</text>
+        <text x="380" y="262" text-anchor="middle" font-size="9" fill="#96897A">3 个数学数据集平均</text>
+
+        <!-- Toxicity: -79.2% -->
+        <text x="580" y="240" text-anchor="middle" font-size="10" fill="#96897A">Toxicity · 概率降低</text>
+        <rect x="520" y="190" width="60" height="30" fill="#24555A" fill-opacity="0.2" stroke="#24555A"/>
+        <text x="550" y="184" text-anchor="middle" font-size="10" fill="#96897A">基线 0</text>
+        <rect x="580" y="40" width="60" height="180" fill="#B54A2C" fill-opacity="0.85"/>
+        <text x="610" y="34" text-anchor="middle" font-size="11" fill="#B54A2C" font-weight="600">-79.2%</text>
+        <text x="580" y="262" text-anchor="middle" font-size="9" fill="#96897A">RealToxicityPrompts</text>
+
+        <!-- 标注：ChatGPT -->
+        <text x="350" y="285" text-anchor="middle" font-size="10" fill="#96897A">基模型均为 ChatGPT · CRITIC 全程未调任何权重</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · ChatGPT 三类任务的 CRITIC 提升幅度。毒性降 79.2% 是最广为传播的一组数字——一个提示框架逼近了专门训练方法的水平</figcaption>
+  </figure>
+
+  <h3>消融：把工具一撤，自我纠正立刻又瘪回去</h3>
+  <p>作者做了一组关键消融——<em>CRITIC w/o Tool</em>：让模型走完整个 verify-then-correct 流程，但不给它任何外部工具，全靠它自己"反思"。结果和上一篇 Cannot Self-Correct 的结论严丝合缝：</p>
+  <ul>
+    <li><em>QA 任务</em>：去掉工具后，F1 增益从 +7.7 掉到只有 +0.03 ~ +2.33——基本等于没涨。</li>
+    <li><em>数学任务</em>：更狠，Text-Davinci-003 在 GSM8k 上不调工具自纠正，solve rate 从 69.7% <em>跌到</em> 67.9%——少了 1.8 个百分点，越改越糟。</li>
+  </ul>
+
+  <figure>
+    <!-- 图 5：CRITIC w/ Tool vs CRITIC w/o Tool 对比 -->
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="175" y="30" text-anchor="middle" font-weight="600" fill="#B54A2C">CRITIC w/ Tool</text>
+        <text x="525" y="30" text-anchor="middle" font-weight="600" fill="#96897A">CRITIC w/o Tool</text>
+        <line x1="350" y1="20" x2="350" y2="240" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <!-- w/ Tool -->
+        <rect x="60" y="55" width="230" height="40" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="175" y="80" text-anchor="middle" fill="#B54A2C">QA: +7.7 F1（三任务平均）</text>
+
+        <rect x="60" y="105" width="230" height="40" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="175" y="130" text-anchor="middle" fill="#B54A2C">Math: +7.0% solve rate</text>
+
+        <rect x="60" y="155" width="230" height="40" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="175" y="180" text-anchor="middle" fill="#B54A2C">Toxicity: -79.2% 概率</text>
+
+        <rect x="60" y="205" width="230" height="34" fill="#24555A" fill-opacity="0.10" stroke="#24555A"/>
+        <text x="175" y="226" text-anchor="middle" fill="#24555A">外部工具给客观信号</text>
+
+        <!-- w/o Tool -->
+        <rect x="410" y="55" width="230" height="40" fill="#96897A" fill-opacity="0.18" stroke="#96897A"/>
+        <text x="525" y="80" text-anchor="middle">QA: +0.03 ~ +2.33 F1（几乎不涨）</text>
+
+        <rect x="410" y="105" width="230" height="40" fill="#96897A" fill-opacity="0.18" stroke="#96897A"/>
+        <text x="525" y="130" text-anchor="middle">Math: GSM8k -1.8%（越改越糟）</text>
+
+        <rect x="410" y="155" width="230" height="40" fill="#96897A" fill-opacity="0.18" stroke="#96897A"/>
+        <text x="525" y="180" text-anchor="middle">Toxicity: 微弱/不稳定</text>
+
+        <rect x="410" y="205" width="230" height="34" fill="#96897A" fill-opacity="0.10" stroke="#96897A"/>
+        <text x="525" y="226" text-anchor="middle">无外部信号，自我纠正失灵</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 同一个 verify-then-correct 流程，工具在 vs 工具不在的对照。左侧三任务全线上涨；右侧要么几乎不涨，要么负涨——又一次钉死了"无外部反馈的自我纠正不可靠"</figcaption>
+  </figure>
+
+  <div class="callout question">
+    <span class="label">反直觉发现</span>
+    作者还顺手做了一个有点让人后背发凉的实验：<em>让 LLM 给自己输出做不确定性估计</em>（self-verification），看它能不能识别自己哪句话是幻觉。结果是它在幻觉检测上<em>经常比随机猜还差</em>——也就是说，模型自己根本不知道自己什么时候在编。这正好从反面解释了为什么 CRITIC w/o Tool 会跌：模型的"内在自信度"根本不可靠，靠它来判断自己改不改，就是盲人给盲人引路。
+  </div>
+
+  <p>把消融和主实验放一起读，能读出这篇论文真正的主张：<em>"工具批判"不是锦上添花，是"自我纠正"这条路的必要条件</em>。流程一模一样，区别只在有没有外部客观信号——有就涨、没有就跌。这是 CRITIC 给这个领域的最硬一记锤。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>CRITIC 的影响远超它"QA +7.7、数学 +7.0、毒性 -79.2%"这组表面数字。它至少做了四件大事——</p>
+  <p>第一，<em>给"工具交互型自我纠正"立了一个范式</em>。在它之前，工具使用（ReAct、Toolformer）是一条主线，自我纠正（Self-Refine、Reflexion）是另一条主线，两条线一直平行。CRITIC 把它们焊在了一起：自我纠正不是反思、而是"调工具批判 + 据反馈改写"。这个"工具批判"范式后来成了 agent 圈的基础设施级思路，CRITIC 也成了 agent 自我纠正绕不开的引用。</p>
+  <p>第二，<em>再次钉死了"无外部反馈的自我纠正不可靠"</em>。第 30 篇 Cannot Self-Correct 是从推理任务上钉的，Reflexion 是从环境反馈角度补的，CRITIC 是从工具批判角度又钉一遍——三篇论文从三个不同侧面收敛到同一个结论：<em>新信息必须从外部进入</em>。这个共识在 2023-2024 年成了 agent 圈的共识，再没人敢写"纯内在自我纠正"的论文。</p>
+  <p>第三，<em>把"plug-and-play 工具批判"做成了模板</em>。CRITIC 的 text-to-text 工具接口意味着"插什么工具就修什么毛病"——这个模板后来被无数 agent 框架抄走。OpenAI 自己在 2024 年 6 月发布的 <em class="latin">CriticGPT</em>（用 GPT-4 训练专门写 critique 的模型，给人类 RLHF 标注员当助手），名字和思路都和 CRITIC 同源——只是把"提示协议"升级成了"训练一个 critique 模型"。CRITIC 是这条线最直接的祖先。</p>
+  <p>第四，<em>直接喂出了 Self-RAG、Voyager、CRITIC 家族自己的 CriticBench</em>。Self-RAG 把"调检索器 + critique"焊进了模型权重，训出了带"反思 token"的 retrieval 模型；Voyager 把"工具批判 + 记忆"升级成"技能库 + Minecraft 无限探索"；CriticBench（同一作者团队后续工作）专门给"critique-correct reasoning"立了个 benchmark。可以说 2023-2024 年那批最有想象力的 agent + critique 工作，几乎都站在 CRITIC 画的延长线上。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>作者在附录里很坦诚地列了几条 CRITIC 的局限。最显眼的一条是<em>推理延迟</em>：每改一次要调好几轮工具，QA 任务光搜索就要多次，加上迭代，端到端延迟是基线的几倍到十几倍。对实时对话场景不友好，对离线批处理倒是不痛不痒。这条后来被 Self-RAG 用"把检索和 critique 焊进权重"的方式补上——速度代价被吸收进模型自身。</p>
+  <p>第二条是<em>提示工程成本</em>。CRITIC 全靠 few-shot 演示，每种工具、每类任务都要手写演示，门槛不算低，且对 prompt 措辞敏感。这意味着它没法完全 plug-and-play，新任务要新写演示。后续工作（Self-RAG、Toolformer）正是用训练把"什么时候调什么工具"内化进模型，让这步变得自动化。</p>
+  <p>第三条更微妙：<em>CRITIC 的上限被"工具本身的能力"卡死</em>。如果搜索引擎没收录某条事实、Perspective API 对某类毒性不敏感、Python 解释器对某类语义错误报不出错，那 CRITIC 的 critique 就会缺这块——模型以为"工具都点头了"其实只是"工具没看见错"。换句话说，CRITIC 把模型的自我验证问题外包给了工具，但工具本身也不万能。后来 Self-RAG 的"反思 token + 检索置信度"、CRITIC 家族自己的 CriticBench，都在试图把这块测得更细。</p>
+  <p>第四条是和 Reflexion 同款的隐忧：<em>语言 critique 也有 reward hacking 风险</em>。如果模型把 critique 拼得不对，改写就往错方向走。论文里没给形式化收敛保证，理论上不收敛。这是 prompt-time learning 普遍的硬约束，不是 CRITIC 独有。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把本篇放回我们的演进时间线，能清楚看到两条线在 CRITIC 这里<em>第一次合流</em>——</p>
+  <ul>
+    <li><em>工具使用主线</em>：ReAct（2022，给 agent 加工作记忆 + 工具调用）→ Toolformer（2023，把工具调用训进权重）→ <em>CRITIC（本篇，工具批判 + 自我纠正）</em> → Self-RAG（2023，把工具批判 + 反思 token 训进权重）。</li>
+    <li><em>自我纠正主线</em>：Self-Refine（29 篇，纯内在）→ Cannot Self-Correct（30 篇，戳穿）→ Reflexion（31 篇，外部环境反馈 + 语言记忆）→ <em>CRITIC（本篇，外部工具反馈 + critique）</em>。</li>
+  </ul>
+  <p>这两条主线在 CRITIC 处汇成一条河——它既是自我纠正主线的"工具派"延伸，又是工具使用主线的"自我纠正"延伸。汇合之后再往前，一条支流奔向 Self-RAG（把 critique 焊进权重，进入训练时代）；另一条支流奔向 Voyager（把 critique 升级成可复用技能库，进入终身学习时代）。再往远看，这条"工具批判 + 自我纠正"的思路，最终在 2024 年 9 月汇入 o1 开启的"推理范式期"——只不过 o1 把"调工具批判"和"改写"都直接训进了 RL 训练目标里。CRITIC 正是这条河从"提示协议"流向"RL 训练"的关键中转站。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>这篇论文背后有几个挺有意思的细节。第一个是<em>血统</em>：两位共同一作 Zhibin Gou 和 Zhihong Shao 当时都是清华大学深圳国际研究生院的硕士生，论文标注是"Work done during an internship at Microsoft Research Asia"——也就是说，这是一份实习生级别的工作，撞上了 ChatGPT 刚发布的窗口期，就成了 agent 自我纠正圈最常被引用的几篇之一。AI 圈的"实习生改变历史"现象，在 2023 年尤其常见。</p>
+  <p>第二个是<em>代码所在</em>。论文的 GitHub 链接是 <em class="latin">microsoft/ProphetNet/tree/master/CRITIC</em>——CRITIC 的代码被放在了 ProphetNet（一个 2020 年的预训练模型）的仓库下面。这背后大概率是 MSRA 实习生复用了组里已有基础设施的痕迹——一个 2023 年的 agent 论文，代码住在 2020 年预训练模型的仓库里，AI 圈的代码考古经常比论文考古更有意思。</p>
+  <p>第三个是<em>团队后续</em>。CRITIC 的两位一作 + 通讯作者 Yujiu Yang 在 2024 年 2 月又联合推出了 <em class="latin">CriticBench</em>（arXiv 2402.14809），专门给 LLM 的"critique-correct reasoning"立了个 benchmark——5 个推理域、15 个数据集、17 个 LLM。CriticBench 是 CRITIC 论文最直接的自然延续：CRITIC 提出了"工具批判自我纠正"的方法，CriticBench 就给它配套了评测标准。同一个团队把一件事从"提出方法"做到"立 benchmark"，这种工作连贯性在 AI 圈并不多见。</p>
+  <p>第四个是<em>名字的双关</em>。<em class="latin">CRITIC</em> 既是论文核心动作"批判"（critique），又读起来像"critical thinking"——作者在 intro 里直接引用了 critical thinking 的哲学文献（Marcus 1988、Ennis 1991）。一个 prompt 框架主动去坐"批判性思维"那把哲学椅子，比直白的 <em class="latin">Self-Refine</em> 多了一层学术野心——它要的不只是"改一遍"，而是"像人一样会查证、会反思、会改"。</p>
+
+  <figure>
+    <!-- 图 6（趣味）：闭眼实习生 → 配三件工具 -->
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 闭眼实习生 -->
+        <circle cx="120" cy="110" r="50" fill="#ECE4D4" stroke="#96897A"/>
+        <line x1="100" y1="105" x2="110" y2="105" stroke="#2E2A22" stroke-width="2"/>
+        <line x1="130" y1="105" x2="140" y2="105" stroke="#2E2A22" stroke-width="2"/>
+        <text x="120" y="180" text-anchor="middle" font-size="11" fill="#96897A">闭眼写初稿</text>
+        <text x="120" y="200" text-anchor="middle" font-size="10" fill="#96897A">不知道哪儿错了</text>
+
+        <!-- 加号 -->
+        <text x="220" y="118" text-anchor="middle" font-size="22" fill="#96897A">+</text>
+
+        <!-- 三件工具 -->
+        <rect x="260" y="60" width="120" height="34" rx="2" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <text x="320" y="82" text-anchor="middle" fill="#B54A2C">🔍 Google</text>
+
+        <rect x="260" y="100" width="120" height="34" rx="2" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <text x="320" y="122" text-anchor="middle" fill="#B54A2C">🐍 Python</text>
+
+        <rect x="260" y="140" width="120" height="34" rx="2" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <text x="320" y="162" text-anchor="middle" fill="#B54A2C">⚠ 毒性 API</text>
+
+        <!-- 等号 -->
+        <text x="430" y="118" text-anchor="middle" font-size="18" fill="#96897A">→</text>
+
+        <!-- 睁眼实习生 -->
+        <circle cx="540" cy="110" r="50" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <circle cx="520" cy="105" r="4" fill="#2E2A22"/>
+        <circle cx="560" cy="105" r="4" fill="#2E2A22"/>
+        <text x="540" y="180" text-anchor="middle" font-size="11" fill="#B54A2C" font-weight="600">睁眼审稿</text>
+        <text x="540" y="200" text-anchor="middle" font-size="10" fill="#B54A2C">事实 / 代码 / 毒性 都改对</text>
+
+        <!-- 备注 -->
+        <text x="350" y="218" text-anchor="middle" font-size="10" fill="#96897A">不调权重，全靠工具给"客观感官"</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 6</span> · "闭眼写初稿 → 配三件工具 → 睁眼审稿"——CRITIC 把人写完稿子主动调工具查证的过程，搬到了一个不调权重的 LLM 身上</figcaption>
+  </figure>
+
+  <p>第五个细节有点人情味。CRITIC 投稿到 ICLR 2024 之前一共改了四个版本——v1 在 2023 年 5 月 19 日挂出，v4 在 2024 年 2 月 21 日定稿。近 9 个月的修改里，作者把"工具批判"这条主线越说越清楚，最终把卖点从"在 ChatGPT 上自我纠正"重新框定成"plug-and-play 的工具批判框架"。一个标题保持不变、但故事越讲越准的论文，往往反映的是研究者自己对这个工作的认识在打磨中变深了。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读这篇论文，我最想留给你的是两个判断。第一个是<em>关于"自我纠正"的必要条件被钉死了</em>。我们这四篇连读下来，结论已经收敛到一句非常清楚的话：<em>没有外部新信息进来，自我纠正要么不涨、要么越改越糟</em>。Self-Refine 是反例、Cannot Self-Correct 是钉棺、Reflexion 是从环境反馈补正、CRITIC 是从工具反馈补正——四篇论文从四个角度收敛到同一个共识。如果你在生产里搭 agent，记住这条卫生习惯：任何"自我批评"模块，要么接外部工具、要么接环境信号、要么接人工反馈，<em>别让模型自己审自己</em>。</p>
+  <p>第二个判断更实操：<em>"工具批判"是一种 agent 设计哲学，不是一个算法</em>。CRITIC 给的不是 verify-then-correct 这个流程本身——这流程 Self-Refine 早就有了——而是"用工具反馈当 critique 的来源"。这意味着你可以照搬这个思路到任意任务：写代码就让模型调 linter + 跑测试当 critique、做 RAG 就让模型调二次检索当 critique、做长文摘要就让模型调事实核查 API 当 critique。<em>只要你能给 agent 接上"客观感官"，自我纠正就活过来</em>。CRITIC 的真正贡献，是把这种"工具批判"思路做成了可复制的设计模式。</p>
+  <p>把这两条放一起，还能读出一个更深的判断：CRITIC 是"提示协议时代"的巅峰之作之一，但也是这个时代的尾声。它把"工具批判 + 自我纠正"用纯 prompt 做到极致之后，下一步显然就是把它训进权重——Self-RAG 把 critique 训成 token、Toolformer 把工具调用训进模型、o1 把"调工具 + 自我纠正"训进 RL 目标。CRITIC 站的位置，正好是"提示协议"和"训练时代"的分水岭：它一边把提示协议推到极限，一边把下一阶段要训的东西全部摊开摆好。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    CRITIC 的 critique 是模型用自然语言拼出来的，背后是工具返回的客观信号。如果未来我们让模型直接生成"我要调什么工具、调几次、怎么解读结果"的整套动作序列，并把这套动作训进权重——这还算"工具批判自我纠正"吗？还是说，它已经变成另一种东西了？提示协议和训练时代的分界线，到底画在哪里更准？你怎么分？
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Self-RAG: Learning to Retrieve, Generate, and Critique through Self-Reflection</h3>
+    <p style="margin:0;">CRITIC 把"工具批判 + 自我纠正"用提示协议做到极致，但延迟高、要手写演示、上限被工具卡死。下一篇我们讲 Self-RAG：把 CRITIC 这套"调检索器验证 + 生成 critique + 据此改写"的流程，<em>焊进模型权重</em>——靠 RL 训出四种"反思 token"，让模型自己学会什么时候检索、什么时候拒绝、什么时候改写。提示协议的巅峰之作之后，自我纠正正式跨入训练时代。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 032 篇</span>
+    <span>2026-09-01</span>
+  </footer>
+
+</div>
+</body>
+</html>
