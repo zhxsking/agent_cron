@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Self-RAG 论文精读 · 大模型经典论文系列 #033</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#033</span>
+  </div>
+
+  <h1 class="title">
+    Self-RAG: Learning to Retrieve, Generate, and Critique through Self-Reflection
+    <span class="en">Self-RAG：把 CRITIC 的"调检索器验证 + 生成 critique + 据此改写"焊进模型权重——靠四种"反思 token"让模型自己学会何时检索、何时拒绝、何时改写，自我纠正正式跨入训练时代</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Akari Asai, Zeqiu Wu, Yizhong Wang, Avirup Sil, Hannaneh Hajishirzi</span>
+    <span>机构：University of Washington · Allen Institute for AI · IBM Research AI</span>
+    <span>发表：2023-10 / ICLR 2024（Oral, top 1%）</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2310.11511" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/AkariAsai/self-rag" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://selfrag.github.io/" target="_blank" rel="noopener">Project</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">上一篇 CRITIC 把"工具批判 + 自我纠正"用提示协议做到了极致：不调一个权重，让 ChatGPT 自己调搜索引擎、调 Python、调毒性 API 来挑自己的错、改自己的答案。漂亮是漂亮，但作者自己也在局限里老实交代了三桩心事——每改一次要调好几轮工具、延迟是基线的十几倍；每种任务都得手写一套 few-shot 演示；最微妙的一条，CRITIC 的上限被"工具本身的能力"卡死，模型以为"工具都点头了"，其实只是"工具没看见错"。</p>
+  <p class="lead">换句话说，CRITIC 证明了"自我纠正必须靠外部反馈"，但它是<em>用提示把这套流程硬塞进一个不会反思的模型</em>——模型本身一字没动，"什么时候该查、查完怎么判、判完怎么改"全靠 prompt 里的示例临场演。那如果反过来——把这些"什么时候检索、要不要相信、答得有没有用"的判断能力，<em>直接训练进模型权重</em>，会怎样？这就是 <em class="latin">Self-RAG</em>：它给 Llama-2 的词表加了四种"反思 token"，让模型自己学会什么时候去翻书、翻完判断哪页有用、答完核对自己有没有瞎编、最后给自己的回答打个分。一个 13B 的小模型，居然在开放域 QA、事实验证、长文生成的事实性上反超了 ChatGPT。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    Self-RAG 给 LLM 的词表加上四种"反思 token"（Retrieve / IsRel / IsSup / IsUse），靠一个"批评模型"离线给语料打反思标签、再把生成器和反思能力一起训进权重——7B/13B 的小模型在开放域 QA、事实验证、长文事实性上反超 ChatGPT 和带检索的 Llama2-chat，自我纠正从"提示协议"正式跨入"训练时代"。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>把 Self-RAG 放回我们这条"自我纠正"主线和"检索增强"主线，它正好是<em>两条线第一次在权重里合流</em>的那个节点——</p>
+  <ul>
+    <li><em>自我纠正主线</em>：Self-Refine（29 篇，纯内在）→ Cannot Self-Correct（30 篇，戳穿）→ Reflexion（31 篇，外部环境反馈 + 语言记忆）→ CRITIC（32 篇，外部工具反馈 + critique）→ <em>Self-RAG（本篇，把"调工具 + 自我批评"训进权重）</em>。</li>
+    <li><em>检索增强主线</em>：标准 RAG（Lewis 等 2020，无脑检索固定条数）→ RETRO / Atlas（2021–2022，把检索塞进预训练）→ <em>Self-RAG（本篇，按需检索 + 段落级自我批判）</em> → Self-Reasoning / InstructRAG / RankRAG（2024，反思轨迹 + 去噪 + 重排）。</li>
+  </ul>
+  <p>CRITIC 把"调工具批判 + 自我纠正"焊死成一个 verify-then-correct 的提示回路，但回路是<em>临时的、靠示例驱动的</em>。Self-RAG 干的事更狠：它把这个回路<em>蒸馏成一个模型自己会输出的 token 序列</em>——不再需要外部 critic 模型在线跑，不再需要为每个任务手写演示，模型在生成正文的同时，自己穿插着吐出"我要不要查""这页有没有用""我有没有瞎编""这答案值几分"。把 CRITIC 那套"提示协议"沉淀成"训练出来的能力"，正是自我纠正从"提示时代"迈向"训练时代"的临界点。往前看，它直接喂出了 Self-Reasoning、InstructRAG 这一整条"反思轨迹"支流；往远看，"模型边生成边自我评估"的思路，最终在 2024 年 o1 的推理 token 里长成了另一种样子。</p>
+
+  <figure>
+    <!-- 图 1：大模型领域发展时间线，标注本篇位置（高亮），并标记已解析部分 -->
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="140" x2="660" y2="140" stroke="#96897A" stroke-width="1"/>
+
+      <g font-family="JetBrains Mono" font-size="10" fill="#96897A">
+        <!-- 2017 Transformer -->
+        <circle cx="70" cy="140" r="4" fill="#24555A" fill-opacity="0.5" stroke="#96897A"/>
+        <text x="70" y="125" text-anchor="middle">2017</text>
+        <text x="70" y="160" text-anchor="middle">Transformer</text>
+
+        <!-- 2020 GPT-3 / RAG -->
+        <circle cx="180" cy="140" r="4" fill="#24555A" fill-opacity="0.5" stroke="#96897A"/>
+        <text x="180" y="125" text-anchor="middle">2020</text>
+        <text x="180" y="160" text-anchor="middle">GPT-3 / RAG</text>
+
+        <!-- 2022 CoT / InstructGPT -->
+        <circle cx="270" cy="140" r="4" fill="#24555A" fill-opacity="0.5" stroke="#96897A"/>
+        <text x="270" y="125" text-anchor="middle">2022</text>
+        <text x="270" y="160" text-anchor="middle">CoT / InstructGPT</text>
+
+        <!-- 2023.03 Reflexion -->
+        <circle cx="355" cy="140" r="4" fill="#24555A" stroke="#96897A"/>
+        <text x="355" y="125" text-anchor="middle">2023.03</text>
+        <text x="355" y="160" text-anchor="middle">Reflexion</text>
+
+        <!-- 2023.05 CRITIC -->
+        <circle cx="410" cy="140" r="4" fill="#24555A" stroke="#96897A"/>
+        <text x="410" y="125" text-anchor="middle">2023.05</text>
+        <text x="410" y="160" text-anchor="middle">CRITIC</text>
+
+        <!-- 2023.10 本篇：高亮 -->
+        <circle cx="475" cy="140" r="9" fill="#B54A2C"/>
+        <text x="475" y="105" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇</text>
+        <text x="475" y="170" text-anchor="middle" fill="#2E2A22" font-weight="600">Self-RAG</text>
+
+        <!-- 2024 o1 -->
+        <circle cx="560" cy="140" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="560" y="125" text-anchor="middle">2024.09</text>
+        <text x="560" y="160" text-anchor="middle">o1</text>
+
+        <!-- 2025 DeepSeek-R1 -->
+        <circle cx="625" cy="140" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="625" y="125" text-anchor="middle">2025</text>
+        <text x="625" y="160" text-anchor="middle">R1</text>
+      </g>
+
+      <!-- 已解析区间标识：从 2017 到本篇 -->
+      <g>
+        <line x1="70" y1="220" x2="475" y2="220" stroke="#24555A" stroke-width="2"/>
+        <circle cx="70" cy="220" r="3" fill="#24555A"/>
+        <circle cx="475" cy="220" r="3" fill="#24555A"/>
+        <text x="272" y="245" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#24555A">已解析 33 篇 · 从 Transformer 到反思 token 训练</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的位置示意。深蓝小圆点为本系列已解析论文，红色大圆点为本篇，浅色节点为后续路线</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>2023 年中，RAG（Retrieval-Augmented Generation，检索增强生成）已经是 LLM 落地的事实标准——谁都怕模型胡说八道，那就先去外部知识库捞几段相关的文档拼在问题前面，让模型"看着抄"。思路没错，但用着用着，标准 RAG 两个死穴越用越扎眼。</p>
+  <p>第一个死穴叫<em>无脑检索</em>。标准 RAG 对<em>每一个</em>问题都检索固定条数文档，不管这问题需不需要。问"1+1 等于几"它也去翻百科、问"帮我写首情诗"它也去检索"情诗定义"——既浪费延迟，又可能把无关内容塞进上下文，反而把模型带偏。这背后是 RAG 把"要不要检索"这个判断<em>外包给了一个写死的规则</em>：永远检索、永远取 top-k。</p>
+  <p>第二个死穴更致命，叫<em>检索不等于对齐</em>。标准 RAG 把检索回来的段落拼进 prompt，就以为万事大吉——但模型完全可能<em>无视</em>这些段落继续瞎编，也可能把段落里没说的内容当成"有据可查"地写出来。检索给了证据，却没有任何机制保证<em>生成的每一句话都真的被证据支持</em>。幻觉没有被消灭，只是被换了个马甲。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    标准 RAG 像一个考试前焦虑的学生：不管题目多简单——"今天星期几"——他都要先翻开课本翻几页，翻到的内容也不细看，直接凭印象往下写，写完从不回头核对答案跟课本对不对得上。Self-RAG 训练的是一个"会考试"的学生：他先判断这题要不要查书（不用查就别浪费时间），要查就只挑相关那几页（IsRel），写完每一句都对照课本标一下"这句是有依据 / 部分有 / 没依据"（IsSup），写完通篇给自己打个 1–5 分（IsUse）。<em>查与不查、信与不信、好不好用，全是他自己边写边判断的</em>。
+  </div>
+
+  <p>而上一篇 CRITIC 的局限也在背后推了一把。CRITIC 用提示协议把"调工具批判 + 自我纠正"做得很漂亮，但它的"什么时候调什么工具、怎么把工具反馈拼成 critique"全靠 few-shot 演示临场演——延迟高、要手写、上限被工具卡死。Self-RAG 的作者们抓住的就是这条缝：<em>如果把这些判断训进模型权重，让它天生就会反思，是不是能同时解决延迟、迁移性和上限问题？</em>这不只是把 CRITIC 提速，更是把"自我纠正"从"提示协议"提升到"训练能力"的范式跃迁。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>论文要回答的问题可以一句话讲清：<em>能不能训练一个单一的 LM，让它自己在生成正文的同时，学会判断"要不要检索""段落相不相关""生成有没有被支持""整体有没有用"——而且这些判断和正文一样，都是从同一个权重里吐出来的 token？</em></p>
+  <p>这里有两个关键词。第一是<em>单一模型</em>——不是"一个生成器 + 一个独立的 critic 模型 + 一个独立检索器"的拼接系统，而是把生成、反思、检索决策都塞进<em>同一个</em> LM；第二是<em>反思 token 作为生成的一部分</em>——模型不是事后调用一个评分器，而是<em>边生成正文边穿插反思 token</em>，反思和正文一起被训练、一起被预测。作者赌的是这条：<em>只要把反思能力蒸馏进权重，模型就能在不用外部 critic 在线跑的前提下，做出可信的自我批判</em>——既保留了 CRITIC"自我纠正需要外部反馈"的洞见（外部检索结果仍是要的），又解决了 CRITIC"提示协议太贵"的痛点。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    先别往下读，凭直觉猜：上一篇 CRITIC 的自我纠正靠的是"外部工具给客观信号"。Self-RAG 把"要不要检索"也训成了模型自己的判断——那如果模型判断错了（该查的时候说"不用查"，或不该查的时候说"查"），会发生什么？换句话说，<em>把"要不要查"的决策权从规则交还给模型，是解放还是甩锅？</em>带着这个疑问往下读，答案藏在第 5 节的消融里。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>Self-RAG 的方法可以一句话概括：<em>给 LM 的词表加四种"反思 token"，靠"批评模型"离线给语料打反思标签，再把生成器和反思能力一起训进同一个权重</em>。听上去和 CRITIC"调工具批判 + 改写"差不多，但本质区别是：CRITIC 的 critic 是<em>临场调的</em>，Self-RAG 的反思能力是<em>训练出来的</em>。我们分三步拆开。</p>
+
+  <h3>第一步：四种反思 token，把"反思"显式化</h3>
+  <p>Self-RAG 给 Llama-2 的词表加了四种特殊 token，每种对应反思的一个环节。这些 token 不是事后打分，而是<em>穿插在正文生成过程中的标记</em>：</p>
+  <ul>
+    <li><em>[Retrieve] —— 要不要查</em>：取值 <em class="latin">Yes / No / Continue</em>。在每段生成开头，模型先吐一个这个 token，决定这一段要不要触发检索。<em class="latin">Continue</em> 表示沿用之前检索的证据，不必再查。</li>
+    <li><em>[IsRel] —— 这页有没有用</em>：取值 <em class="latin">Relevant / Irrelevant</em>。每检索回一个段落，模型对每段单独判一次相关不相关，把无关段落直接过滤掉，不让它污染生成。</li>
+    <li><em>[IsSup] —— 我有没有瞎编</em>：取值 <em class="latin">Fully / Partially / No Support</em>。每生成完一段，模型对照检索证据自评这段话被支持的程度——这是 Self-RAG 的幻觉检测器，<em>段落级</em>而非整篇级，能精确指出哪句是编的。</li>
+    <li><em>[IsUse] —— 整体值几分</em>：取值 1–5 的离散分。在整篇回答末尾，模型给整体打分，供后续 beam search 选最优输出。</li>
+  </ul>
+  <p>关键设计是：这四种 token <em>都从同一个生成器权重里吐出来</em>，和正文一样是 next-token prediction。这意味着"反思"不是外加的模块，而是模型<em>生成语言的一部分</em>——它一边写答案，一边像写批注一样自我点评。</p>
+
+  <figure>
+    <!-- 图 2：Self-RAG 的段级生成 + 反思 token 流程 -->
+    <svg viewBox="0 0 700 340" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 输入问题 -->
+        <rect x="40" y="30" width="160" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="55" text-anchor="middle">输入问题 x</text>
+
+        <!-- Retrieve token -->
+        <rect x="240" y="30" width="150" height="40" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="315" y="55" text-anchor="middle" fill="#B54A2C" font-weight="600">[Retrieve=?]</text>
+
+        <!-- 分支：Yes / No -->
+        <text x="430" y="40" text-anchor="middle" font-size="10" fill="#96897A">Yes</text>
+        <text x="430" y="70" text-anchor="middle" font-size="10" fill="#96897A">No</text>
+
+        <!-- 检索 -->
+        <rect x="470" y="20" width="180" height="34" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="560" y="42" text-anchor="middle" fill="#24555A">检索器取回 K 段</text>
+
+        <!-- 不检索直接生成 -->
+        <rect x="470" y="66" width="180" height="34" rx="2" fill="#96897A" fill-opacity="0.10" stroke="#96897A"/>
+        <text x="560" y="88" text-anchor="middle" fill="#96897A">直接凭参数知识生成</text>
+
+        <!-- IsRel -->
+        <rect x="240" y="120" width="150" height="40" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="315" y="145" text-anchor="middle" fill="#B54A2C" font-weight="600">[IsRel] 过滤段落</text>
+
+        <!-- 生成一段 -->
+        <rect x="470" y="120" width="180" height="40" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="560" y="145" text-anchor="middle" fill="#24555A">生成第 i 段正文</text>
+
+        <!-- IsSup -->
+        <rect x="240" y="200" width="150" height="40" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="315" y="225" text-anchor="middle" fill="#B54A2C" font-weight="600">[IsSup] 自评支持度</text>
+
+        <!-- 循环回生成 -->
+        <path d="M 315 200 Q 315 165 470 145" stroke="#96897A" fill="none" marker-end="url(#ar1)" stroke-dasharray="4 3"/>
+        <text x="380" y="175" font-size="10" fill="#96897A">下一段再判 Retrieve</text>
+
+        <!-- IsUse -->
+        <rect x="240" y="270" width="150" height="40" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="315" y="295" text-anchor="middle" fill="#B54A2C" font-weight="600">[IsUse=1..5]</text>
+
+        <!-- beam search 选最优 -->
+        <rect x="470" y="270" width="180" height="40" rx="2" fill="#24555A" fill-opacity="0.14" stroke="#24555A"/>
+        <text x="560" y="295" text-anchor="middle" fill="#24555A" font-weight="600">段级 beam search 选最优</text>
+
+        <!-- 连线 -->
+        <line x1="200" y1="50" x2="240" y2="50" stroke="#96897A" marker-end="url(#ar1)"/>
+        <line x1="390" y1="45" x2="470" y2="37" stroke="#96897A" marker-end="url(#ar1)"/>
+        <line x1="390" y1="60" x2="470" y2="83" stroke="#96897A" marker-end="url(#ar1)"/>
+        <line x1="470" y1="54" x2="315" y2="120" stroke="#96897A" marker-end="url(#ar1)"/>
+        <line x1="470" y1="160" x2="315" y2="220" stroke="#96897A" marker-end="url(#ar1)"/>
+        <line x1="315" y1="240" x2="470" y2="270" stroke="#96897A" marker-end="url(#ar1)"/>
+      </g>
+      <defs>
+        <marker id="ar1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · Self-RAG 的段级生成流程。红色节点是四种反思 token，蓝色节点是检索与生成动作。模型每生成一段，先判 Retrieve，再过滤段落（IsRel）、生成正文、自评支持度（IsSup），通篇末尾打 IsUse，最后靠段级 beam search 选最优输出</figcaption>
+  </figure>
+
+  <h3>第二步：两个模型、四步训练流水线</h3>
+  <p>反思 token 不是凭空来的，Self-RAG 用了一条<em>"先训批评模型，再训生成器"</em>的两阶段流水线。整个流程四步走：</p>
+  <ol>
+    <li><em>批评数据构造</em>：用 GPT-4 当"老师"，给一批 (输入, 输出, 检索段落) 三元组标注出对应的反思 token 标签——这句该不该 Retrieve、这页 IsRel 是 Relevant 还是 Irrelevant、这段 IsSup 是 Fully 还是 No Support、通篇 IsUse 几分。</li>
+    <li><em>批评模型 C 训练</em>：拿 Llama-2-7B 初始化，把这些 GPT-4 标的反思标签蒸馏进一个"批评模型"——它的任务是<em>给定输入输出段落，预测反思 token</em>。</li>
+    <li><em>生成器数据构造</em>：用训好的批评模型 C，<em>离线</em>给一大堆语料自动打上反思 token 标签，把"自然文本 + 反思 token + 检索段落"交错拼成 150K 条训练样本。</li>
+    <li><em>生成器 G 训练</em>：拿 Llama-2-7B/13B 初始化，在这批交错语料上做<em>标准的 next-token prediction</em>——同时预测正文 token 和反思 token，把检索段落从 loss 里 mask 掉（不学怎么"抄"段落，只学怎么"用"段落）。</li>
+  </ol>
+  <p>这里最妙的设计是<em>批评模型离线打标</em>：反思标签是在数据准备阶段一次性打好的，训练生成器时<em>不需要在线跑批评模型</em>，开销大降。这相当于把 GPT-4 的反思能力，先蒸馏到 C，再用 C 给语料批量打标，最后让 G 把"反思"和"生成"一起学走——两层蒸馏，把昂贵的 GPT-4 反思能力，最终压缩进一个 7B/13B 的开源模型。</p>
+
+  <p>训练目标写出来很干净。批评模型 C 学的是给定输入输出，预测反思 token 的条件概率：</p>
+
+  <div class="formula-block">
+    $$ \mathcal{L}_{C} = -\sum_{t} \log p_{C}\!\left(c_{t} \,\middle|\, x,\, y,\, c_{<t}\right) $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>生成器 G 学的是在交错语料上同时预测正文 token $y_t$ 和反思 token $c_t$，把检索段落 $d$ 当条件、不参与 loss：</p>
+
+  <div class="formula-block">
+    $$ \mathcal{L}_{G} = -\sum_{t} \log p_{G}\!\left(y_{t},\, c_{t} \,\middle|\, x,\, d,\, y_{<t},\, c_{<t}\right) $$
+    <span class="eqn mono">(2)</span>
+  </div>
+
+  <figure>
+    <!-- 图 3：四步训练流水线 -->
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- Step 1 -->
+        <rect x="20" y="60" width="140" height="80" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="90" y="82" text-anchor="middle" font-weight="600">Step 1</text>
+        <text x="90" y="102" text-anchor="middle" font-size="10">GPT-4 当老师</text>
+        <text x="90" y="120" text-anchor="middle" font-size="10">标注反思 token</text>
+
+        <!-- arrow -->
+        <line x1="160" y1="100" x2="195" y2="100" stroke="#96897A" marker-end="url(#ar2)"/>
+
+        <!-- Step 2 -->
+        <rect x="195" y="60" width="140" height="80" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="265" y="82" text-anchor="middle" fill="#24555A" font-weight="600">Step 2</text>
+        <text x="265" y="102" text-anchor="middle" font-size="10" fill="#24555A">训批评模型 C</text>
+        <text x="265" y="120" text-anchor="middle" font-size="10" fill="#24555A">Llama-2-7B 初始化</text>
+
+        <!-- arrow -->
+        <line x1="335" y1="100" x2="370" y2="100" stroke="#96897A" marker-end="url(#ar2)"/>
+
+        <!-- Step 3 -->
+        <rect x="370" y="60" width="140" height="80" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="440" y="82" text-anchor="middle" font-weight="600">Step 3</text>
+        <text x="440" y="102" text-anchor="middle" font-size="10">C 离线给语料打标</text>
+        <text x="440" y="120" text-anchor="middle" font-size="10">150K 交错样本</text>
+
+        <!-- arrow -->
+        <line x1="510" y1="100" x2="545" y2="100" stroke="#96897A" marker-end="url(#ar2)"/>
+
+        <!-- Step 4 -->
+        <rect x="545" y="60" width="140" height="80" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="615" y="82" text-anchor="middle" fill="#B54A2C" font-weight="600">Step 4</text>
+        <text x="615" y="102" text-anchor="middle" font-size="10" fill="#B54A2C">训生成器 G</text>
+        <text x="615" y="120" text-anchor="middle" font-size="10" fill="#B54A2C">正文 + 反思 token</text>
+
+        <text x="350" y="170" text-anchor="middle" font-size="10" fill="#96897A">两层蒸馏：GPT-4 → 批评模型 C → 生成器 G，把"反思"压进 7B/13B 权重</text>
+      </g>
+      <defs>
+        <marker id="ar2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · Self-RAG 的四步训练流水线。两层蒸馏把昂贵的 GPT-4 反思能力，先压进批评模型 C，再压进生成器 G 的权重</figcaption>
+  </figure>
+
+  <h3>第三步：推理时的段级 beam search 与可控性</h3>
+  <p>训练完的生成器，推理时不是贪心解码就完事。Self-RAG 做的是<em>段级 beam search</em>：每生成一段，对每个候选段落并行生成多个候选输出，再用 [IsRel]、[IsSup]、[IsUse] 这些反思 token 当打分信号，从 beam 里挑"事实性 + 整体质量"最优的那条继续往下走。这相当于把 CRITIC 的"verify-then-correct"换了个实现——CRITIC 是事后调工具改，Self-RAG 是事中边生成边用反思 token 当 reward 选路。</p>
+  <p>更妙的是<em>可控性</em>。因为反思 token 是模型自己生成的，推理时可以通过调阈值来<em>改变模型行为</em>：把 [Retrieve=Yes] 的阈值调低，模型就更爱检索、事实性更强、延迟更高（适合做严肃的事实问答）；把阈值调高，模型就更不爱检索、更流畅、更像聊天（适合做闲聊）。一个权重，靠推理时旋钮，就能在"事实性"和"流畅性"之间无级切换——这是 prompt 协议时代做不到的，因为那时候"要不要检索"是写死的规则。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>实验覆盖三类任务：封闭集（PubHealth 事实验证、ARC-Challenge 推理）、短篇 QA（PopQA 长尾、TriviaQA）、长篇生成（传记 FactScore、ASQA 长篇问答带引用）。基线从无检索的 Llama2、Alpaca、ChatGPT，到带检索的 Llama2-FT、Ret-ChatGPT、SAIL、Toolformer。结果干净利落——<em>7B 和 13B 的小模型，反超了 ChatGPT 和带检索的 Llama2-chat</em>。</p>
+
+  <table>
+    <thead>
+      <tr><th>任务（准确率 / 分）</th><th>Llama2-13B 无检索</th><th>Llama2-13B + 标准 RAG</th><th>Self-RAG 13B</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">PopQA（短篇 QA）</td><td>22.6</td><td>48.1</td><td>55.8</td></tr>
+      <tr><td class="text">FEVER（事实验证）</td><td>25.3</td><td>35.2</td><td>72.1</td></tr>
+      <tr><td class="text">NaturalQuestions（开放域 QA）</td><td>24.0</td><td>34.0</td><td>38.8</td></tr>
+      <tr><td class="text">ASQA 长篇 em-recall</td><td>15.3</td><td>26.8</td><td>31.7</td></tr>
+      <tr><td class="text">ASQA 引用精确率</td><td>—</td><td>21.8</td><td>70.3</td></tr>
+    </tbody>
+  </table>
+
+  <p>三组结果里最抓眼球的是<em>FEVER 事实验证 72.1</em>——比带标准检索的 Llama2-13B 翻了一倍还多（35.2 → 72.1）。事实验证恰恰是最考验"生成有没有被证据支持"的任务，Self-RAG 的 [IsSup] token 在这里精准发挥。更狠的是<em>ASQA 引用精确率 70.3</em>：标准 RAG 只有 21.8，Self-RAG 直接拔到 70.3——因为模型每段都自评支持度，引用自然准。论文还明确写到，在 PubHealth、PopQA、传记生成、ASQA 的 Rouge/MAUVE 上，Self-RAG <em>超过了 ChatGPT</em>——一个 13B 的小模型，靠反思 token 训练，在事实性上反超了当时最强的闭源大模型。</p>
+
+  <figure>
+    <!-- 图 4：三类基线 vs Self-RAG 柱状对比 -->
+    <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 坐标轴 -->
+        <line x1="60" y1="40" x2="60" y2="230" stroke="#96897A"/>
+        <line x1="60" y1="230" x2="680" y2="230" stroke="#96897A"/>
+
+        <!-- 三组柱：FEVER, PopQA, ASQA引用精确率 -->
+
+        <!-- FEVER 组 -->
+        <text x="150" y="250" text-anchor="middle" font-size="10" fill="#96897A">FEVER 事实验证</text>
+        <rect x="80" y="186" width="40" height="44" fill="#96897A" fill-opacity="0.25" stroke="#96897A"/>
+        <text x="100" y="180" text-anchor="middle" font-size="9" fill="#96897A">25.3</text>
+        <rect x="125" y="155" width="40" height="75" fill="#96897A" fill-opacity="0.45" stroke="#96897A"/>
+        <text x="145" y="149" text-anchor="middle" font-size="9" fill="#96897A">35.2</text>
+        <rect x="170" y="68" width="40" height="162" fill="#B54A2C" fill-opacity="0.85"/>
+        <text x="190" y="62" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">72.1</text>
+
+        <!-- PopQA 组 -->
+        <text x="370" y="250" text-anchor="middle" font-size="10" fill="#96897A">PopQA 短篇 QA</text>
+        <rect x="300" y="180" width="40" height="50" fill="#96897A" fill-opacity="0.25" stroke="#96897A"/>
+        <text x="320" y="174" text-anchor="middle" font-size="9" fill="#96897A">22.6</text>
+        <rect x="345" y="124" width="40" height="106" fill="#96897A" fill-opacity="0.45" stroke="#96897A"/>
+        <text x="365" y="118" text-anchor="middle" font-size="9" fill="#96897A">48.1</text>
+        <rect x="390" y="106" width="40" height="124" fill="#B54A2C" fill-opacity="0.85"/>
+        <text x="410" y="100" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">55.8</text>
+
+        <!-- ASQA 引用精确率 组 -->
+        <text x="590" y="250" text-anchor="middle" font-size="10" fill="#96897A">ASQA 引用精确率</text>
+        <rect x="520" y="184" width="40" height="46" fill="#96897A" fill-opacity="0.45" stroke="#96897A"/>
+        <text x="540" y="178" text-anchor="middle" font-size="9" fill="#96897A">21.8</text>
+        <rect x="565" y="78" width="40" height="152" fill="#B54A2C" fill-opacity="0.85"/>
+        <text x="585" y="72" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">70.3</text>
+
+        <!-- 图例 -->
+        <rect x="80" y="270" width="12" height="10" fill="#96897A" fill-opacity="0.25" stroke="#96897A"/>
+        <text x="98" y="279" font-size="9" fill="#96897A">Llama2-13B 无检索</text>
+        <rect x="240" y="270" width="12" height="10" fill="#96897A" fill-opacity="0.45" stroke="#96897A"/>
+        <text x="258" y="279" font-size="9" fill="#96897A">+ 标准 RAG</text>
+        <rect x="360" y="270" width="12" height="10" fill="#B54A2C" fill-opacity="0.85"/>
+        <text x="378" y="279" font-size="9" fill="#B54A2C">Self-RAG 13B</text>
+
+        <text x="370" y="295" text-anchor="middle" font-size="9" fill="#96897A">FEVER 翻倍、ASQA 引用精确率 21.8 → 70.3 是最震撼的两组数</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · Self-RAG 13B 在三类任务上对 Llama2-13B 无检索 / + 标准 RAG 的提升。FEVER 和 ASQA 引用精确率的跃迁最直接体现了反思 token 的价值</figcaption>
+  </figure>
+
+  <h3>消融：反思 token 一个都不能少</h3>
+  <p>作者做了一组关键消融，逐一去掉反思 token 看效果，结果和直觉高度吻合：</p>
+  <ul>
+    <li><em>去掉 [Retrieve]</em>：退化成标准 RAG 永远检索——延迟暴涨、无关段落把生成带偏，事实性不升反降。</li>
+    <li><em>去掉 [IsRel]</em>：无关段落混进上下文，模型被噪声带得胡说八道。</li>
+    <li><em>去掉 [IsSup]</em>：模型不再段落级自检，幻觉率回升，引用精确率从 70 掉回标准 RAG 水平。</li>
+    <li><em>去掉 [IsUse] + beam search</em>：退回贪心解码，没法在多条候选里挑最优，整体质量下降。</li>
+  </ul>
+  <p>四种 token 各管一摊，缺哪环哪环塌。这正面回答了第 3 节留的那个疑问——<em>把"要不要查"的决策权交给模型，不是甩锅</em>：模型训过之后，[Retrieve] 的判断是准的，去掉它强制检索反而更糟。把决策权交给"训过的模型"和交给"写死的规则"，效果天差地别。</p>
+
+  <div class="callout question">
+    <span class="label">反直觉发现</span>
+    最让人意外的不是"Self-RAG 比 ChatGPT 强"，而是<em>它有时不检索反而更强</em>。论文里给出案例：对一些模型本身就有把握的常识问题，Self-RAG 吐出 [Retrieve=No]，直接凭参数知识作答，反而比硬塞检索段落的版本更准、更流畅。这等于自己证了一遍标准 RAG 的第一个死穴——<em>无脑检索真的有害</em>。一个"知道自己什么时候不需要查书"的模型，比"逢题必查"的模型更聪明。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>Self-RAG 的影响远超它"FEVER 72.1、引用精确率 70.3"这组表面数字。它至少做了四件大事——</p>
+  <p>第一，<em>把"按需检索 + 自我批判"第一次焊进了同一个 LM 权重</em>。在它之前，RAG 的"要不要检索"是规则写死的，"生成有没有被支持"是从不检查的。Self-RAG 把这两件事都变成了模型自己吐 token——这是 RAG 范式从"拼接系统"走向"端到端可训练模型"的转折点。</p>
+  <p>第二，<em>把"反思 token"立成了一个设计模式</em>。Self-RAG 之后，"给模型加特殊 token 让它边生成边自我评估"成了 RAG 圈的标配思路。Self-Reasoning（2024）用"自推理轨迹"做相关/证据/轨迹分析三段式、InstructRAG（2024）让模型生成去噪 rationale、RankRAG（2024）把"重排 + 生成"训进同一权重——这条支流几乎全是站在 Self-RAG 肩膀上长出来的。</p>
+  <p>第三，<em>再次钉死了 CRITIC 的洞见，但用训练而非提示</em>。CRITIC 说"自我纠正需要外部反馈"，Self-RAG 说"对，而且要把这种反馈判断训进权重"——它把 CRITIC 那条"提示协议"的延长线，直接推进了"训练时代"。后续 OpenAI 自己在 2024 年 6 月发布的 <em class="latin">CriticGPT</em>（用 GPT-4 训一个专门写 critique 的模型给 RLHF 标注员当助手），思路和 Self-RAG 的"训一个批评模型"同源——只是 Self-RAG 把批评模型蒸馏进了生成器，CriticGPT 让它独立存在。</p>
+  <p>第四，<em>直接喂出了"反思轨迹"这一整条支流</em>。Self-Reasoning 的 relevance-aware / evidence-aware / trajectory-aware 三段式、InstructRAG 的 self-synthesized rationale、RankRAG 的 context ranking + generation 双能力——这些 2024 年最有想象力的 RAG 工作，几乎都在 Self-RAG 画的延长线上。可以说 Self-RAG 是 2023–2024 年 RAG 自我反思这一支的<em>直接祖先</em>。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>作者在论文里坦诚列了几条局限。最显眼的是<em>训练成本</em>：反思 token 的监督标签靠 GPT-4 标，要花钱花 API；还得先训一个批评模型 C，再训生成器 G，两阶段训练链路比直接 SFT 重不少。这条后来被 Self-Reasoning 用"只用 2000 训练样本就追上 Self-RAG"的方式部分补上——反思能力其实不需要 150K 那么多数据。</p>
+  <p>第二条是<em>检索器是外挂的</em>。Self-RAG 的生成器学会了"要不要检索"，但检索器本身还是个独立的 Contriever 模型，没和生成器一起端到端训。这意味着"检索准不准"仍卡在检索器能力上——和 CRITIC"上限被工具卡"的痛点同源。后来 RankRAG 把"检索重排 + 生成"一起训，正是补这块。</p>
+  <p>第三条更微妙：<em>反思 token 是离散粗粒度的</em>。[IsSup] 只有 Fully / Partially / No 三档，[IsUse] 只有 1–5 分——这种离散标签表达能力有限，遇到"这句 80% 有依据"这种细粒度情况就力不从心。后来的工作开始探索连续的反思信号或更细的 token 设计。</p>
+  <p>第四条是和 CRITIC 同款的隐忧：<em>反思 token 也可能被 reward hack</em>。如果批评模型 C 给语料打的标本身有偏，生成器 G 学到的反思也是偏的——两层蒸馏会放大 teacher 的错误。这是所有蒸馏范式的通病，Self-RAG 没给形式化保证。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把本篇放回我们的演进时间线，能清楚看到两条主线在 Self-RAG 这里<em>第一次在权重里合流</em>——</p>
+  <ul>
+    <li><em>自我纠正主线</em>：Self-Refine（29 篇，纯内在）→ Cannot Self-Correct（30 篇，戳穿）→ Reflexion（31 篇，外部环境反馈 + 语言记忆）→ CRITIC（32 篇，外部工具反馈 + critique）→ <em>Self-RAG（本篇，反思 token 训进权重）</em>。</li>
+    <li><em>检索增强主线</em>：标准 RAG（2020，无脑检索）→ RETRO / Atlas（2021–2022，检索塞进预训练）→ <em>Self-RAG（本篇，按需检索 + 段落级自我批判）</em> → Self-Reasoning / InstructRAG / RankRAG（2024，反思轨迹 + 去噪 + 重排）。</li>
+  </ul>
+  <p>这两条主线在 Self-RAG 处汇成一条河——它既是自我纠正主线的"训练时代"延伸（把 CRITIC 的提示协议蒸馏进权重），又是检索增强主线的"反思能力"延伸（把"要不要查、查完信不信"训成 token）。汇合之后再往前，一条支流奔向 Self-Reasoning、InstructRAG 这条"反思轨迹"线；另一条支流奔向 RankRAG 这条"检索重排端到端"线。再往远看，"模型边生成边自我评估"的思路，最终在 2024 年 9 月汇入 o1 开启的"推理范式期"——只不过 o1 把"反思 token"换成了更长的隐式思维链，把"自我评估"训进了 RL 的过程奖励里。Self-RAG 正是这条河从"提示协议"流向"RL 训练"的关键中转站。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>这篇论文背后有几个挺有意思的细节。第一个是<em>一作的血统</em>。通讯作者 Hannaneh Hajishirzi 是华盛顿大学教授、Allen Institute for AI 的研究员，在检索增强和 agent 这条线深耕多年；一作 Akari Asai 当时是她的博士生——这篇 Self-RAG 是 Asai 博士早期的代表作，后来她沿着"自适应检索"这条线一路做下去，成了这个方向的代表人物之一。<em>一篇博士生的工作撞上 RAG 爆发的窗口期</em>，就成了 ICLR 2024 的 Oral（top 1%），这种"博士生改变一个细分领域"的故事在 2023 年的 AI 圈屡见不鲜。</p>
+  <p>第二个是<em>反思 token 的灵感来源</em>。论文明确写到，反思 token 灵感来自<em>强化学习里的奖励模型</em>（Ziegler 等 2019、Ouyang 等 2022——后者就是上一篇 InstructGPT）。“让模型自己输出奖励信号"这个想法，Self-RAG 把它从"训练后外加一个打分器"挪到了"训练中融进生成器"——等于把 RLHF 的奖励模型，蒸馏成了模型自己会吐的 token。这个思路后来被 o1 的过程奖励模型继承，成了推理范式的关键组件。能从 RLHF 里看出"反思 token"的影子，是这篇论文最有洞察的一步。</p>
+  <p>第三个是<em>代码和权重的开放度</em>。Self-RAG 不只发论文，还把 7B、13B 模型权重、150K 训练数据、完整代码全挂到了 HuggingFace——这在 2023 年 10 月的 RAG 圈是相当大方的一次开源。后来 Self-Reasoning、InstructRAG 这些工作能快速长出来，很大程度上是因为能直接拿 Self-RAG 的权重和数据当 baseline。一个把"反思能力"开源出来的工作，意外催生了一整条开源 RAG 反思生态。</p>
+  <p>第四个是<em>命名的双关</em>。<em class="latin">Self-RAG</em> 里的 <em class="latin">Self-</em> 一语双关——既是 <em class="latin">Self-Reflective</em>（自我反思），又是 <em class="latin">Self-RAG</em>（模型自己完成 RAG 全流程，不再外挂 critic）。一个名字把"反思"和"端到端"两层意思都占了，比直白的 <em class="latin">Adaptive-RAG</em> 多了一层哲学野心——它要的不只是"按需检索"，而是"模型自己会反思的 RAG"。</p>
+
+  <figure>
+    <!-- 图 5（趣味）：无脑翻书学生 vs 会判断的学生 -->
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 标准 RAG 学生 -->
+        <circle cx="120" cy="100" r="48" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="100" y="92" width="40" height="20" fill="#96897A" fill-opacity="0.3"/>
+        <text x="120" y="106" text-anchor="middle" font-size="10" fill="#2E2A22">📖📖📖</text>
+        <text x="120" y="170" text-anchor="middle" font-size="11" fill="#96897A">逢题必翻书</text>
+        <text x="120" y="190" text-anchor="middle" font-size="10" fill="#96897A">不看对不对得上</text>
+
+        <!-- 等号 -->
+        <text x="220" y="108" text-anchor="middle" font-size="22" fill="#96897A">→</text>
+
+        <!-- Self-RAG 学生 -->
+        <circle cx="540" cy="100" r="48" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <circle cx="520" cy="92" r="3" fill="#2E2A22"/>
+        <circle cx="560" cy="92" r="3" fill="#2E2A22"/>
+        <path d="M 520 112 Q 540 120 560 112" stroke="#2E2A22" stroke-width="1.5" fill="none"/>
+        <text x="540" y="170" text-anchor="middle" font-size="11" fill="#B54A2C" font-weight="600">会判断何时翻书</text>
+        <text x="540" y="190" text-anchor="middle" font-size="10" fill="#B54A2C">翻完核对 · 写完自评</text>
+
+        <!-- 反思 token 标签 -->
+        <text x="350" y="40" text-anchor="middle" font-size="10" fill="#B54A2C">[Retrieve] [IsRel] [IsSup] [IsUse]</text>
+        <text x="350" y="58" text-anchor="middle" font-size="9" fill="#96897A">四种反思 token 训进权重</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · "逢题必翻书的学生" → "会判断何时翻书、翻完会核对的学生"——Self-RAG 把"检索决策 + 自我核对"从规则交还给了一个训过的模型</figcaption>
+  </figure>
+
+  <p>第五个细节有点人情味。Self-RAG 投稿到 ICLR 2024 之前只挂了一版（v1 在 2023 年 10 月 17 日），但论文有 30 页、12 张表——是那种"一次写到位、附录铺得很满"的厚实型论文。最终它被 ICLR 2024 接收为 Oral（top 1%），在 RAG 这条竞争极度激烈的赛道上拿到 Oral，本身就是对"反思 token"这个设计模式最高规格的背书。一个名字朴素、没有花哨架构图的工作，靠"把反思训进权重"这一招，挤进了当年 ICLR 最受关注的工作之列。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读这篇论文，我最想留给你的是两个判断。第一个是<em>关于"反思能力"该住在哪里</em>。我们这五篇连读下来（Self-Refine → Cannot → Reflexion → CRITIC → Self-RAG），其实回答的是同一个问题：模型的自我纠正能力，到底应该放在哪一层？Self-Refine 放在"提示"——纯内在，瘪了；Cannot 戳穿；Reflexion 放在"外部环境反馈 + 语言记忆"——活了；CRITIC 放在"外部工具反馈 + 提示协议"——也活了但贵；Self-RAG 放在"训练进权重"——又活又便宜又可迁移。<em>反思能力的归宿是权重</em>，这是这条主线五篇论文收敛到的最终答案。如果你在做 agent，记住这条：与其给模型套一层"自我批评"的提示壳，不如把这种批评能力训进它自己——临时方案用 Reflexion/CRITIC，长期方案往 Self-RAG 这条路走。</p>
+  <p>第二个判断更实操：<em>"反思 token"是一种通用的能力接口，不是 RAG 专属</em>。Self-RAG 把它用在了"检索 + 生成"这一件事上，但 [Retrieve] 的"要不要查"、[IsSup] 的"我有没有瞎编"、[IsUse] 的"整体几分"——这套"决策 + 核对 + 评分"的三段式反思，<em>可以套到任何 agent 任务上</em>。写代码的 agent 可以训"要不要调 linter""这段有没有被测试覆盖""整体能用几分"的反思 token；做搜索的 agent 可以训"要不要再查一轮""这条结果相不相关""整体答得有没有用"。Self-RAG 的真正贡献，是把"边生成边反思"做成了<em>可复制的训练模式</em>，而不只是一个 RAG 框架。</p>
+  <p>把这两条放一起，还能读出一个更深的判断：Self-RAG 是"训练时代自我纠正"的开门之作，但也是这个时代的起跑线。它把反思 token 训进了<em>监督微调</em>，但反思 token 还没和强化学习结合——真正的"自我纠正 + RL"要等到 o1 的过程奖励模型、DeepSeek-R1 的纯 RL 推理才完成闭环。Self-RAG 站的位置，正好是"反思能力从提示协议走向 RL 训练"的起点：它一边把反思能力训进了权重，一边把"反思当 reward 信号"这条路摊开摆好，等后来的 RL 工作来接。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    Self-RAG 的反思 token 是离散的（[IsSup=Fully/Partially/No]、[IsUse=1..5]），而且只训进了监督微调。如果未来我们把"反思 token"做成连续的置信度信号，并把它直接当 reward 训进 RL（像 o1 的过程奖励那样）——这还算"反思 token"吗？还是说它已经变成了另一种东西？监督微调里的反思和 RL 里的反思，本质是不是同一件事？你怎么分？
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Toolformer: Language Models Can Teach Themselves to Use Tools</h3>
+    <p style="margin:0;">Self-RAG 把"调检索器验证 + 生成 critique"焊进权重，但只针对"检索"这一种工具。下一篇我们讲 Toolformer：Meta AI 让 Llama <em>自己教自己用工具</em>——计算器、搜索引擎、日历、问答系统，统统训进权重。它和 Self-RAG 同样走"把工具调用训进 token"的路，但把范围从"一种检索器"拓成了"任意 API"。当自我纠正和工具使用都进了权重，agent 时代才真正开始。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 033 篇</span>
+    <span>2026-09-02</span>
+  </footer>
+
+</div>
+</body>
+</html>
