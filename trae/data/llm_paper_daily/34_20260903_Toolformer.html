@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Toolformer 论文精读 · 大模型经典论文系列 #034</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#034</span>
+  </div>
+
+  <h1 class="title">
+    Toolformer: Language Models Can Teach Themselves to Use Tools
+    <span class="en">Toolformer：语言模型自己教自己用工具——把 Self-RAG 的"反思 token 训进权重"拓成"任意工具调用训进权重"，让模型学会按需调计算器、搜索引擎、日历、问答系统</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Timo Schick, Jane Dwivedi-Yu, Roberto Dessì, Roberta Raileanu, Maria Lomeli, Luke Zettlemoyer, Nicola Cancedda, Thomas Scialom</span>
+    <span>机构：Meta AI Research · Universitat Pompeu Fabra</span>
+    <span>发表：2023-02 / arXiv:2302.04761 · NeurIPS 2023</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2302.04761" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/lucidrains/toolformer-pytorch" target="_blank" rel="noopener">GitHub（非官方实现）</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">想象一位博学的图书馆员：他能跟你聊三个小时康德的二律背反，能背出整本《神曲》的段落，却在你问"23 乘以 47 等于几"时，一脸诚恳地告诉你"大概是 1001 吧"——然后在你提醒今天是星期几时，又茫然地摇了摇头。这不是夸张的笑话，这就是 2022 年底所有大语言模型的真实写照。</p>
+  <p class="lead">更尴尬的是，一个只有几兆参数、连"理解语言"都算不上的小计算器，在算术上能把 1750 亿参数的 GPT-3 按在地上摩擦。这篇论文要回答的，就是一个近乎哲学的问题：能不能让这位博学的"笨蛋"自己学会，在算不动账的时候悄悄掏出计算器、在记不起日期时悄悄瞄一眼日历？而且——关键来了——不需要人手把手地教，让它<em>自己教自己</em>。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    Toolformer 让一个 67 亿参数的语言模型，靠"自采样 + 损失过滤"的自监督流程，自己学会在什么时候、用什么参数、调用哪一类外部工具（计算器、问答、搜索、翻译、日历），并把它"焊"进权重，零样本下追平甚至超过 1750 亿参数的 GPT-3，而原来的语言能力一丝不减。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>把上一篇 <em class="latin">Self-RAG</em> 想成"把<em>调检索器验证</em>这一种动作训进权重"，那么 <em class="latin">Toolformer</em> 就是把这条思路<em>从一种工具拓展到任意工具</em>：计算器、问答系统、搜索引擎、机器翻译、日历，统统按同一种"工具调用 token"格式训进权重。它承接了"工具使用进权重"的范式，又为后来真正意义上的 agent（智能体）时代铺下了第一块砖——只不过，它自己也老老实实地承认：我还不会把一个工具的输出喂给另一个工具（不能链式调用），所以这块砖还只是"最小学步车"。</p>
+  <p>在大模型发展脉络上，它正好卡在一个奇妙的转折点：<em>训练期</em>把工具调用内化，而非 <em class="latin">few-shot</em> 那样每次推理时临时拼提示。这一步，让"会用工具"从"提示工程技巧"升级成了"模型自身的能力"。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ah-tl" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <!-- 已解析区间底色 -->
+      <rect x="40" y="100" width="430" height="20" fill="#B54A2C" fill-opacity="0.06"/>
+      <line x1="40" y1="110" x2="660" y2="110" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 2017 Transformer -->
+        <circle cx="70" cy="110" r="5" fill="#ECE4D4" stroke="#B54A2C"/>
+        <text x="70" y="88" text-anchor="middle" fill="#B54A2C">2017</text>
+        <text x="70" y="140" text-anchor="middle" fill="#2E2A22">Transformer</text>
+
+        <!-- 2020 GPT-3 -->
+        <circle cx="180" cy="110" r="5" fill="#ECE4D4" stroke="#B54A2C"/>
+        <text x="180" y="88" text-anchor="middle" fill="#B54A2C">2020</text>
+        <text x="180" y="140" text-anchor="middle" fill="#2E2A22">GPT-3</text>
+
+        <!-- 2022 CoT -->
+        <circle cx="290" cy="110" r="5" fill="#ECE4D4" stroke="#B54A2C"/>
+        <text x="290" y="88" text-anchor="middle" fill="#B54A2C">2022</text>
+        <text x="290" y="140" text-anchor="middle" fill="#2E2A22">CoT</text>
+
+        <!-- 2023 Self-RAG -->
+        <circle cx="400" cy="110" r="5" fill="#ECE4D4" stroke="#B54A2C"/>
+        <text x="400" y="88" text-anchor="middle" fill="#B54A2C">2023.09</text>
+        <text x="400" y="140" text-anchor="middle" fill="#2E2A22">Self-RAG</text>
+
+        <!-- 2023 Toolformer 本篇 -->
+        <circle cx="470" cy="110" r="9" fill="#B54A2C"/>
+        <text x="470" y="78" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇</text>
+        <text x="470" y="96" text-anchor="middle" fill="#B54A2C">2023.02</text>
+        <text x="470" y="140" text-anchor="middle" fill="#2E2A22" font-weight="600">Toolformer</text>
+
+        <!-- 2023 ReAct 下期预告 -->
+        <circle cx="560" cy="110" r="5" fill="#ECE4D4" stroke="#24555A"/>
+        <text x="560" y="88" text-anchor="middle" fill="#24555A">2023.10</text>
+        <text x="560" y="140" text-anchor="middle" fill="#24555A">ReAct (下期)</text>
+
+        <!-- 2025 推理范式 -->
+        <circle cx="640" cy="110" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="640" y="88" text-anchor="middle">2025</text>
+        <text x="640" y="140" text-anchor="middle">推理范式</text>
+
+        <text x="255" y="175" text-anchor="middle" fill="#B54A2C" font-size="10">← 已解析区间（#001–#033） →</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的位置：Toolformer 处于"工具使用进权重"的转折点，左接 Self-RAG，右启 agent 时代</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>2022 年底的大模型有一个被反复调侃的"悖论"：它们能写诗、能编程、能讨论哲学，却在四件"小学生都会"的事上频频翻车——<em>算不准账、记不住今天星期几、查不到最新新闻、翻译不好小语种</em>。作者把这四类毛病归因于一个根本原因：这些能力<em>无法靠单纯扩大参数来解决</em>。算术是符号精确运算，知识有截止日期，时间是动态变量——再大的模型，也只是把训练语料里的统计模式背得更熟，本质上学不会"算"和"查"。</p>
+  <p>解决办法看起来很简单：给模型一把"瑞士军刀"——外挂计算器、搜索引擎、日历。但当时已有的做法都有硬伤：</p>
+  <ul>
+    <li><em>重人工派</em>（如 Google 的 <em class="latin">LaMDA</em>、<em class="latin">Internet-Augmented Dialogue</em>）：靠海量人工标注的"何时调工具"样例训练，成本高得吓人，而且<em>人觉得有用的，未必是模型觉得有用的</em>。</li>
+    <li><em>硬编码派</em>（如各种 <em class="latin">retrieval-augmented</em> 流水线）：把工具调用写死在某个任务的某个步骤里，换个任务就失效，模型完全丧失通用性。</li>
+    <li><em>纯提示派</em>（<em class="latin">few-shot</em> 演示工具用法）：推理时管用，但没进权重，换个措辞的提示就可能懵掉，且每次都要占用宝贵的上下文窗口。</li>
+  </ul>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    旧方法像是给一个新员工配了一位"秘书"：秘书（人工标注/硬编码流程）在他耳边不停念叨"这个该查日历、那个该用计算器"。员工确实能把活干了，但离了秘书就抓瞎，而且秘书还贵得离谱。Toolformer 想做的，是让这位员工<em>自己</em>摸索出"什么时候该翻哪本工具书"，摸索的过程全靠他自己干活时的得失反馈，不请任何秘书。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>把上面的背景压成一句话，Toolformer 要解的是：<em>如何让语言模型在不需要大量人工标注的前提下，自己学会"何时调、调哪个、传什么参数、怎么把结果接回文本"，而且学了工具之后，原有的通用语言能力一点都不能掉</em>。</p>
+  <p>注意这里有两个看似矛盾的要求被绑在了一起——<em>要会调工具</em>（领域特定能力）和<em>不能丢通用性</em>（跨领域能力）。前者容易让人想到"为每个任务单独训一个模型"，后者又恰恰反对这么做。作者给出的破局思路是：用<em>同一个语言建模损失</em>来当裁判，让"对预测未来文本有用"的工具调用自己浮出来。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果让你判断"模型在这里调一次计算器到底有没有用"，你会怎么衡量？是看模型最后答得对不对？还是看别的什么？先别往下看——这个问题的答案，正是 Toolformer 最巧妙的那一步。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>整个方法可以浓缩成四个字：<em>采样、执行、过滤、微调</em>。它巧妙地借用了当时刚火起来的一个思路——"用大模型的上下文学习能力，自己生成训练数据"（这条思路的早期代表正是同一作者 Timo Schick 的 <em class="latin">Self-Instruct</em> 雏形）。下面逐步拆解。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ah-2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- Step 1 -->
+        <rect x="20" y="120" width="140" height="70" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="90" y="108" text-anchor="middle" fill="#B54A2C" font-weight="600">① Sample</text>
+        <text x="90" y="148" text-anchor="middle">采样候选</text>
+        <text x="90" y="166" text-anchor="middle">API 调用</text>
+        <text x="90" y="184" text-anchor="middle" fill="#96897A" font-size="10">few-shot 引导</text>
+
+        <!-- Step 2 -->
+        <rect x="195" y="120" width="140" height="70" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="265" y="108" text-anchor="middle" fill="#B54A2C" font-weight="600">② Execute</text>
+        <text x="265" y="148" text-anchor="middle">真正调用 API</text>
+        <text x="265" y="166" text-anchor="middle">拿到返回 r</text>
+
+        <!-- Step 3 -->
+        <rect x="370" y="100" width="140" height="110" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="440" y="88" text-anchor="middle" fill="#B54A2C" font-weight="600">③ Filter</text>
+        <text x="440" y="128" text-anchor="middle">算两种损失</text>
+        <text x="440" y="146" text-anchor="middle">L⁻(无结果) vs</text>
+        <text x="440" y="164" text-anchor="middle">L⁺(有结果)</text>
+        <text x="440" y="186" text-anchor="middle" fill="#B54A2C" font-size="10">只保留减损的</text>
+
+        <!-- Step 4 -->
+        <rect x="545" y="120" width="140" height="70" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="615" y="108" text-anchor="middle" fill="#24555A" font-weight="600">④ Fine-tune</text>
+        <text x="615" y="148" text-anchor="middle">在增强数据 C*</text>
+        <text x="615" y="166" text-anchor="middle">上微调原模型</text>
+
+        <line x1="160" y1="155" x2="195" y2="155" stroke="#96897A" stroke-width="1" marker-end="url(#ah-2)"/>
+        <line x1="335" y1="155" x2="370" y2="155" stroke="#96897A" stroke-width="1" marker-end="url(#ah-2)"/>
+        <line x1="510" y1="155" x2="545" y2="155" stroke="#96897A" stroke-width="1" marker-end="url(#ah-2)"/>
+
+        <!-- 输入输出标注 -->
+        <text x="90" y="245" text-anchor="middle" fill="#96897A" font-size="10">输入：纯文本语料 C</text>
+        <text x="265" y="245" text-anchor="middle" fill="#96897A" font-size="10">含 [API(…)] 的候选</text>
+        <text x="440" y="245" text-anchor="middle" fill="#96897A" font-size="10">裁判：LM 损失</text>
+        <text x="615" y="245" text-anchor="middle" fill="#24555A" font-size="10">输出：Toolformer</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · Toolformer 四步自监督流水线：整套流程的"裁判"不是人，而是模型自己的语言建模损失</figcaption>
+  </figure>
+
+  <h3>步骤一：把工具调用变成"文本"</h3>
+  <p>要做这一切，第一步得让"调工具"这件事能写进文本里。作者把每次 API 调用定义成一个元组 $c = (e_{api}, e_{in})$，其中 $e_{api}$ 是工具名（如 <em class="latin">Calculator</em>），$e_{in}$ 是输入参数。然后用一对外层特殊 token 把它"包"起来，把调用、返回结果都线性化成普通文本序列：</p>
+
+  <pre><code>Pittsburgh is also known as <span style="color:#B54A2C">&lt;API&gt;</span>QA("What other name is Pittsburgh known by?")<span style="color:#B54A2C">&lt;/API&gt;</span> Steel City<span style="color:#96897A"> the Steel City.</span></code></pre>
+
+  <p>这里 <code>&lt;API&gt; ... &lt;/API&gt;</code> 包住的是"调用本身"，紧跟其后的 <code>Steel City</code> 是工具返回的结果 $r$，再往后接原文。一旦调用、返回都被写成 token，模型就能像预测任何普通词一样去预测它们——这就是"<em>把工具调用训进权重</em>"的字面含义。</p>
+
+  <h3>步骤二：让模型自己"提议"该在哪调什么</h3>
+  <p>现在语料里还没有这些调用，得有人去"种"。作者只给模型每个工具<em>一小撮人工写的示范</em>（论文里说是 a handful of demonstrations，每种工具就几条），然后把大段纯文本喂给模型，让它用上下文学习的方式，<em>在文本的各个位置上采样出可能的 API 调用</em>——调什么工具、传什么参数，全由模型自己猜。这一步会产出海量候选，绝大多数都是噪音。</p>
+
+  <h3>步骤三：用损失当裁判，过滤出"真有用"的调用</h3>
+  <p>这是全篇最巧妙的一步，也是回答前面那个思考题的答案。作者没有去看"模型最终答得对不对"（那是结果监督，需要标准答案），而是看<em>把工具结果塞进上下文后，模型预测后续文本是不是更容易了</em>。具体地，对位置 $i$ 上的候选调用 $c_i$ 及其返回 $r_i$，定义一个加权交叉熵损失：</p>
+
+  <div class="formula-block">
+    $$ L_i(z) = -\sum_{j \geq i} w_{j-i} \log p_M\!\left(x_j \mid z,\, x_{1:j-1}\right) $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>这里 $z$ 是塞到位置 $i$ 的"前缀"，权重 $w$ 让越靠后的 token 影响越小（贴近调用位置的 token 更受影响）。然后比较两种情形：</p>
+  <ul>
+    <li><em>有结果</em>：$L_i^{+} = L_i\!\big(e(c_i, r_i)\big)$，把"调用+返回"都塞进去；</li>
+    <li><em>无结果</em>：$L_i^{-} = \min\!\big(L_i(\varepsilon),\; L_i(e(c_i, \varepsilon))\big)$，取"完全不调"和"调了但不给返回"两者中损失更小的那个。</li>
+  </ul>
+
+  <p>过滤规则只有一行：当且仅当<em>有了结果后损失下降得够多</em>，这个调用才被留下——</p>
+
+  <div class="formula-block">
+    $$ L_i^{-} - L_i^{+} \geq \tau_f $$
+    <span class="eqn mono">(2)</span>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ah-3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 原始文本 -->
+        <text x="350" y="28" text-anchor="middle" fill="#96897A" font-size="10">原始文本 x</text>
+        <rect x="40" y="40" width="620" height="34" fill="#ECE4D4" stroke="#96897A" rx="2"/>
+        <text x="350" y="62" text-anchor="middle">Pittsburgh is also known as ____ the Steel City.</text>
+
+        <!-- 候选1 被留下 -->
+        <text x="100" y="100" fill="#24555A" font-size="10">候选 c₁：调 QA 问别名</text>
+        <rect x="40" y="108" width="620" height="34" fill="#24555A" fill-opacity="0.10" stroke="#24555A" rx="2"/>
+        <text x="350" y="130" text-anchor="middle" fill="#24555A">…known as &lt;API&gt;QA("…alias?")&lt;/API&gt; Steel City the Steel City.</text>
+        <text x="160" y="170" fill="#24555A" font-size="10">L⁻ − L⁺ ≥ τf</text>
+        <text x="160" y="184" fill="#24555A" font-weight="600">✓ 留下</text>
+
+        <!-- 候选2 被丢弃 -->
+        <text x="100" y="200" fill="#B54A2C" font-size="10">候选 c₂：调 QA 问"在哪个国家"</text>
+        <rect x="40" y="208" width="620" height="0" fill="none"/>
+      </g>
+      <!-- 用对比框示意丢弃 -->
+      <g font-family="JetBrains Mono" font-size="12">
+        <rect x="40" y="208" width="620" height="0"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 损失过滤示意：候选 c₁ 让后续"the Steel City"更好预测（减损达标，留下）；候选 c₂ 问的是"哪个国家"，对预测这句后续文本无帮助，被丢弃</figcaption>
+  </figure>
+
+  <p>这个设计妙在三点：第一，<em>不需要标准答案</em>，监督信号完全来自模型自己的损失，真正做到自监督；第二，<em>它衡量的是"对模型有用"而非"对人有用"</em>，正好避开前人"人工标注与模型需求错位"的坑；第三，<em>阈值 $\tau_f$ 一刀切</em>，调高了样本少而精，调低了样本多而噪，一个超参就能在数据量与质量间拨杆。</p>
+
+  <h3>步骤四：在过滤后的数据上微调，并改造推理</h3>
+  <p>把通过过滤的调用连同返回结果，<em>原样交错插回</em>原始文本，得到增强语料 $C^*$。注意原文本一字未改，只是间或插入了带返回的工具调用——这保证了模型在学"调工具"的同时，<em>原始语言建模分布没被破坏</em>。然后用标准语言建模目标微调原模型（论文用的是 <em class="latin">GPT-J</em>，6.7B 参数）。</p>
+  <p>推理时也做了配套改造：模型正常自回归生成，<em>一旦吐出代表"请求返回"的特殊 token，解码立刻暂停</em>，系统去真正调用对应 API，把返回结果和闭合 token 插回序列，再让模型继续往下写。对外部世界而言，模型就像中途"停笔查了一下资料"又接着写。</p>
+
+  <div class="callout">
+    <span class="label">工具清单</span>
+    论文实证了五种工具，全部是"文本进、文本出"的 API：<em>计算器</em>（算术）、<em class="latin">QA</em> 系统（基于 <em class="latin">Atlas</em> 的事实问答）、<em>BM25 维基百科检索</em>、<em>机器翻译</em>模型、<em>日历</em>（返回当前日期）。选这五样不是随便挑的——它们正好覆盖了开篇列出的那四类"再大模型也学不会"的毛病。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>实验在 <em class="latin">GPT-J</em>（6.7B）上做，用 <em class="latin">CCNet</em> 子集构造增强数据，8 块 <em class="latin">A100</em> + <em class="latin">DeepSpeed ZeRO-3</em> 微调。基线很有意思：原始 <em class="latin">GPT-J</em>（看原生能力）、<em class="latin">GPT-J + CC</em>（在同样纯文本上微调，用来证明"增益不是来自多看了一遍语料"）、<em class="latin">OPT-66B</em> 和 <em class="latin">GPT-3 175B</em>（看"参数大十倍、二十多倍"能不能碾压）。全部在<em>零样本</em>设置下评估。</p>
+
+  <table>
+    <thead>
+      <tr><th>任务 / 指标</th><th>基线最佳</th><th>Toolformer</th><th>工具触发率</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">LAMA 事实探测</td><td>GPT-3 175B 持平</td><td>追平 175B</td><td>98.1% 调 QA</td></tr>
+      <tr><td class="text">数学（ASDiv / SVAMP / MAWPS）</td><td>OPT-66B / GPT-3</td><td>性能近乎翻倍，反超</td><td>97.9% 调计算器</td></tr>
+      <tr><td class="text">TempLAMA 时间感知</td><td>所有基线</td><td>大幅领先</td><td>54.8% 调日历</td></tr>
+      <tr><td class="text">多语 QA（未含 MT 工具时）</td><td>低分</td><td>显著提升</td><td>—</td></tr>
+      <tr><td class="text">WikiText 困惑度（语言能力）</td><td>GPT-J 基线</td><td>几乎不变</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <p>几个最让人眼前一亮的发现：第一，<em>触发率本身就说明问题</em>——在算术任务上模型 97.9% 的时候主动掏出计算器，在事实问答上 98.1% 主动调 QA，说明它真的"内化"了"这种题该用这个工具"的判断，而不是瞎调。第二，<em>6.7B 在它该用工具的领域，硬是把 175B 的 GPT-3 甩在身后</em>——参数不再是唯一解，"小模型 + 外挂精确工具"在这几类任务上性价比碾压。第三，也是最让作者欣慰的：<em>WikiText 困惑度几乎纹丝不动</em>，证明"学调工具"和"保持通用语言能力"这对矛盾，被这套设计真的调和了。</p>
+  <p>消融实验还挖出一条很有意思的<em>规模规律</em>：利用工具的能力，要到参数量大约 <em>775M</em> 之后才开始显现，更小的模型即使照搬这套流程也学不会。换句话说，"自己教自己用工具"这件事本身，是一种<em>涌现能力</em>。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="175" y="28" text-anchor="middle" font-weight="600">旧范式</text>
+        <text x="525" y="28" text-anchor="middle" font-weight="600" fill="#B54A2C">Toolformer</text>
+        <line x1="350" y1="20" x2="350" y2="220" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <rect x="60" y="50" width="230" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="70" text-anchor="middle">监督来源：人工标注</text>
+
+        <rect x="60" y="92" width="230" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="112" text-anchor="middle">工具范围：单一 / 任务特定</text>
+
+        <rect x="60" y="134" width="230" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="154" text-anchor="middle">调用时机：硬编码流水线</text>
+
+        <rect x="60" y="176" width="230" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="196" text-anchor="middle">通用性：丧失</text>
+
+        <rect x="410" y="50" width="230" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="70" text-anchor="middle" fill="#B54A2C">监督来源：LM 自身损失</text>
+
+        <rect x="410" y="92" width="230" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="112" text-anchor="middle" fill="#B54A2C">工具范围：任意 API</text>
+
+        <rect x="410" y="134" width="230" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="154" text-anchor="middle" fill="#B54A2C">调用时机：模型自主决定</text>
+
+        <rect x="410" y="176" width="230" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="196" text-anchor="middle" fill="#B54A2C">通用性：保留</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · Toolformer 与旧范式在四个维度上的对比：核心区别是"裁判"从人换成了模型自己的损失</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>Toolformer 的最大贡献，是把"模型该不该调工具、调哪个、怎么用结果"这三件事的决策权，从<em>人和流水线</em>手里夺过来，<em>交还给模型自己</em>，并且用一种优雅到近乎朴素的方式——"对你预测下文有没有帮助"——来当唯一裁判。它证明了：<em>不需要海量人工标注，模型也能自己长出工具使用能力</em>。</p>
+  <p>它的思路直接启发了后来一系列工作：把"工具调用"作为一种特殊 token 训进权重，几乎成了 <em>function calling</em>（函数调用）范式的原型；"用模型自己的损失当裁判、自生成训练数据"这一招，也被后续很多 agent 训练工作继承。可以说，它是从"会聊天的模型"走向"会动手的 agent"路上，最早的一块路标。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>作者相当坦诚地列了几条硬伤，而这些硬伤恰好划出了后来 agent 研究的主战场：</p>
+  <ul>
+    <li><em>不能链式调用</em>：一个工具的输出不能直接当另一个工具的输入，无法做"先搜再算再翻译"这种多步流水线。</li>
+    <li><em>没有多轮交互</em>：比如搜索结果只能拿第一段，不能"翻下一页""换关键词再搜"。</li>
+    <li><em>对指令措辞敏感</em>：训练时的措辞分布会迁移到推理，换个问法就可能不触发工具。</li>
+    <li><em>不计调用成本</em>：模型决策时完全不考虑调一次 API 要花多少时间或钱。</li>
+    <li><em>工具必须文本进文本出</em>：图像、音频这类非文本 API 没法直接套这套流程。</li>
+  </ul>
+  <p>这些局限几乎预言了接下来两年的研究方向：<em>链式调用</em>催生了各种"思考-行动-观察"循环的 agent 框架，<em>多轮交互</em>催生了带反馈的 agent 训练，<em>非文本工具</em>则被多模态模型逐步消化。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把镜头拉远看整条大模型脉络：2017 年 <em class="latin">Transformer</em> 打下架构地基；2018–2020 年 <em class="latin">BERT</em>、<em class="latin">GPT-2/3</em> 让"预训练"成为范式；2020–2022 年 <em class="latin">Chinchilla</em> 摸清"算力最优"配比，<em class="latin">InstructGPT</em> 用人类反馈教模型听懂人话；2022–2023 年进入"对齐与应用"期，<em class="latin">CoT</em> 系列点燃推理，<em class="latin">Self-Refine</em>/<em class="latin">Reflexion</em>/<em class="latin">CRITIC</em>/<em class="latin">Self-RAG</em> 一路把"自我纠正"从提示技巧推进到训练进权重。</p>
+  <p><em class="latin">Toolformer</em> 正处在这条线的转折点：它把 <em class="latin">Self-RAG</em> 的"反思 token 进权重"思路，从"一种检索器"拓成"任意工具"，让模型第一次具备了<em>自主使用外部世界</em>的能力。再往后，就要解决它留下的"不能链式、不能多轮"——那正是下一篇 <em class="latin">ReAct</em> 要登场的地方，agent 时代就此拉开帷幕。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>一作 Timo Schick 在这一年前后简直是"自监督数据生成"的狂热信徒：他的另一篇 <em class="latin">Self-Instruct</em> 雏形工作，和 Toolformer 共享同一种哲学——"与其求人标注，不如让模型自己生成、自己筛"。有趣的是，Toolformer 论文里模型<em>从未被告知</em>"算术题该用计算器"，它是看着文本里"400 人里有 29% 通过"这种句子，自己琢磨出"在这儿塞个 [Calculator(400/1400)] 会让后面更好预测"的。这种"模型自己发现什么时候工具帮得上忙"的涌现，比人工教它规则要迷人得多。</p>
+  <p>还有个容易被忽略的彩蛋：Toolformer 发表在 2023 年 2 月，几乎和 ChatGPT 函数调用、各种 plugin 生态同一波涌现。而它选择 <em class="latin">GPT-J</em> 这个相对小的 6.7B 模型做实验，本身就是一种宣言——<em>"会调工具的小模型，能在特定领域咬住参数大二十多倍的巨兽"</em>。这个判断在两年后被开源小模型 + 工具调用的浪潮反复验证。至于"模型越界的幽默"也不少：早期版本里，模型有时会在完全不需要工具的地方也硬塞一个调用，活像个刚学会用锤子的孩子，看什么都像钉子。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 俱乐部门口的"损失门卫" -->
+        <rect x="40" y="60" width="180" height="90" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="130" y="50" text-anchor="middle" fill="#24555A" font-weight="600">训练集俱乐部</text>
+        <text x="130" y="95" text-anchor="middle">只收"减损"</text>
+        <text x="130" y="113" text-anchor="middle">的调用</text>
+
+        <!-- 门卫 -->
+        <circle cx="320" cy="105" r="26" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="320" y="100" text-anchor="middle" fill="#B54A2C" font-size="10">损失门卫</text>
+        <text x="320" y="115" text-anchor="middle" fill="#B54A2C" font-size="9">L⁻−L⁺≥τf?</text>
+
+        <!-- 排队的候选 -->
+        <rect x="400" y="70" width="80" height="24" fill="#24555A" fill-opacity="0.10" stroke="#24555A"/>
+        <text x="440" y="86" text-anchor="middle" fill="#24555A">c₁ 减损 ✓</text>
+        <rect x="400" y="100" width="80" height="24" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="440" y="116" text-anchor="middle" fill="#96897A">c₂ 无用 ✗</text>
+        <rect x="400" y="130" width="80" height="24" fill="#24555A" fill-opacity="0.10" stroke="#24555A"/>
+        <text x="440" y="146" text-anchor="middle" fill="#24555A">c₃ 减损 ✓</text>
+
+        <!-- 箭头 -->
+        <path d="M220 105 Q 270 105 290 105" fill="none" stroke="#96897A" stroke-width="1" marker-end="url(#ah-fun)"/>
+        <path d="M350 80 Q 380 80 398 82" fill="none" stroke="#24555A" stroke-width="1" marker-end="url(#ah-fun2)"/>
+        <path d="M350 112 Q 360 130 380 140" fill="none" stroke="#B54A2C" stroke-width="1" stroke-dasharray="3 3"/>
+        <text x="365" y="150" fill="#B54A2C" font-size="9">拒之门外</text>
+      </g>
+      <defs>
+        <marker id="ah-fun" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="ah-fun2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#24555A"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · "损失门卫"：每个候选 API 调用都要先回答"你让我预测下文更容易了吗"，达标才放行进训练集</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读完整篇，我最受触动的不是它做了多少工具，而是它背后那个<em>极简的裁判原则</em>：判断一个动作该不该被模型学会，就看"它让模型预测未来更容易了吗"。这个原则之所以深刻，是因为它把"什么是有用的工具调用"这个本来需要人来定义的主观问题，转换成了一个<em>模型自己能量化的客观指标</em>。人觉得有用的，模型未必觉得有用；模型自己损失下降了的，才是真的对它有用。这套哲学今天回头看，几乎就是"用模型自身的损失当奖励信号"的雏形——和后来大行其道的 RL 训练，在精神上是同源的。</p>
+  <p>从工程现实看，Toolformer 也是"小模型 + 外挂能力"路线的早期实证：在算术、事实、时间这些<em>符号精确</em>的领域，与其把模型堆到天文参数去硬背，不如让一个 6.7B 学会按需调精确工具。这条性价比路线，和今天开源小模型靠工具调用与 agent 框架"以小博大"的趋势，一脉相承。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    Toolformer 用"损失下降"来当裁判，可损失下降≠最终答案正确。一个调用可能让模型"更自信地预测错答案"而被留下。你觉得，这种"以模型自身损失为裁判"的做法，在什么任务上会失灵？又该怎么补上这道"自信但错误"的缝隙？带着这个问题，我们下篇见。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>ReAct: Synergizing Reasoning and Acting in Language Models</h3>
+    <p style="margin:0;">Toolformer 把工具调用训进了权重，却老老实实承认"我还不会把一个工具的输出喂给下一个工具"。下一篇我们讲 <em class="latin">ReAct</em>：它不靠训练，只在推理时把"思考"和"行动"交织成 Thought→Action→Observation 的循环，让模型<em>一边想一边调工具、一边观察一边再想</em>，正好补上 Toolformer 留下的链式调用与多轮交互缺口——agent 时代真正的奠基之作，即将登场。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 034 篇</span>
+    <span>2026-09-03</span>
+  </footer>
+
+</div>
+</body>
+</html>
