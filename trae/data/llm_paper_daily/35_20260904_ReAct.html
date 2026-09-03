@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReAct 论文精读 · 大模型经典论文系列 #035</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#035</span>
+  </div>
+
+  <h1 class="title">
+    ReAct: Synergizing Reasoning and Acting in Language Models
+    <span class="en">ReAct：把“思考”和“行动”交织成循环——Thought→Action→Observation 的推理-行动协同范式，让模型一边想一边调工具，agent 时代的奠基之作</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Shunyu Yao, Jeffrey Zhao, Dian Yu, Nan Du, Izhak Shafran, Karthik Narasimhan, Yuan Cao</span>
+    <span>机构：Princeton University / Google Research, Brain team</span>
+    <span>发表：2022-10 · arXiv，ICLR 2023 (Oral, Notable Top 5%)</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2210.03629" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/ysymyth/ReAct" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://react-lm.github.io" target="_blank" rel="noopener">Project</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">2022 年 10 月，普林斯顿的一间实验室里，一位博士生正在给大模型出题：“除了 Apple Remote，还有什么设备能控制 Apple Remote 原本设计的程序？”他让模型只用脑子想、不准查资料——模型自信满满地回答“iPhone、iPad、iPod”，可惜答案该是“iPod”。接着他换了个玩法：允许模型边想边去查维基百科。这一次，模型搜了 Apple Remote，发现“Front Row”程序，再搜 Front Row，读到它“由 Apple 键盘功能键控制”，于是写下结论，给出答案。</p>
+
+  <p class="lead">这不是更准了一点点的问题。前一种“只想不动手”的模型，有 56% 的错误来自一本正经地胡编乱造（学术上叫“幻觉”）；后一种“想一步、查一步”的模型，幻觉错误几乎归零。这篇让模型“一边想一边动手”的论文，就是今天 agent（智能体）浪潮真正的起点——它的名字叫 ReAct。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    ReAct 把“推理（Thought）”和“行动（Action）”交织成一个循环，让大模型边想边调工具、边查边修正，用一个最朴素的“思考→行动→观察”循环，奠定了此后所有语言智能体的标准控制流程。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>如果说本系列第 24 篇 <em class="latin">Chain-of-Thought</em> 解决了“模型会不会分步想”，第 34 篇 <em class="latin">Toolformer</em> 解决了“模型会不会用工具”，那么 ReAct 解决的是一个更根本的问题：<em>“想”和“用”能不能在同一根思维线上来回穿插？</em></p>
+  <p>在 ReAct 之前，这两条路线是分裂的。推理派（CoT、Self-Consistency、Tree of Thoughts）让模型在脑子里画推理链，但模型的“脑子”是闭卷的，知识冻在训练权重里，一旦记错就会一路错到底；行动派（WebGPT、SayCan）让模型去调搜索引擎、操控机器人，但模型只管“做”不解释“为什么做”，遇到意外就抓瞎。ReAct 把这两半焊在一起：用思考去规划行动，用行动去给思考补充外部事实。它既是 CoT 思维链的“接地”版，也是工具调用的“会思考”版。</p>
+  <p>它开启的不是一项技术，而是一整个时代——后来所有“agent”框架的控制流，几乎都能在 ReAct 的循环里找到原型。LangChain 的作者 Harrison Chase 公开说过，ReAct 是他创办 LangChain 时最早看到的、最启发他的论文之一。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="120" x2="660" y2="120" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 已解析节点 -->
+        <circle cx="70" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="70" y="100" text-anchor="middle">2017</text>
+        <text x="70" y="150" text-anchor="middle">Transformer</text>
+
+        <circle cx="180" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="180" y="100" text-anchor="middle">2022.01</text>
+        <text x="180" y="150" text-anchor="middle">CoT</text>
+
+        <circle cx="270" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="270" y="100" text-anchor="middle">2023.02</text>
+        <text x="270" y="150" text-anchor="middle">Toolformer</text>
+
+        <!-- 本篇高亮 -->
+        <circle cx="380" cy="120" r="9" fill="#B54A2C"/>
+        <text x="380" y="92" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="380" y="150" text-anchor="middle" fill="#2E2A22" font-weight="600">ReAct</text>
+        <text x="380" y="166" text-anchor="middle" fill="#B54A2C" font-size="10">2022.10 · agent 范式起点</text>
+
+        <circle cx="500" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="500" y="100" text-anchor="middle">2023.03</text>
+        <text x="500" y="150" text-anchor="middle">Reflexion</text>
+
+        <circle cx="610" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="610" y="100" text-anchor="middle">2023.05</text>
+        <text x="610" y="150" text-anchor="middle">Tree of Thoughts</text>
+      </g>
+      <text x="350" y="210" text-anchor="middle" font-family="Lora" font-size="12" fill="#96897A" font-style="italic">已解析节点（浅色）· 本篇（高亮）</text>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型推理-行动脉络中 ReAct 的位置：承 CoT/工具调用，启 agent 时代</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>2022 年的 LLM 研究者面前摆着两个看起来都很强、却互不来往的“半身人”。</p>
+  <p>一个是<em>推理派</em>。代表是思维链（CoT）：给模型看几个带推理草稿的例子，它就能分步想出数学题、常识题的答案。但 CoT 是个“闭卷考生”——它只能翻自己脑子里的记忆，而记忆是训练时冻结的、会记错的。论文里有个残酷的统计：在 HotpotQA 上，纯 CoT 的错误里有 <em>56% 是幻觉</em>，也就是模型把不存在的事编得头头是道，还一路错传下去（这叫“错误传播”）。</p>
+  <p>另一个是<em>行动派</em>。代表是 WebGPT、SayCan 这类工作：让模型去调浏览器查网页、给机器人下动作指令。它能接触真实世界，但模型只输出“干什么”，不输出“为什么这么干”，没有计划、没有工作记忆，环境一变就懵。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    把任务想象成在陌生厨房里做一道菜。CoT 像一个全程闭眼、只凭记忆炒菜的厨师——他记得很多菜谱，但记混了盐和糖你拦不住；行动派像一个只会按菜谱机械操作、从不思考的帮工——菜谱说放盐、可盐罐空了，他就卡在那儿不动了。真正会做菜的人是第三种：边切菜边嘀咕“现在该烧水了”，发现没盐就嘀咕“那用酱油和胡椒替”，忘了和面步骤就嘀咕“我上网查一下”——<em>思考指导行动，行动反哺思考</em>，这正是人类认知里的“内部言语”。
+  </div>
+
+  <p>ReAct 的作者们注意到，这种“边想边做”的能力，在心理学里早有名字：维果茨基称之为“内部言语”（inner speech），被认为负责自我调节、策略制定和工作记忆。他们提出一个朴素的疑问：<em>既然人脑是这么干活的，为什么不让语言模型也这么干？</em></p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>一句话：能不能让大模型把“自由形式的语言推理”和“面向任务的具体行动”<em>交织在同一条轨迹里</em>，并且让两者互相增益——推理用来规划、跟踪、纠正行动，行动用来从外部世界（知识库、环境）取回信息喂给推理？</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果你是模型，面对“Jason Statham 主演的《敢死队》系列导演是谁”这种要查两跳的问题，你会怎么安排“想”和“查”的顺序？是一口气全想完再查，还是想一步查一步？哪种更容易出错、为什么？
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>ReAct 的方法简洁到让人怀疑“这就完了？”——但正是这种简洁让它成了后来所有 agent 的母模板。</p>
+
+  <h3>核心一招：把“想”也变成一种行动</h3>
+  <p>标准 agent 的设定是：每一步接收一个观察 $o_t$，按策略输出一个动作 $a_t$。ReAct 做的事情，是把动作空间从 $\mathcal{A}$ 扩成 $\hat{\mathcal{A}} = \mathcal{A} \cup \mathcal{L}$——其中 $\mathcal{L}$ 是<em>语言空间</em>。落到语言空间里的那个动作，就叫一个“思考”（Thought）。</p>
+
+  <div class="formula-block">
+    $$ \hat{\mathcal{A}} = \mathcal{A} \cup \mathcal{L}, \qquad a_t \in \mathcal{L} \text{ 称为 Thought} $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>关键在于：Thought 不改变外部环境，所以<em>不会产生新的观察</em>。它唯一的作用，是把“对当前上下文推理一番”的结论写回上下文，让后面的行动或推理更靠谱。论文列举了 Thought 能干的好几件事：拆解目标、制定计划、注入常识、从观察里摘出要点、跟踪进度、处理异常、调整计划。</p>
+
+  <h3>核心二招：让“想”和“做”按任务密度自适应交织</h3>
+  <p>ReAct 没有规定死板的格式，而是按任务类型给两种织法：</p>
+  <ul>
+    <li><em>推理密集型任务</em>（问答、事实验证）：Thought 和 Action <em>密集交替</em>，形成 Thought → Action → Observation 的多轮循环。</li>
+    <li><em>决策型任务</em>（文本游戏、网页操作）：动作往往很多，Thought 只需<em>稀疏地</em>出现在关键位置——并且由模型自己决定何时插入。</li>
+  </ul>
+
+  <figure>
+    <svg viewBox="0 0 700 340" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowR" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 原动作空间 -->
+        <text x="60" y="35" fill="#96897A" font-size="11">原动作空间 𝒜</text>
+        <rect x="60" y="48" width="120" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="73" text-anchor="middle">Search / Action</text>
+
+        <!-- 语言空间 -->
+        <text x="250" y="35" fill="#96897A" font-size="11">语言空间 𝓛</text>
+        <rect x="250" y="48" width="120" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="310" y="73" text-anchor="middle">自由形式文本</text>
+
+        <!-- 合并 -->
+        <text x="430" y="35" fill="#B54A2C" font-size="11" font-weight="600">扩大的动作空间 𝓐̂</text>
+        <rect x="430" y="48" width="220" height="40" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="540" y="73" text-anchor="middle" fill="#B54A2C" font-weight="600">行动 ∪ Thought</text>
+        <line x1="180" y1="68" x2="430" y2="68" stroke="#96897A" marker-end="url(#arrowR)"/>
+        <line x1="370" y1="68" x2="430" y2="68" stroke="#96897A" marker-end="url(#arrowR)"/>
+
+        <!-- 循环 -->
+        <rect x="130" y="150" width="150" height="48" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="205" y="179" text-anchor="middle" fill="#24555A" font-weight="600">Thought 思考</text>
+
+        <rect x="330" y="150" width="150" height="48" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="405" y="179" text-anchor="middle">Action 行动</text>
+
+        <rect x="230" y="270" width="240" height="48" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="299" text-anchor="middle">Observation 观察（环境反馈）</text>
+
+        <line x1="280" y1="174" x2="330" y2="174" stroke="#96897A" stroke-width="1.5" marker-end="url(#arrowR)"/>
+        <line x1="405" y1="198" x2="350" y2="270" stroke="#96897A" stroke-width="1.5" marker-end="url(#arrowR)"/>
+        <line x1="300" y1="294" x2="205" y2="198" stroke="#96897A" stroke-width="1.5" marker-end="url(#arrowR)"/>
+        <text x="225" y="240" fill="#96897A" font-size="10">反哺推理</text>
+        <text x="365" y="240" fill="#96897A" font-size="10">触发行动</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · ReAct 的两步设计：把“想”纳入动作空间，再让 Thought-Action-Observation 循环往复</figcaption>
+  </figure>
+
+  <h3>工具与少样本：一个极简的维基百科 API</h3>
+  <p>ReAct 没有搞复杂的检索器，而是给模型一个故意做“弱”的维基百科接口，逼它用语言显式推理来检索。接口只有三个动作：</p>
+  <ul>
+    <li><em class="latin">Search[entity]</em>：返回该实体词条页的前 5 句；找不到就返回搜索引擎推荐的 5 个近似实体。</li>
+    <li><em class="latin">Lookup[string]</em>：在当前页里找下一个包含该字符串的句子，模拟浏览器的 Ctrl+F。</li>
+    <li><em class="latin">Finish[answer]</em>：给出答案，结束任务。</li>
+  </ul>
+  <p>作者强调，这个接口比主流检索器<em>弱得多</em>——只能按词条精确名取一小段。目的是模拟“人怎么查维基”，并强迫模型靠显式语言推理来导航。模型是冻结的 PaLM-540B，只靠 6 个（HotpotQA）或 3 个（FEVER）手写的人例做少样本提示，没有微调。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowF" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <rect x="20" y="70" width="120" height="56" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="95" text-anchor="middle">问题输入</text>
+        <text x="80" y="112" text-anchor="middle" fill="#96897A" font-size="10">Question</text>
+
+        <rect x="180" y="70" width="120" height="56" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="240" y="95" text-anchor="middle" fill="#24555A" font-weight="600">Thought</text>
+        <text x="240" y="112" text-anchor="middle" fill="#24555A" font-size="10">推理：下一步查什么</text>
+
+        <rect x="340" y="70" width="120" height="56" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="400" y="95" text-anchor="middle">Action</text>
+        <text x="400" y="112" text-anchor="middle" fill="#96897A" font-size="10">Search/Lookup/Finish</text>
+
+        <rect x="500" y="70" width="120" height="56" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="560" y="95" text-anchor="middle">Observation</text>
+        <text x="560" y="112" text-anchor="middle" fill="#96897A" font-size="10">Wiki 返回片段</text>
+
+        <line x1="140" y1="98" x2="180" y2="98" stroke="#96897A" marker-end="url(#arrowF)"/>
+        <line x1="300" y1="98" x2="340" y2="98" stroke="#96897A" marker-end="url(#arrowF)"/>
+        <line x1="460" y1="98" x2="500" y2="98" stroke="#96897A" marker-end="url(#arrowF)"/>
+
+        <path d="M560,126 Q400,180 240,126" fill="none" stroke="#B54A2C" stroke-width="1.5" marker-end="url(#arrowF)"/>
+        <text x="400" y="172" text-anchor="middle" fill="#B54A2C" font-size="10">观察回灌，循环继续直到 Finish</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 知识密集型任务上的 ReAct 执行流：推理与检索交替推进</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>论文在四个差异极大的基准上检验 ReAct：两个偏知识推理（HotpotQA 多跳问答、FEVER 事实验证），两个偏交互决策（ALFWorld 文本游戏、WebShop 网页购物）。</p>
+
+  <h3>知识推理：接地让幻觉几乎归零</h3>
+  <p>在 FEVER 事实验证上，ReAct（60.9）直接超过 CoT（56.3）和纯行动（58.9）。在 HotpotQA 上 ReAct（27.4 EM）略逊于 CoT（29.4）——但论文给出一个关键洞察：这并非“想+做”输了，而是那个故意做弱的维基 API 拖了后腿，检索不到时模型宁可说“查不到”。更猛的组合是 <em>ReAct + CoT 自洽（self-consistency）</em>：先用 ReAct 取回外部证据，再让 CoT-SC 在内部知识与外部证据间投票，HotpotQA 拿到 35.1，FEVER 拿到 64.6，全面登顶。</p>
+
+  <table>
+    <thead>
+      <tr><th>方法</th><th>HotpotQA (EM)</th><th>FEVER (Acc)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">Standard</td><td>28.7</td><td>57.1</td></tr>
+      <tr><td class="text">CoT（只推理）</td><td>29.4</td><td>56.3</td></tr>
+      <tr><td class="text">Act-only（只行动）</td><td>25.7</td><td>58.9</td></tr>
+      <tr><td class="text">ReAct（推理+行动）</td><td>27.4</td><td>60.9</td></tr>
+      <tr><td class="text">ReAct → CoT-SC</td><td>35.1</td><td>64.6</td></tr>
+    </tbody>
+  </table>
+
+  <p>人工分析揭示了“为什么”：<em>CoT 的失败有 56% 是幻觉，ReAct 的幻觉失败几乎是 0%</em>。ReAct 的主要失败模式不是胡编，而是“检索受限/搜索词没找对”——这是一种<em>更诚实、可诊断</em>的错误，而非难辨真伪的胡说。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="100" y="28" text-anchor="middle" font-weight="600">CoT（只推理）</text>
+        <text x="470" y="28" text-anchor="middle" font-weight="600" fill="#B54A2C">ReAct（推理+行动）</text>
+
+        <!-- CoT 失败构成 -->
+        <text x="60" y="60" fill="#96897A" font-size="11">失败原因占比</text>
+        <rect x="60" y="70" width="280" height="26" fill="#B54A2C" fill-opacity="0.55"/>
+        <text x="200" y="88" text-anchor="middle" fill="#fff" font-size="11">幻觉 56%</text>
+        <rect x="60" y="100" width="280" height="26" fill="#96897A" fill-opacity="0.35"/>
+        <text x="200" y="118" text-anchor="middle" font-size="11">错误传播 / 其他 44%</text>
+
+        <!-- ReAct 失败构成 -->
+        <rect x="330" y="70" width="280" height="18" fill="#B54A2C" fill-opacity="0.30"/>
+        <text x="470" y="83" text-anchor="middle" font-size="10">幻觉 ≈0%</text>
+        <rect x="330" y="90" width="280" height="36" fill="#24555A" fill-opacity="0.30"/>
+        <text x="470" y="112" text-anchor="middle" fill="#24555A" font-size="11">检索受限 / 搜索词不准</text>
+
+        <line x1="200" y1="140" x2="200" y2="200" stroke="#96897A" stroke-dasharray="3 3"/>
+        <line x1="470" y1="140" x2="470" y2="200" stroke="#96897A" stroke-dasharray="3 3"/>
+        <text x="200" y="190" text-anchor="middle" fill="#96897A" font-size="10">错误难辨真伪</text>
+        <text x="470" y="190" text-anchor="middle" fill="#24555A" font-size="10">错误诚实、可诊断</text>
+        <text x="335" y="220" text-anchor="middle" fill="#96897A" font-size="11">图示为人工分析的失败模式构成（示意比例）</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 失败模式对比：CoT 多为幻觉，ReAct 多为可诊断的检索受限</figcaption>
+  </figure>
+
+  <h3>交互决策：两个例子反杀十万级训练数据</h3>
+  <p>真正的震撼来自决策任务。ALFWorld（文本家务游戏）上，ReAct 只用 <em>1–2 个少样本例子</em>，就比用 10⁵ 个回合训练的模仿/强化学习方法高出 <em>34 个百分点</em>的绝对成功率。WebShop（模拟网购）上，ReAct 同样用极少的例子，把成功率拉到 40%，比 imitation learning 的 29.1% 高出约 10 个绝对点。</p>
+
+  <table>
+    <thead>
+      <tr><th>方法</th><th>训练数据量</th><th>ALFWorld 成功率</th><th>WebShop 成功率</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">Imitation / RL</td><td>10³–10⁵ 回合</td><td>~37%</td><td>29.1%</td></tr>
+      <tr><td class="text">Act-only</td><td>1–2 例</td><td>较低</td><td>30.1%</td></tr>
+      <tr><td class="text">ReAct</td><td>1–2 例</td><td>~71–74%</td><td>40.0%</td></tr>
+    </tbody>
+  </table>
+
+  <p>还有个“量变到质变”的发现：当允许微调时，只需 <em>3000 个例子</em>，ReAct 就成为四种方法里最强的——PaLM-8B 微调 ReAct 反超所有 PaLM-62B 提示方法，PaLM-62B 微调 ReAct 反超所有 540B 提示方法。这暗示：教会模型“怎么推理+行动”去获取信息，远比让它“记住事实”高效。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>ReAct 的真正遗产不是那几个百分点的提升，而是它给整个行业<em>提供了一套控制流的原语</em>。Thought-Action-Observation 这个三段循环，后来成了 LangChain、LangGraph、LlamaIndex、Hugging Face transformers agents 等几乎所有 agent 框架的默认骨架。今天你听到的“function calling”“tool use”“agentic workflow”，骨子里大都能追到 ReAct。</p>
+  <p>它还顺手把“可解释性”重新拉回 agent 设计的中心：因为每一步行动前都有显式的 Thought，人能一眼看懂模型为什么这么干、信息是从内部来的还是查来的，甚至可以中途编辑 Thought 来纠正模型。这把 agent 从“黑箱执行器”变成了“可审查的协作者”。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>ReAct 也并非银弹，论文自己大方承认了几处短板：</p>
+  <ul>
+    <li><em>HotpotQA 上略输 CoT</em>：根源在那个故意做弱的检索接口，检索失败时模型“老实”地说查不到，反倒拉低了分数——这其实暴露了“推理能力 vs 工具能力”的失衡。</li>
+    <li><em>长轨迹撞上下文长度</em>：行动越多，轨迹越长，少样本示例容易撑爆 in-context 的输入上限，作者已开始尝试微调缓解。</li>
+    <li><em>单线推理、不会回溯</em>：ReAct 是一条道走到黑的循环，错了难回头——这恰恰是后来 Reflexion（本系列第 31 篇）、Tree of Thoughts（第 27 篇）、LATS 等要补的课。</li>
+  </ul>
+  <p>后来者的“判决”也印证了这点：2025 年 11 月 LangGraph v1.0 把 <em class="latin">create_react_agent</em> 标记为非推荐，转向带 hook 与持久化状态（Durable State）的中间件架构——行业在说“光有裸 ReAct 循环不够，还得能回滚、能并行、能容错”。但这恰恰证明 ReAct 是个足够结实的底座，值得被反复改造而非推倒重来。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把 ReAct 放回本系列已走过的路上看，脉络格外清晰：</p>
+  <p>Transformer（第 1 篇）打下模型底座 → BERT/GPT 系列（2–4 篇）确立预训练范式 → Chinchilla/InstructGPT（5–6 篇）解决“训得对、听人话” → 进而对齐与应用期，推理派与行动派分头开花：CoT（24）、Self-Consistency（26）、Tree/Graph of Thoughts（27、28）让模型在脑内越想越深；Self-Refine、Reflexion、CRITIC、Self-RAG、Toolformer（29–34）让模型学会自我纠正与调工具。<em>ReAct 正是这两条支流在此汇合的河口</em>——它把“脑内推理”和“外部行动”焊成一根循环，agent 范式由此立柱。再往后，推理范式期（2025–）的 o1、DeepSeek-R1 把“思考”本身变成可训练的算力消耗，但那已是把 ReAct 的“想”推到极致的另一条故事线了。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>ReAct 背后有个很有意思的人：一作姚顺雨（Shunyu Yao）。他 2015 年以全省第三、704 分的成绩考入清华姚班，在校期间还是清华学生说唱社的<em>联合创始人</em>——一个能写代码也能写 flow 的硬核跨界选手。2019 年他到普林斯顿读博，导师 Karthik Narasimhan 来头也不小：当年在 OpenAI 做访问学者时，正是 GPT-1 的第二作者。姚顺雨自己回忆，第一次见面导师问“你想做什么”，他答“你做过的那些 text game，能不能用语言模型重做一遍”——整个 agent 之旅，就从这句闲聊开始。ReAct 这项工作，正是他在 Google 实习期间完成的。</p>
+  <p>命运的伏笔在后面：ReAct 之后姚顺雨又写了 Tree of Thoughts、CoALA，2024 年加入 OpenAI 做 Operator、Deep research 等智能体产品，2025 年末出任腾讯首席 AI 科学家。一个博士期间的开山之作，最后长成了他整个人生的事业线。论文本身也争气：被 ICLR 2023 选为 Oral（Notable Top 5%），如今引用过万，GitHub 星标近四千——一篇“就想看看能不能让模型边想边查”的小文章，意外地成了 agent 时代的奠基礼。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 210" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 厨师帽子 -->
+        <ellipse cx="180" cy="70" rx="46" ry="30" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="134" y="80" width="92" height="34" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="180" y="130" text-anchor="middle" fill="#96897A" font-size="11">闭眼厨师（CoT）</text>
+        <text x="180" y="148" text-anchor="middle" fill="#B54A2C" font-size="10">凭记忆炒菜，记错就一路错</text>
+
+        <!-- 中间 ReAct 厨师 -->
+        <ellipse cx="350" cy="60" rx="46" ry="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <rect x="304" y="70" width="92" height="34" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="350" y="120" text-anchor="middle" fill="#B54A2C" font-weight="600" font-size="11">ReAct 厨师</text>
+        <text x="350" y="138" text-anchor="middle" fill="#B54A2C" font-size="10">边嘀咕边查菜谱边炒</text>
+        <text x="350" y="154" text-anchor="middle" fill="#96897A" font-size="10">没盐？嘀咕“用酱油替”</text>
+
+        <!-- 机械帮工 -->
+        <ellipse cx="520" cy="70" rx="46" ry="30" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="474" y="80" width="92" height="34" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="520" y="130" text-anchor="middle" fill="#96897A" font-size="11">机械帮工（Act-only）</text>
+        <text x="520" y="148" text-anchor="middle" fill="#B54A2C" font-size="10">没盐就卡住，不会变通</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 厨房三厨师：ReAct 的“内部言语”直觉，正是人会的那种边想边做</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>ReAct 给我最大的启发，是一种研究哲学：<em>把人脑里理所当然的机制，老老实实地复刻给模型</em>。它没有发明任何花哨的新结构，只是承认了“思考”和“行动”本就该交织，然后给模型一个能容纳“想”的动作空间。这种“向人类认知借图纸”的朴素，恰恰是它能成为母范式的原因——简单到所有人都能用、能改、能扩展。</p>
+  <p>但 ReAct 也提醒我们一件事：智能体的瓶颈，从来不只是“会不会想”或“会不会用工具”，而是<em>两者能否动态平衡</em>。HotpotQA 上 ReAct 输给 CoT，本质是工具太弱拖累了思考；后来 agent 框架不断加 hook、加回滚、加并行，本质上都在补“单一循环太脆”的课。今天我们谈论 agent，很容易被各种新框架晃花眼，但回到 ReAct 这篇 2022 年的小文章，你会发现所有问题它都预言过、所有方向它都指过路。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果今天让你重新设计一个 ReAct 循环，面对“单线推理不会回溯”这个老毛病，你会给 Thought-Action-Observation 加一个什么机制，让模型在走错时能“撤回重来”而不只是硬着头皮往下走？（提示：本系列第 27、31 篇给过两种截然不同的答案。）
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Voyager: An Open-Ended Embodied Agent with Large Language Models</h3>
+    <p style="margin:0;">ReAct 让模型学会“边想边做”，但每做一次都从零开始——它不会把上一次学会的本事存下来。如果 agent 能像游戏玩家一样，把反复试出的招式攒成一个“技能库”，越玩越强、终身学习，会怎样？下一篇，我们把 ReAct 的循环搬进 Minecraft，看 Voyager 如何用技能库 + 自动课程，让智能体真正“活”成一个不断成长的玩家。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 035 篇</span>
+    <span>2026-09-04</span>
+  </footer>
+
+</div>
+</body>
+</html>
