@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voyager 论文精读 · 大模型经典论文系列 #036</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#036</span>
+  </div>
+
+  <h1 class="title">
+    Voyager: An Open-Ended Embodied Agent with Large Language Models
+    <span class="en">Voyager：把 GPT-4 塞进《我的世界》——会自己定目标、写代码、攒技能、永不遗忘的终身学习智能体</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Guanzhi Wang, Yuqi Xie, Yunfan Jiang, Ajay Mandlekar, Chaowei Xiao, Yuke Zhu, Linxi "Jim" Fan, Anima Anandkumar</span>
+    <span>机构：NVIDIA, Caltech, UT Austin, Stanford, ASU</span>
+    <span>发表：2023-05 / arXiv（后收录于 TMLR 2024，ICLR 2025 Journal Track）</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2305.16291" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/MineDojo/Voyager" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://voyager.minedojo.org/" target="_blank" rel="noopener">Project</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">2023 年 5 月的一个深夜，一只手无寸铁的 AI 智能体被空投到了《我的世界》的一片随机方块世界里。它没有被告知要去打龙，也没有被告知要造房子，唯一的指令只有一句含糊的"尽可能多地发现新东西"。换作以前的强化学习智能体，多半会在原地转圈直到饿死；可这一次，它先是抬头看了看树，自己写了一段 JavaScript 代码去砍木头，接着又自己写代码做工作台、做石镐、挖铁矿、打僵尸——几个小时后，它居然造出了一把钻石镐。</p>
+  <p class="lead">让这只智能体"活过来"的，是一篇叫 <em class="latin">Voyager</em> 的论文。它没用一行梯度下降，没动一次模型权重，只靠着不断向 GPT-4 提问、把答案写成代码、再把能跑通的代码存进一个"技能库"，就完成了过去需要训练几十亿步的强化学习才能做到的事。这篇解析，就带你看看 NVIDIA 团队是如何把"思考—行动—反思"的循环，焊成一个能在方块世界里终身学习的探险家的。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    Voyager 把 GPT-4 当作"会写代码的大脑"，用"自动课程 + 技能库 + 迭代提示"三件套，让智能体在《我的世界》里自己出题、自己写代码、自己查 bug、自己把技能存起来复用，第一次让大模型驱动的智能体展现出真正的终身学习能力。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>如果把整个大模型的发展史看成一条长河，Voyager 处在一个非常特别的<em>分岔口</em>：它既不是底层模型的进步（它直接调用 GPT-4，一行权重都不训），也不是单纯的提示工程（它有一整套系统化的"记忆—课程—反思"结构），而是把前面二十多篇论文攒下的"零散能力"焊在了一起，第一次拼出了一个能<em>持续自主进化</em>的智能体骨架。</p>
+
+  <p>具体说，它承接了三条线：一是第 35 篇我们讲过的 <em class="latin">ReAct</em>——"思考—行动—观察"循环奠定了 LLM 调工具的基本范式；二是第 31 篇 <em class="latin">Reflexion</em>——把失败写进语言记忆、下次避开同样的坑；三是第 34 篇 <em class="latin">Toolformer</em>——把工具调用训进权重。Voyager 把这些思路拉到极限：不微调、不训练，全靠 prompt + 外部记忆，却要解决一个比单轮问答难得多的任务——<em>在无限世界里越玩越强，而且永远不忘</em>。</p>
+
+  <p>它开启的，则是后来被称为 <em>LLM Agent</em> 的整个赛道：之后的 AutoGPT、BabyAGI、斯坦福小镇、MetaGPT、甚至今天的各类"通用智能体"框架，几乎都能在 Voyager 这套"课程—技能库—自我验证"的骨架里找到自己的影子。可以说，它是<em>LLM agent 时代的奠基样本</em>之一。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 主线 -->
+        <line x1="40" y1="120" x2="660" y2="120" stroke="#96897A" stroke-width="1"/>
+        <!-- 时代分段标记 -->
+        <text x="40" y="40" fill="#96897A" font-size="10">2017</text>
+        <text x="660" y="40" text-anchor="end" fill="#96897A" font-size="10">2025+</text>
+
+        <!-- 节点 1: Transformer -->
+        <circle cx="60" cy="120" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="60" y="105" text-anchor="middle" fill="#2E2A22">Transformer</text>
+
+        <!-- 节点 2: GPT-3 -->
+        <circle cx="170" cy="120" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="170" y="105" text-anchor="middle" fill="#2E2A22">GPT-3</text>
+
+        <!-- 节点 3: CoT -->
+        <circle cx="250" cy="120" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="250" y="105" text-anchor="middle" fill="#2E2A22">CoT</text>
+
+        <!-- 节点 4: Toolformer -->
+        <circle cx="350" cy="120" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="105" text-anchor="middle" fill="#2E2A22">Toolformer</text>
+
+        <!-- 节点 5: Reflexion -->
+        <circle cx="420" cy="120" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="420" y="105" text-anchor="middle" fill="#2E2A22">Reflexion</text>
+
+        <!-- 节点 6: ReAct -->
+        <circle cx="490" cy="120" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="490" y="105" text-anchor="middle" fill="#2E2A22">ReAct</text>
+
+        <!-- 本篇：Voyager 高亮 -->
+        <circle cx="565" cy="120" r="8" fill="#B54A2C"/>
+        <text x="565" y="90" text-anchor="middle" fill="#B54A2C" font-weight="600" font-size="12">本篇位置</text>
+        <text x="565" y="148" text-anchor="middle" fill="#2E2A22" font-weight="600">Voyager</text>
+        <text x="565" y="162" text-anchor="middle" fill="#96897A" font-size="10">2023.05</text>
+
+        <!-- 节点 8: 后续 agent -->
+        <circle cx="640" cy="120" r="4" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="2 2"/>
+        <text x="640" y="105" text-anchor="middle" fill="#96897A">后续 agent</text>
+
+        <!-- 已解析区间高亮（从 Transformer 到 Voyager） -->
+        <line x1="60" y1="120" x2="565" y2="120" stroke="#B54A2C" stroke-width="2.5" opacity="0.6"/>
+
+        <!-- 时代标签 -->
+        <text x="100" y="200" fill="#24555A" font-size="10">奠基/预训练</text>
+        <text x="320" y="200" fill="#24555A" font-size="10">对齐/提示</text>
+        <text x="560" y="200" fill="#24555A" font-size="10">agent 时代</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的 Voyager 位置示意，红色线段为本系列已解析区间</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要理解 Voyager 解决了什么，得先看看《我的世界》为什么是 AI 研究的"终极考场"。这游戏有两个最反常识的特点：第一，<em>它没有目标</em>。不像下棋要赢、不像超级马里奥要通关，整张地图是程序随机生成的，玩家想干嘛干嘛。第二，<em>它有科技树</em>——空手砍不动石头，得先做木镐；石镐才能挖铁；铁镐才能挖钻石。技能之间有严格的<em>偏序关系</em>，必须按顺序点亮。</p>
+
+  <p>这两个特点加在一起，恰好把"通用智能"压成了一个非常干净的考题：<em>一个智能体能不能在没人指挥的情况下，自己摸清这个世界的能力层级，然后一层一层爬上去？</em>这正是 Jim Fan 团队此前发起的 MineDojo 项目（NeurIPS 2022 杰出论文奖）所关心的核心问题。</p>
+
+  <p>在 Voyager 之前，主流解法是<em>强化学习</em>：从零开始，让智能体用像素当眼睛、用按键当手脚，靠"挖到钻石给奖励"这种稀疏信号训练。从 2016 年的 MineRL 大赛到 2022 年 OpenAI 的 VPT（看视频学操作），整整六年，研究者烧掉了天文数字的算力，最好的成绩也不过是<em>偶尔</em>挖到钻石，而且换张地图就废。痛点很清楚：奖励太稀疏、探索太低效、学到的策略像一张脆弱的纸，稍微换个环境就撕了。</p>
+
+  <p>另一条线是 LLM agent。2023 年春天，ReAct、Reflexion、AutoGPT 这些工作接连冒出来，证明 GPT 这类大模型可以直接当"大脑"，边想边调工具。但它们都有一个共同的硬伤——<em>不积累</em>。问一次答一次，下一轮又从零开始，跨不过几十轮，更别提"越玩越强"的终身学习。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    旧式强化学习像让一个婴儿从零开始摸索世界，每挖一块石头都要试错几百万次；早期的 LLM agent 像请了一位博学的教授，但你每次问他都得从头解释一遍背景，他答完就走了，第二天再来他什么都不记得。Voyager 想做的，是给这位教授配一本笔记本——他每答对一题就把解法抄下来，下次再遇到类似题直接翻笔记本。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>把背景压成一句话，Voyager 要回答的问题是：<em>能不能让一个 LLM 驱动的智能体，在没有任何人类干预的开放世界里，持续地提出任务、积累技能、永远不忘、还能把学到的本事迁移到新环境？</em></p>
+
+  <p>这个问题被拆成了三个子目标，恰好对应 Voyager 的三大组件：</p>
+  <ul>
+    <li><em>该干嘛</em>：开放世界没有外接任务清单，智能体得自己根据当前状态（手里有什么、身处什么地形、已经会什么）挑一个<em>难度刚好的下一个目标</em>——既不能太简单到无聊，也不能难得让人崩溃。</li>
+    <li><em>怎么干</em>：Minecraft 的低级动作（转视角、按键）粒度太细，长任务动辄上千步。光靠 LLM 一字一句地输出动作根本撑不住。需要一种<em>粒度可大可小、还能复用</em>的动作表示。</li>
+    <li><em>记什么</em>：上下文窗口是有限的，把所有历史塞进 prompt 不现实。需要一种能跨轮次、跨任务<em>稳定存储且语义可检索</em>的长期记忆，而且加新技能时不能把旧技能搞乱（即避免强化学习里臭名昭著的"灾难性遗忘"）。</li>
+  </ul>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    假如让你设计这样一个智能体，你会让"下一个任务"由谁决定？是写死一张科技树任务清单，还是问 GPT-4"你觉得下一步该干嘛"？前者稳妥但僵化，后者灵活但可能瞎出题。Voyager 选了后者，你猜它怎么防止 GPT-4 一直出无意义的题？
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>Voyager 的整套设计可以用一句话概括：<em>把大模型当大脑，把游戏当调试器，把技能库当硬盘</em>。下面分三个模块拆解。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 360" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrowAcc" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 顶部 GPT-4 大脑 -->
+        <rect x="270" y="20" width="160" height="44" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="350" y="46" text-anchor="middle" fill="#B54A2C" font-weight="600">GPT-4（大脑）</text>
+
+        <!-- 左侧：自动课程 -->
+        <rect x="40" y="110" width="170" height="60" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="125" y="135" text-anchor="middle">① 自动课程</text>
+        <text x="125" y="155" text-anchor="middle" fill="#96897A" font-size="10">提出下一个任务</text>
+
+        <!-- 中间：迭代提示机制 -->
+        <rect x="265" y="110" width="170" height="60" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="135" text-anchor="middle">② 迭代提示</text>
+        <text x="350" y="155" text-anchor="middle" fill="#96897A" font-size="10">写代码 + 三路反馈</text>
+
+        <!-- 右侧：技能库 -->
+        <rect x="490" y="110" width="170" height="60" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="575" y="135" text-anchor="middle">③ 技能库</text>
+        <text x="575" y="155" text-anchor="middle" fill="#96897A" font-size="10">向量检索 + 复用</text>
+
+        <!-- 底部 Minecraft 环境 -->
+        <rect x="200" y="240" width="300" height="60" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="350" y="265" text-anchor="middle" fill="#24555A">Minecraft 世界</text>
+        <text x="350" y="285" text-anchor="middle" fill="#24555A" font-size="10">环境反馈 / 执行错误 / 状态</text>
+
+        <!-- 流向箭头 -->
+        <!-- 大脑 → 三个模块 -->
+        <line x1="320" y1="64" x2="125" y2="108" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)"/>
+        <line x1="350" y1="64" x2="350" y2="108" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)"/>
+        <line x1="380" y1="64" x2="575" y2="108" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)"/>
+
+        <!-- 课程 → 迭代提示 -->
+        <line x1="210" y1="140" x2="265" y2="140" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)"/>
+        <!-- 迭代提示 → 技能库（验证通过才入库，强调色） -->
+        <line x1="435" y1="140" x2="490" y2="140" stroke="#B54A2C" stroke-width="1.5" marker-end="url(#arrowAcc)"/>
+        <text x="462" y="132" text-anchor="middle" fill="#B54A2C" font-size="10">验证通过</text>
+
+        <!-- 技能库 → 迭代提示（检索回流） -->
+        <line x1="490" y1="160" x2="435" y2="160" stroke="#96897A" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
+        <text x="462" y="180" text-anchor="middle" fill="#96897A" font-size="10">检索复用</text>
+
+        <!-- 迭代提示 → Minecraft -->
+        <line x1="350" y1="170" x2="350" y2="238" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)"/>
+        <!-- Minecraft → 迭代提示（反馈回流） -->
+        <line x1="380" y1="240" x2="380" y2="172" stroke="#96897A" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
+
+        <!-- 大脑 → 课程（虚线，象征持续提问） -->
+        <line x1="270" y1="50" x2="210" y2="110" stroke="#96897A" stroke-width="0.5" stroke-dasharray="2 2"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · Voyager 三大组件与 Minecraft 环境的数据流，红色实线表示"验证通过的技能才入库"，虚线表示反馈与检索回流</figcaption>
+  </figure>
+
+  <h3>子方法一：自动课程（Automatic Curriculum）</h3>
+  <p>第一个模块要回答的是"下一步该干嘛"。Voyager 不写死任务清单，而是<em>每完成一个任务就回头问 GPT-4</em>："根据我现在的状态（手里有什么、站在什么生物群系、已经会什么、最近失败过什么），给我一个既新颖又不至于太难的新任务。"这被作者称为"上下文内的新颖性搜索"——GPT-4 凭着它从全网学到的世界知识，能很自然地提出"还没做过但够得着"的事。</p>
+
+  <p>这个 prompt 由四部分组成：一条<em>鼓励多样性</em>的总指令（"发现尽可能多的不同东西"）、当前智能体状态（背包、装备、生命值、生物群系）、最近完成和失败的任务清单、以及用 GPT-3.5 自问自答补充的额外上下文。如果某个任务连续失败，课程会主动把它拆成更简单的子任务或者干脆暂时搁置，避免在死胡同里耗光预算。</p>
+
+  <p>这里有个反直觉的细节：课程 prompt 用了 <em>chain-of-thought</em>（思维链，见第 24 篇）提示——先让模型推理"什么是新颖且可行的"，再产出任务。temperature 设为 0.1，既保留一点随机性以鼓励多样性，又不会乱出题。整个系统里没有一条手写的"先砍木头再做木镐"的规则，<em>科技树的顺序完全是 GPT-4 凭常识涌现出来的</em>。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    自动课程就像一个会因材施教的私人教练。它不像传统课程表那样把所有学生塞进同一条流水线，而是看你今天状态如何、上次卡在哪、手里有什么，临时给你挑一道"再跳一跳就够得着"的题。这种"最近发展区"教学法，正好对应 Minecraft 科技树那种"必须先会 A 才能学 B"的硬约束。
+  </div>
+
+  <h3>子方法二：迭代提示机制（Iterative Prompting Mechanism）</h3>
+  <p>有了任务，第二步是写代码去执行。Voyager 选了一个非常激进的动作空间——<em>直接把 JavaScript 函数当作动作</em>。它不用低级的"转视角—按键"序列，而是让 GPT-4 写一段调用 Mineflayer API 的 JS 代码（比如 <code class="mono">bot.dig</code>、<code class="mono">bot.placeBlock</code>、<code class="mono">bot.craft</code>），整段代码扔进游戏执行，结束后再统一回收反馈。</p>
+
+  <p>这个选择是 Voyager 最深的洞察之一。代码有三个天然优势：一是<em>可组合</em>（函数可以调函数），二是<em>可验证</em>（要么跑通了要么没跑通，没有中间态），三是<em>可解释</em>（人类能直接读出智能体"知道"什么）。这三个性质让"技能累积"第一次在 LLM agent 上变得可行。</p>
+
+  <p>但 GPT-4 一次写对的概率并不高。Voyager 设计了一个紧凑的修复循环：每次代码执行后，回收<em>三路反馈</em>——环境状态（执行后背包多了什么、走到哪了）、执行错误（JS 运行时报错、API 调用异常）、以及一个独立的 GPT-4 实例扮演的"自我验证裁判"判断"任务到底完成了没有"。如果三路有任何一路说没成，原始 GPT-4 会被重新提示，把上一次的代码、错误信息、裁判建议一起喂回去，再写一版。这个循环最多跑 4 轮，4 轮还失败就把任务退回课程模块，让它拆解或搁置。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 任务 -->
+        <rect x="20" y="90" width="110" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="75" y="116" text-anchor="middle">新任务</text>
+
+        <!-- GPT-4 生成代码 -->
+        <rect x="170" y="90" width="120" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="230" y="116" text-anchor="middle">GPT-4 写代码</text>
+
+        <!-- 执行 -->
+        <rect x="330" y="90" width="120" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="390" y="116" text-anchor="middle">游戏执行</text>
+
+        <!-- 三路反馈 -->
+        <rect x="490" y="40" width="180" height="36" rx="2" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <text x="580" y="62" text-anchor="middle" fill="#B54A2C" font-size="11">环境状态</text>
+
+        <rect x="490" y="90" width="180" height="36" rx="2" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <text x="580" y="112" text-anchor="middle" fill="#B54A2C" font-size="11">执行错误</text>
+
+        <rect x="490" y="140" width="180" height="36" rx="2" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <text x="580" y="162" text-anchor="middle" fill="#B54A2C" font-size="11">自我验证裁判</text>
+
+        <!-- 主线箭头 -->
+        <line x1="130" y1="112" x2="170" y2="112" stroke="#96897A" marker-end="url(#arrow2)"/>
+        <line x1="290" y1="112" x2="330" y2="112" stroke="#96897A" marker-end="url(#arrow2)"/>
+        <line x1="450" y1="112" x2="490" y2="112" stroke="#96897A" marker-end="url(#arrow2)"/>
+
+        <!-- 反馈回流到 GPT-4（虚线，循环） -->
+        <path d="M 580 178 Q 580 200 230 200 L 230 134" stroke="#B54A2C" stroke-width="1.2" stroke-dasharray="4 3" fill="none" marker-end="url(#arrow2)"/>
+        <text x="400" y="216" text-anchor="middle" fill="#B54A2C" font-size="10">未通过 → 把反馈喂回 GPT-4 重新写代码（最多 4 轮）</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 迭代提示机制的"任务—生成—执行—三路反馈—重写"闭环，红色虚线表示未通过时的反馈回流</figcaption>
+  </figure>
+
+  <p>这里有个跟 Reflexion（第 31 篇）和 ReAct（第 35 篇）的关键差别：那两个工作每一步只吐一个文本动作，Voyager 一次吐<em>一整段程序</em>，可能跑几十个游戏 tick、调很多 API。这种"动作粒度放大"让模型把推理成本<em>摊销</em>到一堆低级动作上，也让产出的程序本身就成了一个可复用、可入库的"技能单元"。</p>
+
+  <h3>子方法三：技能库（Skill Library）</h3>
+  <p>第三个模块是 Voyager 区别于所有前辈的灵魂。当一个任务被自我验证裁判判定成功后，对应的 JavaScript 函数不会随风飘走——它会配上一段 GPT-4 生成的自然语言描述，连同描述的向量嵌入（用 OpenAI 的 <em class="latin">text-embedding-ada-002</em>）一起塞进一个向量数据库。下次新任务来了，系统把任务描述做嵌入、检索 Top-5 最相关的旧技能，作为可调用的"helper"拼到新 prompt 里。新代码可以直接调旧函数，比如 <code class="mono">craftStonePickaxe()</code> 里可以调用之前学过的 <code class="mono">mineWoodLog()</code> 和 <code class="mono">craftWoodenPickaxe()</code>。</p>
+
+  <p>这个设计的妙处在于它把"学习"从权重更新搬到了代码累积。<em>权重更新</em>有灾难性遗忘——学新技能会冲掉旧技能；<em>代码累积</em>没有这个问题，新加的函数不会动旧的半根毫毛。技能库就是智能体给自己写的一份不断膨胀的简历，而且每一项都<em>经过验证</em>（没跑通的不许入库），所以每一项都站在已验证的地基上。这被作者称为"<em>学习在复合</em>"——能力像滚雪球一样越滚越大。</p>
+
+  <div class="callout">
+    <span class="label">关键设计</span>
+    技能库的两条铁律让"复合"变得可信而不是堆垃圾：第一，<em>前置技能必须已经在库里</em>——你不能跳过石镐直接挖铁；第二，<em>新代码必须验证通过才入库</em>——没跑通的程序永远进不了库。这两条规则共同保证了库里的每一段代码都站在已测试的地面之上，复合不会复合出 bug。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>实验在 Minecraft Java 版上跑，基线是当时最强的三种 LLM agent 框架——ReAct、Reflexion、AutoGPT。所有方法都接 GPT-4，都看不到像素，只通过文本状态交互。Voyager 的成绩单相当炸眼。</p>
+
+  <table>
+    <thead>
+      <tr><th>指标</th><th>此前 SOTA</th><th>Voyager</th><th>提升</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">160 轮内发现独特物品数</td><td>~19</td><td>63</td><td>3.3×</td></tr>
+      <tr><td class="text">平均移动距离</td><td>—</td><td>—</td><td>2.3×</td></tr>
+      <tr><td class="text">解锁木工具所需轮数</td><td>~92</td><td>6 ± 2</td><td>15.3×</td></tr>
+      <tr><td class="text">解锁石工具所需轮数</td><td>~94</td><td>11 ± 2</td><td>8.5×</td></tr>
+      <tr><td class="text">解锁铁工具所需轮数</td><td>~134</td><td>21 ± 7</td><td>6.4×</td></tr>
+      <tr><td class="text">解锁钻石工具</td><td>从未达到</td><td>102 轮（3 次中 1 次）</td><td>唯一达成</td></tr>
+    </tbody>
+  </table>
+
+  <p>最扎眼的数字是<em>钻石工具</em>——在 MineRL 比赛 + VPT 那条 RL 路线苦战六年都打不下来的目标，Voyager 是唯一摸到的，而且只用了 102 轮 prompt 迭代。注意这是"3 次实验中 1 次"，作者很诚实地在论文里标了这点，避免读者误以为钻石是稳的。</p>
+
+  <p>更耐人寻味的是消融实验。去掉技能库，Voyager 在前期还能跟上，后期明显<em>停滞</em>——因为没有可复用的"积木"，每个新任务都得从零写代码，复杂度一上去就垮。去掉自动课程改用手写课程，表现也明显下滑，因为手写课程不知道智能体现在手里有什么。去掉自我验证裁判，科技树进度<em>大幅退化</em>——没有裁判盯着，很多其实没完成的任务被错判为完成，垃圾代码混进库，复合就崩了。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="175" y="30" text-anchor="middle" font-weight="600">旧 RL / 早期 LLM agent</text>
+        <text x="525" y="30" text-anchor="middle" font-weight="600" fill="#B54A2C">Voyager</text>
+        <line x1="350" y1="20" x2="350" y2="250" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <!-- 左侧：旧方法 -->
+        <rect x="60" y="55" width="230" height="32" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="76" text-anchor="middle">动作：低级按键 / 单步文本</text>
+
+        <rect x="60" y="100" width="230" height="32" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="121" text-anchor="middle">记忆：上下文窗口 / 无</text>
+
+        <rect x="60" y="145" width="230" height="32" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="166" text-anchor="middle">任务：人工指定 / 固定</text>
+
+        <rect x="60" y="190" width="230" height="32" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="211" text-anchor="middle">遗忘：灾难性遗忘严重</text>
+
+        <!-- 右侧：Voyager -->
+        <rect x="410" y="55" width="230" height="32" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="76" text-anchor="middle" fill="#B54A2C">动作：整段 JS 程序（可组合）</text>
+
+        <rect x="410" y="100" width="230" height="32" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="121" text-anchor="middle" fill="#B54A2C">记忆：向量检索的技能库</text>
+
+        <rect x="410" y="145" width="230" height="32" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="166" text-anchor="middle" fill="#B54A2C">任务：GPT-4 自动出题</text>
+
+        <rect x="410" y="190" width="230" height="32" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="211" text-anchor="middle" fill="#B54A2C">遗忘：代码累积，永不遗忘</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · Voyager 与旧方法在动作空间、记忆、任务来源、遗忘问题上的四个关键差异</figcaption>
+  </figure>
+
+  <p>另一个让人惊喜的发现是<em>零样本迁移</em>：研究者把 Voyager 在一个世界攒下来的技能库，原封不动搬到一个全新的 Minecraft 世界（地形、生物群系全不一样），让它去解从没见过的新任务。它能直接调用旧技能，从零搞定新任务；而 ReAct、Reflexion 这些没有技能库的基线，在新世界里几乎从零开始，举步维艰。这恰恰是"终身学习"该有的样子——<em>本事应该能搬走</em>。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>Voyager 发出后，几乎一夜之间把"LLM agent"从一个零散的实验方向，焊成了一个有清晰方法论的研究范式。它的三件套——<em>自动课程、技能库、自我验证循环</em>——成了之后无数 agent 框架抄作业的模板。无论是之后冒出来的 AutoGPT、BabyAGI 这类"自主任务 agent"，还是斯坦福小镇那种"多智能体社会模拟"，乃至今天形形色色的"通用智能体"产品，骨架里都能找到 Voyager 的影子。</p>
+
+  <p>它的两个方法论贡献尤其深远。一是<em>代码作为动作空间</em>：把"动作"从低级按键升到可执行程序，一举解决了长任务里动作粒度太细、上下文塞不下的问题，也顺势让"技能"成了可累积、可验证、可组合的一等公民。二是<em>外部向量记忆替代权重更新</em>：证明了"学习"未必非要梯度下降，把验证过的程序往数据库里塞，同样能做到"越用越强"，而且避开了灾难性遗忘这个 RL 的老顽疾。这两条思路后来被反复重用，几乎是 LLM agent 领域的"设计模式"。</p>
+
+  <p>更宏观看，Voyager 把 Minecraft 从"RL 的苦役场"重新定义成"LLM agent 的启蒙乐园"。在这之后，Minecraft 几乎成了 agent 论文的标配测试床，连 OpenAI 后来一些早期 agent 探索也用过它。论文本身后来被 TMLR 接收（2024 年 3 月），还拿到了 ICLR 2025 的 Journal Track 认证——对于一个"应用层"工作来说，这是相当高的待遇。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>Voyager 并非没有短板。最显眼的一条是<em>对 Minecraft 文本的强依赖</em>。它能跑通，很大程度上是因为 Minecraft 的事件能用文本说清楚（背包多了什么、走到哪了），而且 GPT-4 在预训练时见过海量的 Minecraft 视频、wiki、论坛帖——它"知道"这个游戏该怎么玩。换成视觉主导、文本稀疏的真实世界（比如让机器人做饭），这条路未必走得通。一位 TMLR 审稿人就直言："我不确定这方法能否推广到 dynamics 完全不同、训练数据里没怎么覆盖过的游戏。"</p>
+
+  <p>第二条是<em>感知被完全外包给了 Mineflayer API</em>。Voyager 不看像素，所有"看见"都来自 API 已经结构化好的状态。这绕开了视觉感知的难题，但也意味着它没解决真正的"embodied perception"——一旦环境没有现成 API，它就瞎了。后来的工作（如 DEPS、SWITCH）开始尝试把视觉模型接进来，但这都是 Voyager 之后的事。</p>
+
+  <p>第三条是<em>成本与延迟</em>。每个任务最多 4 轮 GPT-4 调用，每轮都是黑盒 API 请求，单次实验跑下来 API 费用不菲，速度也远谈不上实时。对于"在线交互"型任务（比如和真人对话的客服 agent），这个延迟是致命的。</p>
+
+  <p>第四条是<em>"开放世界"的边界</em>。Voyager 的"终身学习"是在 Minecraft 这一<em>封闭规则</em>世界里的开放探索，规则不变、物理稳定。真正的开放世界——比如互联网、物理世界——规则会变、会有对抗者、会有分布漂移，Voyager 的技能库能否扛住这种"规则漂移"，论文没给出答案。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把 Voyager 放回大模型发展的长河里，它处于一条非常清晰的<em>从"模型即智能"到"系统即智能"</em>的演进路径上。早期（2017—2020），大家的注意力全在<em>把模型做大</em>：Transformer、GPT-2、GPT-3，思路是参数够多就够聪明。规模化探索期（2020—2022）开始关心<em>数据配比</em>，Chinchilla 证明了"小模型多数据"能反杀大模型。</p>
+
+  <p>对齐与应用期（2022—2023）则拐了一个弯：研究者发现光有大模型不够，得教它<em>听人话、会反思、会用工具</em>。InstructGPT 用人类反馈教模型听话；CoT、Self-Consistency、Tree of Thoughts 一路把"推理"做成可提示的技能；Reflexion 把失败写进语言记忆；Toolformer 把工具调用训进权重；ReAct 把"思考—行动—观察"焊成循环。每一步都在<em>给模型加外挂</em>——但每个外挂都是单点突破，彼此不连。</p>
+
+  <p>Voyager 出现在这条线的<em>汇流处</em>。它没发明任何一个全新组件，但它把"自动出题（curriculum）+ 工具调用（code as action）+ 反思循环（iterative prompting）+ 长期记忆（skill library）"这四样分别来自不同论文的思路，第一次焊成了一个能<em>持续运行、自我积累</em>的闭环系统。在它之后，LLM agent 研究正式从"单点技巧"进入"系统工程"阶段——之后无论是 MetaGPT 的多智能体协作、斯坦福小镇的社会模拟，还是今天的各类 agent 框架，本质都是在这个骨架上换组件、加组件。这条线一直延伸到今天，是 LLM 应用层最活跃的方向之一。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>Voyager 背后有个挺有意思的人物——通讯作者 <em class="latin">Linxi "Jim" Fan</em>。这位 NVIDIA 的高级研究员，其实<em>是 OpenAI 的第一位实习生</em>。2016 年夏天，已经被斯坦福录取的他闲着没事，朋友说城里有家新公司让他去看看，他就去了，那家公司就是 OpenAI。他的实习导师是 Andrej Karpathy 和 Ilya Sutskever，做的是 <em class="latin">World of Bits</em>——让 AI 看屏幕像素、控键鼠的最早 AGI 尝试之一。换句话说，<em>Jim Fan 的整个学术生涯就是一场"如何造 agent"的长跑</em>，从 2016 年的像素 agent，到 2022 年的 MineDojo（NeurIPS 杰出论文奖），再到 2023 年的 Voyager，他一直在追问同一个问题：怎么让 AI 在开放世界里持续变强。</p>
+
+  <p>Voyager 一发布就炸了圈。Karpathy 本人在推特上感慨："还记得 2016 年在《我的世界》里做 AI agent 是多么绝望吗？现在画风变了——正确的做法是先拿全网数据训一个 LLM 学世界知识、推理、工具使用，然后像 NVIDIA 这样让它去解决问题。"他还补了一句："如果 2016 年有人给我看这种<em>无梯度</em>的 agent 方法，我肯定会大惊失色。"——一个前 OpenAI 核心成员、当时已是特斯拉 AI 总监的人，公开承认"被震到"，这是相当高的赞誉。</p>
+
+  <p>还有个细节很有意思：Voyager 上 arXiv 是 2023 年 5 月 25 日，<em>两天后</em>，另一篇几乎同主题的工作 <em class="latin">Ghost in the Minecraft</em>（GITM）就贴出来了。两支团队几乎是同时独立地想到"用 GPT-4 玩 Minecraft"，可见这个 idea 在 2023 年春天已经"在空气中"了——GPT-4 一发布，"让它去打游戏"几乎是所有 agent 研究者的第一直觉。</p>
+
+  <p>Jim Fan 后来在一次访谈里把 Minecraft 形容为"开放式 agent 涌现的完美原汤"——它的开放性、科技树的偏序结构、文本友好的事件描述，几乎是为 LLM agent 量身定做的考题。他还调侃自己 Minecraft 玩得不好，"所以我希望我的 AI 能弥补我糟糕的游戏技巧"——这种"造个 AI 替我打游戏"的自嘲，反而让 Voyager 多了几分人情味。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 像素小人（左，代表 2016 的 Jim） -->
+        <g transform="translate(80,100)">
+          <rect x="-12" y="-30" width="24" height="20" fill="#96897A"/>
+          <rect x="-10" y="-10" width="20" height="30" fill="#24555A"/>
+          <text x="0" y="40" text-anchor="middle" fill="#96897A">2016</text>
+          <text x="0" y="56" text-anchor="middle" fill="#96897A">像素 agent</text>
+        </g>
+
+        <!-- 箭头到中间 -->
+        <line x1="115" y1="95" x2="305" y2="95" stroke="#96897A" stroke-width="1" marker-end="url(#arrFun)"/>
+        <defs>
+          <marker id="arrFun" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+          </marker>
+        </defs>
+        <text x="210" y="85" text-anchor="middle" fill="#96897A" font-size="10">6 年 + 一篇 NeurIPS 杰出论文</text>
+
+        <!-- 中间 MineDojo -->
+        <g transform="translate(350,100)">
+          <rect x="-40" y="-30" width="80" height="40" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="0" y="-10" text-anchor="middle">MineDojo</text>
+          <text x="0" y="8" text-anchor="middle" fill="#96897A" font-size="10">看视频学技能</text>
+          <text x="0" y="40" text-anchor="middle" fill="#96897A">2022</text>
+        </g>
+
+        <!-- 箭头到右 -->
+        <line x1="395" y1="95" x2="585" y2="95" stroke="#B54A2C" stroke-width="1.5" marker-end="url(#arrFun2)"/>
+        <defs>
+          <marker id="arrFun2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+          </marker>
+        </defs>
+        <text x="490" y="85" text-anchor="middle" fill="#B54A2C" font-size="10">GPT-4 出现</text>
+
+        <!-- 右边 Voyager -->
+        <g transform="translate(620,100)">
+          <rect x="-30" y="-30" width="60" height="40" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C"/>
+          <text x="0" y="-10" text-anchor="middle" fill="#B54A2C">Voyager</text>
+          <text x="0" y="8" text-anchor="middle" fill="#B54A2C" font-size="10">终身学习</text>
+          <text x="0" y="40" text-anchor="middle" fill="#B54A2C">2023</text>
+        </g>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · Jim Fan 的"造 agent"长跑：从 2016 的像素 agent 到 2022 的 MineDojo，再到 2023 的 Voyager</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读完 Voyager，最让我念念不忘的不是那些炸眼的数字，而是它隐含的一个<em>哲学转向</em>：它把"学习"重新定义成了"往数据库里塞验证过的代码"，而不是"调权重"。这看似只是工程上的取舍，实则是对"智能是什么"的一次重新发问。如果一套系统不需要改一个参数、只靠累积可执行程序就能越用越强，那"智能"的核心到底在<em>权重</em>里，还是在<em>外部记忆 + 调用结构</em>里？Voyager 没回答，但它把这个问号摆到了台面上。</p>
+
+  <p>这条思路今天看来越发不像是"工程小聪明"。当下的 agent 框架几乎都在沿这条路走——把大模型当推理引擎，把工具调用、记忆检索、规划循环当外挂系统，"智能"被分布式到了一整套<em>系统</em>里，而不是锁在某个模型参数矩阵里。某种意义上，这跟大脑（模型）+ 笔记本 + 工具箱 + 反思习惯的人类认知结构遥相呼应。Voyager 在 Minecraft 这个"玩具世界"里把这个结构跑通了，它的意义远不止"AI 会打游戏"。</p>
+
+  <p>当然，我也保持一份清醒。Voyager 跑通的世界，<em>规则封闭、文本友好、API 现成</em>——这三个条件在真实世界里几乎同时满足不了。真实世界没有 <code class="mono">bot.dig</code> 这种现成动作，视觉感知也没法外包给 API，规则还会漂移。Voyager 证明了"终身学习 agent"在受限世界里的可行性，但<em>从 Minecraft 走到物理世界</em>这段路，可能比从"无 agent"到"Voyager"这段路更长、更难。Jim Fan 自己后来也把研究重心转到了机器人（Eureka、Project GROOT），这本身就是一个信号：方块世界跑通了，下一步是真实世界。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    假如把 Voyager 的技能库搬到一个"规则会变"的世界——比如某个游戏每隔几小时就更新一版配方表——它的技能库会不会反而成为累赘，让它在过时代码上越陷越深？你觉得该给技能库加什么机制，才能让它在规则漂移下依然有用？欢迎带着这个问题，等下一篇。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Generative Agents: Interactive Simulacra of Human Behavior</h3>
+    <p style="margin:0;">Voyager 证明了单个 LLM agent 能在开放世界里越玩越强——那如果把 25 个这样的 agent 放进同一个沙盒小镇，让它们各自有性格、有日程、能相互打招呼、传八卦、甚至自发办一场情人节派对，会怎样？下一篇，我们去看斯坦福那群把 25 个 GPT-3.5 agent 塞进一个小镇、结果它们自己"活"出了一段完整社会生活的研究者，是怎么把 LLM agent 从"单兵作战"推到"群体涌现"的。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 036 篇</span>
+    <span>2026-09-05</span>
+  </footer>
+
+</div>
+</body>
+</html>
