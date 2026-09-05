@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 36,
-  "last_run_date": "2026-09-05",
+  "last_index": 37,
+  "last_run_date": "2026-09-06",
   "papers_covered": [
     {
       "index": 1,
@@ -290,10 +290,18 @@
       "date": "2023-05-25",
       "era": "对齐与应用期 2022–2023",
       "filename": "36_20260905_Voyager.html"
+    },
+    {
+      "index": 37,
+      "title_en": "Generative Agents: Interactive Simulacra of Human Behavior",
+      "title_zh": "Generative Agents：把 25 个 LLM agent 塞进同一个沙盒小镇——它们会自发打招呼、传八卦、办情人节派对，群体涌现的第一份样本",
+      "date": "2023-04-07",
+      "era": "对齐与应用期 2022–2023",
+      "filename": "37_20260906_Generative_Agents.html"
     }
   ],
   "next_preview": {
-    "title_en": "Generative Agents: Interactive Simulacra of Human Behavior",
-    "title_zh": "Generative Agents：把 25 个 LLM agent 塞进同一个沙盒小镇——它们会自发打招呼、传八卦、办情人节派对，群体涌现的第一份样本"
+    "title_en": "MetaGPT: Meta Programming for Multi-Agent Collaborative Framework",
+    "title_zh": "MetaGPT：把多智能体协作工程化——用 SOP 让一群 LLM 像创业团队一样分工，自己造出可运行的软件"
   }
 }
