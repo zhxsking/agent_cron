@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 38,
-  "last_run_date": "2026-09-07",
+  "last_index": 39,
+  "last_run_date": "2026-09-08",
   "papers_covered": [
     {
       "index": 1,
@@ -306,10 +306,18 @@
       "date": "2023-08-01",
       "era": "对齐与应用期 2022–2023",
       "filename": "38_20260907_MetaGPT.html"
+    },
+    {
+      "index": 39,
+      "title_en": "AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation Framework",
+      "title_zh": "AutoGen：把多智能体协作变成'可编程的对话'——微软的通用多智能体框架，与 MetaGPT 的'流水线派'分庭抗礼",
+      "date": "2023-08-16",
+      "era": "对齐与应用期 2022–2023",
+      "filename": "39_20260908_AutoGen.html"
     }
   ],
   "next_preview": {
-    "title_en": "AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation Framework",
-    "title_zh": "AutoGen：把多智能体协作变成'可编程的对话'——微软的通用多智能体框架，与 MetaGPT 的'流水线派'分庭抗礼"
+    "title_en": "CAMEL: Communicative Agents for \"Mind\" Exploration of Large Language Model Society",
+    "title_zh": "CAMEL：用角色扮演 + inception prompting 让两个 LLM 自主对话完成任务——多智能体角色扮演的真正起源，比 AutoGen 早五个月，却被埋进附录"
   }
 }

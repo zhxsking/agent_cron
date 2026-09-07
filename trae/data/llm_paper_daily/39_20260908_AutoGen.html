@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoGen 论文精读 · 大模型经典论文系列 #039</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#039</span>
+  </div>
+
+  <h1 class="title">
+    AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation Framework
+    <span class="en">AutoGen：把多智能体协作变成"可编程的对话"——微软的通用多智能体框架，与 MetaGPT 的"流水线派"分庭抗礼</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Qingyun Wu, Gagan Bansal, Jieyu Zhang, Yiran Wu, Beibin Li, Erkang Zhu, Li Jiang, Xiaoyun Zhang, Shaokun Zhang, Jiale Liu, Ahmed Hassan Awadallah, Ryen W. White, Doug Burger, Chi Wang</span>
+    <span>机构：Microsoft Research, Pennsylvania State University, University of Washington, Xidian University</span>
+    <span>发表：2023-08 / arXiv（ICLR 2024 LLM Agent Workshop 最佳论文）</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2308.08155" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/microsoft/autogen" target="_blank" rel="noopener">GitHub</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">上一篇 MetaGPT 给多智能体立了规矩：不许闲聊，每个人按 SOP 交出固定格式的文档，像软件公司流水线那样一节一节往前推。效果确实好——HumanEval 85.9%、任务完成率 100%，组织方式本身就是增益。可规矩太硬，总有人不服气：要是任务没法预先拆成几道工序呢？要是中途要换人、要拉个人进来拍板呢？要是 agent 之间的来回本身就是干活呢？</p>
+  <p class="lead">同一个 2023 年夏天，微软研究院抛出了<em>另一个极端的答案</em>：别急着定流程，先把"对话"这件事做成可编程的基础设施。agent 可以是 LLM，可以是人，可以是工具，甚至三者合一；它们怎么聊、谁先说话、要不要喊人，全都交给开发者用自然语言和代码灵活定义。这篇论文叫 <em class="latin">AutoGen</em>，它不押"流水线"，它押"对话"。当"流水线派"遇上"对话派"，多智能体到底该严格还是灵活？答案，藏在一个叫 <em class="latin">Conversable Agent</em> 的抽象里。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    AutoGen 把"多智能体协作"抽象成"可编程的对话"——agent 可定制、可对话，能结合 LLM、人、工具或三者的混合，对话模式既可静态编排也可动态演化，开发者用自然语言和代码就能定义任意交互流程。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>上一篇 MetaGPT，我们看到"群体协作"从涌现的火花走向工程化交付的转折。AutoGen 和它几乎同时（2023 年 8 月）出现在同一片浪潮里，却<em>站在对立面</em>：MetaGPT 押"组织"，AutoGen 押"对话"；MetaGPT 把人编成流水线，AutoGen 把人编进聊天群。这两篇加在一起，几乎框定了 2023 年多智能体设计的<em>两极</em>——一个是结构主义，一个是自由派。</p>
+  <p>在大模型发展脉络里，AutoGen 的位置很微妙：它不是某个新模型，也不是某项训练技巧，而是<em>基础设施</em>。它的真正贡献是把"多 agent 怎么搭"这件事，从一个临时拼装、各自为政的脚本活，升格成一套通用、可复用、可编程的框架抽象。后来无数 agent 框架（CrewAI、AG2、LangGraph 的一部分）都在它的影子下生长。可以说，它是"对齐与应用期"agent 线上，从"会玩的 agent"走向"能被工程师大规模搭起来的 agent 系统"的<em>承重墙</em>。</p>
+
+  <figure>
+    <!-- 图 1：大模型领域发展时间线，标注本篇位置 -->
+    <svg viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="120" x2="660" y2="120" stroke="#96897A" stroke-width="1"/>
+      <!-- 已解析覆盖区段（暖色淡底，从2017到2023-08） -->
+      <rect x="100" y="116" width="310" height="8" fill="#B54A2C" fill-opacity="0.35"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 里程碑节点 -->
+        <circle cx="100" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="100" y="100" text-anchor="middle">2017</text>
+        <text x="100" y="150" text-anchor="middle" fill="#2E2A22">Transformer</text>
+
+        <circle cx="220" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="220" y="100" text-anchor="middle">2020</text>
+        <text x="220" y="150" text-anchor="middle" fill="#2E2A22">GPT-3</text>
+
+        <circle cx="300" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="300" y="100" text-anchor="middle">2022-10</text>
+        <text x="300" y="150" text-anchor="middle" fill="#2E2A22">ReAct</text>
+
+        <circle cx="360" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="360" y="100" text-anchor="middle">2023-04</text>
+        <text x="360" y="150" text-anchor="middle" fill="#2E2A22">Gen. Agents</text>
+
+        <!-- 本篇：高亮放大 -->
+        <circle cx="410" cy="120" r="9" fill="#B54A2C"/>
+        <circle cx="410" cy="120" r="14" fill="none" stroke="#B54A2C" stroke-width="1" opacity="0.5"/>
+        <text x="410" y="92" text-anchor="middle" fill="#B54A2C" font-weight="600">2023-08</text>
+        <text x="410" y="78" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇</text>
+        <text x="410" y="150" text-anchor="middle" fill="#2E2A22" font-weight="600">AutoGen</text>
+
+        <circle cx="480" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="480" y="100" text-anchor="middle">2024-09</text>
+        <text x="480" y="150" text-anchor="middle" fill="#2E2A22">o1</text>
+
+        <circle cx="580" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="580" y="100" text-anchor="middle">2025</text>
+        <text x="580" y="150" text-anchor="middle" fill="#2E2A22">推理范式</text>
+
+        <circle cx="640" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="640" y="100" text-anchor="middle">2026</text>
+        <text x="640" y="150" text-anchor="middle" fill="#2E2A22">agent 落地</text>
+
+        <!-- 图例 -->
+        <rect x="40" y="195" width="14" height="8" fill="#B54A2C" fill-opacity="0.35"/>
+        <text x="62" y="203" fill="#96897A">= 已解析覆盖区段</text>
+        <circle cx="240" cy="199" r="5" fill="#B54A2C"/>
+        <text x="252" y="203" fill="#96897A">= 本篇位置</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的位置：本篇与 MetaGPT 同处"对齐与应用期"agent 线，是群体协作走向"可编程基础设施"的承重墙</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>2023 年上半年，"自主智能体"热潮正盛。AutoGPT 给自己定目标、上网查资料、自己写代码；BabyAGI 用任务循环不停拆活；LangChain 给了"链"式编排，把 prompt、工具、记忆串成一串；各种"角色扮演"框架让多个 LLM 互相说话，看起来像在协作。</p>
+  <p>但真想搭一个<em>能组合 LLM + 工具 + 人</em>的系统，开发者很快撞上三堵墙。第一堵：<em>能力孤岛</em>——一个 agent 要么纯 LLM，要么纯工具调用，想把"人的判断""代码执行""模型推理"揉进同一个 agent，得自己手搓一堆胶水代码。第二堵：<em>交互死板</em>——大多数框架只支持一种预设流程，要么固定两两对话，要么固定角色轮次，遇到"中途要喊人拍板""要根据上下文换下一个发言者"这种动态需求就抓瞎。第三堵：<em>人没法随时进出</em>——人要么全程不在场，要么全程打断，没有一种"灵活级别"让人想插嘴就插嘴、想跳过就跳过。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象你在搭一个客服系统：有 AI 助手答常规问题，有代码执行器算报价，还有真人专家兜底处理疑难。旧框架要么让你把这三者焊死在一条链上（AI 答完→算报价→转人），要么干脆不让人参与。可真实业务里，你想的是"AI 搞不定就把人拉进同一个会话接着聊，人忙时 AI 先撑着"——这种"随时进出的群聊"，旧框架几乎给不了。
+  </div>
+
+  <p>论文里那张经典的对比表（<em class="latin">Table 1</em>）把这些痛点量化了：它拿 AutoGen 和 LangChain、AutoGPT、BabyAGI、CAMEL 等同期系统比了四个维度——是不是通用基础设施、支不支持静态<em>和</em>动态对话、能不能执行 LLM 生成的代码、人能不能灵活介入。结果是<em>没有一家四项全满足</em>：有的只支持静态对话，有的不能执行代码，有的把人挡在门外。AutoGen 的切入点，正是把这四堵墙一起拆掉。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>一句话：怎么设计一个<em>通用、可复用、可定制</em>的多智能体抽象，让它能覆盖从最简单到最复杂的各类应用，又不把开发者锁死在某一种对话模式里？</p>
+  <p>拆成两个关键子问题，论文自己写得明明白白：第一，<em>单个 agent 怎么设计</em>，才能既能力强、又可复用、又能灵活组合 LLM、人、工具？第二，<em>agent 之间怎么交互</em>，才能用一套统一接口，装下从两两对话到动态群聊的千变万化的模式？这两个问题答好了，"多智能体应用"才能从手搓脚本变成可工程化的基础设施。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果让你设计这个"万能 agent 基类"，你会让它默认带什么能力？是先定死一个角色（产品经理/工程师），还是只给一套"能收发消息、能自己回话"的最小骨架，把角色留给开发者去配？哪一种更经得起不同应用折腾？
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>AutoGen 的方法论可以浓缩成一句话：<em>把 agent 抽象成"可对话、可定制"的统一基类，把协作抽象成"可编程的对话模式"</em>。下面分三步看它怎么落地。</p>
+
+  <h3>步骤一：Conversable Agent——一个能聊天、能定制的万能基类</h3>
+  <p>先说人话：AutoGen 不一上来就给你"产品经理""工程师"这种预设角色，而是给一个<em>最小骨架</em>——叫 <em class="latin">Conversable Agent</em>（可对话智能体）。这个骨架只有两个核心能力：能<em>收发消息</em>（conversable），能<em>被定制</em>（customizable）。定制什么？定制它"收到消息后干嘛"——可以用 LLM 回话，可以调工具，可以问人，也可以把这些任意混合。</p>
+  <p>这个设计的妙处在于<em>组合自由度</em>。同一个基类，配 LLM 就是 AI 助手，配代码执行器就是"会跑代码的 agent"，配人工输入就是"人肉代理"，三者全开就是"既能想又能干还能问人"的全能选手。角色不是写死的，是<em>配置出来</em>的。论文还给了两个开箱即用的子类，让开发者拿来即用：</p>
+  <ul>
+    <li><em class="latin">AssistantAgent</em>：默认是个"纯 LLM 大脑"——收任务、写 Python 代码块给别的 agent 跑，收到报错还能自己改。不强制要人介入，也不自己执行代码。</li>
+    <li><em class="latin">UserProxyAgent</em>：默认是"人的替身 + 代码执行器"——每轮先问人要不要说话，人不说就自动检测消息里有没有可执行代码块，有就跑、把结果灌回去。它把"人"和"工具"焊进了同一个 agent。</li>
+  </ul>
+  <p>还有一个关键机制叫 <em class="latin">auto-reply</em>（自动回复）：agent 收到消息后，可以按注册的回复函数自动生成回复，也能随时把人拉回来插嘴。这就让多智能体既能<em>自主</em>跑起来，又不丢<em>人在环</em>的可能——自主和人控之间是连续的旋钮，不是非此即彼的开关。</p>
+
+  <figure>
+    <!-- 图 2：Conversable Agent 架构 -->
+    <svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 基类：Conversable Agent -->
+        <rect x="220" y="30" width="260" height="70" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="350" y="55" text-anchor="middle" fill="#B54A2C" font-weight="600">Conversable Agent（基类）</text>
+        <text x="350" y="75" text-anchor="middle" fill="#96897A" font-size="10">conversable + customizable</text>
+        <text x="350" y="92" text-anchor="middle" fill="#96897A" font-size="10">收发消息 / auto-reply / register_reply()</text>
+
+        <!-- 三大能力 -->
+        <rect x="40" y="150" width="150" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="115" y="170" text-anchor="middle">LLM 推理</text>
+        <text x="115" y="186" text-anchor="middle" fill="#96897A" font-size="9">GPT-4 等模型</text>
+
+        <rect x="275" y="150" width="150" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="170" text-anchor="middle">工具 / 代码执行</text>
+        <text x="350" y="186" text-anchor="middle" fill="#96897A" font-size="9">Docker / 函数调用</text>
+
+        <rect x="510" y="150" width="150" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="585" y="170" text-anchor="middle">人工输入</text>
+        <text x="585" y="186" text-anchor="middle" fill="#96897A" font-size="9">人在环 / 可跳过</text>
+
+        <line x1="280" y1="100" x2="160" y2="148" stroke="#96897A" stroke-dasharray="3 3"/>
+        <line x1="350" y1="100" x2="350" y2="148" stroke="#96897A" stroke-dasharray="3 3"/>
+        <line x1="420" y1="100" x2="540" y2="148" stroke="#96897A" stroke-dasharray="3 3"/>
+
+        <!-- 两个开箱子类 -->
+        <rect x="80" y="240" width="220" height="46" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="190" y="260" text-anchor="middle" fill="#24555A" font-weight="600">AssistantAgent</text>
+        <text x="190" y="276" text-anchor="middle" fill="#96897A" font-size="9">LLM 脑 / 写代码 / 收报错改</text>
+
+        <rect x="400" y="240" width="220" height="46" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="510" y="260" text-anchor="middle" fill="#24555A" font-weight="600">UserProxyAgent</text>
+        <text x="510" y="276" text-anchor="middle" fill="#96897A" font-size="9">人替身 / 自动跑代码 / 可问人</text>
+
+        <line x1="190" y1="194" x2="190" y2="238" stroke="#96897A" marker-end="url(#arr2)"/>
+        <line x1="510" y1="194" x2="510" y2="238" stroke="#96897A" marker-end="url(#arr2)"/>
+
+        <text x="350" y="310" text-anchor="middle" fill="#96897A" font-size="10">同一基类 → 三能力任意组合 → 两个子类拿来即用</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · Conversable Agent 架构：一个基类，三大可定制能力（LLM / 工具 / 人），衍生出两个开箱即用子类</figcaption>
+  </figure>
+
+  <p>这个抽象可以用一个极简等式概括——agent 的回复，是它"收到什么消息"和"自己被配成什么样"的函数：</p>
+
+  <div class="formula-block">
+    $$ \text{reply}(a, m) = f_{\text{config}(a)}(m,\ \text{context}) $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>其中 $\text{config}(a)$ 决定 agent $a$ 用 LLM、工具还是人来生成回复，$m$ 是收到的消息，context 是共享上下文。一句话：<em>同一个骨架，换个配置就是另一个角色</em>。</p>
+
+  <h3>步骤二：可编程的对话模式——从两人聊天到动态群聊</h3>
+  <p>有了万能 agent，还得解决"它们怎么聊"。AutoGen 的第二刀，是把对话模式也做成<em>可编程</em>的。它内置了四种基本模式，还能让开发者用自然语言或代码自定义任意模式：</p>
+  <ul>
+    <li><em>两人对话</em>（<em class="latin">two-agent chat</em>）：最简单，两个 agent 你一句我一句，由 <em class="latin">initiate_chat</em> 启动。</li>
+    <li><em>顺序对话</em>（<em class="latin">sequential chat</em>）：一串两人对话串起来，用"carryover"机制把上一段的总结带进下一段的上下文，像接力棒。</li>
+    <li><em>群聊</em>（<em class="latin">group chat</em>）：两个以上 agent 共享同一条对话线、同一个上下文。关键问题是"下一个谁说话"——AutoGen 给了四种选人策略：<em class="latin">round_robin</em>（轮流）、<em class="latin">random</em>（随机）、<em class="latin">manual</em>（人选）、<em class="latin">auto</em>（让 LLM 根据上下文决定）。最后一种就是<em>动态对话</em>的引擎。</li>
+    <li><em>嵌套对话</em>（<em class="latin">nested chat</em>）：把一整套工作流打包进单个 agent，外面看它像个普通 agent，里面其实藏着一个子工作流，方便复用。</li>
+  </ul>
+
+  <figure>
+    <!-- 图 3：四种对话模式 -->
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 模式1：两人对话 -->
+        <text x="90" y="30" text-anchor="middle" font-weight="600">① 两人对话</text>
+        <circle cx="60" cy="80" r="16" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="60" y="84" text-anchor="middle" font-size="9">A</text>
+        <circle cx="120" cy="80" r="16" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="84" text-anchor="middle" font-size="9">B</text>
+        <line x1="76" y1="74" x2="104" y2="74" stroke="#96897A" marker-end="url(#arr3)"/>
+        <line x1="104" y1="86" x2="76" y2="86" stroke="#96897A" marker-end="url(#arr3)"/>
+
+        <!-- 模式2：顺序对话 -->
+        <text x="280" y="30" text-anchor="middle" font-weight="600">② 顺序对话</text>
+        <circle cx="210" cy="80" r="14" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="210" y="84" text-anchor="middle" font-size="9">A</text>
+        <circle cx="260" cy="80" r="14" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="260" y="84" text-anchor="middle" font-size="9">B</text>
+        <circle cx="320" cy="80" r="14" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="320" y="84" text-anchor="middle" font-size="9">C</text>
+        <line x1="224" y1="80" x2="246" y2="80" stroke="#96897A" marker-end="url(#arr3)"/>
+        <line x1="274" y1="80" x2="306" y2="80" stroke="#96897A" marker-end="url(#arr3)"/>
+        <text x="265" y="110" text-anchor="middle" fill="#96897A" font-size="9">carryover 总结</text>
+
+        <!-- 模式3：群聊 -->
+        <text x="540" y="30" text-anchor="middle" font-weight="600">③ 群聊（动态）</text>
+        <rect x="470" y="50" width="150" height="70" rx="2" fill="#B54A2C" fill-opacity="0.08" stroke="#B54A2C" stroke-dasharray="3 3"/>
+        <text x="545" y="64" text-anchor="middle" fill="#B54A2C" font-size="9">GroupChatManager</text>
+        <circle cx="500" cy="90" r="12" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="500" y="94" text-anchor="middle" font-size="8">A</text>
+        <circle cx="545" cy="90" r="12" fill="#B54A2C" fill-opacity="0.4" stroke="#B54A2C"/>
+        <text x="545" y="94" text-anchor="middle" font-size="8" fill="#fff">B</text>
+        <circle cx="590" cy="90" r="12" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="590" y="94" text-anchor="middle" font-size="8">C</text>
+        <text x="545" y="135" text-anchor="middle" fill="#96897A" font-size="9">LLM 选下一个发言者</text>
+
+        <!-- 模式4：嵌套 -->
+        <text x="90" y="170" text-anchor="middle" font-weight="600">④ 嵌套对话</text>
+        <circle cx="90" cy="210" r="16" fill="#24555A" fill-opacity="0.3" stroke="#24555A"/>
+        <text x="90" y="214" text-anchor="middle" font-size="9">agent</text>
+        <text x="140" y="208" fill="#24555A" font-size="9">内含子工作流</text>
+        <rect x="50" y="195" width="20" height="12" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="72" y="200" width="16" height="10" fill="#ECE4D4" stroke="#96897A"/>
+
+        <!-- 自定义 -->
+        <text x="380" y="170" text-anchor="middle" font-weight="600" fill="#B54A2C">+ 自然语言/代码自定义</text>
+        <rect x="290" y="190" width="200" height="36" rx="2" fill="none" stroke="#B54A2C" stroke-dasharray="4 3"/>
+        <text x="390" y="213" text-anchor="middle" fill="#B54A2C" font-size="10">register_reply() / 任意拓扑</text>
+
+        <!-- 静态/动态标注 -->
+        <text x="90" y="115" text-anchor="middle" fill="#96897A" font-size="9">静态</text>
+        <text x="545" y="50" text-anchor="end" fill="#B54A2C" font-size="9" font-weight="600">动态</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 四种对话模式：两人 / 顺序 / 群聊 / 嵌套，加上可自定义的任意拓扑，静态与动态并存</figcaption>
+  </figure>
+
+  <p>这里有个关键区分：<em>静态对话</em>是无论输入什么，agent 拓扑都不变（轮流说话、固定顺序）；<em>动态对话</em>是拓扑本身随上下文演化（LLM 根据当前进展决定下一个谁说话）。AutoGen 两样都给——简单任务用静态够稳，复杂任务用动态够活。这正好补上了 MetaGPT 没覆盖的"流程跑着跑着要改路线"的缺口。</p>
+
+  <h3>步骤三：人在环 + 代码执行，原生焊进 agent</h3>
+  <p>第三刀最实用：AutoGen 把"<em>人能随时进出</em>"和"<em>代码能自动跑</em>"做成原生能力，而不是事后补丁。<em class="latin">UserProxyAgent</em> 是这套设计的缩影——它默认每轮先问人"要不要说话"，人不开口就自动扫消息里有没有可执行代码块，有就在 Docker 里跑、把 stdout 和报错灌回对话。这意味着"AI 写代码→执行→报错→AI 改"这个闭环，开箱就能跑。</p>
+
+  <pre><code># 最简两 agent：assistant + user_proxy 自动跑代码（简化）
+assistant = AssistantAgent("assistant", llm_config=...)
+user_proxy = UserProxyAgent("user", code_execution_config={"use_docker": True})
+user_proxy.initiate_chat(
+    assistant,
+    message="画一张 META 和 TESLA 今年至今的股价变化图",
+)
+# → assistant 写代码 → user_proxy 自动执行 → 报错回灌 → assistant 改 → 出图</code></pre>
+
+  <p>论文里那个贯穿全篇的例子就是这句"画 META 和 TESLA 股价图"：<em class="latin">assistant</em> 第一次写的代码忘了装 <em class="latin">yfinance</em> 包，<em class="latin">user_proxy</em> 一跑就报错，把报错塞回去，<em class="latin">assistant</em> 马上补一句"先 <em class="latin">pip install</em>"，再出图。整个过程<em>没人插手</em>，靠对话自己走通。这就是 AutoGen 想要的"对话即工作流"。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    MetaGPT 像一家有严格 SOP 的工厂：每个工位干什么、交什么，写得明明白白。AutoGen 像一个 Slack 群：你把任务甩进去，会写代码的、会跑代码的、会拍板的人都在群里，谁该接话谁就接，接不下去了 @ 一下人。前者稳，后者活——没有谁对谁错，只是任务长得不一样。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>AutoGen 的实验不是去刷某个 benchmark 的 SOTA，而是<em>用六个不同领域的示例应用</em>，证明这套通用框架能 cover 住从简单到复杂的各类任务。这点很关键——它卖的不是某一项成绩，而是"通用性"本身。</p>
+
+  <table>
+    <thead>
+      <tr><th>应用领域</th><th>所用对话模式</th><th>关键发现</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">数学推理</td><td>六 agent 群聊（求解者×3 + 批评 + 核对 + 汇总）</td><td>多 agent 辩论优于单 agent</td></tr>
+      <tr><td class="text">代码生成与调试</td><td>assistant + user_proxy 两人</td><td>开箱即用的写-跑-改闭环</td></tr>
+      <tr><td class="text">供应链优化</td><td>Commander + Writer + Safeguard</td><td>人工干预减少 3–10×</td></tr>
+      <tr><td class="text">在线决策（搜索/推荐）</td><td>多 agent + 工具调用</td><td>灵活组合 web 搜索能力</td></tr>
+      <tr><td class="text">问答</td><td>检索 + 生成 agent</td><td>模块化能力组合</td></tr>
+      <tr><td class="text">娱乐（狼人杀游戏）</td><td>多角色动态群聊</td><td>动态对话驱动涌现</td></tr>
+    </tbody>
+  </table>
+
+  <p>几个发现值得细说。第一，<em>数学推理那个六 agent 系统</em>特别有意思：三个求解 agent 各写各的解法，一个批评 agent 找毛病，一个核对 agent 验算，一个汇总 agent 收口。这种"多解 + 互评 + 验算"的群聊，比单个 GPT-4 硬想更准——和上一篇 Self-Consistency、CoT 一脉里的"多路径投票"思路遥相呼应，只是把"采样多次"变成了"多 agent 同时干"。第二，<em>供应链优化</em>那个例子最显工程价值：用 AutoGen 搭的 Commander-Writer-Safeguard 三角，把人工干预次数砍掉 3 到 10 倍，编码工作量降到原来的 1/4 以下——这是真金白银的工程收益。第三，<em>狼人杀</em>那个例子最能体现"动态对话"的威力：谁是下一个发言者、要不要带节奏，全靠 LLM 根据当前局势现场决定，没有预设剧本，却跑出了像样的游戏逻辑。</p>
+
+  <figure>
+    <!-- 图 4：MetaGPT vs AutoGen 哲学对比 -->
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="175" y="30" text-anchor="middle" font-weight="600">MetaGPT（流水线派）</text>
+        <text x="525" y="30" text-anchor="middle" font-weight="600" fill="#B54A2C">AutoGen（对话派）</text>
+        <line x1="350" y1="20" x2="350" y2="250" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <rect x="60" y="50" width="230" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="72" text-anchor="middle">抽象单位：角色 + SOP 工序</text>
+
+        <rect x="60" y="96" width="230" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="118" text-anchor="middle">交互：固定流水线 / 共享消息池</text>
+
+        <rect x="60" y="142" width="230" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="164" text-anchor="middle">流程：静态、预定义顺序</text>
+
+        <rect x="60" y="188" width="230" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="210" text-anchor="middle">强项：稳定交付、可复现</text>
+
+        <rect x="410" y="50" width="230" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="72" text-anchor="middle" fill="#B54A2C">抽象单位：可对话的 agent 基类</text>
+
+        <rect x="410" y="96" width="230" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="118" text-anchor="middle" fill="#B54A2C">交互：可编程对话 / 静态+动态</text>
+
+        <rect x="410" y="142" width="230" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="164" text-anchor="middle" fill="#B54A2C">流程：可演化、LLM 选下一个</text>
+
+        <rect x="410" y="188" width="230" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="210" text-anchor="middle" fill="#B54A2C">强项：通用、灵活、人能随时进出</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 流水线派 vs 对话派：抽象单位、交互方式、流程弹性、强项，四维对照出两套哲学的取舍</figcaption>
+  </figure>
+
+  <p>最值得玩味的结论是：AutoGen 没有声称自己比 MetaGPT"更好"，它声称的是<em>更通用</em>。它的增益来源不是"组织方式"（那是 MetaGPT 的赌注），而是"<em>把人和工具原生焊进 agent，把对话模式做成可编程基建</em>"。两种增益不是对立的——后来的实践表明，最稳的多智能体系统，往往是 MetaGPT 式的流程骨架 + AutoGen 式的灵活对话缝在一起。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>AutoGen 的影响可以从三个层面看。学术上，它把"多智能体应用"从一个个临时脚本，升格成有<em>通用抽象</em>的基础设施课题——"可对话 + 可定制"这套基类设计，后来几乎成了 agent 框架的事实标准。它拿下 <em class="latin">ICLR 2024 LLM Agent Workshop</em> 最佳论文奖，被引用数百次。</p>
+  <p>工程上，它开源后迅速成为最受欢迎的多智能体框架之一，GitHub 星标一路涨到数万量级，和 MetaGPT、CrewAI 并列。微软官方持续迭代（0.2 → 0.4 多 agent 核心重写），社区还分叉出 <em class="latin">AG2</em>（原 AutoGen 社区版）继续维护。它直接催生了一大批"对话即工作流"的应用范式，让"人 + LLM + 工具"混合编排成了标配能力。</p>
+  <p>产业上，AutoGen 被广泛用于企业内部 agent 系统的原型与生产，从供应链、客服到数据分析，"多 agent 群聊"成了一种可复制的工程模板。一句话：AutoGen 让"多智能体"从"论文里的 demo"和"玩具脚本"，变成<em>能被工程师大规模搭起来的通用基建</em>。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>AutoGen 不是没有软肋。首先，它<em>高度依赖强 LLM 兜底</em>——群聊里"LLM 选下一个发言者"这套机制，模型一弱就乱套，选错人、绕圈、死循环都见过。其次，<em>对话本身有成本</em>：多 agent 来回聊天 token 烧得飞快，复杂任务下对话拓扑该怎么优化、什么时候该收敛，论文当时没给自动解法（后来的 <em class="latin">AgentOptimizer</em>、<em class="latin">EvolvableQ</em> 才补上这一刀）。</p>
+  <p>再者，<em>动态对话的可控性</em>是个长期难题：灵活的另一面是难复现、难调试，同一个任务跑两遍可能走出两条完全不同的对话路径。还有那段绕不开的<em>CAMEL 引用争议</em>（下节详谈）——它暴露了"框架论文"在引用同期工作时的边界问题。后续工作沿几条路走：自动优化对话拓扑、把流程从"对话"扩展到"多智能体经济"、以及和 MetaGPT 式结构主义融合，取两派之长。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把本篇放回大模型的整条时间线里（呼应图 1）：</p>
+  <ul>
+    <li><em>奠基期 2014–2017</em>：Transformer 横空出世，attention 取代循环，为一切注意力模型铺路。</li>
+    <li><em>预训练范式期 2018–2020</em>：BERT 双向理解、GPT-2 单向生成，再到 GPT-3 把"大"玩明白，模型开始有"few-shot 学新任务"的能力。</li>
+    <li><em>规模化探索期 2020–2022</em>：Chinchilla 证明"更小模型 + 更多数据"反杀 GPT-3，算力最优训练法成型。</li>
+    <li><em>对齐与应用期 2022–2023</em>：InstructGPT、DPO 让模型听懂人话；CoT、Self-Consistency、ToT/GoT 把"提示工程"玩出花；ReAct、Toolformer、Reflexion、CRITIC、Self-RAG 把"工具 + 自我纠正"焊进单 agent；Voyager、Generative Agents 把 agent 从"会调工具"推向"会玩、会社交"；MetaGPT 把群体协作从"涌现"推向"工程化交付"。AutoGen 正紧接 MetaGPT，给出<em>另一极</em>的答案——不押组织押对话，把多智能体做成可编程基建。</li>
+    <li><em>推理范式期 2025–</em>：o1、DeepSeek-R1、Kimi K1.5 用强化学习训练思维链，推理范式时代开启——但 agent 要用上这种"会推理"的能力，还得靠 AutoGen 这类框架把多智能体编排好。</li>
+  </ul>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>这篇论文最戏剧性的一段，不在正文，而在它和 CAMEL 的"引用官司"。CAMEL（<em class="latin">Communicative Agents for "Mind" Exploration</em>）是 KAUST 团队 2023 年 3 月发的论文，比 AutoGen 早了整整五个月，讲的是用"角色扮演 + inception prompting"让两个 LLM agent 自主对话完成任务——思路和 AutoGen 高度相似。但 AutoGen 在正文里几乎没提 CAMEL，把对比挪到了<em>附录</em>。</p>
+  <p>CAMEL 一作李国豪不干了。他在 ICLR 公共评论区指出这是"值得注意的遗漏"，意思很直接：你把我塞附录，读者基本看不到，结果大家都以为多智能体对话是你 AutoGen 首创的。ICLR 的审稿人和领域主席也点了 AutoGen 的名，说"在附录讨论同期工作不可取，因为附录的审核级别和正文不一样，等于变相让人没法公平看到"。这段插曲后来成了 agent 圈子里"arXiv 不是同行评审、发早了不代表被引"的经典案例。</p>
+  <p>另一个彩蛋在作者名单里：<em class="latin">Doug Burger</em>，微软技术院士，他给 AutoGen 站台时留下一句相当高调的话——"<em class="latin">Capabilities like AutoGen are poised to fundamentally transform and extend what large language models are capable of. This is one of the most exciting developments I have seen in AI recently.</em>"（大意：AutoGen 这类能力有望根本性地改造和扩展大模型能干的事，是我近来在 AI 里见过的最激动人心的发展之一。）一个微软高级别老总亲自下场背书一篇框架论文，足见微软内部对它的期许。</p>
+  <p>还有个后话：AutoGen 后来经历了"分家"——微软官方继续推 0.4 重写版（多 agent 核心架构），社区分叉出 <em class="latin">AG2</em>（原 AutoGen 社区版）独立维护。一个框架长出两条命，也算是 agent 圈子里独有的风景。</p>
+
+  <figure>
+    <!-- 图 5：附录 vs 正文 的趣味插图 -->
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 左：CAMEL 被塞进附录 -->
+        <text x="175" y="30" text-anchor="middle" font-weight="600">CAMEL 的处境</text>
+        <rect x="80" y="50" width="190" height="120" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="74" text-anchor="middle" fill="#96897A" font-size="10">AutoGen 论文</text>
+        <rect x="100" y="86" width="150" height="24" fill="#fff" stroke="#96897A" opacity="0.5"/>
+        <text x="175" y="102" text-anchor="middle" font-size="9">正文：几乎不提 CAMEL</text>
+        <rect x="100" y="120" width="150" height="36" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C"/>
+        <text x="175" y="134" text-anchor="middle" fill="#B54A2C" font-size="9" font-weight="600">附录：CAMEL 对比</text>
+        <text x="175" y="148" text-anchor="middle" fill="#B54A2C" font-size="8">（读者基本看不到）</text>
+
+        <!-- 右：对话派 logo 式隐喻 -->
+        <text x="525" y="30" text-anchor="middle" font-weight="600" fill="#B54A2C">AutoGen 的隐喻</text>
+        <circle cx="470" cy="110" r="18" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="470" y="114" text-anchor="middle" font-size="9">AI</text>
+        <circle cx="525" cy="110" r="18" fill="#24555A" fill-opacity="0.3" stroke="#24555A"/>
+        <text x="525" y="114" text-anchor="middle" font-size="9">人</text>
+        <circle cx="580" cy="110" r="18" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="580" y="114" text-anchor="middle" font-size="9">工具</text>
+        <line x1="488" y1="104" x2="507" y2="104" stroke="#B54A2C" marker-end="url(#arr5)"/>
+        <line x1="543" y1="116" x2="562" y2="116" stroke="#B54A2C" marker-end="url(#arr5)"/>
+        <line x1="565" y1="98" x2="488" y2="98" stroke="#B54A2C" stroke-dasharray="3 3"/>
+        <text x="525" y="160" text-anchor="middle" fill="#96897A" font-size="9">"把人编进同一个群聊"</text>
+      </g>
+      <defs>
+        <marker id="arr5" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 左：CAMEL 被塞进附录的尴尬；右：AutoGen 的核心隐喻——AI、人、工具编进同一个群聊</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>我读 AutoGen 最大的感触是：它和 MetaGPT 合在一起，把多智能体设计里最核心的一对张力——<em>结构 vs 灵活</em>——摆到了台面上。MetaGPT 押"结构"，赌的是复杂任务靠 SOP 兜底；AutoGen 押"灵活"，赌的是真实世界任务长得千奇百怪，预设流程兜不住。两篇都对，也都各缺一半。</p>
+  <p>更深的启示在于：AutoGen 把"人"变成了 agent。这件事比它表面看更激进——以前"人在环"是个开关，要么全程在、要么全程不在；AutoGen 把人变成一个可对话、可定制的 agent，人就和 LLM、工具<em>同构</em>了。这意味着你可以在任何时刻把人拉进对话、又随时让人退出，自主和人控之间是连续光谱。当未来 agent 系统越来越强，"人什么时候该插手"会变成一个越来越重要的设计决策——AutoGen 给的旋钮，很可能就是答案的雏形。</p>
+  <p>当然，它也留下一个待解的张力：灵活的另一面是难复现、难调试。同一个任务跑两遍走出两条路，对研究是麻烦，对工程是噩梦。后来 LangGraph 用"图 + 状态机"试图把灵活性装回可复现的壳里，AG2 也在自动优化对话拓扑上下功夫。多智能体的未来，也许不是"纯对话"或"纯流水线"，而是<em>把对话的可编程性，和结构的可复现性，缝在同一套基建里</em>。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果让你搭一个"AI 投资研究助手"系统——要查财报、算估值、还要让分析师随时插嘴改判断——你会用 MetaGPT 的流水线，还是 AutoGen 的群聊？哪个环节该严格、哪个环节该灵活？如果两者都用，你会在哪里画那条分界线？
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>CAMEL: Communicative Agents for "Mind" Exploration of Large Language Model Society</h3>
+    <p style="margin:0;">AutoGen 把 CAMEL 塞进了附录，CAMEL 团队不服气——可这篇比 AutoGen 早五个月发的论文，到底说了什么？它用"角色扮演 + inception prompting"让两个 LLM agent 自主对话完成任务，被很多人视作多智能体角色扮演的真正起源。下一篇，我们回到那篇"被埋在附录里"的论文，看 agent 对话范式的源头长什么样。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 039 篇</span>
+    <span>2026-09-08</span>
+  </footer>
+
+</div>
+</body>
+</html>
