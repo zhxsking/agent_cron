@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAMEL 论文精读 · 大模型经典论文系列 #040</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#040</span>
+  </div>
+
+  <h1 class="title">
+    CAMEL: Communicative Agents for &ldquo;Mind&rdquo; Exploration of Large Language Model Society
+    <span class="en">CAMEL：用角色扮演 + inception prompting 让两个 LLM 自主对话完成任务——多智能体角色扮演的真正起源，比 AutoGen 早五个月，却被埋进附录</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Guohao Li, Hasan Abed Al Kader Hammoud, Hani Itani, Dmitrii Khizbullin, Bernard Ghanem</span>
+    <span>机构：King Abdullah University of Science and Technology (KAUST)</span>
+    <span>发表：2023-03 / arXiv · NeurIPS 2023</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2303.17760" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/camel-ai/camel" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://www.camel-ai.org/" target="_blank" rel="noopener">Project</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">想象一下：你完全不懂股票交易，却想做一个自动交易机器人。你打开 ChatGPT，输入&ldquo;帮我写个交易机器人&rdquo;，对方回你一堆似是而非的模板代码。你想追问，却不知道该怎么问——因为你连&ldquo;止损&rdquo;&ldquo;市价单&rdquo;都说不清楚。人在不懂行的领域里，连提问本身都是个难题。</p>
+  <p class="lead">2023 年 3 月，KAUST 的一群研究者抛出一个看似简单的点子：既然人不会提问，那就让一个 LLM 替你提问，让另一个 LLM 负责回答。两个 agent 自己聊着，把活儿干完。这篇论文就是 <em class="latin">CAMEL</em>，它要回答的问题是——能不能让智能体之间自主协作，人类只丢一个想法就够了？</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    CAMEL 让两个 LLM 分别扮演&ldquo;AI 用户&rdquo;和&ldquo;AI 助手&rdquo;，用对称的 inception prompting 锁住各自角色，靠多轮对话自主把任务做完——人类只需要给一个模糊的想法和两个角色名。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>在大模型的发展史上，<em>CAMEL 处于&ldquo;agent 化&rdquo;浪潮的真正起点</em>。在那之前，我们见过 ReAct 让一个模型边想边调工具，见过 Generative Agents 让 25 个 LLM 在小镇上自发地传八卦、办派对。但前者是&ldquo;单兵作战 + 工具&rdquo;，后者是&ldquo;群体涌现 + 仿真&rdquo;，都还没有一个干净的、面向<em>任务完成</em>的多智能体协作范式。</p>
+  <p>CAMEL 补上的正是这一块：它定义了&ldquo;角色扮演 + 起源提示&rdquo;这套后来被反复复用的最小骨架——一个下指令的 agent、一个干活的 agent、一段锁住身份的系统提示。它是后来 AutoGen、MetaGPT、ChatDev 这些工程化框架的&ldquo;概念祖先&rdquo;，只不过 CAMEL 自己把更多篇幅留给了数据生成与行为分析，工程化的故事让给了后继者。</p>
+
+  <figure>
+    <!-- 图 1：大模型领域发展时间线，标注/高亮本篇位置 -->
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="120" x2="660" y2="120" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 2017 Transformer -->
+        <circle cx="80" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="100" text-anchor="middle">2017</text>
+        <text x="80" y="148" text-anchor="middle" fill="#2E2A22">Transformer</text>
+
+        <!-- 2020 GPT-3 -->
+        <circle cx="200" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="200" y="100" text-anchor="middle">2020</text>
+        <text x="200" y="148" text-anchor="middle" fill="#2E2A22">GPT-3</text>
+
+        <!-- 2022 ReAct -->
+        <circle cx="300" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="300" y="100" text-anchor="middle">2022</text>
+        <text x="300" y="148" text-anchor="middle" fill="#2E2A22">ReAct</text>
+
+        <!-- 2023.04 Generative Agents -->
+        <circle cx="380" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="380" y="100" text-anchor="middle">2023.04</text>
+        <text x="380" y="148" text-anchor="middle" fill="#2E2A22">Generative Agents</text>
+
+        <!-- 2023.03 CAMEL 高亮 -->
+        <circle cx="460" cy="120" r="9" fill="#B54A2C"/>
+        <text x="460" y="88" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="460" y="105" text-anchor="middle" fill="#B54A2C" font-weight="600">2023.03</text>
+        <text x="460" y="148" text-anchor="middle" fill="#2E2A22" font-weight="600">CAMEL</text>
+
+        <!-- 2023.08 MetaGPT / AutoGen -->
+        <circle cx="540" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="540" y="100" text-anchor="middle">2023.08</text>
+        <text x="540" y="148" text-anchor="middle" fill="#2E2A22">MetaGPT / AutoGen</text>
+
+        <!-- 2024+ Agent 工程化 -->
+        <circle cx="630" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="630" y="100" text-anchor="middle">2024+</text>
+        <text x="630" y="148" text-anchor="middle" fill="#2E2A22">Agent 工程化</text>
+
+        <!-- 已解析区间高亮带 -->
+        <rect x="40" y="112" width="416" height="16" fill="#B54A2C" fill-opacity="0.08"/>
+        <text x="248" y="180" text-anchor="middle" fill="#B54A2C" font-size="10" font-weight="600">已解析区间（#001–#040）</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的 CAMEL：agent 协作范式的真正起点，承 ReAct / Generative Agents 之前，启 MetaGPT / AutoGen 之后</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>2023 年初，ChatGPT 火了没多久，所有人都在尝试用对话模型干活。但一个尴尬的事实浮现出来：<em>对话模型的成功，严重依赖人能不能问对问题</em>。你让它写代码，它就回一段代码；你提示得不够具体，它就给你一个通用得没用的答案。想要它做得好，你得起码懂这个领域——可如果我真的懂，我还找你干嘛？</p>
+  <p>论文里举了一个特别到位的例子：一个不懂交易的人，想让模型帮他做一个股票交易程序，他甚至不知道该用&ldquo;止损&rdquo;还是&ldquo;网格&rdquo;这种词去追问。于是问题被倒过来了——<em>能不能不要人来引导对话，让一个 agent 代替人去&ldquo;提问&rdquo;，让另一个 agent 去&ldquo;回答&rdquo;</em>？这就是 CAMEL 想解决的事。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    把它想成剧组里的两个人：一个是&ldquo;导演&rdquo;（AI User），负责提要求、定方向；一个是&ldquo;演员&rdquo;（AI Assistant），负责按导演的要求把戏演出来。导演不一定懂表演细节，演员不一定懂整体剧本，但只要他俩都对得上&ldquo;我们今天要拍哪场戏&rdquo;这个想法，就能自己把戏拍完——你作为制片人，只需要丢一句&ldquo;拍一场雨夜分手戏&rdquo;就够了。
+  </div>
+
+  <p>但研究者很快发现，让两个 LLM &ldquo;自己聊&rdquo;并没有想象中那么顺。他们做了一些初步实验，结果撞上一堆离谱的失败模式：两个 agent 说着说着就<em>角色对调</em>了（演员开始指挥导演）；assistant 不停<em>重复同一句指令</em>；给出<em>敷衍式回复</em>（&ldquo;好的，我会做的&rdquo; 然后就没了）；甚至陷入<em>无限循环</em>，谁也不肯往前走一步。说白了，LLM 的&ldquo;注意力&rdquo;太容易被自己上一句话带跑，聊着聊着就忘了自己是谁。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>一句话：怎么让两个 LLM 在没有人类持续介入的情况下，稳定地、按各自角色地把一个模糊任务做完？</p>
+  <p>这里其实捆着两个子问题：一是<em>怎么让 agent 不跑偏</em>（不角色对调、不无限循环、不敷衍）；二是<em>怎么让这个过程可规模化</em>——不只是跑通一次 demo，而是能批量生成大量高质量的多轮对话数据，用来研究 agent 的行为，甚至反哺训练更强的 LLM。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果让你来设计，你会用什么招数防止两个 agent 忘掉自己的角色？提示工程？硬编码一个状态机？还是干脆每次都把完整的系统提示重新塞进去？先别往下看，自己猜一个 CAMEL 会选哪条路。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>CAMEL 的答案很&ldquo;轻&rdquo;：不搞状态机，不加额外训练，全部用提示工程解决。整套方法可以拆成三个组件——任务细化器、AI 用户、AI 助手，外加一个叫 inception prompting 的&ldquo;锁身份&rdquo;机制。</p>
+
+  <figure>
+    <!-- 图 2：角色扮演框架示意图 -->
+    <svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="13" fill="#2E2A22">
+        <!-- 人类输入 -->
+        <rect x="40" y="40" width="150" height="56" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="115" y="64" text-anchor="middle">人类输入</text>
+        <text x="115" y="82" text-anchor="middle" font-size="10" fill="#96897A">想法 + 2 个角色名</text>
+
+        <!-- Task Specifier -->
+        <rect x="260" y="40" width="170" height="56" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="345" y="64" text-anchor="middle" fill="#24555A" font-weight="600">Task Specifier</text>
+        <text x="345" y="82" text-anchor="middle" font-size="10" fill="#24555A">模糊想法 → 具体任务</text>
+
+        <!-- AI User -->
+        <rect x="120" y="180" width="180" height="70" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="210" y="208" text-anchor="middle" fill="#B54A2C" font-weight="600">AI User</text>
+        <text x="210" y="228" text-anchor="middle" font-size="10" fill="#B54A2C">下指令 · 给方向</text>
+        <text x="210" y="244" text-anchor="middle" font-size="10" fill="#96897A">inception prompt A</text>
+
+        <!-- AI Assistant -->
+        <rect x="400" y="180" width="180" height="70" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="490" y="208" text-anchor="middle" fill="#B54A2C" font-weight="600">AI Assistant</text>
+        <text x="490" y="228" text-anchor="middle" font-size="10" fill="#B54A2C">给方案 · 干活</text>
+        <text x="490" y="244" text-anchor="middle" font-size="10" fill="#96897A">inception prompt B</text>
+
+        <!-- 对话循环箭头 -->
+        <path d="M300 200 Q 350 170 400 200" fill="none" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <text x="350" y="172" text-anchor="middle" font-size="10" fill="#B54A2C">指令</text>
+        <path d="M400 230 Q 350 260 300 230" fill="none" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <text x="350" y="266" text-anchor="middle" font-size="10" fill="#B54A2C">方案</text>
+
+        <!-- 输入到 Task Specifier -->
+        <line x1="190" y1="68" x2="260" y2="68" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)"/>
+        <!-- Task Specifier 到两个 agent -->
+        <line x1="345" y1="96" x2="210" y2="180" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)"/>
+        <line x1="345" y1="96" x2="490" y2="180" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)"/>
+
+        <!-- 终止 -->
+        <text x="210" y="290" text-anchor="middle" font-size="10" fill="#96897A">AI User 判定任务完成 → 停</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · CAMEL 角色扮演框架：Task Specifier 先把模糊想法落成具体任务，再交给 AI User 与 AI Assistant 多轮对话完成</figcaption>
+  </figure>
+
+  <h3>第一步：Task Specifier（任务细化器）</h3>
+  <p>人类给的输入通常很糙，比如&ldquo;开发一个股票交易机器人&rdquo;。CAMEL 先用一个独立的 agent 把它&ldquo;展开&rdquo;成更具体的版本，比如&ldquo;开发一个基于 Python 的 swing trading 机器人，扫描市场趋势、监控个股、生成带止损和止盈的买卖信号&rdquo;。这一步看起来不起眼，但它直接决定了后续两个 agent 有没有可能聊到点子上——<em>任务越具体，对话越不容易跑偏</em>。</p>
+
+  <h3>第二步：Role-Playing（角色扮演）</h3>
+  <p>细化后的任务交给两个 agent：AI User 负责&ldquo;提要求&rdquo;，AI Assistant 负责&ldquo;给方案&rdquo;。它俩轮流说话，每一轮 AI User 给一条指令，AI Assistant 回一个解决方案，循环往复，直到 AI User 自己判定&ldquo;任务完成了&rdquo;才停。整个过程没有人类插嘴——这正是不跑偏机制最关键的考验。</p>
+
+  <h3>第三步：Inception Prompting（起源提示）</h3>
+  <p>这是 CAMEL 的灵魂。研究者给两个 agent 各写了一段对称的<em>系统提示</em>，里面塞满约束：告诉 AI User&ldquo;你只能给指令、不能替对方干活&rdquo;，告诉 AI Assistant&ldquo;你只能回答、不能反过来指挥&rdquo;，还反复强调&ldquo;不要重复指令&rdquo;&ldquo;不要敷衍&rdquo;&ldquo;别陷入循环&rdquo;。说白了，inception prompting 就是把人类工程师&ldquo;踩过的坑&rdquo;预先翻译成 prompt 里的红线。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    起源提示像给两个演员各发一张&ldquo;角色卡&rdquo;，上面写满&ldquo;你绝对不能干的事&rdquo;：导演卡上写&ldquo;不许抢戏去演&rdquo;，演员卡上写&ldquo;不许反过来指挥导演&rdquo;。每次开演前都把这张卡重新念一遍，保证谁都不会忘了自己是谁。这种&ldquo;把约束写进系统提示&rdquo;的思路，后来几乎成了所有多智能体框架的标配。
+  </div>
+
+  <p>论文还把这个机制做成了一条可规模化的<em>数据生产线</em>：因为对话完全自动，你可以让它在 50 个 user 角色 × 50 个 assistant 角色的组合上批量跑，自动产出成千上万条多轮指令-解决方案对话。CAMEL 就这样生成了 AI Society、Code、Math、Science 四个数据集，外加一个专门模拟&ldquo;没对齐的恶意 agent&rdquo;的 Misalignment 数据集。</p>
+
+  <figure>
+    <!-- 图 3：数据/训练流程图 -->
+    <svg viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <rect x="20" y="60" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="80" text-anchor="middle">角色组合</text>
+        <text x="80" y="96" text-anchor="middle" font-size="10" fill="#96897A">50 × 50</text>
+
+        <rect x="180" y="60" width="140" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="250" y="80" text-anchor="middle">Role-Playing</text>
+        <text x="250" y="96" text-anchor="middle" font-size="10" fill="#96897A">inception prompting</text>
+
+        <rect x="360" y="60" width="140" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="430" y="80" text-anchor="middle">多轮对话数据</text>
+        <text x="430" y="96" text-anchor="middle" font-size="10" fill="#96897A">AI Society / Code</text>
+
+        <rect x="540" y="60" width="140" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="610" y="80" text-anchor="middle" fill="#24555A">微调 LLaMA-7B</text>
+        <text x="610" y="96" text-anchor="middle" font-size="10" fill="#24555A">知识涌现</text>
+
+        <line x1="140" y1="85" x2="180" y2="85" stroke="#96897A" marker-end="url(#arrow2)"/>
+        <line x1="320" y1="85" x2="360" y2="85" stroke="#96897A" marker-end="url(#arrow2)"/>
+        <line x1="500" y1="85" x2="540" y2="85" stroke="#96897A" marker-end="url(#arrow2)"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · CAMEL 的数据生产线：从角色组合到自动对话，再到微调小模型验证知识涌现</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>实验围绕三个问题展开：CAMEL 生成的方案到底好不好？自动产生的对话数据能不能反过来让小模型变强？这些 agent 协作里到底藏着哪些坑？</p>
+  <p>第一个问题用两套评委打分：一套是 GPT-4，一套是人类。对比的基线是 <em class="latin">gpt-3.5-turbo</em> 单次生成的方案。结果显示 CAMEL 角色扮演产出的方案在两种评估里都明显胜过单次生成——<em>两个 agent 多轮聊出来的，确实比一个 agent 一次性憋出来的强</em>。</p>
+
+  <table>
+    <thead>
+      <tr><th>评估维度</th><th>gpt-3.5-turbo 单次</th><th>CAMEL Role-Playing</th><th>胜出方</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">GPT-4 评委打分</td><td>基线</td><td>更高</td><td>CAMEL</td></tr>
+      <tr><td class="text">人类评委打分</td><td>基线</td><td>更高</td><td>CAMEL</td></tr>
+      <tr><td class="text">方案具体度/可用性</td><td>偏泛化</td><td>更具体可执行</td><td>CAMEL</td></tr>
+    </tbody>
+  </table>
+
+  <p>第二个问题更有意思。研究者用 CAMEL 自动生成的 AI Society 数据集，<em>渐进式地</em>微调 LLaMA-7B——也就是随着数据越积越多，看模型能力怎么涨。结果是：随着对话数据量增加，小模型在&ldquo;AI 社会相关&rdquo;的问题上表现越来越好，呈现出一种<em>知识涌现</em>的趋势。这说明 CAMEL 不只是个跑 demo 的玩具，它生成的数据真的能反过来喂出更强的模型。代码能力方面，团队还在 <em class="latin">HumanEval</em> 和 <em class="latin">HumanEval+</em> 上做了基准测试。</p>
+
+  <figure>
+    <!-- 图 4：新旧方法对比图 -->
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="175" y="30" text-anchor="middle" font-weight="600">单 agent + 人工引导</text>
+        <text x="525" y="30" text-anchor="middle" font-weight="600" fill="#B54A2C">CAMEL 双 agent 自主协作</text>
+        <line x1="350" y1="20" x2="350" y2="240" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <rect x="60" y="55" width="230" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="77" text-anchor="middle">人类必须全程在场引导</text>
+
+        <rect x="60" y="100" width="230" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="122" text-anchor="middle">不懂行就提不出好问题</text>
+
+        <rect x="60" y="145" width="230" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="167" text-anchor="middle">单次生成，方案泛化</text>
+
+        <rect x="60" y="190" width="230" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="212" text-anchor="middle">难以规模化产数据</text>
+
+        <rect x="410" y="55" width="230" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="77" text-anchor="middle" fill="#B54A2C">人类只丢一个想法就走开</text>
+
+        <rect x="410" y="100" width="230" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="122" text-anchor="middle" fill="#B54A2C">AI User 替你提问</text>
+
+        <rect x="410" y="145" width="230" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="167" text-anchor="middle" fill="#B54A2C">多轮对话，方案具体可执行</text>
+
+        <rect x="410" y="190" width="230" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="212" text-anchor="middle" fill="#B54A2C">自动批量产对话数据</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 单 agent 人工引导 vs CAMEL 双 agent 自主协作：四个维度的关键差异</figcaption>
+  </figure>
+
+  <p>第三个问题则是 CAMEL 最诚实的地方。论文专门用一整节列出 agent 协作里出现的&ldquo;翻车现场&rdquo;：role flipping（角色对调）、assistant repeats instruction（助手复读指令）、flake replies（敷衍回复）、infinite loop（无限循环）、conversation termination（终止条件难定）。这些不是 bug 报告，而是<em>被当成研究贡献公开出来</em>——后来几乎所有做多智能体的人都得跟这些坑打交道。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>CAMEL 的影响分三层。第一层是<em>概念层</em>：它给整个 agent 领域定下了&ldquo;角色扮演 + 起源提示&rdquo;这套最小可行骨架。后来的 AutoGen 把它泛化成&ldquo;可编程的对话&rdquo;，MetaGPT 把它工程化成&ldquo;SOP 流水线&rdquo;，ChatDev 把它特化成&ldquo;软件开发流水线&rdquo;——但根上都长在 CAMEL 这棵树上。</p>
+  <p>第二层是<em>数据层</em>：AI Society、Code 这些自动生成的多轮指令数据集，给后来研究&ldquo;对话型指令微调&rdquo;的人提供了现成的素材，也第一次让人看到&ldquo;agent 自动产数据 → 反哺训练更强 agent&rdquo;这条闭环的可能性。</p>
+  <p>第三层是<em>社区层</em>：开源的 CAMEL 库后来长成了 CAMEL-AI 社区，聚集了 100 多位研究者，催生了 OASIS（百万级 agent 社会模拟）、OWL（通用多智能体助手）、CRAB（跨环境 agent 基准）等一连串后续工作。一个 2023 年 3 月的 arXiv 预印本，硬是养出了一个持续运转的研究集体。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>CAMEL 的局限，论文自己也很坦白。最核心的一条是：<em>所有约束都靠 prompt，没有任何结构性的强制</em>。agent 要是想角色对调，能拦住它的只有系统提示里那句&ldquo;别对调&rdquo;，没有协议层的硬保障。这意味着一旦模型变强、上下文变长，prompt 的&ldquo;软约束&rdquo;随时可能失效——这恰恰是后来多智能体系统最头疼的事。</p>
+  <p>其次，论文的评估主要在 GPT-4 上做，评委也包含 GPT-4 自己。审稿人就直接指出：GPT-4 与人类在这项研究里是对齐的，但这<em>不保证在真实执行中一定成功</em>——模型自评的可信度始终是个悬而未决的问号。再者，论文标题里写着&ldquo;Large Language Model Society&rdquo;，但实际只验证了<em>两个</em> agent 互动，&ldquo;社会&rdquo;的说法多少有点超前。</p>
+  <p>后来者的修补方向也清晰：ChatDev 给对话加了流水线结构、MetaGPT 加了 SOP、AutoGen 把对话变成可编程对象——都是在补 CAMEL &ldquo;纯靠 prompt&rdquo;这个口子。而 OASIS 等工作则真的把 agent 数量扩到了百万级，把&ldquo;社会&rdquo;两个字坐实。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把 CAMEL 放回整条线看，脉络是这样的：Transformer（2017）给了大模型一个能&ldquo;看到很远&rdquo;的底座；GPT-3（2020）证明了&ldquo;大 + 提示&rdquo;能涌现出多任务能力；CoT / Zero-shot CoT（2022）教会模型&ldquo;分步想&rdquo;；ReAct（2022）把&ldquo;想&rdquo;和&ldquo;做&rdquo;接上工具，单 agent 能边推理边调外部接口。</p>
+  <p>到了 2023 年，线开始分叉。一边是 Generative Agents，把 25 个 LLM 塞进小镇做&ldquo;社会仿真&rdquo;，重点在记忆与涌现；另一边就是 CAMEL，把&ldquo;两个 agent 协作完成任务&rdquo;这件事第一次干净地定义出来，重点在角色扮演与起源提示。之后 MetaGPT、AutoGen、ChatDev 接力把这套范式工程化、流水线化，再往后就是 OASIS 把规模拉到百万、OWL 把通用任务自动化拉满。CAMEL 站的，正是这条&ldquo;agent 协作范式&rdquo;支线的起点。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>CAMEL 的命名其实藏着一个彩蛋：<em class="latin">CAMEL</em> 是 <em class="latin">Communicative Agents for &ldquo;Mind&rdquo; Exploration of Large Language Model Society</em> 的首字母缩写——把每个大写字母拎出来正好拼成&ldquo;骆驼&rdquo;。骆驼以耐力著称，能长时间不喝水穿越沙漠，这恰好暗合了 CAMEL 让 agent 在无人监督下长时间自主协作的野心。</p>
+  <p>论文开头还引了电影《盗梦空间》（Inception）里 Dom Cobb 的那句台词：&ldquo;最顽强的寄生虫是什么？是一个想法。&rdquo;这正是&ldquo;inception prompting&rdquo;这个名字的来源——研究者想表达的，是<em>一个好想法一旦植入 agent，就能自己长成一整套任务</em>。把流行文化台词塞进学术论文开头，在 2023 年的 LLM 圈还不算常见，CAMEL 算是开了个有点俏皮的先例。</p>
+  <p>还有个被很多人忽略的细节：CAMEL 其实比 AutoGen 早了整整五个月（CAMEL 是 2023 年 3 月，AutoGen 是 2023 年 8 月），但名声却被后者盖过一截。一个可能的原因是 CAMEL 把大量篇幅留给了数据生成与行为分析，工程化叙事偏弱；而 AutoGen 一上来就强调&ldquo;可编程的多智能体对话框架&rdquo;，正好戳中了开发者社区最想要的那个点。这多少有点&ldquo;埋进附录&rdquo;的意味——但这正是这个系列要把它翻出来重读的理由。</p>
+
+  <figure>
+    <!-- 图 5：轻松风格插图 -->
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 骆驼简化轮廓 -->
+        <ellipse cx="350" cy="120" rx="90" ry="38" fill="#ECE4D4" stroke="#B54A2C" stroke-width="1.5"/>
+        <!-- 驼峰 -->
+        <path d="M300 95 Q 320 70 340 95" fill="#ECE4D4" stroke="#B54A2C" stroke-width="1.5"/>
+        <path d="M360 95 Q 380 70 400 95" fill="#ECE4D4" stroke="#B54A2C" stroke-width="1.5"/>
+        <!-- 头 -->
+        <circle cx="470" cy="105" r="22" fill="#ECE4D4" stroke="#B54A2C" stroke-width="1.5"/>
+        <!-- 腿 -->
+        <line x1="290" y1="158" x2="290" y2="180" stroke="#B54A2C" stroke-width="1.5"/>
+        <line x1="330" y1="158" x2="330" y2="180" stroke="#B54A2C" stroke-width="1.5"/>
+        <line x1="380" y1="158" x2="380" y2="180" stroke="#B54A2C" stroke-width="1.5"/>
+        <line x1="420" y1="158" x2="420" y2="180" stroke="#B54A2C" stroke-width="1.5"/>
+        <!-- 眼 -->
+        <circle cx="478" cy="100" r="2" fill="#B54A2C"/>
+        <!-- 标注 -->
+        <text x="350" y="125" text-anchor="middle" fill="#B54A2C" font-weight="600">CAMEL</text>
+        <text x="350" y="40" text-anchor="middle" font-size="11" fill="#96897A">耐力型 agent：无人监督，自主穿越任务沙漠</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 名字里的骆驼：能长时间不喝水、自主穿越沙漠——正是 CAMEL 对 agent 的期许</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读 CAMEL 最大的收获，是看清了&ldquo;agent 协作&rdquo;这件事的真正难点不在算力、不在模型大小，而在<em>怎么让一个 agent 不忘掉自己是谁</em>。这个难点至今没被彻底解决——你看现在几乎所有多智能体框架都在反复设计&ldquo;角色锁定&rdquo;&ldquo;状态管理&rdquo;&ldquo;对话收敛&rdquo;，本质上都是在跟 CAMEL 当年撞见的同一批坑搏斗。</p>
+  <p>另一个值得琢磨的点：CAMEL 把&ldquo;失败模式&rdquo;当研究贡献公开出来，这件事在 2023 年其实挺超前。它等于告诉所有人&mdash;&mdash;别再拿一个跑通的 demo 当成果了，<em>把坑画出来</em>才是真正能推动领域的事。后来 OASIS 做百万级 agent、OWL 做真实任务自动化，回过头看都建立在&ldquo;先承认 agent 会跑偏&rdquo;这个诚实的起点上。</p>
+  <p>放到今天看，CAMEL 的&ldquo;纯 prompt 软约束&rdquo;已经不够用了，但它提出的那个核心直觉依然没过时：把人类的&ldquo;提问权&rdquo;外包给一个 agent，是让不懂行的人也能用上 AI 的关键一步。今天我们谈 AI 普惠、谈 agent 即服务，根上还是 CAMEL 那个&ldquo;你只管丢一个想法&rdquo;的承诺。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果让你今天重做 CAMEL，你会用哪些&ldquo;硬结构&rdquo;来补上它&ldquo;纯靠 prompt&rdquo;的软约束短板？是状态机、是角色权限隔离、还是干脆把角色身份训进模型权重里？欢迎带着这个问题，去看下一篇怎么把角色扮演焊成流水线。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>ChatDev: Communicative Agents for Software Development</h3>
+    <p style="margin:0;">CAMEL 让两个 agent 自主对话把任务做完，但&ldquo;做完&rdquo;不等于&ldquo;做对&rdquo;——下一篇，ChatDev 把这套角色扮演焊成一条软件开发流水线：设计、编码、测试，每个阶段都是一对 director-programmer 在对话。它能不能用纯对话跑出真能跑的软件？我们下期见。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 040 篇</span>
+    <span>2026-09-09</span>
+  </footer>
+
+</div>
+</body>
+</html>
