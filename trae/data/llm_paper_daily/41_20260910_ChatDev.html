@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChatDev 论文精读 · 大模型经典论文系列 #041</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  /* 中文没有真实斜体设计，混排斜体会被浏览器"伪斜体"强行倾斜 CJK 字形，
+     可读性差且违背"禁止伪斜体"的初衷。默认 <em> 用于中文/中英混排强调，
+     改用颜色+字重区分，不使用斜体。 */
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  /* 仅当强调内容是纯英文/拉丁字母（如论文英文标题、模型英文名等）时，
+     才使用 Lora 的真实 ital 轴斜体：<em class="latin">Attention</em> */
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#041</span>
+  </div>
+
+  <h1 class="title">
+    ChatDev: Communicative Agents for Software Development
+    <span class="en">ChatDev：把 CAMEL 的角色扮演焊成软件开发流水线——让 LLM 自己开一家软件公司，设计、编码、测试全靠对话</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Chen Qian, Wei Liu, Hongzhang Liu, Nuo Chen, Yufan Dang, Jiahao Li, Cheng Yang, Weize Chen, Yusheng Su, Xin Cong, Juyuan Xu, Dahai Li, Zhiyuan Liu, Maosong Sun</span>
+    <span>机构：Tsinghua University (THUNLP) · The University of Sydney · BUPT · Modelbest Inc.</span>
+    <span>发表：2023-07 / arXiv · ACL 2024</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2307.07924" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/OpenBMB/ChatDev" target="_blank" rel="noopener">GitHub</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">上一篇我们读 CAMEL，看它把两个 LLM 凑成一对"导演 + 演员"，靠角色扮演自主把模糊任务做完。但研究团队自己都很坦白：那套机制跑出来的，顶多算"一个能讲完的故事"，不一定是"一个能跑的程序"。一句话——做完了，不等于做对了。</p>
+  <p class="lead">2023 年 7 月，清华 THUNLP 的同一拨人，带着 OpenBMB 社区，抛出了 CAMEL 的"工程化续作"：<em class="latin">ChatDev</em>。他们干脆把"虚拟软件公司"这套壳子做实——CEO、CTO、程序员、测试员一应俱全，按瀑布模型把"设计→编码→测试"焊成一条流水线，每一步都是两个 agent 在对话。它要回答的问题更狠：能不能不靠人写一行代码，光靠一群 LLM 对话，就跑出一个真能玩的五子棋？</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    ChatDev 把 CAMEL 的"双 agent 角色扮演"焊成一条瀑布式软件开发流水线，用 chat chain 规定"聊什么"、用 communicative dehallucination 规定"怎么聊"，让一群 LLM agent 光靠对话就把一个能跑的软件造出来——平均不到 7 分钟、成本不到 1 美元。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>在大模型的演进线上，<em>ChatDev 站在"agent 工程化"那一波的正中央</em>。它的位置很微妙：往回看一步，是 2023 年 3 月的 CAMEL——那篇论文第一次把"双 agent 角色扮演 + 起源提示"这套骨架搭起来，但更像一个跑得通的 demo；往后看一步，是 8 月的 MetaGPT 和 AutoGen——前者把"软件公司"做成了带 SOP 的流水线，后者把"多 agent 对话"抽象成可编程对象。</p>
+  <p>ChatDev 卡在这两波中间，干了一件承上启下的事：<em>把 CAMEL 的角色扮演，从"一次对话完成任务"特化成"一条有序流水线完成软件"</em>。它第一次把瀑布模型这种经典软件工程范式，完整地映射成 agent 之间的对话序列，并给出"chat chain + 交流去幻觉"两件工具。它的贡献不在"多 agent"本身，而在于<em>把软件工程的过程知识，翻译成了 agent 能听懂的对话协议</em>。</p>
+
+  <figure>
+    <!-- 图 1：大模型领域发展时间线，标注/高亮本篇位置 -->
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="120" x2="660" y2="120" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 2017 Transformer -->
+        <circle cx="80" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="100" text-anchor="middle">2017</text>
+        <text x="80" y="148" text-anchor="middle" fill="#2E2A22">Transformer</text>
+
+        <!-- 2022 ReAct -->
+        <circle cx="220" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="220" y="100" text-anchor="middle">2022.10</text>
+        <text x="220" y="148" text-anchor="middle" fill="#2E2A22">ReAct</text>
+
+        <!-- 2023.03 CAMEL -->
+        <circle cx="340" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="340" y="100" text-anchor="middle">2023.03</text>
+        <text x="340" y="148" text-anchor="middle" fill="#2E2A22">CAMEL</text>
+
+        <!-- 2023.07 ChatDev 高亮 -->
+        <circle cx="430" cy="120" r="9" fill="#B54A2C"/>
+        <text x="430" y="88" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="430" y="105" text-anchor="middle" fill="#B54A2C" font-weight="600">2023.07</text>
+        <text x="430" y="148" text-anchor="middle" fill="#2E2A22" font-weight="600">ChatDev</text>
+
+        <!-- 2023.08 MetaGPT / AutoGen -->
+        <circle cx="520" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="520" y="100" text-anchor="middle">2023.08</text>
+        <text x="520" y="148" text-anchor="middle" fill="#2E2A22">MetaGPT / AutoGen</text>
+
+        <!-- 2023.12+ ECL / Agent 工程化 -->
+        <circle cx="630" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="630" y="100" text-anchor="middle">2023.12+</text>
+        <text x="630" y="148" text-anchor="middle" fill="#2E2A22">ECL / 工程化</text>
+
+        <!-- 已解析区间高亮带 -->
+        <rect x="40" y="112" width="386" height="16" fill="#B54A2C" fill-opacity="0.08"/>
+        <text x="233" y="180" text-anchor="middle" fill="#B54A2C" font-size="10" font-weight="600">已解析区间（#001–#041）</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · ChatDev 在大模型 agent 演进线上的位置：承 CAMEL 的角色扮演，启 MetaGPT/AutoGen 的工程化浪潮</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>2023 年中，单 agent 写代码这事儿已经不算新鲜——GitHub Copilot 把补全做成了日常工具，开源圈也冒出 GPT-Engineer 这种"一句话生成项目骨架"的玩具。但研究团队很快撞上同一堵墙：<em>让一个 LLM 一步把软件整个儿吐出来，它一定会"幻觉"</em>。代码缺依赖、函数没实现全、import 路径对不上——论文里把这些统称作 <em class="latin">coding hallucination</em>（编码幻觉）。</p>
+  <p>更关键的是，作者把这种幻觉的根因拆得很清楚，归到两点：第一，<em>缺少任务粒度</em>——你让模型"写个五子棋"，这个指令太高层、太笼统，模型没有一个"先分析需求、再选语言、再写主循环"的指导思想；第二，<em>缺少决策质证</em>——单 agent 自己拍板，没人来反驳、来追问"你确定用 pygame 还是 tkinter？""那个 ai 判断函数你怎么调？"，错的决定一路滚到尾。</p>
+  <p>另一头，传统的深度学习+软件工程研究，是按瀑布模型分阶段做专项模型的——设计阶段一个模型、编码阶段一个模型、测试阶段又一个模型。各阶段技术栈对不齐，导致<em>整个开发过程是碎片化的</em>，从数据采集到训练推理各搞各的。论文一句话戳中要害："methods employed in different phases remain isolated until now"（不同阶段的方法一直各自为政）。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象一个只会写代码但不懂产品的人，被丢一句"你做个五子棋吧"，他就闷头写。没人跟他聊"要不要做成网页版""棋盘多大""AI 难度几档"——他只能瞎猜，猜错你也得等他写完才知道。传统单 agent LLM 就是这个孤独的程序员；ChatDev 想做的，是给他配一整个团队：CEO 定方向、CPO 拍产品、CTO 选技术、程序员写码、审查员挑刺、测试员跑用例——大家坐下来一步一步聊，聊完再动手。
+  </div>
+
+  <p>但"一群 agent 自己聊"这条路，CAMEL 已经踩过坑了：角色对调、复读指令、敷衍回复、无限循环。ChatDev 要往前走，就得回答一个工程问题——<em>怎么让多 agent 对话不乱跑、还能跑出真东西</em>。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>一句话：怎么把"软件开发"这件需要多角色协作的事，拆成一条<em>有序、可控、能产出可执行代码</em>的 agent 对话流水线？</p>
+  <p>这个问题里捆着三个子难点：一是<em>顺序问题</em>——那么多角色（CEO、CTO、程序员、测试员……），谁先说话、谁后说话、按什么顺序？二是<em>收敛问题</em>——两个 agent 聊起来容易陷入"角色对调"或"无限循环"，怎么保证聊得完、聊得对？三是<em>幻觉问题</em>——就算聊得完，写出来的代码可能根本跑不动，怎么在对话过程中就把幻觉压下去？</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果你来设计，"谁先谁后"你会怎么排？是把所有角色丢进一个群聊让大家抢话，还是排成一条固定顺序的流水线？先别往下看，猜一个 ChatDev 会选哪条路，再想想为什么。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>ChatDev 的答案分两层：一层管"聊什么"，叫 <em class="latin">chat chain</em>；一层管"怎么聊"，叫 <em class="latin">communicative dehallucination</em>。两层叠起来，就把 CAMEL 那种"两个 agent 自由聊"焊成了一条有工业节奏的流水线。</p>
+
+  <figure>
+    <!-- 图 2：ChatDev 整体架构 / 聊天链示意图 -->
+    <svg viewBox="0 0 700 360" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrowA" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 顶部：用户需求 -->
+        <rect x="250" y="20" width="200" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="45" text-anchor="middle">用户需求（如"开发五子棋"）</text>
+
+        <!-- 三大阶段方框 -->
+        <!-- 设计阶段 -->
+        <rect x="30" y="100" width="180" height="200" rx="2" fill="#24555A" fill-opacity="0.08" stroke="#24555A"/>
+        <text x="120" y="124" text-anchor="middle" fill="#24555A" font-weight="600">设计阶段</text>
+        <text x="120" y="142" text-anchor="middle" font-size="10" fill="#24555A">CEO · CPO · CTO</text>
+        <rect x="50" y="158" width="140" height="28" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="176" text-anchor="middle" font-size="10">CEO↔CPO 定模式</text>
+        <rect x="50" y="196" width="140" height="28" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="214" text-anchor="middle" font-size="10">CEO↔CTO 选语言</text>
+        <rect x="50" y="234" width="140" height="28" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="252" text-anchor="middle" font-size="10">self-reflection</text>
+        <text x="120" y="284" text-anchor="middle" font-size="9" fill="#96897A">→ 设计文档</text>
+
+        <!-- 编码阶段 -->
+        <rect x="260" y="100" width="180" height="200" rx="2" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <text x="350" y="124" text-anchor="middle" fill="#B54A2C" font-weight="600">编码阶段</text>
+        <text x="350" y="142" text-anchor="middle" font-size="10" fill="#B54A2C">CTO · programmer · designer</text>
+        <rect x="280" y="158" width="140" height="28" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="176" text-anchor="middle" font-size="10">CTO↔programmer 写码</text>
+        <rect x="280" y="196" width="140" height="28" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="214" text-anchor="middle" font-size="10">designer 出图</text>
+        <rect x="280" y="234" width="140" height="28" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="252" text-anchor="middle" font-size="10">programmer 集成</text>
+        <text x="350" y="284" text-anchor="middle" font-size="9" fill="#96897A">→ 源代码</text>
+
+        <!-- 测试阶段 -->
+        <rect x="490" y="100" width="180" height="200" rx="2" fill="#24555A" fill-opacity="0.08" stroke="#24555A"/>
+        <text x="580" y="124" text-anchor="middle" fill="#24555A" font-weight="600">测试阶段</text>
+        <text x="580" y="142" text-anchor="middle" font-size="10" fill="#24555A">programmer · reviewer · tester</text>
+        <rect x="510" y="158" width="140" height="28" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="580" y="176" text-anchor="middle" font-size="10">reviewer 静态审查</text>
+        <rect x="510" y="196" width="140" height="28" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="580" y="214" text-anchor="middle" font-size="10">tester 跑解释器</text>
+        <rect x="510" y="234" width="140" height="28" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="580" y="252" text-anchor="middle" font-size="10">programmer 改 bug</text>
+        <text x="580" y="284" text-anchor="middle" font-size="9" fill="#96897A">→ 可执行软件</text>
+
+        <!-- 阶段间箭头 -->
+        <line x1="210" y1="200" x2="260" y2="200" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrowA)"/>
+        <line x1="440" y1="200" x2="490" y2="200" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrowA)"/>
+
+        <!-- 顶部需求分发 -->
+        <line x1="350" y1="60" x2="120" y2="100" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)"/>
+
+        <!-- 底部输出 -->
+        <rect x="250" y="320" width="200" height="36" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="350" y="343" text-anchor="middle" fill="#24555A">最终软件 + 用户手册</text>
+        <line x1="580" y1="300" x2="350" y2="320" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · ChatDev 的聊天链：三大阶段 × 多个原子子任务，每个子任务都是一对 instructor/assistant 在对话</figcaption>
+  </figure>
+
+  <h3>第一步：Chat Chain（聊天链）——规定"聊什么"</h3>
+  <p>核心思路是把瀑布模型搬过来：软件开发被切成<em>设计 → 编码 → 测试</em>（论文主体讲这三个核心阶段，完整版还有"文档"阶段）。每个阶段再被切成一连串"原子子任务"，每个子任务里只放两个角色——一个 <em class="latin">instructor</em>（指令方）和一个 <em class="latin">assistant</em>（响应方），两人多轮对话直到达成共识，抽取出一个"解决方案"（可能是一段文本决策，也可能是一段代码），交给下一个子任务。</p>
+  <p>形式化一点，整条流水线可以写成三层嵌套：流水线 <em class="latin">C</em> 是一串阶段 <em class="latin">P</em>，每个阶段是一串子任务 <em class="latin">T</em>，每个子任务是一次双 agent 对话 <em class="latin">C(I, A)</em> 取出来的解 <em class="latin">τ</em>。</p>
+
+  <div class="formula-block">
+    $$\mathcal{C}=\langle\mathcal{P}^{1},\mathcal{P}^{2},\dots,\mathcal{P}^{|\mathcal{C}|}\rangle,\quad \mathcal{P}^{i}=\langle\mathcal{T}^{1},\mathcal{T}^{2},\dots,\mathcal{T}^{|\mathcal{P}^{i}|}\rangle,\quad \mathcal{T}^{j}=\tau\big(\mathsf{C}(\mathcal{I},\mathcal{A})\big)$$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>这条链子最妙的地方，是<em>跨阶段只传"解决方案"，不传整段对话历史</em>。也就是说，设计阶段聊的一大堆话，到编码阶段只留下一份"设计文档"；编码阶段几百轮对话，到测试阶段只留下一份"源代码"。这样既躲开了 LLM 上下文长度的硬限制，又让每个阶段的 agent 只盯着眼前这一件事，<em>专注度上去了，被无关信息淹没的风险下来了</em>。论文把这种记忆管理叫"短期记忆 + 长期记忆"：短期记忆撑住单阶段对话连续性，长期记忆把上一阶段的产出当下一阶段的输入。</p>
+
+  <h3>第二步：Agentization（角色化）——延续 CAMEL 的 inception prompting</h3>
+  <p>每个子任务开始前，ChatDev 用 <em class="latin">inception prompting</em>（起源提示）给两个 agent 各发一张"角色卡"。这套机制直接继承自 CAMEL——两个系统提示 <em class="latin">P<sub>I</sub></em> 和 <em class="latin">P<sub>A</sub></em> 大致对称，里面塞满约束：当前子任务的目标、各自角色、能用哪些外部工具、通信协议（怎么算"达成一致"、用什么格式收尾）、以及一长串"不许干的事"——不许角色对调、不许复读指令、不许敷衍回复、不许无限循环。</p>
+
+  <div class="formula-block">
+    $$\mathcal{I}=\rho(\text{LLM},\mathsf{P}_{I}),\quad \mathcal{A}=\rho(\text{LLM},\mathsf{P}_{A})$$
+    <span class="eqn mono">(2)</span>
+  </div>
+
+  <p>这里 <em class="latin">ρ</em> 就是"通过 system message 给 LLM 分配角色"的操作。说白了，CAMEL 那张"角色卡"被 ChatDev 直接拿来用了——但用得更精细：每个子任务的角色卡内容都不一样，编码阶段的"程序员卡"和测试阶段的"程序员卡"是两套话术。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    把 chat chain 想成一条工厂流水线上的工位，每个工位坐两个人：一个发指令（instructor）、一个干活（assistant）。两个人上岗前各领一张工位专属的"操作守则"，上面写清"今天你俩要产出什么""谁问谁答""什么时候算完工""不许干啥"。聊到一致了，把产出的东西（一段代码或一个决策）传给下一个工位，自己工位的对话记录就归档——下个工位只看产出，不看你俩刚才聊了啥。这就是 ChatDev 的"流水线哲学"。
+  </div>
+
+  <h3>第三步：Communicative Dehallucination（交流去幻觉）——规定"怎么聊"</h3>
+  <p>这是 ChatDev 自己最得意的一笔。它发现：assistant 拿到指令后，如果立刻"硬答"，往往会<em>自己脑补</em>指令里缺的细节——比如 instructor 说"加个新字段"，assistant 不知道这字段是数据库列还是 API 字段，就随便挑一个开干，错的猜测一路滚到下游，很难查。于是 ChatDev 搞了个"故意角色反转"：assistant 不直接答，先反过来问 instructor 一个聚焦的小问题，问清楚了再答。</p>
+
+  <div class="formula-block">
+    $$\text{Vanilla:}\ \langle\mathcal{I}\rightarrow\mathcal{A},\ \mathcal{A}\leadsto\mathcal{I}\rangle_{\circlearrowleft}\quad\Longrightarrow\quad\text{Dehallucination:}\ \langle\mathcal{I}\rightarrow\mathcal{A},\ \langle\mathcal{A}\rightarrow\mathcal{I},\ \mathcal{I}\leadsto\mathcal{A}\rangle_{\circlearrowleft},\ \mathcal{A}\leadsto\mathcal{I}\rangle_{\circlearrowleft}$$
+    <span class="eqn mono">(3)</span>
+  </div>
+
+  <p>左边是普通的双 agent 对话：instructor 给指令、assistant 给方案，循环。右边是去幻觉版：中间多塞了一轮"assistant 反过来问、instructor 答"，把模糊的指令先问细了，assistant 才正式动手。<em>代价是多一两轮对话的延迟和 token，换来的是幻觉被卡在源头</em>——这正是 ChatDev 把"软件工程的代码审查"翻译成"agent 对话协议"的那一笔。</p>
+
+  <figure>
+    <!-- 图 3：交流去幻觉机制对比图 -->
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrow3r" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 左侧：普通对话 -->
+        <text x="175" y="28" text-anchor="middle" font-weight="600">普通双 agent 对话</text>
+        <rect x="60" y="50" width="230" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="70" text-anchor="middle">instructor 给模糊指令</text>
+        <rect x="60" y="100" width="230" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="120" text-anchor="middle">assistant 硬答（脑补细节）</text>
+        <rect x="60" y="150" width="230" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="170" text-anchor="middle">幻觉滚到下游 → bug 难查</text>
+        <line x1="175" y1="80" x2="175" y2="100" stroke="#96897A" marker-end="url(#arrow3)"/>
+        <line x1="175" y1="130" x2="175" y2="150" stroke="#96897A" marker-end="url(#arrow3)"/>
+        <text x="175" y="210" text-anchor="middle" font-size="10" fill="#96897A">快，但容易错</text>
+
+        <!-- 中间分隔 -->
+        <line x1="350" y1="20" x2="350" y2="240" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <!-- 右侧：去幻觉 -->
+        <text x="525" y="28" text-anchor="middle" font-weight="600" fill="#B54A2C">交流去幻觉</text>
+        <rect x="410" y="50" width="230" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="70" text-anchor="middle" fill="#B54A2C">instructor 给模糊指令</text>
+        <rect x="410" y="92" width="230" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="112" text-anchor="middle" fill="#B54A2C">assistant 反问（角色反转）</text>
+        <rect x="410" y="134" width="230" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="154" text-anchor="middle" fill="#B54A2C">instructor 补细节</text>
+        <rect x="410" y="176" width="230" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="196" text-anchor="middle" fill="#B54A2C">assistant 据细节正式答</text>
+        <line x1="525" y1="80" x2="525" y2="92" stroke="#B54A2C" marker-end="url(#arrow3r)"/>
+        <line x1="525" y1="122" x2="525" y2="134" stroke="#B54A2C" marker-end="url(#arrow3r)"/>
+        <line x1="525" y1="164" x2="525" y2="176" stroke="#B54A2C" marker-end="url(#arrow3r)"/>
+        <text x="525" y="226" text-anchor="middle" font-size="10" fill="#B54A2C">多一两轮，幻觉卡在源头</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 普通对话 vs 交流去幻觉：左边"硬答"让幻觉滚到下游，右边"先反问再答"把幻觉卡在指令边界</figcaption>
+  </figure>
+
+  <h3>第四步：Self-Reflection（自我反思）——兜底机制</h3>
+  <p>还有一种尴尬情形：两个 agent 聊着聊着"达成一致"了，但没触发预设的收尾协议（比如该输出 <em class="latin">&lt;C&gt;</em> 标记却没输出）。这时 ChatDev 会<em>起一个"伪我"</em>——让一个新提问者把刚才的对话记录丢给 assistant，让它从对话里提炼出信息摘要，相当于"复盘自己刚才说了啥"，把松散的对话收成一个能用的产出。这是个兜底机制，保证流水线不会因为一次没收尾就卡死。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>研究团队自建了一个 <em class="latin">Software Requirement Description Dataset (SRDD)</em>，装了 1200 条软件需求描述，默认用 ChatGPT-3.5、温度 0.2 跑。评估沿四个维度：<em>完整性</em>（功能点是否齐全）、<em>可执行性</em>（代码能不能真跑起来）、<em>一致性</em>（产出是否对得上需求）、<em>质量</em>（综合分）。对比的基线是当时的 MetaGPT 和 GPT-Engineer。</p>
+
+  <table>
+    <thead>
+      <tr><th>方法</th><th>完整性</th><th>可执行性</th><th>一致性</th><th>质量</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">GPT-Engineer（单 agent）</td><td>0.50</td><td>0.3583</td><td>0.7887</td><td>0.1419</td></tr>
+      <tr><td class="text">MetaGPT</td><td>0.4834</td><td>0.4145</td><td>0.7601</td><td>0.1523</td></tr>
+      <tr><td class="text"><strong>ChatDev</strong></td><td><strong>0.5600</strong></td><td><strong>0.8800</strong></td><td><strong>0.8021</strong></td><td><strong>0.3953</strong></td></tr>
+    </tbody>
+  </table>
+
+  <p>最扎眼的是<em>可执行性</em>那一栏：ChatDev 跑出 0.88，MetaGPT 只有 0.41，GPT-Engineer 0.36——<em>ChatDev 生成的代码，能直接跑起来的比例几乎是另外两家的两倍</em>。综合质量分 0.3953，比最强基线高了 159%。这正是交流去幻觉 + 聊天链一步步质证的效果——代码不是一次憋出来的，是一路被追问、被审查、被测试员跑用例磨出来的。</p>
+  <p>论文还顺手统计了成本：<em>平均一个软件从需求到可运行，耗时不到 7 分钟、花费不到 1 美元</em>（约 0.2967 美元，含美术设计出图成本）。这个数字当时被 36 氪等媒体一转载就炸了——"AI 7 分钟开一家软件公司"。但研究者自己更在意的，是另一个发现：<em>自然语言对话占整个沟通过程的 57.2%，编程语言占 42.8%</em>。换句话说，agent 们一大半时间在"用人话聊设计"，少一半时间在"用代码聊调试"——这恰好印证了论文那句核心论断："language as a unifying bridge"（语言是统一桥梁）。</p>
+
+  <figure>
+    <!-- 图 4：自然语言 vs 编程语言在 ChatDev 各阶段的占比 -->
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 总体占比饼图风格条 -->
+        <text x="175" y="28" text-anchor="middle" font-weight="600">对话语言占比（总体）</text>
+        <rect x="60" y="50" width="130" height="34" fill="#24555A" fill-opacity="0.25" stroke="#24555A"/>
+        <text x="125" y="72" text-anchor="middle" fill="#24555A" font-weight="600">自然语言 57.2%</text>
+        <rect x="190" y="50" width="98" height="34" fill="#B54A2C" fill-opacity="0.25" stroke="#B54A2C"/>
+        <text x="239" y="72" text-anchor="middle" fill="#B54A2C" font-weight="600">代码 42.8%</text>
+        <text x="175" y="108" text-anchor="middle" font-size="10" fill="#96897A">人话聊设计 · 代码聊调试</text>
+
+        <!-- 分隔 -->
+        <line x1="350" y1="20" x2="350" y2="240" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <!-- 右侧：分阶段 -->
+        <text x="525" y="28" text-anchor="middle" font-weight="600">各阶段主导语言</text>
+        <rect x="410" y="50" width="230" height="28" fill="#24555A" fill-opacity="0.18" stroke="#24555A"/>
+        <text x="525" y="69" text-anchor="middle" fill="#24555A">设计阶段：几乎纯自然语言</text>
+        <rect x="410" y="92" width="230" height="28" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C"/>
+        <text x="525" y="111" text-anchor="middle" fill="#B54A2C">编码阶段：自然语言 + 代码</text>
+        <rect x="410" y="134" width="230" height="28" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C"/>
+        <text x="525" y="153" text-anchor="middle" fill="#B54A2C">测试阶段：以代码 + 报错为主</text>
+        <text x="525" y="190" text-anchor="middle" font-size="10" fill="#96897A">"语言作为统一桥梁"的实证</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · ChatDev 对话语言占比：自然语言略过半，主导设计；编程语言主导调试——印证"语言是统一桥梁"</figcaption>
+  </figure>
+
+  <p>还有一个被很多人忽略的细节：论文报告说，<em>审查员和程序员的对话过程中，识别并修改了将近二十种潜在的代码漏洞</em>——包括未捕获异常、资源未释放、边界条件错乱等。这意味着 agent 之间的"对话式 code review"不是走过场，真的起到了"质证"的作用。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>ChatDev 的影响分三层。第一层是<em>范式层</em>：它第一次干净地把"瀑布模型"这种经典软件工程范式，完整地映射成 agent 对话序列，证明了"软件工程的过程知识"可以翻译成"agent 的对话协议"。这条翻译路径后来被 MetaGPT（SOP 流水线）、AutoGen（可编程对话）、AgentVerse 等一众框架反复借用——只不过它们各自换了包装：MetaGPT 强调"标准化操作流程"，AutoGen 强调"可编程对话"，但根都在 ChatDev 这条"用对话阶段对应开发阶段"的思路里。</p>
+  <p>第二层是<em>技术层</em>：chat chain 和 communicative dehallucination 这两件工具，成了后来多 agent 框架的"标准件"。"分阶段只传产出不传历史"的内存管理思路，被几乎所有后续框架继承；"assistant 先反问再答"的去幻觉模式，后来甚至被单独抽成了一种 agent 设计模式，叫 <em class="latin">Instructor-Reversal Clarification</em>（指令反转澄清），收录进了 agent 模式目录。</p>
+  <p>第三层是<em>社区层</em>：ChatDev 的代码挂在 OpenBMB 下，长成了一个 19k+ star 的开源项目，催生了 ChatDev 2.0（DevAll，零代码多智能体平台）和一系列同团队续作——Experiential Co-Learning（经验协同学习）、Iterative Experience Refinement（迭代经验精炼）、Scaling Multi-Agent Collaboration（多 agent 协作扩展）、Cross-Team Collaboration（跨团队协作）——硬是把"agent 软件开发"做成了一个持续运转的研究方向。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>ChatDev 的局限，论文自己也很坦白。最核心的一条是<em>所有约束依然靠 prompt</em>。inception prompting 再精细，本质上还是"软约束"——agent 真要角色对调，能拦住它的只有系统提示里那句"别对调"，没有协议层的硬保障。这是从 CAMEL 那里继承来的口子，ChatDev 用 chat chain 把它缓解了一截（每个子任务角色卡都重置），但没堵死。</p>
+  <p>其次，评估范围有限。<em>只在小游戏规模的软件上验证</em>——五子棋、贪吃蛇、画板这种几百行代码的玩具。论文也承认"用户需求不一定完全满足"，且生成有随机性。放到真实工程里（几万行、多模块、跨语言），这套流水线能不能撑住，是悬而未决的。后来 Contract-Coding 等工作就指出：ChatDev 在相对路径、跨模块依赖这种"接地"问题上仍会翻车。</p>
+  <p>再者，<em>瀑布模型本身是僵化的</em>。现实软件工程早就不纯走瀑布了，敏捷迭代、CI/CD、回溯修改才是常态。ChatDev 把流水线焊死成单向，没有"返工"机制——设计错了不能回头改设计，只能靠测试阶段反复打补丁。后来 ToP（Think-on-Process）等工作就在补这个口子，让开发流程能动态生成、实时调整。</p>
+  <p>最后是<em>经验不积累</em>。每次任务都从零开始，上次踩过的坑下次还会踩。这恰恰是同团队下一篇文章 Experiential Co-Learning 要解决的——让 agent 把历史轨迹里的"捷径"抽出来，反哺未来任务。这条"从孤立任务到经验积累"的演进线，正是 ChatDev 自己留出的口子。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把 ChatDev 放回整条线看：Transformer（2017）给了大模型能"看到很远"的底座；GPT-3（2020）证明了"大 + 提示"涌现多任务能力；ReAct（2022）把"想"和"做"接上工具，单 agent 能边推理边调外部接口。</p>
+  <p>到了 2023 年，agent 这条线开始分叉。一边是 Generative Agents（2023.04），把 25 个 LLM 塞进小镇做社会仿真，重点在记忆与群体涌现；一边是 CAMEL（2023.03），第一次把"双 agent 角色扮演 + 起源提示"定义出来，重点在无人监督自主完成任务。<em>ChatDev 站在 CAMEL 这条支线的正中央</em>——它把 CAMEL 的角色扮演特化成软件开发流水线，用 chat chain 给"顺序"，用 communicative dehallucination 给"质量"。之后 MetaGPT（2023.08）把流水线升级成带 SOP 的"软件公司"，AutoGen（2023.08）把对话抽象成可编程对象，再往后 Experiential Co-Learning（2023.12）给 agent 加上"跨任务经验记忆"——这条"agent 协作工程化"的支线，就是从 CAMEL 到 ChatDev 一路展开的。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>ChatDev 的命名其实没啥花哨彩蛋——就是 <em class="latin">Chat</em> + <em class="latin">Dev</em>（开发），"用聊天搞开发"。但论文里有个细节很有意思：作者把这篇论文的开头，献给了一句关于"协作"的引语——"协作让我们能知道比自己所能知道的更多，让我们以不同的方式思考，获取本不会获得的信息，并在共同努力实现共同目标的过程中结合想法。"这恰好是 ChatDev 的整个立论基础：<em>一群 agent 协作，能比单个 agent 知道得更多</em>。</p>
+  <p>还有个被媒体玩坏的数字："7 分钟、不到 1 美元、一家软件公司"。36 氪当时一篇爆款标题就是《7 分钟开发一个游戏，成本 1 美元不到，ChatGPT 造了一家软件开发公司，还有 AI 版 CEO、CTO、程序员……》。这个数字是真的，但它其实是<em>平均</em>值——简单的五子棋可能两三分钟就跑完，复杂的贪吃蛇要十几分钟；0.2967 美元里还含了"美术设计师"出图的钱（平均每个软件出 8.74 张图）。媒体只取了平均值，把它讲成了"AI 7 分钟开公司"的神话——研究者自己其实更在意那个 0.88 的可执行率。</p>
+  <p>最后说个团队轶事：ChatDev 的第一作者 Chen Qian，是清华 THUNLP 的博士后（水木学者计划），师从孙茂松和刘知远。他和团队几乎把"agent 软件开发"做成了一整个产品线——ChatDev（流水线）、Experiential Co-Learning（加经验）、Iterative Experience Refinement（动态精炼经验）、Scaling Multi-Agent Collaboration（扩规模）、Cross-Team Collaboration（跨团队）——一连五篇，硬是把一个 2023 年的 arXiv 预印本，养成了一个持续三四年的研究方向。OpenBMB 社区也在 ChatDev 的带动下，从清华的一个开源组织，长成了聚集上百位研究者的开源生态。</p>
+
+  <figure>
+    <!-- 图 5：轻松风格插图——"AI 软件公司" -->
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 公司大楼简化轮廓 -->
+        <rect x="180" y="60" width="340" height="110" fill="#ECE4D4" stroke="#B54A2C" stroke-width="1.5"/>
+        <!-- 楼层分隔 -->
+        <line x1="180" y1="95" x2="520" y2="95" stroke="#B54A2C" stroke-width="1"/>
+        <line x1="180" y1="130" x2="520" y2="130" stroke="#B54A2C" stroke-width="1"/>
+        <!-- 各层标签 -->
+        <text x="350" y="82" text-anchor="middle" fill="#24555A" font-weight="600">设计层：CEO · CPO · CTO</text>
+        <text x="350" y="117" text-anchor="middle" fill="#B54A2C" font-weight="600">编码层：programmer · designer</text>
+        <text x="350" y="152" text-anchor="middle" fill="#24555A" font-weight="600">测试层：reviewer · tester</text>
+        <!-- 招牌 -->
+        <rect x="270" y="30" width="160" height="24" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="350" y="47" text-anchor="middle" fill="#B54A2C" font-weight="600">ChatDev 虚拟软件公司</text>
+        <!-- 底部成本时间 -->
+        <text x="350" y="188" text-anchor="middle" font-size="10" fill="#96897A">~7 分钟 · &lt; $1 · 平均 8.74 张图</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · "AI 软件公司"：三层小楼，每层一对 agent 在对话，按瀑布流水线把需求磨成可运行软件</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读 ChatDev 最大的收获，是看清了"<em>把过程知识翻译成对话协议</em>"这件事的威力。传统软件工程积累了半个世纪的"瀑布模型""code review""测试驱动"这些方法论，一直被认为是"人的经验"。ChatDev 第一次证明：这些经验可以被写成 prompt 里的角色卡、通信协议、终止条件，让一群 LLM 按它来协作。它不是在"让 AI 学会写代码"，而是在<em>让 AI 学会用软件工程师的方式协作</em>——这是两种完全不同的野心。</p>
+  <p>另一个值得琢磨的点：ChatDev 的"交流去幻觉"——assistant 先反问再答——本质上是一种<em>把"代码审查"前置到"指令边界"</em>的思路。传统工程里，审查发生在代码写完之后，错的猜测已经滚进代码里了；ChatDev 把审查挪到了"指令还没答完"的那一刻，错的东西根本没机会进代码。这个"把审查时机提前"的直觉，今天回头看依然没过时——后来 agent 模式目录把它单独抽成"指令反转澄清"模式，正是因为它命中了一个普遍痛点。</p>
+  <p>放到今天看，ChatDev 的"纯 prompt 软约束 + 单向瀑布"已经不够用了。但它立的那个核心直觉——<em>软件开发是可以被拆成有序对话序列的</em>——至今是整个 agent 软件工程方向的底座。今天我们谈"AI 写软件""vibe coding""自动编程"，根上还是 ChatDev 当年那句"language as a unifying bridge"。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    ChatDev 每次任务都从零开始，上次踩过的坑下次还会踩。如果你来续作，你会怎么给 agent 加上"经验记忆"？是把历史对话原样塞回去，还是抽成某种"捷径规则"？带着这个问题，去看下一篇 ChatDev 团队自己是怎么接招的。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Experiential Co-Learning of Software-Developing Agents</h3>
+    <p style="margin:0;">ChatDev 把角色扮演焊成了流水线，但每跑一个软件都从零开始——踩过的坑下次还会踩。下一篇，ChatDev 团队自己接招：让 instructor 和 assistant 从历史对话轨迹里抽出"捷径经验"，下次新任务时拿来互相推理。它能第一次让 agent 学会"吃一堑长一智"吗？我们下期见。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 041 篇</span>
+    <span>2026-09-10</span>
+  </footer>
+
+</div>
+</body>
+</html>

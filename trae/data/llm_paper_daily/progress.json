@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 40,
-  "last_run_date": "2026-09-09",
+  "last_index": 41,
+  "last_run_date": "2026-09-10",
   "papers_covered": [
     {
       "index": 1,
@@ -322,10 +322,18 @@
       "date": "2023-03-31",
       "era": "对齐与应用期 2022–2023",
       "filename": "40_20260909_CAMEL.html"
+    },
+    {
+      "index": 41,
+      "title_en": "ChatDev: Communicative Agents for Software Development",
+      "title_zh": "ChatDev：把 CAMEL 的角色扮演焊成软件开发流水线——让 LLM 自己开一家软件公司，设计、编码、测试全靠对话",
+      "date": "2023-07-16",
+      "era": "对齐与应用期 2022–2023",
+      "filename": "41_20260910_ChatDev.html"
     }
   ],
   "next_preview": {
-    "title_en": "ChatDev: Communicative Agents for Software Development",
-    "title_zh": "ChatDev：把 CAMEL 的角色扮演焊成软件开发流水线——让 LLM 自己开一家软件公司，设计、编码、测试全靠对话"
+    "title_en": "Experiential Co-Learning of Software-Developing Agents",
+    "title_zh": "Experiential Co-Learning：让 agent 学会从历史里取经——ChatDev 团队的续作，把'经验记忆'焊进多智能体协作"
   }
 }
