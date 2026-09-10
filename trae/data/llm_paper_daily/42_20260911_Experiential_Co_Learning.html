@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Experiential Co-Learning 论文精读 · 大模型经典论文系列 #042</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+  td.best{ color:var(--accent); font-weight:600; }
+
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#042</span>
+  </div>
+
+  <h1 class="title">
+    Experiential Co-Learning of Software-Developing Agents
+    <span class="en">Experiential Co-Learning：让 agent 学会从历史里取经——把“经验记忆”焊进多智能体协作</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Chen Qian, Yufan Dang, Jiahao Li, Wei Liu, Zihao Xie, Yifei Wang, Weize Chen, Cheng Yang, Xin Cong, Xiaoyin Che, Zhiyuan Liu, Maosong Sun</span>
+    <span>机构：Tsinghua University · Dalian University of Technology · BUPT · Siemens</span>
+    <span>发表：2023-12 arXiv / ACL 2024</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2312.17025" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/OpenBMB/ChatDev" target="_blank" rel="noopener">GitHub</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">上一期，我们看着 ChatDev 让一群 LLM 角色扮演成 CEO、CTO、程序员、测试员，靠"对话"就把一个能跑起来的软件从无到有造了出来。但你大概也会冒出一个疑问：如果让它们明天再做一款新软件，它们还记得昨天踩过的坑吗？</p>
+
+  <p class="lead">答案有点残酷——不记得。每接到一个新任务，这套 agent 团队都会像第一天上班的新人一样，从零开始摸爬滚打：同样的编译错误再犯一遍，同样的调试弯路再走一遍。这篇论文要解决的，就是给这些 agent 配一本"团队经验笔记本"，让它们学会从历史里取经。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    让 instructor 和 assistant 两类 agent 从历史协作轨迹里自动挖出"捷径"经验，存进共享经验池，遇到新任务时先翻笔记本、再协作——多智能体协作正式跨入"会学习、能复用"的阶段。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>在大模型的 agent 演化线上，这篇论文卡在一个很关键的拐点上。前面我们已经走过了一条清晰的脉络：<em class="latin">ReAct</em> 让单个 agent 学会"边想边用工具"，<em class="latin">Voyager</em> 把它塞进游戏里攒技能，<em class="latin">Generative Agents</em> 让 25 个 agent 在小镇里自发社交，再到 <em class="latin">MetaGPT</em>、<em class="latin">AutoGen</em>、<em class="latin">CAMEL</em> 把多智能体协作工程化，最后 <em class="latin">ChatDev</em> 把角色扮演焊成软件开发流水线。</p>
+
+  <p>但这里有个一直被回避的短板：上述所有框架，<em>每个任务都是孤立求解的</em>。agent 解决完 A 任务，所有对话记录就丢进故纸堆；遇到结构相似的 B 任务，它不会去翻 A 的经验，而是从头再来一遍。这与人差别巨大——人会记得"上次这里漏了个分号，这次先检查"。</p>
+
+  <p>Experiential Co-Learning（下文简称 ECL）正是补上这一块的论文。它回答的不是"agent 怎么协作"，而是"<em>agent 协作时怎么把经验攒下来、用上去</em>"。这是多智能体协作从"会干活"走向"会成长"的第一步，也为后来 ChatDev 团队自己的 MacNet（协作拓扑）、MAEL（跨任务经验迁移）等一系列后续工作埋下了火种。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="tl-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="120" x2="660" y2="120" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 已解析节点（灰） -->
+        <circle cx="70" cy="120" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="70" y="100" text-anchor="middle">2022.10</text>
+        <text x="70" y="148" text-anchor="middle">ReAct</text>
+
+        <circle cx="190" cy="120" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="190" y="100" text-anchor="middle">2023.03</text>
+        <text x="190" y="148" text-anchor="middle">CAMEL</text>
+
+        <circle cx="270" cy="120" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="270" y="100" text-anchor="middle">2023.04</text>
+        <text x="270" y="148" text-anchor="middle">GenAgents</text>
+
+        <circle cx="360" cy="120" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="360" y="100" text-anchor="middle">2023.08</text>
+        <text x="360" y="148" text-anchor="middle">MetaGPT/AutoGen</text>
+
+        <circle cx="450" cy="120" r="5" fill="#96897A"/>
+        <text x="450" y="100" text-anchor="middle">2023.07</text>
+        <text x="450" y="148" text-anchor="middle">ChatDev</text>
+
+        <!-- 本篇 -->
+        <circle cx="540" cy="120" r="9" fill="#B54A2C"/>
+        <circle cx="540" cy="120" r="14" fill="none" stroke="#B54A2C" stroke-width="1" opacity="0.4"/>
+        <text x="540" y="88" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇 · 2023.12</text>
+        <text x="540" y="105" text-anchor="middle" fill="#B54A2C" font-weight="600">ECL（ACL 2024）</text>
+        <text x="540" y="148" text-anchor="middle" fill="#2E2A22" font-weight="600">经验记忆</text>
+
+        <!-- 后续 -->
+        <circle cx="630" cy="120" r="4" fill="none" stroke="#96897A" stroke-dasharray="2 2"/>
+        <text x="630" y="100" text-anchor="middle">2024.06→</text>
+        <text x="630" y="148" text-anchor="middle">MacNet/MAEL</text>
+
+        <!-- 演进箭头 -->
+        <text x="245" y="195" text-anchor="middle" fill="#24555A" font-size="10">单 agent 用工具 —— 多 agent 协作 —— 协作工程化</text>
+        <text x="585" y="195" text-anchor="middle" fill="#B54A2C" font-size="10" font-weight="600">会学习、能复用</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 多智能体协作脉络与本文位置：ECL 把"经验积累"首次焊进多 agent 协作</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要理解 ECL 为什么重要，得先看清 ChatDev 那套流水线的真实运行状态。在 ChatDev 里，软件开发被拆成若干阶段，每个阶段都是一对 agent 在对话：一个 <em>instructor</em>（指令者，类似提需求的 reviewer）给方向，一个 <em>assistant</em>（执行者，类似写代码的 programmer）出方案。reviewer 借助一个真实编译器不断反馈"这里没实现""这里有 bug"，programmer 再改代码，循环往复直到编译通过。</p>
+
+  <p>这套机制能跑通软件，但作者敏锐地指出了三个痛点：</p>
+  <ul>
+    <li><em>任务孤岛</em>：每个任务独立求解，A 任务的经验对 B 任务毫无帮助，agent 永远是"新手"。</li>
+    <li><em>重复试错</em>：同一类编译错误、同一种调试弯路，在不同任务里反复出现，白白烧 token。</li>
+    <li><em>最终还得靠人</em>：因为缺乏跨任务的学习与迁移能力，遇到稍微陌生的任务就容易卡壳，最终需要人介入兜底。</li>
+  </ul>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象一家没有"项目复盘会"的外包公司。每个项目组解散后，文档全扔碎纸机，下一单来了重新组队、重新踩坑。哪怕你今年做过一百个待办清单 App，明年再来一个待办清单需求，新组的人照样得从"原来空指针会崩"开始学。ECL 想做的事，就是给这家公司建一个"经验库 + 内部检索系统"：每做完一单，自动把"从崩溃版本怎么走到能用版本"的捷径提炼出来存好；下一单开工前，先检索相关经验塞进对话里再开工。
+  </div>
+
+  <p>值得一提的是，论文里专门澄清了一个词——"<em>shortcut</em>（捷径）"。在很多论文里 shortcut 带贬义，指模型投机取巧学到表面相关性；但这里作者用它取褒义，指"<em>从历史轨迹里挖出的一条更高效的通路</em>"，是 agent 应该主动去想的那条近路。这点命名上的"反其道而行"，也透露了作者的雄心：让 agent 像人一样主动走捷径、抄近道。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>把背景拧成一句，论文要回答的核心问题是：</p>
+  <div class="callout question">
+    <span class="label">核心问题</span>
+    如何设计、收集并应用"经验"，让 instructor 与 assistant 两类 agent 能从过去的协作轨迹里学到可复用的东西，从而在遇到<em>没见过的新任务</em>时，协作更准、更省、更少依赖人？
+  </div>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    在往下看方法之前，先停一下猜一猜：如果你来设计"agent 经验库"，最朴素的做法大概是什么？是不是直接把上次成功的整段对话原封不动存下来，下次原样塞回去？<br><br>这篇论文偏偏没这么干。它觉得"原样存对话"有大问题。你觉得问题可能出在哪？（提示：一次完整协作里，并不是每一步都在进步。）
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>ECL 的解法是三个模块串成一条流水线，分别对应"<em>记录经验—提炼经验—使用经验</em>"。两类 agent（instructor 和 assistant）贯穿始终，但分工在三个阶段略有不同。下面把三步拆开讲，每一步都配一句"人话"再给术语。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="m-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 两个 agent -->
+        <rect x="30" y="30" width="150" height="46" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="105" y="58" text-anchor="middle">instructor</text>
+        <rect x="30" y="90" width="150" height="46" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="105" y="118" text-anchor="middle">assistant</text>
+
+        <!-- 模块一 -->
+        <rect x="220" y="40" width="150" height="86" rx="2" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <text x="295" y="68" text-anchor="middle" fill="#B54A2C" font-weight="600">① Co-Tracking</text>
+        <text x="295" y="90" text-anchor="middle" font-size="10" fill="#96897A">协同追踪</text>
+        <text x="295" y="108" text-anchor="middle" font-size="10" fill="#96897A">产出"过程轨迹"</text>
+        <line x1="180" y1="83" x2="220" y2="83" stroke="#96897A" marker-end="url(#m-arrow)"/>
+
+        <!-- 模块二 -->
+        <rect x="410" y="40" width="150" height="86" rx="2" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <text x="485" y="68" text-anchor="middle" fill="#B54A2C" font-weight="600">② Co-Memorizing</text>
+        <text x="485" y="90" text-anchor="middle" font-size="10" fill="#96897A">协同记忆</text>
+        <text x="485" y="108" text-anchor="middle" font-size="10" fill="#96897A">挖"shortcut"存经验池</text>
+        <line x1="370" y1="83" x2="410" y2="83" stroke="#96897A" marker-end="url(#m-arrow)"/>
+
+        <!-- 经验池 -->
+        <rect x="600" y="40" width="90" height="86" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="645" y="68" text-anchor="middle" fill="#24555A" font-weight="600">经验池</text>
+        <text x="645" y="88" text-anchor="middle" font-size="10" fill="#96897A">instructor 池</text>
+        <text x="645" y="106" text-anchor="middle" font-size="10" fill="#96897A">assistant 池</text>
+        <line x1="560" y1="83" x2="600" y2="83" stroke="#96897A" marker-end="url(#m-arrow)"/>
+
+        <!-- 模块三 + 新任务 -->
+        <rect x="300" y="180" width="160" height="86" rx="2" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <text x="380" y="208" text-anchor="middle" fill="#B54A2C" font-weight="600">③ Co-Reasoning</text>
+        <text x="380" y="228" text-anchor="middle" font-size="10" fill="#96897A">协同推理</text>
+        <text x="380" y="246" text-anchor="middle" font-size="10" fill="#96897A">检索经验→增强对话</text>
+
+        <rect x="520" y="195" width="140" height="56" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="590" y="220" text-anchor="middle">新任务</text>
+        <text x="590" y="238" text-anchor="middle" font-size="10" fill="#96897A">unseen task</text>
+        <line x1="460" y1="223" x2="520" y2="223" stroke="#96897A" marker-end="url(#m-arrow)"/>
+
+        <!-- 经验池回流到模块三 -->
+        <path d="M645,126 C645,160 460,160 460,180" fill="none" stroke="#24555A" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#m-arrow)"/>
+        <text x="555" y="158" text-anchor="middle" font-size="10" fill="#24555A">检索复用</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · ECL 三模块全景：记录—提炼—使用，经验池贯穿训练与推理</figcaption>
+  </figure>
+
+  <h3>步骤一 · Co-Tracking（协同追踪）</h3>
+  <p>先说人话：让两个 agent 在一批<em>训练任务</em>上像彩排一样协作干活，并把它们一来一回的整个过程完整记下来，形成一条"过程轨迹"。</p>
+  <p>再说术语：对训练任务集 $\mathcal{T}$ 里的每个任务 $t$，instructor 给出一串指令 $\mathcal{I}=\{i_1,i_2,\cdots,i_n\}$，assistant 回以一串解决方案 $\mathcal{S}=\{s_1,s_2,\cdots,s_n\}$，其中每个 $s_j$ 是一段"还算完整"的软件代码。这一来一回天然能建模成一条有向<em>链</em>：</p>
+
+  <div class="formula-block">
+    $$ \mathcal{G}=(\mathcal{N},\mathcal{E}),\quad s_0 \xrightarrow{i_1} s_1 \xrightarrow{i_2} s_2 \xrightarrow{i_3} \cdots \xrightarrow{i_n} s_n $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>节点 $\mathcal{N}$ 是一个个代码方案（$s_0$ 是初始的空方案），边 $\mathcal{E}$ 是一条条指令，边 $(s_j, i_{j+1}, s_{j+1})$ 表示"在指令 $i_{j+1}$ 引导下，方案从 $s_j$ 变成了 $s_{j+1}$"。注意这条链记录的是<em>过程</em>，不只是最终结果——这是后面能提炼经验的前提。</p>
+
+  <h3>步骤二 · Co-Memorizing（协同记忆）</h3>
+  <p>这一步是全文最精巧的地方。先抛出作者的一个关键观察——它直接回应了前面思考题：</p>
+
+  <div class="callout">
+    <span class="label">关键观察</span>
+    链上并不是每一步都在变好。会出现两种"无效步"：一是<em>回溯</em>——改着改着又退回到之前的代码；二是<em>由对到错</em>——本来能跑的代码，被某条指令改坏了。所以"原样存整条轨迹"会把大量噪声、弯路、倒退也存进去，agent 照搬反而被带偏。
+  </div>
+
+  <p>于是作者做了第一件事：把"链"压成"图"。用哈希函数把内容相同的方案映射到同一个节点，一条长长的、带重复的链，就被折叠成一张<em>状态转移图</em>——哪里在打转、哪里在倒退，一目了然。</p>
+
+  <p>接着是第二件事，也是最核心的——<em>挖 shortcut</em>。作者指出：图上相邻两个节点之间的一条边，代表 agent 已经会的"一步优化"；但真正有价值的经验，往往藏在"<em>非相邻</em>"节点之间——从某个差劲的方案，跳过中间那些弯路，直达一个好方案。这条"跨节点的近路"，就是一条 shortcut，也就是要存进经验池的东西。挖捷径靠的是外部环境反馈（编译器给的分）做启发。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="g-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 上：原始链 -->
+        <text x="40" y="30" font-weight="600">原始链（带弯路与倒退）</text>
+        <g>
+          <rect x="30" y="50" width="70" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="65" y="74" text-anchor="middle">s0 空</text>
+          <rect x="130" y="50" width="70" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="165" y="74" text-anchor="middle">s1 半成品</text>
+          <rect x="230" y="50" width="70" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="265" y="74" text-anchor="middle">s2 崩</text>
+          <rect x="330" y="50" width="70" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="365" y="74" text-anchor="middle">=s1 重复</text>
+          <rect x="430" y="50" width="70" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="465" y="74" text-anchor="middle">s3 能跑</text>
+          <rect x="530" y="50" width="70" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="565" y="74" text-anchor="middle">s4 完整</text>
+          <line x1="100" y1="70" x2="130" y2="70" stroke="#96897A" marker-end="url(#g-arrow)"/>
+          <line x1="200" y1="70" x2="230" y2="70" stroke="#96897A" marker-end="url(#g-arrow)"/>
+          <line x1="300" y1="70" x2="330" y2="70" stroke="#96897A" marker-end="url(#g-arrow)"/>
+          <line x1="400" y1="70" x2="430" y2="70" stroke="#96897A" marker-end="url(#g-arrow)"/>
+          <line x1="500" y1="70" x2="530" y2="70" stroke="#96897A" marker-end="url(#g-arrow)"/>
+        </g>
+
+        <text x="350" y="125" text-anchor="middle" fill="#96897A" font-size="10">↓ 哈希折叠：相同内容映射到同一节点</text>
+
+        <!-- 下：折叠图 + shortcut -->
+        <text x="40" y="155" font-weight="600">折叠后的状态图（挖出 shortcut）</text>
+        <g>
+          <!-- s0 -->
+          <circle cx="80" cy="215" r="22" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="80" y="219" text-anchor="middle" font-size="10">s0</text>
+          <!-- s1（被 s1 重复合并） -->
+          <circle cx="200" cy="215" r="26" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="200" y="219" text-anchor="middle" font-size="10">s1</text>
+          <!-- s2 崩 -->
+          <circle cx="320" cy="215" r="22" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="320" y="219" text-anchor="middle" font-size="10">s2</text>
+          <!-- s3 能跑 -->
+          <circle cx="460" cy="215" r="24" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="460" y="219" text-anchor="middle" font-size="10">s3</text>
+          <!-- s4 完整 -->
+          <circle cx="590" cy="215" r="24" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C"/>
+          <text x="590" y="219" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">s4</text>
+
+          <!-- 实际的弯路边 -->
+          <path d="M106,215 C140,215 165,180 178,190" fill="none" stroke="#96897A" marker-end="url(#g-arrow)"/>
+          <path d="M222,210 C260,200 280,200 298,215" fill="none" stroke="#96897A" marker-end="url(#g-arrow)"/>
+          <!-- 倒退：s2 回到 s1 -->
+          <path d="M310,237 C260,260 230,255 205,241" fill="none" stroke="#96897A" stroke-dasharray="3 3" marker-end="url(#g-arrow)"/>
+          <text x="265" y="270" text-anchor="middle" font-size="9" fill="#96897A">倒退</text>
+          <path d="M335,210 C380,195 415,200 437,210" fill="none" stroke="#96897A" marker-end="url(#g-arrow)"/>
+          <path d="M484,215 C520,215 545,215 566,215" fill="none" stroke="#96897A" marker-end="url(#g-arrow)"/>
+
+          <!-- shortcut：s1 直接到 s4，跨过 s2 弯路 -->
+          <path d="M200,193 C300,150 470,150 588,193" fill="none" stroke="#B54A2C" stroke-width="2" marker-end="url(#g-arrow)"/>
+          <text x="395" y="150" text-anchor="middle" fill="#B54A2C" font-weight="600" font-size="11">shortcut（捷径经验）</text>
+        </g>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 链折叠成图 + 挖 shortcut：跨非相邻节点的近路才是值得存的经验</figcaption>
+  </figure>
+
+  <p>挖到一条从 $s_j$ 到 $s_k$ 的 shortcut 后，作者还要把它转成 agent "能读能用"的形式——一段自然语言<em>指令</em>。比如有两种模板：一种是"从零生成某段代码要怎么做"，一种是"从源代码 A 怎么改到目标代码 B"。节点评分用外部信号成对计算，综合了代码与任务的相似度、与最终方案的相似度、能否编译等多个维度。最终，这些 (起点, 终点, 增益, 指令) 经验条目，会<em>交错地</em>写进 instructor 和 assistant 各自的经验池——instructor 池里存"该怎么指挥"，assistant 池里存"该怎么响应"。</p>
+
+  <h3>步骤三 · Co-Reasoning（协同推理）</h3>
+  <p>最后一步是"用"。遇到一个<em>没见过的新任务</em>时，instructor 和 assistant 不再从零对话，而是先各自去经验池里检索：用新任务的描述做 query，按代码/文本相似度找到最相关的几条 shortcut 经验，把它们作为 few-shot 示例塞进自己的对话上下文，然后再开始一来一回地协作。换句话说，<em>经验池是两类 agent 共享的长期记忆，每次开工先翻笔记本</em>。这就是开篇"团队经验笔记本"那个比喻的真正落地。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>实验在 ChatDev 的软件开发基准上跑，对照 MetaGPT 和原始 ChatDev。评估分两个视角：自主性（软件质量四维）和效率。最让人印象深刻的是<em>完整性</em>和<em>可执行性</em>两项的跃升——下面这组数字最能说明问题。</p>
+
+  <table>
+    <thead>
+      <tr><th>方法</th><th>completeness</th><th>executability</th><th>duration (s)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">MetaGPT</td><td>0.4472</td><td>0.4208</td><td>154.00</td></tr>
+      <tr><td class="text">ChatDev（基线）</td><td>0.6131</td><td>0.8800</td><td>148.22</td></tr>
+      <tr><td class="text">ECL（本文）</td><td class="best">0.9497</td><td class="best">0.9650</td><td class="best">↓ 更省</td></tr>
+    </tbody>
+  </table>
+
+  <p>把数字翻译成人话：<em>完整性</em>（软件实现了多少功能）从 ChatDev 的 0.6131 一路拉到 0.9497，接近满分，提升幅度超过 5 成；<em>可执行性</em>（代码能不能直接跑起来）从 0.8800 提升到 0.9650，几乎"开箱即跑"。MetaGPT 在这两项上分别只有 0.4472 和 0.4208，被甩开一大截。论文还报告：ECL 在<em>效率</em>视角下显著降低了协作成本与人工介入次数——也就是"更省 token、更少求人"。</p>
+
+  <div class="callout">
+    <span class="label">为什么这么猛</span>
+    关键不在"模型更聪明"，而在"经验被复用了"。agent 不必每个任务都重新发明轮子：当它在一个新软件里遇到似曾相识的结构，经验池会直接把"上次从半成品怎么走到能跑"的捷径递到它手里，省掉了大量无效试错。这也呼应了开篇的痛点——真正贵的不是算力，而是重复踩坑。
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="175" y="28" text-anchor="middle" font-weight="600">ChatDev（无经验）</text>
+        <text x="525" y="28" text-anchor="middle" font-weight="600" fill="#B54A2C">ECL（有经验池）</text>
+        <line x1="350" y1="20" x2="350" y2="230" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <!-- 左侧：串行试错 -->
+        <rect x="50" y="55" width="250" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="75" text-anchor="middle">每个任务从零开始</text>
+        <rect x="50" y="95" width="250" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="115" text-anchor="middle">同类错误反复重犯</text>
+        <rect x="50" y="135" width="250" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="155" text-anchor="middle">串行试错，烧 token</text>
+        <rect x="50" y="175" width="250" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="195" text-anchor="middle">常需人工兜底</text>
+
+        <!-- 右侧：经验复用 -->
+        <rect x="400" y="55" width="250" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="75" text-anchor="middle" fill="#B54A2C">先翻经验池再开工</text>
+        <rect x="400" y="95" width="250" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="115" text-anchor="middle" fill="#B54A2C">捷径经验规避旧坑</text>
+        <rect x="400" y="135" width="250" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="155" text-anchor="middle" fill="#B54A2C">跨任务复用，省算力</text>
+        <rect x="400" y="175" width="250" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="195" text-anchor="middle" fill="#B54A2C">自主性提升，少求人</text>
+
+        <text x="175" y="232" text-anchor="middle" font-size="10" fill="#96897A">completeness 0.6131</text>
+        <text x="525" y="232" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">completeness 0.9497</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 有无经验池的关键差异：从"孤岛式试错"到"经验驱动协作"</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>论文自己最看重的贡献有三条，用大白话转述如下：</p>
+  <ol>
+    <li><em>首次把经验搬进多 agent 协作</em>：此前像 Reflexion 这类工作虽然也讲"从反馈里学"，但多局限在单 agent、同任务内的反思；ECL 把"跨任务经验"显式接进 instructor/assistant 两类 agent 的协作闭环。</li>
+    <li><em>把轨迹建成图、把 shortcut 当经验</em>：用"任务执行图 + 非相邻节点捷径"这套抽象，给"什么是值得记的经验"提供了一个清晰、可操作的答案，鼓励 agent 在推理时走捷径思维。</li>
+    <li><em>用实验坐实了"会学习=更省更好"</em>：在软件开发的可量化反馈上，证明了攒经验能同时提升质量与效率、降低人工介入。</li>
+  </ol>
+
+  <p>更重要的是它对 ChatDev 团队自己后续工作的"火种"意义。这篇 ACL 2024 论文之后，同一个团队几乎沿着它打开的口子一路推进：2024 年 5 月的 <em class="latin">Iterative Experience Refinement</em>（IER）把"经验的获取、利用、传播、淘汰"做成完整闭环；6 月的 <em class="latin">MacNet</em> 把 ChatDev 的链式协作拓扑升级成支持上千 agent 的有向无环图；2025 年的 <em class="latin">MAEL</em>（跨任务经验学习）更进一步把经验按 agent 分池、用奖励信号引导检索。可以说，ECL 是这一整条"经验派"路线的起跑线。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>客观地看，ECL 也有几处明显的边界。第一，它的"经验"高度依赖一个能给出客观反馈的<em>外部环境</em>——软件能编译、能跑，是"挖 shortcut"得以成立的前提。换到那些没有清晰对错信号的任务（比如开放式写作、头脑风暴），节点评分和捷径提取都会失去抓手。第二，经验是写在 <em>prompt 上下文</em>里复用的，没有反向更新模型权重，于是经验池越大、上下文越长，检索与注入成本也会随之上升，规模存在天花板。第三，shortcut 的"好坏"靠启发式打分，难免混入噪声捷径，长期可能把 agent 带偏。</p>
+
+  <p>这些局限恰恰成了后续工作的发力点：IER 解决经验怎么"动态淘汰与更新"，MacNet 解决协作拓扑"怎么扩到上千 agent"，MAEL 则把经验学习推向"奖励引导 + 跨任务"的更普适形态。一篇好论文的价值，往往就体现在它给自己留了多少"未竟之事"。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把镜头拉远，agent 这条线大致可以这么梳理：早期是 <em>单 agent + 工具调用</em>（ReAct、Toolformer）；接着是 <em>单 agent + 长期记忆与反思</em>（Reflexion、ExpeL）；然后进入 <em>多 agent 协作</em>，从角色扮演（CAMEL）到群体涌现（Generative Agents），再到工程化框架（MetaGPT、AutoGen、ChatDev）。ECL 正站在"协作工程化"与"协作智能化"的交界——它承认前面的框架已经能干活，但补上了"<em>协作要能成长</em>"这一块。</p>
+
+  <p>再往后的走向也清晰：一方面是把<em>协作拓扑</em>从链/树做到图（MacNet）、再到可学习的中心编排器（NeurIPS 2025 的 Evolving Orchestration）；另一方面是把<em>经验</em>从"塞 prompt"做到"按 agent 分池 + 奖励引导检索"（MAEL），乃至共享经验社区（Spark）。本系列至此已带大家走过 41 篇，从 2017 年的 Transformer 一路到 agent 工程化，ECL 是第 42 块拼图——它让 agent 学会了"记得住、用得上"。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>聊聊这篇论文背后的人和事。一作 Chen Qian（钱晨）彼时在清华，后来转到上海交通大学；这篇他和 Yufan Dang 并列一作，背后站着清华 OpenBMB 团队的刘知远、孙茂松师徒——也就是说，<em>ChatDev 这条线，是同一个团队连发的"连续剧"</em>。CAMEL 是 2023 年 3 月（被我们系列第 40 期考证为角色扮演真正的起源），ChatDev 是 7 月，ECL 是 12 月（次年 ACL 2024 录用），中间只隔几个月，节奏像追番。</p>
+
+  <p>还有个值得一提的小细节：论文在 related work 里特意把自己和 <em class="latin">ExpeL</em> 做了对照——ExpeL 把"成功轨迹的整段历史"当经验，ECL 偏不，它坚持要"挖捷径"而不是"存全程"。这个看似不起眼的取舍，其实透露了团队的一个执念：经验不该是流水账，而该是<em>提炼过的捷径</em>。后来的 IER、MAEL 都延续了"经验要精炼、要可淘汰"的思路，源头就在这里。</p>
+
+  <div class="callout">
+    <span class="label">一个彩蛋</span>
+    这篇论文的代码并不在独立仓库，而是直接合进了 OpenBMB/ChatDev 主仓的 <em class="latin">ecl</em> 模块，2024 年 1 月 25 日发的发布说明里写着"已集成 Experiential Co-Learning Module"——也就是说，你今天 clone ChatDev，就能直接用上这套经验学习。这也是它和很多"只发论文不开源"的 agent 工作的一大不同。
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 团队经验笔记本 -->
+        <rect x="40" y="50" width="160" height="90" rx="3" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="75" text-anchor="middle" font-weight="600">团队经验笔记本</text>
+        <line x1="60" y1="85" x2="180" y2="85" stroke="#96897A" opacity="0.4"/>
+        <text x="120" y="102" text-anchor="middle" font-size="10" fill="#96897A">shortcut 1：别忘加分号</text>
+        <text x="120" y="116" text-anchor="middle" font-size="10" fill="#96897A">shortcut 2：先写主循环</text>
+        <text x="120" y="130" text-anchor="middle" font-size="10" fill="#96897A">shortcut 3：异常先兜底</text>
+
+        <!-- 两个 agent 翻笔记本 -->
+        <circle cx="280" cy="95" r="18" fill="#24555A" fill-opacity="0.15" stroke="#24555A"/>
+        <text x="280" y="99" text-anchor="middle" font-size="9">instructor</text>
+        <circle cx="380" cy="95" r="18" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C"/>
+        <text x="380" y="99" text-anchor="middle" font-size="9">assistant</text>
+
+        <path d="M155,90 L262,92" fill="none" stroke="#24555A" stroke-dasharray="3 3" marker-end="url(#tl-arrow)"/>
+        <text x="205" y="80" text-anchor="middle" font-size="9" fill="#24555A">检索</text>
+
+        <!-- 新软件 -->
+        <rect x="470" y="55" width="180" height="80" rx="3" fill="#B54A2C" fill-opacity="0.10" stroke="#B54A2C"/>
+        <text x="560" y="80" text-anchor="middle" fill="#B54A2C" font-weight="600">新软件任务</text>
+        <text x="560" y="100" text-anchor="middle" font-size="10" fill="#96897A">带着经验开工</text>
+        <text x="560" y="116" text-anchor="middle" font-size="10" fill="#96897A">少踩坑 · 更快 · 更完整</text>
+
+        <path d="M398,92 L470,90" fill="none" stroke="#96897A" marker-end="url(#tl-arrow)"/>
+      </g>
+      <defs>
+        <marker id="tl-arrow2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 趣味示意：agent 的"团队经验笔记本"——开工先翻，再协作</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读完整篇，我最大的感触是：ECL 把一个被 agent 社区长期回避的问题——"<em>经验怎么攒、怎么用</em>"——给出了第一个干净利落的工程答案。它没有去动模型权重（不像 RLHF 那样重），也没有发明新的对齐算法，而是用"图 + 捷径 + 经验池 + 检索复用"这套组合拳，把<em>in-context 的经验</em>做出了体系感。这种"轻量但成体系"的风格，恰恰是 agent 工程化最缺的一类贡献。</p>
+
+  <p>把视角放到今天，这套思路其实正悄悄变成 agent 平台的"标配能力"：你会看到各种 agent 框架都开始内置"记忆/经验"模块，本质都在回答 ECL 当年提出的问题——只是各自在"记什么、怎么检索、要不要带奖励"上做文章。一个朴素但重要的判断：<em>agent 的下半场，比的不是单次任务多惊艳，而是谁能把第一次的经验稳定用到第一百次</em>。ECL 是这条赛道上一个清晰的起点。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    ECL 的经验是靠"外部编译器反馈"来打分的。如果换成一个<em>没有客观对错</em>的领域——比如让 agent 团队写一篇市场分析报告，或者帮你策划一次旅行——你打算用什么信号去判断"哪条协作轨迹值得提炼成捷径"？欢迎带着这个问题，等下一期我们一起看更普适的经验学习框架。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>MacNet: Multi-Agent Collaboration Networks</h3>
+    <p style="margin:0;">ChatDev 团队的下一记连招：当经验被攒下来之后，协作的"形状"成了新瓶颈。MacNet 把 ChatDev 那条线性的 agent 链，升级成一张有向无环图，让上千个 agent 在不撑爆上下文的前提下协同干活。从"会记经验"到"会换阵型"，多智能体协作的拓扑时代就此开场——下期见。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 042 篇</span>
+    <span>2026-09-11</span>
+  </footer>
+
+</div>
+</body>
+</html>
