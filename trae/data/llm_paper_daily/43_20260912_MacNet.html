@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MacNet 论文精读 · 大模型经典论文系列 #043</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#043</span>
+  </div>
+
+  <h1 class="title">
+    Scaling Large Language Model-based Multi-Agent Collaboration
+    <span class="en">MacNet：把 ChatDev 的链式协作升级成有向无环图——支持上千个 agent 的多智能体协作网络，并发现"协作缩放定律"</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Chen Qian, Zihao Xie, Yifei Wang, Wei Liu, Kunlun Zhu, Hanchen Xia, Yufan Dang, Zhuoyun Du, Weize Chen, Cheng Yang, Zhiyuan Liu, Maosong Sun</span>
+    <span>机构：清华大学 / 鹏城实验室 / 北京邮电大学</span>
+    <span>发表：2024-06 / ICLR 2025</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2406.07155" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/OpenBMB/ChatDev/tree/macnet" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://openreview.net/forum?id=K3n5jPkrU6" target="_blank" rel="noopener">OpenReview</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">2024 年的某天，清华大学自然语言处理实验室里，一个问题被摆上了桌面：神经网络里"加神经元能变强"早已是共识——那如果给一群大模型智能体不断"加同事"，它们会不会也越聊越聪明？</p>
+  <p class="lead">听起来像个职场段子，但这正是 <em class="latin">MacNet</em> 要认真回答的问题。在此之前，多智能体研究大多停留在"三五成群"的小打小闹——十个 agent 就算多了，几十个已是极限。ChatDev 用链式对话让 LLM 自己开公司，可一旦 agent 数量上千，对话上下文就会像滚雪球一样撑爆模型窗口。这篇论文要做的，是把这条"单链"拆掉，换成一个能容纳上千节点的有向无环图，并追问：协作，也有缩放定律吗？</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    MacNet 用有向无环图（DAG）把多智能体协作从"一条链"升级成"一张网"，在拓扑排序的编排下让上千个 agent 有序协作，并发现了一条"协作缩放定律"——性能随 agent 数量呈 S 型增长，且"协作涌现"远早于传统的"神经涌现"。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>在前面几篇里，我们已经走过了一条完整的多智能体协作脉络：<em>CAMEL 用角色扮演点燃了两个 agent 的自主对话</em>，<em>ChatDev 把对话焊成了软件开发流水线</em>，<em>Experiential Co-Learning 又给流水线装上了"经验记忆"</em>。但这些工作的协作结构都是"链式"的——A 告诉 B，B 告诉 C，一条路走到黑。</p>
+  <p>MacNet 站在这条脉络的"瓶颈口"上：它承接了 ChatDev 的 instructor-assistant 双角色范式，但要解决的核心矛盾是——<em>链式结构无法扩展</em>。一旦 agent 超过几十个，要么上下文爆炸，要么信息在长链中层层损耗。MacNet 的回答是：用图论里的有向无环图替代链，让协作从"一条线"变成"一张网"。同时，它把"缩放定律"这个大模型训练阶段的黄金法则，<em>第一次搬到了推理阶段的多智能体协作上</em>。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrT" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L5,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="120" x2="660" y2="120" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="10" fill="#96897A">
+        <!-- CAMEL -->
+        <circle cx="120" cy="120" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="100" text-anchor="middle">2023.03</text>
+        <text x="120" y="145" text-anchor="middle" fill="#2E2A22">CAMEL</text>
+        <text x="120" y="158" text-anchor="middle" fill="#96897A">角色扮演</text>
+        <!-- ChatDev -->
+        <circle cx="240" cy="120" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="240" y="100" text-anchor="middle">2023.07</text>
+        <text x="240" y="145" text-anchor="middle" fill="#2E2A22">ChatDev</text>
+        <text x="240" y="158" text-anchor="middle" fill="#96897A">链式流水线</text>
+        <!-- AutoGen -->
+        <circle cx="360" cy="120" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="360" y="100" text-anchor="middle">2023.08</text>
+        <text x="360" y="145" text-anchor="middle" fill="#2E2A22">AutoGen</text>
+        <text x="360" y="158" text-anchor="middle" fill="#96897A">对话框架</text>
+        <!-- Experiential -->
+        <circle cx="460" cy="120" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="460" y="100" text-anchor="middle">2023.12</text>
+        <text x="460" y="145" text-anchor="middle" fill="#2E2A22">Co-Learning</text>
+        <text x="460" y="158" text-anchor="middle" fill="#96897A">经验记忆</text>
+        <!-- MacNet (highlighted) -->
+        <circle cx="560" cy="120" r="8" fill="#B54A2C"/>
+        <text x="560" y="88" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="560" y="145" text-anchor="middle" fill="#2E2A22" font-weight="600">MacNet</text>
+        <text x="560" y="158" text-anchor="middle" fill="#B54A2C" font-weight="600">DAG 网络</text>
+      </g>
+      <!-- bracket showing chain era -->
+      <path d="M 100 175 L 100 182 L 490 182 L 490 175" fill="none" stroke="#96897A" stroke-width="0.8"/>
+      <text x="295" y="200" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#96897A">链式协作时代</text>
+      <!-- arrow to MacNet era -->
+      <path d="M 510 182 L 620 182" fill="none" stroke="#B54A2C" stroke-width="0.8" marker-end="url(#arrT)"/>
+      <text x="565" y="200" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#B54A2C">图结构协作</text>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · MacNet 在多智能体协作脉络中的位置：从"链式"走向"图结构"</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要理解 MacNet 为何出现，得先回到一个更根本的问题：<em>为什么需要多个 agent 协作？</em></p>
+  <p>单个大语言模型虽然强大，但有三个绕不开的短板：一是<em>上下文窗口有限</em>，长任务塞不进去；二是<em>"一个人做所有事"容易顾此失彼</em>，写代码时还要兼顾测试、文档，注意力被摊薄；三是<em>缺乏外部反馈</em>，闭门造车容易跑偏。多智能体协作正是为了解决这些：让不同的 agent 扮演不同角色，通过对话互相提点、分工、纠错。</p>
+  <p>但问题也随之而来。早期的多智能体框架（如 ChatDev、AutoGen）几乎都采用"链式"结构——agent A 把结果交给 B，B 交给 C，像工厂流水线一样单向推进。这种结构在小规模下很好用，但一旦你想"加人手"，就会遇到三道墙：</p>
+
+  <ul>
+    <li><em>上下文爆炸</em>：每经过一个 agent，对话历史就越滚越长，几十轮下来 token 数就突破模型窗口上限。</li>
+    <li><em>信息损耗</em>：在长链末端，最初 agent 产出的细节早已在层层转述中被稀释。</li>
+    <li><em>结构僵化</em>：一条链只能走一条路，无法并行探索多个方案，也无法让中间结果"回流"做交叉验证。</li>
+  </ul>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象一个 50 人的公司，但所有人只能排成一列纵队传话——CEO 跟 CTO 说，CTO 跟架构师说，架构师跟前端说……传到最后一个实习生时，CEO 最初的需求早就面目全非了。而且任何一个人请假，整条线就断了。MacNet 要做的，就是把这个"纵队"打散重组，变成一张有明确汇报关系但能并行运作的协作网络。
+  </div>
+
+  <p>与此同时，论文的灵感来源也值得一提。大模型领域有一条著名的"<em class="latin">neural scaling law</em>"（神经缩放定律）：模型的损失（loss）与参数量、数据量、训练算力呈幂律关系——参数越多、数据越多，模型越强。Kaplan 等人在 2020 年提出的这条定律，直接推动了 GPT-3 到 GPT-4 的军备竞赛。MacNet 的作者们提出了一个大胆的类比：如果把"增加神经元"换成"增加协作 agent"，会不会也有类似的缩放规律？<em>在训练阶段靠堆参数，在推理阶段靠堆 agent</em>——这条路走得通吗？</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>把上面的背景浓缩成一句话，MacNet 要解决的核心问题是：</p>
+  <p><em>如何设计一个可扩展到上千个 agent 的多智能体协作框架，使性能随 agent 数量的增加而持续提升，同时不突破上下文窗口的物理限制？</em></p>
+  <p>这个问题其实拆成了三个子问题：第一，<em>用什么结构</em>来组织上千个 agent？第二，<em>怎么编排交互</em>才能既有序又不撑爆上下文？第三，<em>加 agent 到底有没有用</em>——如果有，规律是什么？</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果你要让 1000 个 agent 协作完成一个任务，你会怎么组织它们？是让所有人讨论（全连接），还是排成一条长链，还是……？先想想你心目中的"最优结构"，再往下看论文给出的答案。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>MacNet 的方法可以拆成三步：<em>建网</em>（网络构造）、<em>排序</em>（交互推理）、<em>控量</em>（记忆控制）。三步环环相扣，共同解决了"上千 agent 不爆炸"的难题。</p>
+
+  <h3>第一步：用有向无环图（DAG）建网</h3>
+  <p>MacNet 的第一个关键决策是：把 agent 之间的协作关系建模成一个<em>有向无环图</em>（<em class="latin">Directed Acyclic Graph</em>，DAG）。"有向"意味着信息有明确的流动方向——从上游 agent 流向下游；"无环"意味着不存在循环依赖——A 依赖 B、B 依赖 C，但 C 不能再依赖回 A，否则就会死锁。</p>
+  <p>形式化地，一个 MacNet 拓扑记为 $\mathcal{G}=(\mathcal{V},\mathcal{E})$，其中 $\mathcal{V}$ 是节点集合，$\mathcal{E}$ 是有向边集合：</p>
+
+  <div class="formula-block">
+    $$ \mathcal{V}=\{v_{i}\mid i\in I\},\quad \mathcal{E}=\{\langle v_{i},v_{j}\rangle\mid i,j\in I\wedge i\neq j\} $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>论文研究了三大类拓扑结构，细分为六种变体：</p>
+  <ul>
+    <li><em>链式</em>（<em class="latin">chain</em>）：线性串联，最接近原始 ChatDev。</li>
+    <li><em>树式</em>：又分"扁平"的星形（<em class="latin">star</em>）和"深递归"的树形（<em class="latin">tree</em>），允许一个 agent 把结果分发给多个下游。</li>
+    <li><em>图式</em>：最灵活，又分全连接网格（<em class="latin">mesh</em>）、分层 MLP 结构（<em class="latin">layered</em>）和随机不规则结构（<em class="latin">random</em>）。</li>
+  </ul>
+
+  <p>但光有拓扑还不够。论文借鉴了 ChatDev 的核心设计——<em>功能二分</em>（<em class="latin">functional dichotomy</em>），把每个 agent 分成两种角色：</p>
+  <ul>
+    <li><em>监督者</em>（<em class="latin">instructor</em>）：分配在<em>边</em>上，负责向下游发出指令——"你需要解决什么、改进什么"。</li>
+    <li><em>执行者</em>（<em class="latin">assistant</em>）：分配在<em>节点</em>上，负责根据指令产出具体的解决方案。</li>
+  </ul>
+
+  <p>这个分配通过一个"agent 化"操作 $\rho(\cdot)$ 完成——给基础模型装上专业角色、外部工具和上下文记忆：</p>
+
+  <div class="formula-block">
+    $$ \bm{a_{i}}=\rho(v_{i}),\ \forall v_{i}\in\mathcal{V};\qquad \bm{a_{ij}}=\rho(\langle v_{i},v_{j}\rangle),\ \forall\langle v_{i},v_{j}\rangle\in\mathcal{E} $$
+    <span class="eqn mono">(2)</span>
+  </div>
+
+  <p>也就是说，<em>节点上是干活的，边上是发指令的</em>。这种二分让角色各司其职，也让"有向"边有了明确的语义——边上的 instructor 告诉下游的 assistant 该做什么。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 360" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrDag" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#24555A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- Node 1 (assistant) -->
+        <circle cx="120" cy="60" r="26" fill="#ECE4D4" stroke="#24555A" stroke-width="1.5"/>
+        <text x="120" y="58" text-anchor="middle" font-size="10">assistant</text>
+        <text x="120" y="72" text-anchor="middle" font-size="10" fill="#24555A">v1</text>
+        <text x="120" y="105" text-anchor="middle" fill="#96897A" font-size="10">输入任务</text>
+
+        <!-- Node 2 -->
+        <circle cx="350" cy="60" r="26" fill="#ECE4D4" stroke="#24555A" stroke-width="1.5"/>
+        <text x="350" y="58" text-anchor="middle" font-size="10">assistant</text>
+        <text x="350" y="72" text-anchor="middle" font-size="10" fill="#24555A">v2</text>
+
+        <!-- Node 3 -->
+        <circle cx="350" cy="220" r="26" fill="#ECE4D4" stroke="#24555A" stroke-width="1.5"/>
+        <text x="350" y="218" text-anchor="middle" font-size="10">assistant</text>
+        <text x="350" y="232" text-anchor="middle" font-size="10" fill="#24555A">v3</text>
+
+        <!-- Node 4 (final) -->
+        <circle cx="560" cy="140" r="26" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C" stroke-width="1.5"/>
+        <text x="560" y="138" text-anchor="middle" font-size="10" fill="#B54A2C">assistant</text>
+        <text x="560" y="152" text-anchor="middle" font-size="10" fill="#B54A2C">v4</text>
+        <text x="560" y="185" text-anchor="middle" fill="#B54A2C" font-size="10">最终方案</text>
+
+        <!-- Edges with instructor labels -->
+        <line x1="146" y1="60" x2="324" y2="60" stroke="#24555A" stroke-width="1.2" marker-end="url(#arrDag)"/>
+        <rect x="215" y="44" width="40" height="16" rx="2" fill="#F4EFE4" stroke="#B54A2C" stroke-width="0.8"/>
+        <text x="235" y="55" text-anchor="middle" font-size="8" fill="#B54A2C">instructor</text>
+
+        <line x1="350" y1="86" x2="350" y2="194" stroke="#24555A" stroke-width="1.2" marker-end="url(#arrDag)"/>
+        <rect x="358" y="132" width="40" height="16" rx="2" fill="#F4EFE4" stroke="#B54A2C" stroke-width="0.8"/>
+        <text x="378" y="143" text-anchor="middle" font-size="8" fill="#B54A2C">instructor</text>
+
+        <line x1="376" y1="60" x2="540" y2="125" stroke="#24555A" stroke-width="1.2" marker-end="url(#arrDag)"/>
+        <rect x="448" y="78" width="40" height="16" rx="2" fill="#F4EFE4" stroke="#B54A2C" stroke-width="0.8"/>
+        <text x="468" y="89" text-anchor="middle" font-size="8" fill="#B54A2C">instructor</text>
+
+        <line x1="376" y1="220" x2="540" y2="155" stroke="#24555A" stroke-width="1.2" marker-end="url(#arrDag)"/>
+        <rect x="448" y="178" width="40" height="16" rx="2" fill="#F4EFE4" stroke="#B54A2C" stroke-width="0.8"/>
+        <text x="468" y="189" text-anchor="middle" font-size="8" fill="#B54A2C">instructor</text>
+
+        <!-- Legend -->
+        <rect x="40" y="290" width="14" height="14" rx="2" fill="#ECE4D4" stroke="#24555A"/>
+        <text x="62" y="301" font-size="11" fill="#2E2A22">节点 = 执行者 assistant（产出方案）</text>
+        <rect x="40" y="312" width="14" height="14" rx="2" fill="#F4EFE4" stroke="#B54A2C"/>
+        <text x="62" y="323" font-size="11" fill="#2E2A22">边 = 监督者 instructor（发指令）</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · MacNet 的 DAG 结构示意：节点上分配执行者 agent，边上分配监督者 agent，信息沿有向边流动</figcaption>
+  </figure>
+
+  <h3>第二步：拓扑排序编排交互</h3>
+  <p>有了网络，下一个问题是：<em>谁来先说话？</em>一千个 agent 总不能同时开口。MacNet 借用了图论里的一个经典算法——<em>拓扑排序</em>（<em class="latin">topological ordering</em>）。</p>
+  <p>拓扑排序的规则很简单：<em>每个节点只有在它所有的上游依赖都被处理完之后，才会被访问</em>。这就保证了信息流动的有序性——下游 agent 一定是在拿到上游所有结果之后才开始工作，不会出现"还没收到指令就开始瞎做"的情况。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    拓扑排序就像项目管理里的"前置任务表"：任务 C 依赖 A 和 B 的产出，那 C 一定排在 A、B 之后执行。MacNet 的拓扑排序就是给整张 DAG 生成一张"执行时刻表"，让每个 agent 知道自己什么时候该上场。
+  </div>
+
+  <p>在每一轮交互中，只有<em>相邻的两个 agent</em>参与——边上的 instructor 向下游的 assistant 下达指令，assistant 根据上游传来的"工件"（<em class="latin">artifact</em>，可以是代码片段、推理结论、文本草稿等）进行<em>精炼</em>（<em class="latin">refine</em>），然后把精炼后的工件继续往后传。</p>
+
+  <h3>第三步：只传工件，不传对话——记忆控制</h3>
+  <p>这是 MacNet 能扩展到上千 agent 的真正秘诀。在传统的链式协作中，每个 agent 的完整对话历史都会传递给下游，上下文像滚雪球一样越来越长。MacNet 做了一个看似简单却关键的决定：</p>
+  <p><em>只把精炼后的工件传给下游邻居，不传完整对话。</em></p>
+  <p>也就是说，每个 agent 只看到上游传来的"成品"，而看不到上游 agent 之间漫长的讨论过程。这就把每个 agent 的上下文长度控制在了<em>局部</em>范围内——无论整个网络有多大，单个 agent 处理的 token 数始终是可控的。正是这个设计，让 MacNet 能在全连接的密集网络中支持<em>超过一千个 agent</em>而不会撑爆窗口。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrFlow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- Step 1 -->
+        <rect x="20" y="70" width="120" height="60" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="95" text-anchor="middle">拓扑排序</text>
+        <text x="80" y="112" text-anchor="middle" fill="#96897A" font-size="9">生成执行时刻表</text>
+
+        <!-- Step 2 -->
+        <rect x="190" y="70" width="120" height="60" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="250" y="95" text-anchor="middle">相邻交互</text>
+        <text x="250" y="112" text-anchor="middle" fill="#96897A" font-size="9">instructor→assistant</text>
+
+        <!-- Step 3 -->
+        <rect x="360" y="70" width="120" height="60" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="420" y="95" text-anchor="middle">精炼工件</text>
+        <text x="420" y="112" text-anchor="middle" fill="#96897A" font-size="9">refine artifact</text>
+
+        <!-- Step 4 -->
+        <rect x="530" y="70" width="140" height="60" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="600" y="95" text-anchor="middle" fill="#24555A">只传工件不传对话</text>
+        <text x="600" y="112" text-anchor="middle" fill="#24555A" font-size="9">→ 下游邻居</text>
+
+        <line x1="140" y1="100" x2="190" y2="100" stroke="#96897A" marker-end="url(#arrFlow)"/>
+        <line x1="310" y1="100" x2="360" y2="100" stroke="#96897A" marker-end="url(#arrFlow)"/>
+        <line x1="480" y1="100" x2="530" y2="100" stroke="#96897A" marker-end="url(#arrFlow)"/>
+
+        <!-- Loop back -->
+        <path d="M 600 70 Q 600 30 420 30 Q 250 30 250 70" fill="none" stroke="#B54A2C" stroke-width="0.8" stroke-dasharray="3 3" marker-end="url(#arrFlow)"/>
+        <text x="425" y="22" text-anchor="middle" fill="#B54A2C" font-size="9">下一轮（下一个拓扑序节点）</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · MacNet 交互推理流程：拓扑排序 → 相邻交互 → 精炼工件 → 只传工件不传对话，循环直至所有节点处理完毕</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>MacNet 的实验设计围绕三个递进的问题展开，每一个都给出了令人意外的发现。</p>
+
+  <h3>发现一：MacNet 全面超越基线</h3>
+  <p>在四个异构任务上，MacNet 的链式结构平均性能就已经优于所有基线方法。论文对比了 <em class="latin">CoT</em>（思维链提示）、<em class="latin">AutoGPT</em> 和 <em class="latin">GPTSwarm</em>，覆盖逻辑推理（MMLU）、代码生成（HumanEval）、软件开发（SRDD）和文本生成（CommonGen-Hard）四类场景。</p>
+
+  <table>
+    <thead>
+      <tr><th>任务场景</th><th>数据集</th><th>能力维度</th><th>MacNet 表现</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">逻辑推理</td><td>MMLU</td><td>多选题准确率</td><td>优于全部基线</td></tr>
+      <tr><td class="text">代码生成</td><td>HumanEval</td><td>函数级编程</td><td>优于全部基线</td></tr>
+      <tr><td class="text">软件开发</td><td>SRDD</td><td>仓库级软件</td><td>优于全部基线</td></tr>
+      <tr><td class="text">文本生成</td><td>CommonGen-Hard</td><td>受约束生成</td><td>优于全部基线</td></tr>
+    </tbody>
+  </table>
+
+  <h3>发现二：不规则拓扑反杀规则结构——小世界现象</h3>
+  <p>这是论文最反直觉的发现之一。直觉上，全连接的网格结构（<em class="latin">mesh</em>）应该最强——毕竟每个 agent 都能和所有其他 agent 交互。但实验结果恰恰相反：<em>随机的不规则拓扑性能优于规则结构</em>，包括链、树和全连接网格。</p>
+  <p>作者将其命名为<em>"小世界协作现象"</em>（<em class="latin">small-world collaboration phenomenon</em>）——那些拓扑结构接近小世界网络特性的，表现最好。原因是：随机连接缩短了信息传递的路径长度，减少了工件在长链中层层转述的损耗；同时，随机拓扑比密集的全连接网格<em>少了 51.92% 的耗时</em>，因为交互轮次更少。</p>
+  <p>此外，论文还发现拓扑的"方向性"很重要：<em>发散型拓扑（子节点多于父节点）优于收敛型拓扑</em>——因为让多个 agent 同时处理一个工件再分发，比把多个 agent 的结果汇聚到一个节点更容易。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- Chain -->
+        <text x="90" y="25" text-anchor="middle" font-weight="600">链式 chain</text>
+        <circle cx="40" cy="60" r="8" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="90" cy="60" r="8" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="140" cy="60" r="8" fill="#ECE4D4" stroke="#96897A"/>
+        <line x1="48" y1="60" x2="82" y2="60" stroke="#96897A"/>
+        <line x1="98" y1="60" x2="132" y2="60" stroke="#96897A"/>
+        <text x="90" y="90" text-anchor="middle" fill="#96897A" font-size="9">单路径 · 慢</text>
+
+        <!-- Tree -->
+        <text x="260" y="25" text-anchor="middle" font-weight="600">树形 tree</text>
+        <circle cx="260" cy="45" r="8" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="230" cy="75" r="8" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="290" cy="75" r="8" fill="#ECE4D4" stroke="#96897A"/>
+        <line x1="258" y1="52" x2="234" y2="68" stroke="#96897A"/>
+        <line x1="262" y1="52" x2="286" y2="68" stroke="#96897A"/>
+        <text x="260" y="100" text-anchor="middle" fill="#96897A" font-size="9">可分支 · 较好</text>
+
+        <!-- Mesh -->
+        <text x="430" y="25" text-anchor="middle" font-weight="600">全连接 mesh</text>
+        <circle cx="410" cy="45" r="7" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="450" cy="45" r="7" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="410" cy="80" r="7" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="450" cy="80" r="7" fill="#ECE4D4" stroke="#96897A"/>
+        <line x1="410" y1="45" x2="450" y2="45" stroke="#96897A"/>
+        <line x1="410" y1="45" x2="410" y2="80" stroke="#96897A"/>
+        <line x1="410" y1="45" x2="450" y2="80" stroke="#96897A"/>
+        <line x1="450" y1="45" x2="410" y2="80" stroke="#96897A"/>
+        <line x1="450" y1="45" x2="450" y2="80" stroke="#96897A"/>
+        <line x1="410" y1="80" x2="450" y2="80" stroke="#96897A"/>
+        <text x="430" y="105" text-anchor="middle" fill="#96897A" font-size="9">密集 · 信息过载</text>
+
+        <!-- Random (winner) -->
+        <text x="610" y="25" text-anchor="middle" font-weight="600" fill="#B54A2C">随机 random</text>
+        <circle cx="570" cy="40" r="7" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C"/>
+        <circle cx="620" cy="50" r="7" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C"/>
+        <circle cx="590" cy="75" r="7" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C"/>
+        <circle cx="640" cy="80" r="7" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C"/>
+        <circle cx="560" cy="90" r="7" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C"/>
+        <line x1="572" y1="42" x2="616" y2="50" stroke="#B54A2C"/>
+        <line x1="620" y1="55" x2="592" y2="72" stroke="#B54A2C"/>
+        <line x1="590" y1="80" x2="636" y2="80" stroke="#B54A2C"/>
+        <line x1="566" y1="88" x2="586" y2="78" stroke="#B54A2C"/>
+        <text x="610" y="115" text-anchor="middle" fill="#B54A2C" font-size="9" font-weight="600">小世界 · 最优</text>
+
+        <!-- Performance bar comparison -->
+        <text x="350" y="145" text-anchor="middle" font-size="11" fill="#96897A">性能对比（示意）</text>
+        <rect x="60" y="160" width="60" height="16" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="135" y="172" font-size="10" fill="#96897A">chain</text>
+        <rect x="230" y="160" width="80" height="16" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="320" y="172" font-size="10" fill="#96897A">tree</text>
+        <rect x="400" y="160" width="70" height="16" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="480" y="172" font-size="10" fill="#96897A">mesh</text>
+        <rect x="540" y="160" width="110" height="16" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C"/>
+        <text x="660" y="172" font-size="10" fill="#B54A2C" font-weight="600">random</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 六种拓扑结构对比：随机不规则拓扑凭借"小世界"特性胜出，路径短、耗时少、性能最优</figcaption>
+  </figure>
+
+  <h3>发现三：协作缩放定律——S 型曲线与协作涌现</h3>
+  <p>这是论文最具理论深度的贡献。当作者把 agent 数量从几个逐步增加到上千个时，性能呈现出一条漂亮的 <em>S 型曲线</em>（<em class="latin">logistic growth</em>）——初期缓慢上升，中期急剧拉升，后期趋于饱和（约 100 个 agent 时接近饱和）。</p>
+  <p>更令人惊讶的是对比：<em>协作涌现的出现时间远早于神经涌现</em>。传统神经缩放定律需要数十亿参数、海量训练数据才能看到性能跃升；而 MacNet 的协作涌现只需几十到上百个 agent 就能触发。作者给出的解释是：<em>agent 不需要从零学习</em>——它们底层的 LLM 已经预训练了海量知识，agent 之间的交互只是在<em>激活和传播</em>这些已有知识，通过反思和精炼让多维度的考量汇聚成更全面的方案。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- Axes -->
+        <line x1="60" y1="200" x2="660" y2="200" stroke="#96897A" stroke-width="1"/>
+        <line x1="60" y1="200" x2="60" y2="30" stroke="#96897A" stroke-width="1"/>
+        <text x="360" y="228" text-anchor="middle" fill="#96897A" font-size="11">agent 数量（对数轴）</text>
+        <text x="20" y="115" text-anchor="middle" fill="#96897A" font-size="11" transform="rotate(-90 20 115)">归一化性能</text>
+
+        <!-- Logistic curve (MacNet) -->
+        <path d="M 60 185 C 120 183, 180 178, 220 165 C 260 145, 300 95, 340 65 C 380 48, 440 42, 500 40 L 640 40" 
+              fill="none" stroke="#B54A2C" stroke-width="2"/>
+        <text x="500" y="32" font-size="10" fill="#B54A2C" font-weight="600">协作缩放（S 型）</text>
+
+        <!-- Neural scaling for comparison (dashed) -->
+        <path d="M 60 192 C 200 190, 350 188, 450 180 C 520 168, 580 140, 640 95" 
+              fill="none" stroke="#24555A" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text x="560" y="130" font-size="10" fill="#24555A">神经缩放（对比）</text>
+
+        <!-- Saturation point -->
+        <line x1="340" y1="65" x2="340" y2="200" stroke="#96897A" stroke-width="0.5" stroke-dasharray="2 2"/>
+        <text x="345" y="75" font-size="9" fill="#96897A">~100 agent 饱和</text>
+
+        <!-- Emergence marker -->
+        <circle cx="260" cy="145" r="4" fill="#B54A2C"/>
+        <text x="265" y="135" font-size="9" fill="#B54A2C" font-weight="600">协作涌现</text>
+        <circle cx="520" cy="155" r="4" fill="#24555A"/>
+        <text x="525" y="150" font-size="9" fill="#24555A">神经涌现</text>
+
+        <!-- axis ticks -->
+        <text x="60" y="215" font-size="9" fill="#96897A">1</text>
+        <text x="200" y="215" font-size="9" fill="#96897A">10</text>
+        <text x="340" y="215" font-size="9" fill="#96897A">100</text>
+        <text x="480" y="215" font-size="9" fill="#96897A">1K</text>
+        <text x="640" y="215" font-size="9" fill="#96897A">10K</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 协作缩放定律：性能随 agent 数量呈 S 型增长，协作涌现（~数十 agent）远早于神经涌现（~数十亿参数）</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>MacNet 的影响可以从三个层面来理解。</p>
+  <p>第一，<em>工程层面</em>：它把多智能体协作的规模上限从"几十个"推到了"上千个"，这直接回答了"加 agent 有没有用"这个被忽视的问题。"只传工件不传对话"的记忆控制策略，至今仍是大规模 agent 系统控制上下文长度的标准思路。</p>
+  <p>第二，<em>理论层面</em>：它把缩放定律从训练阶段（堆参数、堆数据）扩展到了推理阶段（堆 agent、堆协作）。这条"协作缩放定律"的 S 型曲线和"协作涌现早于神经涌现"的发现，为后续研究提供了<em>可预测的资源-性能关系</em>——你想知道加多少 agent 能达到什么性能，不再是拍脑袋，而是有了一条拟合曲线。</p>
+  <p>第三，<em>生态层面</em>：MacNet 直接被集成进了 ChatDev 的 <em class="latin">macnet</em> 分支，成为 OpenBMB 生态中多智能体协作的核心基础设施。后续同一团队的"<em class="latin">puppeteer</em>"（木偶师）范式进一步把静态 DAG 升级为可学习的动态编排器，正是建立在 MacNet 的基础之上。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>MacNet 虽然打开了大规模协作的大门，但它本身也留下了几个明显的缺口：</p>
+  <ul>
+    <li><em>静态拓扑</em>：DAG 结构是预先设定的，不会根据任务难度或中间结果动态调整。一个简单任务也用 100 个 agent，一个复杂任务可能还是同一张图。后续的 <em class="latin">puppeteer</em> 工作正是用强化学习训练一个"中央调度器"来动态编排，补上了这一短板。</li>
+    <li><em>延迟代价</em>：上千个 agent 意味着上千轮 LLM 调用。第三方测评显示，100 个 agent 时响应时间可达单 agent 的 2.3 倍。在延迟敏感的场景中，这不是免费的午餐。</li>
+    <li><em>饱和效应</em>：S 型曲线意味着加 agent 的收益会递减。论文发现约 100 个 agent 后性能趋于饱和——盲目堆 agent 并不经济，如何选"最优 agent 数"仍需进一步研究。</li>
+    <li><em>拓扑搜索空间</em>：论文只测了六种代表性拓扑，而 DAG 的可能结构是天文数字。哪种拓扑对哪类任务最优，还需要更系统的搜索。</li>
+  </ul>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>从大模型发展全貌来看，多智能体协作是一条与"模型训练"并行的技术线。它的演进可以这样梳理：</p>
+  <p><em>起步期</em>（2022–2023）：ReAct 确立了"思考-行动"的循环范式，单个 agent 开始具备与环境交互的能力。Chain-of-Thought 和 Self-Consistency 让推理能力涌现，为多 agent 协作提供了"会思考的零件"。</p>
+  <p><em>协作萌芽期</em>（2023 上半年）：CAMEL 用角色扮演让两个 agent 自主对话，点燃了多智能体协作的火种。AutoGen 提供了通用的对话框架。</p>
+  <p><em>工程化期</em>（2023 下半年）：ChatDev 把对话焊成软件开发流水线，MetaGPT 用 SOP 工程化多 agent 分工。这个阶段的结构以<em>链式</em>为主。</p>
+  <p><em>规模化期</em>（2024）：MacNet 出场——用 DAG 替代链，支持上千 agent，发现协作缩放定律。这是多智能体从"小作坊"走向"大规模系统"的转折点。</p>
+  <p><em>动态化期</em>（2025）：puppeteer 把静态拓扑升级为 RL 训练的动态编排器，标志着协作网络开始<em>自己学会怎么组织自己</em>。</p>
+  <p>MacNet 正好处在"规模化期"的起点上——它回答了"能不能扩"的问题，同时为"怎么动态扩"留下了入口。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>MacNet 背后有一个有趣的"传承"故事。这篇论文的一作 Chen Qian（钱辰）和通讯作者 Maosong Sun（孙茂松）来自清华大学自然语言处理实验室，而这正是 ChatDev 的诞生地。也就是说，<em>MacNet 是 ChatDev 团队给自己的"链式结构"做的一次自我革命</em>——他们亲手推翻了自己上一代作品的核心设计。</p>
+  <p>更有意思的是论文的代码仓库。MacNet 并没有新建一个独立 repo，而是直接开在了 <em class="latin">OpenBMB/ChatDev</em> 的一个分支 <em class="latin">macnet</em> 上。这种"在自家后院搞升级"的做法，透露出一种务实的工程师气质：不追求炫酷的新品牌，而是在已有生态上迭代演进。后来 <em class="latin">puppeteer</em> 同样开在 ChatDev 的 <em class="latin">puppeteer</em> 分支上——一条技术线、一个仓库、三代演进。</p>
+  <p>还有一个值得一提的细节：论文里有一个概念叫"工件"（<em class="latin">artifact</em>），指的是 agent 之间传递的中间产物。这个词来自软件工程领域——在软件开发中，"artifact"通常指编译后的二进制文件、文档或测试报告。MacNet 把它借过来，泛指 agent 产出的任何形式的中间结果。这个术语的选择透露了论文的工程底色：<em>它把多智能体协作当成了一条软件生产线来设计</em>。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- ChatDev box -->
+        <rect x="40" y="50" width="140" height="80" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="110" y="78" text-anchor="middle" font-weight="600">ChatDev</text>
+        <text x="110" y="95" text-anchor="middle" fill="#96897A" font-size="9">链式流水线</text>
+        <text x="110" y="110" text-anchor="middle" fill="#96897A" font-size="9">2023</text>
+
+        <!-- arrow -->
+        <line x1="180" y1="90" x2="250" y2="90" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrFun)"/>
+
+        <!-- MacNet box -->
+        <rect x="250" y="50" width="140" height="80" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="320" y="78" text-anchor="middle" font-weight="600" fill="#B54A2C">MacNet</text>
+        <text x="320" y="95" text-anchor="middle" fill="#B54A2C" font-size="9">DAG 网络</text>
+        <text x="320" y="110" text-anchor="middle" fill="#96897A" font-size="9">2024</text>
+
+        <!-- arrow -->
+        <line x1="390" y1="90" x2="460" y2="90" stroke="#24555A" stroke-width="1.2" marker-end="url(#arrFun)"/>
+
+        <!-- puppeteer box -->
+        <rect x="460" y="50" width="140" height="80" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="530" y="78" text-anchor="middle" font-weight="600" fill="#24555A">puppeteer</text>
+        <text x="530" y="95" text-anchor="middle" fill="#24555A" font-size="9">RL 动态编排</text>
+        <text x="530" y="110" text-anchor="middle" fill="#96897A" font-size="9">2025</text>
+
+        <!-- self-revolution note -->
+        <text x="215" y="40" text-anchor="middle" fill="#B54A2C" font-size="9">自我革命</text>
+        <text x="425" y="40" text-anchor="middle" fill="#24555A" font-size="9">继续进化</text>
+
+        <defs>
+          <marker id="arrFun" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+          </marker>
+        </defs>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 6</span> · ChatDev 团队的三代演进：链式 → DAG 网络 → RL 动态编排，同一个仓库里的技术迭代</figcaption>
+  </figure>
+
+  <p>还有一个有趣的现实映射：MacNet 的"小世界现象"与社会学里的经典理论遥相呼应。社会学家马克·格兰诺维特（Mark Granovetter）在 1973 年提出过"弱关系的力量"——在社交网络中，信息和机会往往不是通过紧密的小圈子传播的，而是通过那些"弱连接"的远距离关系跨越社群边界。MacNet 的发现异曲同工：<em>随机的、不那么紧密的连接，反而比全连接更高效</em>——因为全连接带来的是信息冗余和过载，而随机连接保持了"路径短"和"信息多样"的平衡。AI 的多智能体协作，竟然也遵循着人类社会的网络智慧。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>MacNet 最让我震撼的不是"上千个 agent"这个数字，而是它揭示的一个深层洞察：<em>缩放定律不只属于训练阶段</em>。过去几年，整个行业都沉浸在"堆参数、堆数据、堆算力"的范式里——GPT-3 到 GPT-4 到 GPT-5，千亿参数、万亿 token。MacNet 提出了一条不同的路：<em>在推理阶段，通过增加协作 agent 来扩展能力</em>。</p>
+  <p>这意味着什么？意味着<em>算力的使用方式正在分化</em>。一部分算力用于训练更大的模型（训练缩放），另一部分算力用于在推理时跑更多的协作 agent（推理缩放）。这和 o1 开启的"测试时缩放"（test-time compute scaling）思路异曲同工——只是 o1 缩放的是单个模型的思考链长度，MacNet 缩放的是 agent 的协作规模。两条路殊途同归，都在说同一件事：<em>推理阶段也有缩放空间，而且可能比训练阶段更便宜</em>。</p>
+  <p>但 MacNet 也留下了一个值得深思的张力：S 型曲线意味着<em>收益递减</em>。100 个 agent 之后再加人，性能提升微乎其微。这和职场的直觉是一致的——一个 5 人精干小组的产出，往往高于一个 50 人的臃肿团队。那么，<em>真正的挑战不是"能不能扩"，而是"什么时候该停"</em>。MacNet 给了曲线，但"最优 agent 数"的选择仍然是一个开放问题——它可能取决于任务复杂度、模型能力、拓扑结构和成本预算的联合优化。</p>
+  <p>最后，"小世界现象"的发现让我对 AI 协作的未来多了一份乐观。它暗示着：<em>最有效的协作结构不是高度集权的全连接，也不是松散无序的各自为政，而是介于两者之间的"小世界"</em>——既有紧密的局部协作，又有跨越远距离的随机连接。这与人类最成功的组织形态惊人地一致。也许，当 AI 学会协作时，它最终也会发现人类几千年文明摸索出的那个道理。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果"协作缩放定律"是 S 型曲线，100 个 agent 后就接近饱和，那你认为影响饱和点位置的关键因素是什么？是模型能力、任务复杂度、拓扑结构，还是别的什么？换句话说——<em>什么决定了"加到多少 agent 就该停"?</em>
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Multi-Agent Collaboration via Evolving Orchestration（puppeteer）</h3>
+    <p style="margin:0;">MacNet 的 DAG 是"静态"的——图结构在任务开始前就定好了，不会变。那如果让一个"中央调度器"像木偶师一样，根据任务进展<em>动态决定</em>该激活哪个 agent、按什么顺序走呢？下一篇，同一个 ChatDev 团队用强化学习训练出了这个"木偶师"，把协作网络从静态拓扑推向了动态编排。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 043 篇</span>
+    <span>2026-09-12</span>
+  </footer>
+
+</div>
+</body>
+</html>
