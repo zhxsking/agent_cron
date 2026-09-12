@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 43,
-  "last_run_date": "2026-09-12",
+  "last_index": 44,
+  "last_run_date": "2026-09-13",
   "papers_covered": [
     {
       "index": 1,
@@ -346,10 +346,18 @@
         "date": "2024-06-11",
         "era": "对齐与应用期 2022–2023",
         "filename": "43_20260912_MacNet.html"
+      },
+      {
+        "index": 44,
+        "title_en": "Multi-Agent Collaboration via Evolving Orchestration",
+        "title_zh": "puppeteer（木偶师）：把 MacNet 的静态 DAG 换成会学习的'木偶师'——用强化学习训练中央调度器，让多智能体协作从静态拓扑走向动态编排",
+        "date": "2025-05-26",
+        "era": "动态编排期 2025–",
+        "filename": "44_20260913_Evolving_Orchestration.html"
       }
     ],
     "next_preview": {
-      "title_en": "Multi-Agent Collaboration via Evolving Orchestration",
-      "title_zh": "Multi-Agent Collaboration via Evolving Orchestration：把 MacNet 的静态 DAG 换成会学习的'木偶师'——用强化学习训练中央调度器，让多智能体协作从静态拓扑走向动态编排"
+      "title_en": "MAS-Orchestra: Understanding and Improving Multi-Agent Reasoning Through Holistic Orchestration and Controlled Benchmarks",
+      "title_zh": "MAS-Orchestra：把 puppeteer 的'逐步编排'升级成'一次性整体编排'——把多智能体编排建模成函数调用强化学习，一次生成整个 MAS，效率提升 10 倍"
     }
 }
