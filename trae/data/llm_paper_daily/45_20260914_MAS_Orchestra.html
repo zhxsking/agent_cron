@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAS-Orchestra 论文精读 · 大模型经典论文系列 #045</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  /* 中文没有真实斜体设计，混排斜体会被浏览器"伪斜体"强行倾斜 CJK 字形，
+     可读性差且违背"禁止伪斜体"的初衷。默认 <em> 用于中文/中英混排强调，
+     改用颜色+字重区分，不使用斜体。 */
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  /* 仅当强调内容是纯英文/拉丁字母（如论文英文标题、模型英文名等）时，
+     才使用 Lora 的真实 ital 轴斜体：<em class="latin">Attention</em> */
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#045</span>
+  </div>
+
+  <h1 class="title">
+    MAS-Orchestra: Understanding and Improving Multi-Agent Reasoning Through Holistic Orchestration and Controlled Benchmarks
+    <span class="en">MAS-Orchestra：把 puppeteer 的"逐步编排"升级成"一次性整体编排"——把多智能体编排建模成函数调用强化学习，一次生成整个 MAS，效率提升 10 倍</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Zixuan Ke, Yifei Ming, Austin Xu, Ryan Chin, Xuan-Phi Nguyen, Prathyusha Jwalapuram, Jiayu Wang, Semih Yavuz, Caiming Xiong, Shafiq Joty</span>
+    <span>机构：Salesforce Research · MIT · University of Wisconsin-Madison</span>
+    <span>发表：2026-01 / arXiv · ICML 2026</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2601.14652" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/SalesforceAIResearch/MAS-Orchestra" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://mas-orchestra.salesforceresearch.ai/mas_r1/" target="_blank" rel="noopener">Project</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">上一篇我们追到 <em>puppeteer（木偶师）</em>——它用强化学习训练一个"中央调度器"，让它学会在多智能体协作网络里逐步加节点、加边，把静态拓扑升级成动态编排。听起来已经很酷了，对吧？可 Salesforce 的同一支团队几乎在同一时间又抛出一个新问题：如果编排器不是"逐步决策"，而是<em>一眼看穿整个系统</em>再下手呢？</p>
+  <p class="lead">更扎心的是，他们顺手做了一件所有人都在嘴上喊、却没人真去做的事——造一个<em>能告诉你"什么时候该用 MAS、什么时候纯属浪费"</em>的基准。结果发现：很多被吹上天的多智能体系统，其实在大量任务上根本打不过一个会"自洽投票"的单智能体。这篇就是 <em class="latin">MAS-Orchestra</em>，一篇一边把编排做对、一边给整个 MAS 狂热泼冷水的论文。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    把多智能体编排建模成"函数调用 + 强化学习"，编排器一次性生成整套 MAS 配置，比 puppeteer 的逐步决策快十倍以上；同时用一个五维度基准揭穿"多智能体永远更好"的幻觉。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>在大模型的演进图里，这一篇的位置非常微妙——它既站在 <em>动态编排期</em> 的最前沿，又主动给自己这一脉泼了一盆冷水。</p>
+  <p>从 puppeteer 往回看，我们已经走过了一条清晰的轨迹：<em class="latin">ReAct</em> 把"思考"和"行动"交织成循环 → <em class="latin">MetaGPT</em> 把多智能体协作工程化成流水线 → <em class="latin">AutoGen</em> 把它做成可编程的对话 → <em class="latin">CAMEL</em>/<em class="latin">ChatDev</em> 让 LLM 自己开公司 → <em class="latin">MacNet</em> 把链式协作升级成上千节点的 DAG → <em>puppeteer</em> 用 RL 学会动态编排拓扑。每一步都在让"多智能体"更聪明、更可扩展。</p>
+  <p>但这一路有一个没人敢正面回答的问题：<em>凭什么说多智能体一定比单智能体好？</em>之前所有论文都在比"我的 MAS 比你的 MAS 强"，没人严肃地比"我的 MAS 比一个会自己投票的单智能体强"。MAS-Orchestra 不仅补上了这个对照，还顺手把 puppeteer 的"逐步编排"升级成"整体编排"——这是承前；而它埋下的"多智能体优势是会破灭的"这条线，则直接开启了下一波反思潮——这是启后。</p>
+
+  <figure>
+    <!-- 图 1：大模型发展时间线，标注本篇位置，高亮已解析部分 -->
+    <svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="tl-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="10" fill="#96897A">
+        <!-- 主线 -->
+        <line x1="30" y1="150" x2="700" y2="150" stroke="#96897A" stroke-width="1"/>
+
+        <!-- 时代分组标签 -->
+        <text x="60" y="40" fill="#24555A" font-weight="600">奠基期 2014–2017</text>
+        <text x="60" y="55">Attention(2017)</text>
+
+        <text x="180" y="40" fill="#24555A" font-weight="600">预训练范式期 2018–2020</text>
+        <text x="180" y="55">BERT/GPT-2/GPT-3</text>
+
+        <text x="320" y="40" fill="#24555A" font-weight="600">规模化/对齐 2020–2023</text>
+        <text x="320" y="55">Chinchilla/InstructGPT/CoT</text>
+
+        <text x="470" y="40" fill="#24555A" font-weight="600">推理范式期 2025–</text>
+        <text x="470" y="55">DeepSeek-R1/o1/CoT 系列</text>
+
+        <text x="580" y="220" fill="#24555A" font-weight="600">动态编排期 2025–</text>
+        <text x="580" y="235">MacNet→puppeteer→MAS-Orchestra</text>
+
+        <!-- 已解析节点（高亮） -->
+        <circle cx="60" cy="150" r="5" fill="#B54A2C"/>
+        <text x="60" y="135" text-anchor="middle" fill="#B54A2C" font-weight="600">2017</text>
+        <text x="60" y="170" text-anchor="middle">#01</text>
+
+        <circle cx="180" cy="150" r="5" fill="#B54A2C"/>
+        <text x="180" y="135" text-anchor="middle" fill="#B54A2C" font-weight="600">2018</text>
+        <text x="180" y="170" text-anchor="middle">#02–04</text>
+
+        <circle cx="320" cy="150" r="5" fill="#B54A2C"/>
+        <text x="320" y="135" text-anchor="middle" fill="#B54A2C" font-weight="600">2022</text>
+        <text x="320" y="170" text-anchor="middle">#05–23</text>
+
+        <circle cx="450" cy="150" r="5" fill="#B54A2C"/>
+        <text x="450" y="135" text-anchor="middle" fill="#B54A2C" font-weight="600">2023–24</text>
+        <text x="450" y="170" text-anchor="middle">#24–44</text>
+
+        <!-- 本篇节点（高亮放大） -->
+        <circle cx="600" cy="150" r="9" fill="#B54A2C"/>
+        <circle cx="600" cy="150" r="14" fill="none" stroke="#B54A2C" stroke-width="1" opacity="0.4"/>
+        <text x="600" y="125" text-anchor="middle" fill="#B54A2C" font-weight="600">2026</text>
+        <text x="600" y="180" text-anchor="middle" fill="#2E2A22" font-weight="600">本篇 #45</text>
+        <text x="600" y="195" text-anchor="middle" fill="#B54A2C" font-weight="600">MAS-Orchestra</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的 MAS-Orchestra（红圈高亮为已解析系列节点）</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要理解 MAS-Orchestra 为什么必须存在，得先把 puppeteer 那套做法的"暗病"翻出来。</p>
+  <p>puppeteer 的核心思路是：把编排器当成一个会"逐步加零件"的 RL 智能体——它每一步决定要不要再添一个 sub-agent、要不要再加一条连接边，直到它觉得"差不多了"就停。这听上去很优雅，但作者团队自己复盘时发现三个一直被回避的硬伤：</p>
+  <ul>
+    <li><em>暗病一：局部最优陷阱。</em>每一步只能看到当下这一跳的奖励，编排器很容易在第三步就因为"再加一个会立刻涨 1 分"而狂加节点，结果整套系统在第十几步时冗余到爆炸。这正是 RL 里经典的 long-horizon credit assignment 难题，在 MAS 编排里被放大。</li>
+    <li><em>暗病二：训练开销爆炸。</em>每一步都要单独跑一遍前向 + 反向传播，多智能体系统稍微复杂一点，训练成本就指数级往上窜。puppeteer 在 8B 模型上已经要烧掉不少卡时。</li>
+    <li><em>暗病三：sub-agent 必须是"玩具"。</em>因为编排器要"分析甚至复现 sub-agent 的内部代码"，sub-agent 越复杂，编排器越扛不住。所以几乎所有同类工作都只敢用 CoT、CoT-SC 这种最简单的小角色，根本不敢把"会多轮搜索的 agent"塞进去。</li>
+  </ul>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    把 puppeteer 想象成一个厨师在组装一道菜——他一次只能拿一种食材，每拿一种就得先尝一口再决定要不要拿下一把。如果食材只是盐、糖、醋这种单一调料还好，可如果某样食材本身就是"已经炖了三个小时的浓汤"，他还得把整锅汤倒出来重新尝一遍才能继续。结果就是：他只能拿小包调料，永远做不出真正的大菜。MAS-Orchestra 的答案是：让厨师一眼看完全部食材清单，一次性下完所有决定。
+  </div>
+
+  <p>比这更深的一层"暗病"，是整个 MAS 领域的集体盲区——<em>从来没人严肃地回答"这套多智能体系统到底比单智能体强在哪里"</em>。所有论文都在比"我的 MAS 比你的 MAS 高 X 分"，却没人比"我的 MAS 比一个会自洽投票（CoT-SC）的单智能体高多少分"。这就像所有人都在比谁的越野车爬坡更猛，却没人问一句"是不是骑山地自行车反而更快"。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>论文一上来就把目标讲得非常清楚，三个互相缠绕的核心问题：</p>
+  <ul>
+    <li><em>问题一：如何让编排一次性、整体地完成，而不是逐步累加？</em>核心是从 sequential decision process 切到 holistic orchestration。</li>
+    <li><em>问题二：如何让编排器只关心"系统结构"，不去碰 sub-agent 的内部细节？</em>核心是把复杂 sub-agent 抽象成黑盒函数。</li>
+    <li><em>问题三：如何科学地回答"什么时候 MAS 真的比 SAS 强"？</em>核心是造一个能控制任务结构的基准。</li>
+  </ul>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    在继续往下读之前，先停一下问自己：如果你来设计"一次性生成整个 MAS"的训练目标，你会让编排器输出什么？是输出一整段可执行代码？还是输出一份 JSON 配置？还是输出一串函数调用？每种选择背后都有非常不同的代价——作者选了"函数调用"，为什么？
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>MAS-Orchestra 的整个方法可以拆成三块：<em>函数调用抽象</em>、<em>整体编排</em>、<em>强化学习训练</em>。三块咬合在一起，才解决了上面那三个问题。我们一块一块讲。</p>
+
+  <h3>第一步：把 sub-agent 抽象成"可调用函数"</h3>
+  <p>作者最关键的设计选择，是<em>不让编排器去碰 sub-agent 的内部实现</em>。在他们的范式里，一个会做"多轮搜索 + 工具调用 + 反思"的复杂 agent，对编排器来说就是一个签名清晰的函数：</p>
+
+  <pre><code>create_agent(
+    name="search_agent",
+    goal="find evidence for the claim",
+    tools=[web_search, browser],
+    reasoning_effort="high"
+)</code></pre>
+
+  <p>编排器只决定<em>何时实例化、实例化几个、它们之间怎么连</em>，根本不需要知道 search_agent 内部是 ReAct 还是 Reflexion，用 GPT-4o 还是 Claude。这就是论文里反复强调的 <em>goal-oriented sub-agent</em>——sub-agent 由"它要达成什么目标"定义，自带自己的上下文、工具、工作流。</p>
+
+  <p>整个编排动作被压缩到只有两个原语：</p>
+  <ul>
+    <li><em class="latin">create_agent</em>：实例化一个 sub-agent；</li>
+    <li><em class="latin">create_flow</em>：把几个 sub-agent 的输入输出连起来，组成执行流。</li>
+  </ul>
+
+  <p>就这两个原语，能拼出从"单 agent + 自洽投票"到"多 agent 并行 + 互相辩论 + 投票"的几乎任意拓扑。这有点像 UNIX 哲学——几个简单原语 + 自由组合 = 复杂系统。</p>
+
+  <h3>第二步：用"整体编排"替代"逐步决策"</h3>
+  <p>这一步才是 MAS-Orchestra 真正的"杀手锏"。puppeteer 是一步步加节点的，每一步都是一次单独的决策、一次单独的梯度更新。MAS-Orchestra 让编排器<em>在一次前向里输出整套 MAS 配置</em>——一气呵成。</p>
+
+  <figure>
+    <!-- 图 2：整体编排 vs 逐步编排 对比示意 -->
+    <svg viewBox="0 0 720 320" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr-a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 左：puppeteer 逐步编排 -->
+        <text x="170" y="30" text-anchor="middle" font-weight="600">puppeteer：逐步编排</text>
+        <text x="170" y="46" text-anchor="middle" fill="#96897A" font-size="10">每步一次决策，奖励局部</text>
+
+        <rect x="30" y="70" width="80" height="36" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="70" y="93" text-anchor="middle">step 1</text>
+        <text x="70" y="105" text-anchor="middle" font-size="9">+agent A</text>
+
+        <rect x="120" y="70" width="80" height="36" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="160" y="93" text-anchor="middle">step 2</text>
+        <text x="160" y="105" text-anchor="middle" font-size="9">+edge A→B</text>
+
+        <rect x="210" y="70" width="80" height="36" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="250" y="93" text-anchor="middle">step 3</text>
+        <text x="250" y="105" text-anchor="middle" font-size="9">+agent C</text>
+
+        <text x="170" y="140" text-anchor="middle" fill="#96897A" font-size="10">... N 步之后 ...</text>
+
+        <rect x="80" y="160" width="180" height="60" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="170" y="190" text-anchor="middle" font-size="10">最终 MAS（局部最优）</text>
+        <text x="170" y="208" text-anchor="middle" fill="#96897A" font-size="9">训练成本随步数线性增长</text>
+
+        <line x1="70" y1="106" x2="70" y2="160" stroke="#96897A" stroke-width="1" marker-end="url(#arr-a)"/>
+        <line x1="160" y1="106" x2="160" y2="160" stroke="#96897A" stroke-width="1" marker-end="url(#arr-a)"/>
+        <line x1="250" y1="106" x2="250" y2="160" stroke="#96897A" stroke-width="1" marker-end="url(#arr-a)"/>
+
+        <!-- 右：MAS-Orchestra 整体编排 -->
+        <text x="540" y="30" text-anchor="middle" font-weight="600" fill="#B54A2C">MAS-Orchestra：整体编排</text>
+        <text x="540" y="46" text-anchor="middle" fill="#B54A2C" font-size="10">一次决策，全局奖励</text>
+
+        <rect x="430" y="80" width="220" height="60" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="540" y="105" text-anchor="middle" fill="#B54A2C" font-weight="600">single forward pass</text>
+        <text x="540" y="123" text-anchor="middle" font-size="9">create_agent × N + create_flow × M</text>
+
+        <line x1="540" y1="140" x2="540" y2="170" stroke="#B54A2C" stroke-width="1.5" marker-end="url(#arr-a)"/>
+
+        <rect x="430" y="180" width="220" height="60" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="540" y="208" text-anchor="middle" fill="#B54A2C" font-weight="600">最终 MAS（全局协同）</text>
+        <text x="540" y="226" text-anchor="middle" fill="#96897A" font-size="9">训练成本与系统复杂度解耦</text>
+
+        <!-- 对比箭头 -->
+        <text x="360" y="100" text-anchor="middle" fill="#24555A" font-weight="600">→</text>
+        <text x="360" y="200" text-anchor="middle" fill="#24555A" font-weight="600">10× 效率</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · puppeteer 逐步编排 vs MAS-Orchestra 整体编排</figcaption>
+  </figure>
+
+  <p>从优化角度看，这把 multi-step RL 问题<em>化简成了 single-step RL</em>。没有了 long-horizon credit assignment，没有了 error propagation，训练稳定性大幅提升；而推理时，编排器只需要做一次前向，整个 MAS 就搭好了，<em>这正是 10 倍效率提升的根源</em>。</p>
+
+  <h3>第三步：引入 Degree of MAS（DoM）</h3>
+  <p>这里有一个看似小、实则关键的设计——作者显式引入了一个叫 <em>Degree of MAS（DoM）</em> 的旋钮。用户可以配置：</p>
+  <ul>
+    <li><em>low DoM</em>：编排器最多只能用 1 个 sub-agent（退化为 SAS 的延伸）；</li>
+    <li><em>high DoM</em>：编排器可以任意组合多个 sub-agent。</li>
+  </ul>
+
+  <p>为什么要这个旋钮？因为作者在做 MASBENCH 分析时发现：<em>不是所有任务都该用 MAS</em>。给简单数学题硬套一个 5-agent 辩论系统，往往比一个会自洽投票的单 agent 更差。DoM 让编排器在训练时就学到"哪些任务该退回到单 agent、哪些任务该张开成多 agent"——这是一种内置的"自我节制"。</p>
+
+  <h3>第四步：强化学习训练</h3>
+  <p>训练目标非常直接：编排器一次性输出整套 <em class="latin">create_agent</em> + <em class="latin">create_flow</em> 调用，系统据此跑完整个 MAS 拓扑，最后用最终答案的正确性当奖励信号。整个过程其实就是把"function calling"当作 RL 的动作空间，把"系统输出正确答案"当作奖励。整套训练<em>完全跳过 SFT 直接做 RL</em>（作者也做了 SFT 初始化的对照，发现纯 RL 反而更稳）。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    把编排器当成一个建筑师，puppeteer 让他一块砖一块砖地盖楼，每加一块砖就给一次小费；MAS-Orchestra 让他一次性画完整张图纸再施工，最后只看楼能不能住人给一笔大钱。前者会盖出歪歪扭扭的"局部最优楼"，后者才能盖出真正协同的"整体楼"。一次性决策的好处是：建筑师可以同时权衡"客厅要朝南"和"厨房要近水源"，而不会被"先盖客厅还是先盖厨房"这种顺序问题绑架。
+  </div>
+
+  <figure>
+    <!-- 图 3：训练流程图 -->
+    <svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr-b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <rect x="20" y="70" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="95" text-anchor="middle">任务 + DoM</text>
+        <text x="80" y="110" text-anchor="middle" font-size="9" fill="#96897A">输入</text>
+
+        <rect x="170" y="70" width="120" height="50" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="230" y="92" text-anchor="middle" fill="#B54A2C" font-weight="600">编排器 LLM</text>
+        <text x="230" y="108" text-anchor="middle" font-size="9">single forward</text>
+
+        <rect x="320" y="70" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="380" y="92" text-anchor="middle">create_agent</text>
+        <text x="380" y="108" text-anchor="middle" font-size="9">+ create_flow</text>
+
+        <rect x="470" y="70" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="530" y="92" text-anchor="middle">执行整套 MAS</text>
+        <text x="530" y="108" text-anchor="middle" font-size="9">sub-agents 跑完</text>
+
+        <rect x="620" y="70" width="80" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="660" y="92" text-anchor="middle" fill="#24555A" font-weight="600">reward</text>
+        <text x="660" y="108" text-anchor="middle" font-size="9">答案正确性</text>
+
+        <line x1="140" y1="95" x2="170" y2="95" stroke="#96897A" marker-end="url(#arr-b)"/>
+        <line x1="290" y1="95" x2="320" y2="95" stroke="#96897A" marker-end="url(#arr-b)"/>
+        <line x1="440" y1="95" x2="470" y2="95" stroke="#96897A" marker-end="url(#arr-b)"/>
+        <line x1="590" y1="95" x2="620" y2="95" stroke="#96897A" marker-end="url(#arr-b)"/>
+
+        <!-- 回传梯度 -->
+        <path d="M 660 70 Q 660 30 230 30 Q 230 30 230 70" stroke="#B54A2C" stroke-width="1" stroke-dasharray="4 3" fill="none" marker-end="url(#arr-b)"/>
+        <text x="445" y="22" text-anchor="middle" fill="#B54A2C" font-size="10">梯度回传（更新编排器权重）</text>
+
+        <text x="360" y="170" text-anchor="middle" fill="#96897A" font-size="10">整个循环只发生一次前向 + 一次回传</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · MAS-Orchestra 的训练-推理一体化流程</figcaption>
+  </figure>
+
+  <h3>把 MASBENCH 当成"诊断仪"而不只是基准</h3>
+  <p>方法部分的最后一环是 MASBENCH——但它不只是个跑分的基准，而是一个<em>能控制任务结构的诊断仪</em>。作者把任务沿着五个轴刻画：</p>
+  <ul>
+    <li><em>Depth（深度）</em>：一个子任务要多少步推理才能完成；</li>
+    <li><em>Horizon（视野）</em>：整套任务有多少个串行子任务；</li>
+    <li><em>Breadth（广度）</em>：整套任务有多少个并行子任务；</li>
+    <li><em>Parallel（可并行性）</em>：这些子任务能不能同时跑；</li>
+    <li><em>Robustness（鲁棒性）</em>：任务里有没有对抗性噪声、错误信息。</li>
+  </ul>
+  <p>每个 axis 都被刻意构造出不同取值的任务实例，这样就能像做对照实验一样，<em>单独看每个维度上 MAS 比 SAS 强还是弱</em>。这是 MAS 评估史上第一次有这么精细的控制变量。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>实验有两个层次：<em>MASBENCH 上的诊断</em>（告诉你 MAS 什么时候该用）和<em>公开基准上的效果</em>（告诉你 MAS-Orchestra 实际多强）。</p>
+
+  <h3>诊断结果：MAS 不是万能的</h3>
+  <p>作者在 MASBENCH 上跑了 3 种编排器 × 5 种 sub-agent 设置，得到几条非常反直觉的结论：</p>
+  <ul>
+    <li><em>"多智能体优势"集中爆发在 sub-agent 能力的"边缘地带"</em>——也就是 sub-agent 单独跑能做对大部分但做不对全部的那一档。如果 sub-agent 太弱，多 agent 也救不回来；如果 sub-agent 已经足够强，加再多 agent 也没用。</li>
+    <li><em>会推理的 RLM 反而不如普通指令微调 LLM 适合当编排器</em>。原因是 RLM 喜欢"自己想"，倾向于把任务扛下来不分配；普通 LLM 更"知趣"，更愿意把任务分发出去。</li>
+    <li><em>MAS 在数据投毒下显著更鲁棒</em>。因为 MAS 会显式分解问题、把子任务分给不同 agent、还会插入 moderation 步骤——天然就隔离了对抗信号。</li>
+  </ul>
+
+  <h3>公开基准结果：10 倍效率，Pareto 前沿</h3>
+  <p>在 AIME24、GPQA、MuSiQue、BrowseComp-Plus 等公开基准上，MAS-Orchestra 不仅精度上稳超 puppeteer、AFlow、MAS-Zero 等强基线，更狠的是<em>推理成本降到了原来的 1/10 以下</em>——LLM 调用次数、token 数、美元成本三个维度同时压到 1/10。这意味着在 cost-accuracy 平面上，MAS-Orchestra 直接坐在 Pareto 前沿的最优角上。</p>
+
+  <table>
+    <thead>
+      <tr><th>方法</th><th>训练</th><th>整体编排</th><th>有 DoM</th><th>有 sub-agent 抽象</th><th>对 MAS vs SAS 分析</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">MAS-Zero</td><td>✗</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td></tr>
+      <tr><td class="text">AFlow</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+      <tr><td class="text">MAS-GPT</td><td>SFT</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td></tr>
+      <tr><td class="text">puppeteer</td><td>RL</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+      <tr><td class="text">ToolOrchestra</td><td>RL</td><td>✗</td><td>✗</td><td>✓</td><td>✗</td></tr>
+      <tr><td class="text" style="color:#B54A2C;font-weight:600">MAS-Orchestra</td><td style="color:#B54A2C;font-weight:600">RL</td><td style="color:#B54A2C;font-weight:600">✓</td><td style="color:#B54A2C;font-weight:600">✓</td><td style="color:#B54A2C;font-weight:600">✓</td><td style="color:#B54A2C;font-weight:600">✓</td></tr>
+    </tbody>
+  </table>
+
+  <figure>
+    <!-- 图 4：MAS-Orchestra 与基线在能力维度上的对比 -->
+    <svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="dot" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">
+          <circle cx="1" cy="1" r="0.6" fill="#96897A" opacity="0.15"/>
+        </pattern>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 表头 -->
+        <text x="40" y="40" font-weight="600" fill="#96897A">方法</text>
+        <text x="280" y="40" font-weight="600" fill="#96897A">训练</text>
+        <text x="380" y="40" font-weight="600" fill="#96897A">整体编排</text>
+        <text x="490" y="40" font-weight="600" fill="#96897A">DoM</text>
+        <text x="570" y="40" font-weight="600" fill="#96897A">MAS vs SAS</text>
+        <line x1="20" y1="50" x2="700" y2="50" stroke="#96897A" stroke-width="1"/>
+
+        <!-- MAS-Zero -->
+        <text x="40" y="80">MAS-Zero</text>
+        <circle cx="290" cy="76" r="6" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="390" cy="76" r="6" fill="#B54A2C"/>
+        <circle cx="500" cy="76" r="6" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="580" cy="76" r="6" fill="#ECE4D4" stroke="#96897A"/>
+
+        <!-- AFlow -->
+        <text x="40" y="110">AFlow</text>
+        <circle cx="290" cy="106" r="6" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="390" cy="106" r="6" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="500" cy="106" r="6" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="580" cy="106" r="6" fill="#ECE4D4" stroke="#96897A"/>
+
+        <!-- MAS-GPT -->
+        <text x="40" y="140">MAS-GPT</text>
+        <circle cx="290" cy="136" r="6" fill="#B54A2C" fill-opacity="0.5"/>
+        <text x="278" y="139" font-size="8" fill="#96897A">SFT</text>
+        <circle cx="390" cy="136" r="6" fill="#B54A2C"/>
+        <circle cx="500" cy="136" r="6" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="580" cy="136" r="6" fill="#ECE4D4" stroke="#96897A"/>
+
+        <!-- puppeteer -->
+        <text x="40" y="170">puppeteer</text>
+        <circle cx="290" cy="166" r="6" fill="#B54A2C"/>
+        <circle cx="390" cy="166" r="6" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="500" cy="166" r="6" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="580" cy="166" r="6" fill="#ECE4D4" stroke="#96897A"/>
+
+        <!-- ToolOrchestra -->
+        <text x="40" y="200">ToolOrchestra</text>
+        <circle cx="290" cy="196" r="6" fill="#B54A2C"/>
+        <circle cx="390" cy="196" r="6" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="500" cy="196" r="6" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="580" cy="196" r="6" fill="#ECE4D4" stroke="#96897A"/>
+
+        <!-- MAS-Orchestra 高亮行 -->
+        <rect x="20" y="215" width="680" height="30" fill="#B54A2C" fill-opacity="0.08"/>
+        <text x="40" y="235" font-weight="600" fill="#B54A2C">MAS-Orchestra</text>
+        <circle cx="290" cy="231" r="7" fill="#B54A2C"/>
+        <circle cx="390" cy="231" r="7" fill="#B54A2C"/>
+        <circle cx="500" cy="231" r="7" fill="#B54A2C"/>
+        <circle cx="580" cy="231" r="7" fill="#B54A2C"/>
+
+        <line x1="20" y1="260" x2="700" y2="260" stroke="#96897A" stroke-width="1"/>
+        <text x="360" y="275" text-anchor="middle" fill="#96897A" font-size="10">实心 = 具备该特性 · 空心 = 不具备 · MAS-Orchestra 是唯一全勾的方法</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · MAS-Orchestra 是唯一同时满足五大特性的方法（据论文 Table 1 改绘）</figcaption>
+  </figure>
+
+  <div class="callout">
+    <span class="label">最令人惊讶的发现</span>
+    作者在论文里直接写了一句非常"打脸整个领域"的话——大意是：在 AIME 这种数学题上，多智能体协调<em>几乎带不来任何收益</em>，一个会自洽投票的强单 agent 就够了。这等于在告诉同行："你们过去几年往数学题上硬套 MAS 的所有努力，大概率是在白烧钱。"
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>这篇论文的影响可以从三个维度来评估：</p>
+  <ul>
+    <li><em>对编排范式的影响</em>：把"逐步决策"切换成"整体决策"，等于给后续所有自动 MAS 设计立了一个新范式。puppeteer 之后再做编排的人，要么继续走逐步路线、要么得正面回应"为什么不做整体"。</li>
+    <li><em>对评估范式的影响</em>：MASBENCH 是第一个<em>专为回答"MAS 何时优于 SAS"而造的基准</em>。它不再追求"我的 MAS 在 GSM8K 上比你的高 X 分"，而是追求"我能告诉你什么样的任务结构才该上 MAS"。这是一种范式的转向。</li>
+    <li><em>对工业部署的影响</em>：10 倍效率让 RL-trained MAS 第一次具备真正可部署的性价比。Salesforce 自己的 Agentforce 平台很快就把这套思路接了进去——这篇不是纯学术，而是直接对齐工业需求。</li>
+  </ul>
+  <p>更深远的是，这篇论文埋下了一颗"反向种子"——它把"MAS 不一定更好"这个事实第一次系统性地暴露出来。几个月后，<em>同一支团队</em>（Salesforce Research，第一作者 Prathyusha Jwalapuram、Shafiq Joty 同时挂名）就直接发了一篇质疑 MAS 整体优势的论文。我们下一篇正好追到那里。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>论文自身和后续工作暴露的局限：</p>
+  <ul>
+    <li><em>sub-agent 池是预先给定的</em>。MAS-Orchestra 还不能"自己造新 sub-agent"，只能在已有的几个候选里挑组合。这是后续工作（如 Unified-MAS）会补上的方向。</li>
+    <li><em>MASBENCH 还是合成数据为主</em>。虽然五个维度刻画得很系统，但合成任务和真实任务之间还有差距。这也是后续很多 MAS 评估工作继续补强的方向。</li>
+    <li><em>编排器只能选 sub-agent 不能改 sub-agent</em>。比如它不能"挑了 search_agent 之后再告诉它要换工具集"，这是 ToolOrchestra 之类的并行工作会去补的洞。</li>
+    <li><em>对"为什么 MAS 在某些轴上反而更差"的解释还不够理论化</em>。论文给出了大量经验观察，但没有给出一个能预测"什么任务该用 MAS"的封闭数学公式。</li>
+    <li><em>更狠的反思其实来自同团队</em>：几个月后那篇 <em class="latin">The Illusion of Multi-Agent Advantage</em> 直接用更严格的对照实验指出，自动生成的 MAS 在好几个真实任务上甚至<em>打不过</em>单 agent + CoT-SC，且贵 10 倍。MAS-Orchestra 自己埋下的种子，长成了对自家方法的质疑。</li>
+  </ul>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把本篇放回大模型发展的整条线索里看：</p>
+  <ul>
+    <li><em>奠基期（2017）</em>：Transformer 横空出世，注意力机制解决长距离依赖。这一篇里 sub-agent 的底层能力全靠这一阶段的成果。</li>
+    <li><em>预训练范式期（2018–2020）</em>：BERT/GPT-2/GPT-3 让"一个模型干所有任务"成为可能。此时还都是单 agent。</li>
+    <li><em>规模化/对齐期（2020–2023）</em>：Chinchilla 给出数据-参数配比，InstructGPT 让模型听话，CoT 让模型会分步推理。这一阶段把单 agent 推向能力天花板——也正是在这里，人们开始想"能不能靠多 agent 突破天花板"。</li>
+    <li><em>推理范式期（2025–）</em>：DeepSeek-R1、o1 把推理本身做成可训练的，单 agent 在数学/代码上的能力被推到惊人水平。这也正是 MAS-Orchestra 发现"数学题上 MAS 没用"的背景——单 agent 已经强到不需要 MAS 帮忙。</li>
+    <li><em>对齐与应用期：多智能体阶段</em>：ReAct 把"想-做"循环化，MetaGPT/AutoGen/CAMEL/ChatDev 把多智能体协作工程化，MacNet 把拓扑升级成 DAG，puppeteer 把编排做成 RL，MAS-Orchestra 把编排做成整体函数调用——这是本篇的位置。</li>
+    <li><em>动态编排期（2025–）</em>：从 puppeteer 到 MAS-Orchestra，编排从"逐步"走向"整体"，从"启发式"走向"训练式"。同时 MASBENCH 第一次把"MAS 何时优于 SAS"变成可量化的问题。这一脉接下来要面对的，正是"MAS 优势的幻象"这一反向冲击。</li>
+  </ul>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>这篇论文背后有几个挺好玩的小细节：</p>
+  <ul>
+    <li><em>团队是真"自己卷自己"</em>。puppeteer 和 MAS-Orchestra 出自 Salesforce Research 同一个组——Shafiq Joty 老师和 Zixuan Ke 是这两篇的共同作者。等于自己刚发完 puppeteer，转头就发了一篇"puppeteer 还有暗病、我们用整体编排把它治了"。</li>
+    <li><em>更"自残"的是</em>，几个月后他们又发了 <em class="latin">The Illusion of Multi-Agent Advantage</em>，第一作者换成了同组的 Prathyusha Jwalapuram，但 Shafiq Joty 还是通讯作者。等于同一支团队三连击：先做 puppeteer，再升级成 MAS-Orchestra，最后反过来质疑整个 MAS 优势。这种"自己推翻自己"的科研态度，挺让人尊敬的。</li>
+    <li><em>命名风格</em>：puppeteer（木偶师）和 MAS-Orchestra（多智能体乐团）的命名延续了一条非常生动的隐喻链——前者把 sub-agent 当成被提线的木偶，后者把它们当成乐团里被指挥的乐手。从"提线"到"指挥"，编排的隐喻正好升级了一档。</li>
+    <li><em>项目主页上有 Live Demo</em>：你可以亲手喂它一个任务，看编排器一次性吐出整套 MAS 配置。这种"看一遍编排器画图纸"的体验非常直观，比读论文本身还有冲击力。</li>
+    <li><em>ICML 2026 接收</em>：从 arXiv v1 到 v5 反复打磨，最后被 ICML 2026 接收——也是这一脉工作里第一篇撞上顶会的。</li>
+  </ul>
+
+  <figure>
+    <!-- 图 5：趣味插图——从木偶师到指挥家 -->
+    <svg viewBox="0 0 720 220" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 木偶师 -->
+        <text x="180" y="30" text-anchor="middle" fill="#96897A" font-weight="600">puppeteer（2025）</text>
+        <!-- 提线的手 -->
+        <circle cx="180" cy="80" r="14" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="180" y="84" text-anchor="middle" font-size="10">手</text>
+        <!-- 提线 -->
+        <line x1="170" y1="92" x2="120" y2="140" stroke="#96897A"/>
+        <line x1="180" y1="94" x2="160" y2="140" stroke="#96897A"/>
+        <line x1="190" y1="92" x2="200" y2="140" stroke="#96897A"/>
+        <line x1="195" y1="90" x2="240" y2="140" stroke="#96897A"/>
+        <!-- 木偶 -->
+        <circle cx="120" cy="155" r="10" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="160" cy="155" r="10" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="200" cy="155" r="10" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="240" cy="155" r="10" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="180" y="195" text-anchor="middle" fill="#96897A" font-size="10">一次只动一个</text>
+
+        <!-- 箭头 -->
+        <path d="M 320 100 L 400 100" stroke="#B54A2C" stroke-width="1.5" marker-end="url(#arr-c)"/>
+        <text x="360" y="92" text-anchor="middle" fill="#B54A2C" font-size="10">升级</text>
+
+        <!-- 指挥家 -->
+        <text x="540" y="30" text-anchor="middle" fill="#B54A2C" font-weight="600">MAS-Orchestra（2026）</text>
+        <!-- 指挥棒 -->
+        <circle cx="540" cy="80" r="14" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="540" y="84" text-anchor="middle" font-size="10" fill="#B54A2C">指挥</text>
+        <!-- 一次同时挥手 -->
+        <line x1="525" y1="92" x2="480" y2="140" stroke="#B54A2C"/>
+        <line x1="535" y1="94" x2="520" y2="140" stroke="#B54A2C"/>
+        <line x1="545" y1="94" x2="560" y2="140" stroke="#B54A2C"/>
+        <line x1="555" y1="92" x2="600" y2="140" stroke="#B54A2C"/>
+        <!-- 乐手 -->
+        <circle cx="480" cy="155" r="10" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <circle cx="520" cy="155" r="10" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <circle cx="560" cy="155" r="10" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <circle cx="600" cy="155" r="10" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="540" y="195" text-anchor="middle" fill="#B54A2C" font-size="10">一次指挥所有乐手</text>
+
+        <defs>
+          <marker id="arr-c" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+          </marker>
+        </defs>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 命名隐喻的升级：从"提线木偶师"到"乐团指挥"</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读完这篇，最让人感慨的不是 10 倍效率，也不是 Pareto 前沿，而是它把"多智能体优势"这件事从神话还原成了工程问题。</p>
+  <p>过去两年，"多智能体"几乎成了一种行业口头禅——只要任务难，就上多 agent，仿佛 agent 数量和系统能力是单调递增的。MAS-Orchestra 用 MASBENCH 把这条曲线的真实形状画了出来：<em>它是一条先升后降、有清晰峰值</em>的曲线，峰值就在"sub-agent 能力的边缘地带"。这等于在告诉所有人——多 agent 不是越多越好，而是要和任务的深度、视野、广度、可并行性、鲁棒性匹配。</p>
+  <p>更有意思的是，这篇和它的后续（下一篇我们要追的）合在一起，构成了一段非常完整的"科研自我纠错"叙事：先发明更聪明的 MAS，再质问 MAS 到底聪不聪明。这种<em>"做出来 → 检验它 → 推翻它"</em>的节奏，比任何"我永远是对的"的论文都更让人信服。科研的诚信，往往不在结论里，而在能不能承认自己之前的局限。</p>
+  <p>从工业角度看，DoM 这个旋钮很可能会成为未来 agent 平台的标配——用户不再去手动配置"我要几个 agent"，而是告诉系统"这个任务我希望 DoM 是 low/high"，让编排器自己决定要不要张开成多 agent。这有点像数据库查询优化器——你只说"我要这些数据"，优化器自己决定走索引还是扫表。编排能力的"声明式化"，可能正是接下来一年 agent 平台的主战场。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果你现在要做一个客服机器人，任务结构是：大部分问题简单（FAQ 检索），少量问题复杂（多轮排查 + 工单流转）。你会给编排器配 low DoM 还是 high DoM？还是说，应该让编排器自己根据每条请求动态切？欢迎带着这个问题去读下一篇——那里会有更尖锐的答案。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>The Illusion of Multi-Agent Advantage</h3>
+    <p style="margin:0;">同一支团队，几个月后掉头开炮——自动生成的 MAS 在多个真实任务上不仅没赢，反而输给了一个会自洽投票的单 agent，且贵 10 倍。当"多智能体一定更强"的神话被自家团队亲手戳破，整个领域会怎么收场？</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 045 篇</span>
+    <span>2026-09-14</span>
+  </footer>
+
+</div>
+</body>
+</html>
