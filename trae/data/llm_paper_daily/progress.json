@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 45,
-  "last_run_date": "2026-09-14",
+  "last_index": 46,
+  "last_run_date": "2026-09-15",
   "papers_covered": [
     {
       "index": 1,
@@ -362,10 +362,18 @@
       "date": "2026-01-21",
       "era": "动态编排期 2025–",
       "filename": "45_20260914_MAS_Orchestra.html"
+    },
+    {
+      "index": 46,
+      "title_en": "The Illusion of Multi-Agent Advantage",
+      "title_zh": "多智能体优势的幻象：自动 MAS 全面输给 CoT-SC，还贵 10 倍——同一支团队的自我打脸",
+      "date": "2026-06-11",
+      "era": "动态编排期 2025–",
+      "filename": "46_20260915_Illusion_of_MAS_Advantage.html"
     }
   ],
     "next_preview": {
-      "title_en": "The Illusion of Multi-Agent Advantage",
-      "title_zh": "多智能体优势的幻象：自动 MAS 全面输给 CoT-SC，还贵 10 倍——同一支团队的自我打脸"
+      "title_en": "SWE-agent: Agent-Computer Interfaces Enable Automated Software Engineering",
+      "title_zh": "SWE-agent：好工具胜过多个大脑——给 agent 设计对的接口，比堆十个 agent 更管用"
     }
 }
