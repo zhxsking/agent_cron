@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SWE-agent 论文精读 · 大模型经典论文系列 #047</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#047</span>
+  </div>
+
+  <h1 class="title">
+    SWE-agent: Agent-Computer Interfaces Enable Automated Software Engineering
+    <span class="en">SWE-agent：好工具胜过多个大脑——给 agent 设计对的接口，比堆十个 agent 更管用</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：John Yang*, Carlos E. Jimenez*, Alexander Wettig, Kilian Lieret, Shunyu Yao, Karthik Narasimhan, Ofir Press</span>
+    <span>机构：Princeton Language and Intelligence, Princeton University</span>
+    <span>发表：2024-05 / NeurIPS 2024</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2405.15793" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/SWE-agent/SWE-agent" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://swe-agent.com/" target="_blank" rel="noopener">Project</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">上一篇我们讲完 <em class="latin">The Illusion of Multi-Agent Advantage</em>——同一支团队掉头开炮，证明自动 MAS 全面输给一个朴素的 CoT-SC，还贵 10 倍。当时结尾留了个钩子：既然"堆 agent"是个幻象，那到底什么才真的管用？</p>
+  <p class="lead">答案其实早在两年前就埋好了。普林斯顿的一群人没有去造更复杂的协作图谱，而是做了一件朴素到几乎有点反高潮的事：给语言模型（LM）重新设计一个"操作电脑的接口"。他们把直接扔给模型的 Linux shell 换成一套专为 LM 写的小命令——窗口化看文件、带语法检查的编辑、压缩历史的反馈——结果在真实 GitHub 仓库修 Bug 的榜单上，解决率从 3.8% 一口气拉到 12.47%，<em>模型权重一个参数都没动</em>。这篇论文叫 <em class="latin">SWE-agent</em>，它用一份消融实验讲明白了一件事：<em>决定 agent 好不好的，从来不是 agent 有几个，而是它和电脑之间的那道接口设计得对不对</em>。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    与其让 LM 直接面对为人类设计的 Linux shell，不如专门给它造一套"代理-计算机接口"（ACI）：少量、紧凑、带护栏的命令 + 简洁有信息量的反馈，就能在不改模型权重的前提下，把 SWE-bench 真实仓库 Bug 修复率从 3.8% 拉到 12.47%——好接口比多大脑更值钱。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>顺着这个系列的脉络，我们从第 35 篇 <em class="latin">ReAct</em> 起一路走来：先打通"思考-行动"循环，再用 <em class="latin">Toolformer</em>、<em class="latin">Voyager</em> 把工具调用焊进模型，然后一头扎进多智能体协作（MetaGPT、AutoGen、CAMEL、ChatDev……），最后在 puppeteer 和 MAS-Orchestra 把编排推到极致，又在第 46 篇被同一团队自己戳破"多 agent 优势是幻象"。</p>
+  <p>SWE-agent 在这条时间线上属于一个<em>被叙事暂时跳过的关键节点</em>。它 2024 年 5 月挂在 arXiv、年底登 NeurIPS 2024，恰好处在 ReAct 系范式成熟与"agent热潮清算"之间。它的位置很微妙：既是对 ReAct 那套"思考+行动+观察"循环的<em>第一次严肃的工程化落地</em>，又是后来所有 coding agent（Devin、OpenHands、AutoCodeRover、Agentless）共同承认的<em>接口设计起点</em>。第 46 篇告诉我们"多 agent 没用"，SWE-agent 倒过来回答了下一个问题——<em>那单 agent 要怎么和电脑打交道才有用</em>。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="130" x2="660" y2="130" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="10" fill="#96897A">
+        <circle cx="80" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="115" text-anchor="middle">2022</text>
+        <text x="80" y="155" text-anchor="middle">ReAct</text>
+        <text x="80" y="170" text-anchor="middle" fill="#96897A" font-size="9">思考+行动循环</text>
+
+        <circle cx="200" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="200" y="115" text-anchor="middle">2023</text>
+        <text x="200" y="155" text-anchor="middle">SWE-bench</text>
+        <text x="200" y="170" text-anchor="middle" fill="#96897A" font-size="9">真实仓库评测</text>
+
+        <circle cx="340" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="340" y="115" text-anchor="middle">2024.03</text>
+        <text x="340" y="155" text-anchor="middle">Devin</text>
+        <text x="340" y="170" text-anchor="middle" fill="#96897A" font-size="9">闭源引爆</text>
+
+        <circle cx="470" cy="130" r="8" fill="#B54A2C"/>
+        <text x="470" y="100" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="470" y="155" text-anchor="middle" fill="#2E2A22" font-weight="600">SWE-agent</text>
+        <text x="470" y="170" text-anchor="middle" fill="#B54A2C" font-size="9">接口设计起点</text>
+
+        <circle cx="580" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="580" y="115" text-anchor="middle">2024.07+</text>
+        <text x="580" y="155" text-anchor="middle">Agentless/OpenHands</text>
+        <text x="580" y="170" text-anchor="middle" fill="#96897A" font-size="9">范式之争</text>
+
+        <circle cx="640" cy="130" r="4" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="2 2"/>
+        <text x="640" y="115" text-anchor="middle">2026</text>
+        <text x="640" y="155" text-anchor="middle">MAS 幻象</text>
+      </g>
+      <g font-family="JetBrains Mono" font-size="9" fill="#96897A">
+        <text x="350" y="215" text-anchor="middle">agent 与电脑的接口，从"裸 shell"走向"专门设计" →</text>
+        <text x="470" y="232" text-anchor="middle" fill="#B54A2C">↑ 本篇是第一个把"接口设计"当成研究对象的工作</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型 agent 与代码库交互的发展脉络：SWE-agent 是"接口设计"作为研究对象的起点</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>故事要从 2023 年底说起。普林斯顿 NLP 组的同一批人（Carlos Jimenez、John Yang 等）刚放出 <em class="latin">SWE-bench</em>——一个从 12 个真实 Python 仓库里挖出来的 2294 道"修 GitHub Issue"题。这榜单一出，所有人都意识到一件事：<em>代码生成和软件工程，根本不是一回事</em>。</p>
+  <p>在此之前，大家评测 LM 写代码，用的是 HumanEval 这种"给个函数签名、补全函数体"的题。可真实软件工程要求的是：<em>跨文件理解整个仓库、定位 Bug 在哪、改对地方、还能跑通测试</em>。SWE-bench 当时的最好成绩只有 3.8%，来自一个"检索增强、非交互"的朴素系统——基本等于让模型看几段相关代码，然后一次性猜个补丁出来。3.8% 这个数字摆在那里，等于在说：<em>把 LM 当成生成器，对软件工程任务是远远不够的</em>。</p>
+  <p>那能不能让 LM 像"agent"那样，自己开终端、翻文件、改代码、跑测试？早期工作（比如 ReAct）确实是这么想的——把 LM 塞到一个 Linux shell 前面，让它一边思考一边敲 bash。可一旦真让它去敲，毛病就全暴露了：</p>
+  <ul>
+    <li><em>输出爆炸</em>：一句 <code class="mono">cat</code> 把几千行文件倒进上下文，模型当场被淹没</li>
+    <li><em>格式敏感</em>：少个空格、引号没配对，命令就报错，模型还不知道哪错了</li>
+    <li><em>没有反馈</em>：编辑写错了？shell 不告诉你，模型以为成功了，继续往下走</li>
+    <li><em>动作碎</em>：改一段代码要敲十几次 bash，每次都得记住上次的行号</li>
+  </ul>
+  <p>作者打了个很狠的比方：<em>让 LM 直接用为人类设计的 shell，就像让人类程序员用二进制写代码</em>。人类有 IDE、有语法高亮、有跳转、有 lint，这些不是装饰，是让"思考"能落到"行动"上的脚手架。LM 凭什么不能有一套自己的脚手架？</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象你给一个刚入职的实习生扔了台只有命令行的服务器，没装编辑器、没装 git 友好工具、连 <code class="mono">ls</code> 输出都不带颜色。他不是不会写代码，是<em>操作环境在和他作对</em>。再聪明的人，在这种环境下也会频繁打错命令、忘了自己刚才改了哪行。SWE-agent 做的事，就是给这位实习生配齐 VSCode + 插件 + 一个温柔的 lint 老师——但所有工具都按 LM 的"阅读习惯"重新打磨过。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>论文要回答的核心问题，措辞极其克制，但分量很重：<em>在不改动语言模型权重的前提下，单独优化"agent 与计算机之间的接口设计"，能多大程度地提升 LM agent 在真实软件工程任务上的表现？</em></p>
+  <p>这个问法本身就把战场划得很清楚。当时整个领域的默认假设是"换个更强的模型"或者"加更多 agent"。SWE-agent 偏要问：如果模型不动、agent 数量不动，只动<em>中间那道接口</em>，会怎样？这个问题之所以重要，是因为它把"agent 能力"这个含混的概念，拆出了一个<em>可独立研究、可工程化、可复现</em>的维度——接口设计。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果你只能改"接口"，不能改模型、不能加 agent，你会从哪几个角度下手？先别往下看，自己列三个你会想到的"接口该管的事"——看完 SWE-agent 的四条原则，对比一下你漏了哪条。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>SWE-agent 给出的答案叫 <em class="latin">Agent-Computer Interface</em>（ACI，代理-计算机接口）。它的核心思想一句话能说完：<em>LM agent 是一类新的"终端用户"，需要为它专门设计的接口，而不是拿为人类设计的 UI 凑合</em>。ACI 不是一个模型，也不是一个框架，而是夹在 LM 和计算机中间的一层抽象——它定义"模型能敲什么命令"，也定义"电脑怎么把结果回喂给模型"。这套设计背后，是作者从反复观察 agent 行为里提炼出的四条原则。</p>
+
+  <h3>四条 ACI 设计原则</h3>
+  <ol>
+    <li><em>动作要简单、好懂</em>。bash 命令动辄几十个选项，文档长得像字典。给 LM 的命令应该选项少、文档短——这样不用 demonstration、不用微调也能学会。这是 SWE-agent 所有命令的"宪法"。</li>
+    <li><em>动作要紧凑、高效</em>。一次能干完的事别拆成十步。糟糕的设计是"很多简单动作要拼好几轮才能完成一个高阶操作"。SWE-agent 把"打开+滚动+搜索"这些高频操作各焊成一条命令。</li>
+    <li><em>环境反馈要有信息量但不啰嗦</em>。高质量反馈该告诉模型"环境现在什么状态、你刚才那步干了啥"，但不带无关细节。比如改完文件，回显一下改后的内容就行，不用把整个仓库树都打出来。</li>
+    <li><em>用护栏防止错误传播、加速恢复</em>。LM 和人一样会打错字、会编辑出语法错的代码，而且很难自己爬出来。在 edit 命令里焊一个语法检查器，错了直接打回、不让脏代码落盘，能省下后面十几轮的瞎折腾。</li>
+  </ol>
+
+  <h3>把原则落成命令：搜索 / 文件查看器 / 编辑器</h3>
+  <p>原则听着抽象，落到 SWE-agent 里是一组专为 LM 打磨的小命令。它们替代了"裸 bash"，但底层仍建在 Linux shell 之上，需要时还能用回原版命令。</p>
+  <p><em>搜索与导航</em>。SWE-bench 的任务往往是"读 Issue → 找到相关文件 → 改"。裸 <code class="mono">grep</code> 会把所有匹配行倒出来，几百行刷屏。SWE-agent 的 <code class="mono">find_file</code> / <code class="mono">search_file</code> / <code class="mono">search_dir</code> 只回一个摘要：哪些文件有匹配、各几处。更狠的是，单次搜索最多回 50 条结果，超了不回，反而<em>提示模型把查询写得更具体</em>——这等于把"搜索太宽"这个错误，直接堵在了源头。</p>
+  <p><em>文件查看器</em>。打开一个文件，<code class="mono">cat</code> 全倒出来是不行的。SWE-agent 的 <code class="mono">open</code> 命令一次只显示 <em>最多 100 行</em>的窗口，配 <code class="mono">scroll_down</code> / <code class="mono">scroll_up</code> / <code class="mono">goto</code> 滚动。每屏都附上：完整文件路径、总行数、当前窗口前后各省略了多少行、每行行号——这些信息对人来说多余，对 LM 来说却让它<em>随时知道自己在哪里</em>。</p>
+  <p><em>文件编辑器</em>。这是全篇最关键的设计。裸 bash 改代码要 <code class="mono">sed</code>、<code class="mono">echo &gt;</code>、<code class="mono">awk</code> 一通乱炖，错一个引号全完。SWE-agent 的 <code class="mono">edit</code> 只收三个参数：起始行、结束行、替换文本。一步就能替换一整段，<em>所见即所得</em>。最妙的是，编辑完之后文件查看器<em>立刻</em>把改后的内容回显，模型不用再敲一次 <code class="mono">cat</code> 验证。更妙的是——edit 里焊了个 <em class="latin">flake8</em> 语法检查器：编辑若引入语法错误，这次编辑<em>直接丢弃</em>，把错误片段连同修改前后的代码一起回给模型，让它重试。这条护栏单独贡献了 +3.0 个百分点的提升。</p>
+
+  <div class="formula-block">
+    $$ \text{resolve rate}_{\text{ACI}} - \text{resolve rate}_{\text{shell-only}} \approx +10.7\,\text{pp} $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <rect x="40" y="40" width="160" height="80" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="75" text-anchor="middle" font-weight="600">LM（GPT-4 Turbo）</text>
+        <text x="120" y="95" text-anchor="middle" fill="#96897A" font-size="10">权重不变</text>
+
+        <rect x="270" y="40" width="160" height="80" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="350" y="70" text-anchor="middle" fill="#B54A2C" font-weight="600">ACI 接口层</text>
+        <text x="350" y="88" text-anchor="middle" fill="#B54A2C" font-size="10">open / scroll / goto</text>
+        <text x="350" y="103" text-anchor="middle" fill="#B54A2C" font-size="10">search_* / edit / find_file</text>
+
+        <rect x="500" y="40" width="160" height="80" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="580" y="75" text-anchor="middle" font-weight="600">计算机 / 仓库</text>
+        <text x="580" y="95" text-anchor="middle" fill="#96897A" font-size="10">Docker 沙箱</text>
+
+        <line x1="200" y1="80" x2="270" y2="80" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)"/>
+        <line x1="430" y1="80" x2="500" y2="80" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)"/>
+        <text x="235" y="72" text-anchor="middle" fill="#96897A" font-size="9">thought+command</text>
+        <text x="465" y="72" text-anchor="middle" fill="#96897A" font-size="9">执行</text>
+
+        <line x1="500" y1="105" x2="430" y2="105" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)" stroke-dasharray="4 3"/>
+        <line x1="270" y1="105" x2="200" y2="105" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)" stroke-dasharray="4 3"/>
+        <text x="465" y="118" text-anchor="middle" fill="#96897A" font-size="9">原始输出</text>
+        <text x="235" y="118" text-anchor="middle" fill="#96897A" font-size="9">压缩+护栏反馈</text>
+
+        <rect x="270" y="180" width="160" height="120" rx="2" fill="none" stroke="#B54A2C" stroke-dasharray="4 3"/>
+        <text x="350" y="200" text-anchor="middle" fill="#B54A2C" font-size="10" font-weight="600">ACI 四原则</text>
+        <text x="350" y="220" text-anchor="middle" fill="#2E2A22" font-size="9">1. 命令简单好懂</text>
+        <text x="350" y="238" text-anchor="middle" fill="#2E2A22" font-size="9">2. 动作紧凑高效</text>
+        <text x="350" y="256" text-anchor="middle" fill="#2E2A22" font-size="9">3. 反馈有信息量但不啰嗦</text>
+        <text x="350" y="274" text-anchor="middle" fill="#2E2A22" font-size="9">4. 护栏防错、加速恢复</text>
+        <text x="350" y="292" text-anchor="middle" fill="#96897A" font-size="8">（每条都有消融证据）</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · SWE-agent 架构：LM 与计算机之间多了一层 ACI，它负责把命令收窄、把反馈压缩、把错误拦住</figcaption>
+  </figure>
+
+  <h3>上下文管理：把历史"压扁"</h3>
+  <p>还有一条容易被忽略但极关键的工程：上下文管理。LM 的上下文窗口是有限的，而一次修 Bug 可能要敲几十轮命令。SWE-agent 的做法是——<em>把最近 5 轮之前的所有观察，各压缩成一行</em>。模型还能看到"自己之前干了什么"，但不再被几十屏的旧输出塞满。同时，如果某条命令没有任何输出，ACI 不会沉默，而是明确回一句 <em class="latin">"Your command ran successfully and did not produce any output"</em>——把"什么都没发生"这个状态显式化，省得模型瞎猜。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <rect x="20" y="70" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="92" text-anchor="middle" font-size="10">Issue 输入</text>
+        <text x="80" y="108" text-anchor="middle" fill="#96897A" font-size="9">Bug 描述</text>
+
+        <rect x="180" y="70" width="120" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="240" y="92" text-anchor="middle" fill="#24555A" font-size="10" font-weight="600">thought + command</text>
+        <text x="240" y="108" text-anchor="middle" fill="#24555A" font-size="9">ReAct 一轮</text>
+
+        <rect x="340" y="70" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="400" y="92" text-anchor="middle" font-size="10">observation</text>
+        <text x="400" y="108" text-anchor="middle" fill="#96897A" font-size="9">护栏反馈</text>
+
+        <rect x="500" y="70" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="560" y="92" text-anchor="middle" font-size="10">历史压缩</text>
+        <text x="560" y="108" text-anchor="middle" fill="#96897A" font-size="9">>5 轮压成一行</text>
+
+        <line x1="140" y1="95" x2="180" y2="95" stroke="#96897A" marker-end="url(#arrow2)"/>
+        <line x1="300" y1="95" x2="340" y2="95" stroke="#96897A" marker-end="url(#arrow2)"/>
+        <line x1="460" y1="95" x2="500" y2="95" stroke="#96897A" marker-end="url(#arrow2)"/>
+
+        <path d="M 560 120 Q 560 160 240 160 Q 240 160 240 120" fill="none" stroke="#96897A" stroke-dasharray="4 3" marker-end="url(#arrow2)"/>
+        <text x="400" y="180" text-anchor="middle" fill="#96897A" font-size="9">压缩后的历史回灌进下一轮的输入</text>
+
+        <text x="80" y="40" text-anchor="middle" fill="#96897A" font-size="9">循环到 submit 或步数耗尽</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · SWE-agent 的 ReAct 循环：思考→命令→观察→历史压缩→下一轮，护栏和压缩让循环能跑几十轮不崩</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>主战场是 SWE-bench 全量测试集（2294 道真实仓库 Issue）。SWE-agent 用 GPT-4 Turbo，解决率 <em>12.47%</em>——而此前的 SOTA，是 SWE-bench 原论文里那个非交互、检索增强系统的 <em>3.8%</em>。一句话：从"几乎修不动"到"能修一成多"，模型一个参数没动。在 HumanEvalFix（短代码调试）上更是 87.7% 的 pass@1。</p>
+  <p>更说明问题的是消融。作者在 SWE-bench Lite（300 题子集）上把 ACI 的每条设计都拆开看，结论非常硬：</p>
+
+  <table>
+    <thead>
+      <tr><th>配置</th><th>SWE-bench Lite 解决率</th><th>相对完整版变化</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">完整 SWE-agent（基线）</td><td>18.0%</td><td>—</td></tr>
+      <tr><td class="text">去掉 edit 的 lint 护栏</td><td>15.0%</td><td>↓3.0</td></tr>
+      <tr><td class="text">不要 edit 命令，只用裸 bash</td><td>10.3%</td><td>↓7.7</td></tr>
+      <tr><td class="text">搜索换成逐条回显的迭代式</td><td>12.0%</td><td>↓6.0</td></tr>
+      <tr><td class="text">完全不要搜索命令</td><td>15.7%</td><td>↓2.3</td></tr>
+      <tr><td class="text">文件查看器窗口改 30 行</td><td>14.3%</td><td>↓3.7</td></tr>
+    </tbody>
+  </table>
+
+  <p>每一行都对应一条原则，每一行都在跌。最扎眼的是"不要 edit，只用裸 bash"——直接掉 7.7 个百分点，几乎腰斩。这把"接口设计"这件事的因果，钉得死死的：<em>不是模型变强了，是接口变对了</em>。还有一个让人意外的发现——ACI 是为 GPT-4 Turbo 调的，但<em>搬到 Claude 3 Opus 上几乎不掉档</em>（全量 10.5%、Lite 23.7%）。这说明好的接口设计是<em>跨模型可迁移</em>的，不是对某一个模型的过拟合。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <text x="175" y="28" text-anchor="middle" font-weight="600">裸 shell（人类用）</text>
+        <text x="525" y="28" text-anchor="middle" font-weight="600" fill="#B54A2C">ACI（LM 专用）</text>
+        <line x1="350" y1="20" x2="350" y2="240" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <rect x="60" y="50" width="230" height="32" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="71" text-anchor="middle">cat 全文 → 上下文爆炸</text>
+
+        <rect x="60" y="92" width="230" height="32" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="113" text-anchor="middle">grep → 几百行刷屏</text>
+
+        <rect x="60" y="134" width="230" height="32" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="155" text-anchor="middle">sed/awk 改代码 → 引号地狱</text>
+
+        <rect x="60" y="176" width="230" height="32" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="197" text-anchor="middle">编辑出错 → 无反馈，静默失败</text>
+
+        <rect x="410" y="50" width="230" height="32" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="71" text-anchor="middle" fill="#B54A2C">open → 100 行窗口 + 行号</text>
+
+        <rect x="410" y="92" width="230" height="32" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="113" text-anchor="middle" fill="#B54A2C">search_* → 最多 50 条摘要</text>
+
+        <rect x="410" y="134" width="230" height="32" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="155" text-anchor="middle" fill="#B54A2C">edit → 起止行+替换文本</text>
+
+        <rect x="410" y="176" width="230" height="32" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="197" text-anchor="middle" fill="#B54A2C">edit+lint → 错就打回，脏码不落盘</text>
+
+        <text x="175" y="230" text-anchor="middle" fill="#96897A" font-size="10">Lite 解决率 10.3%</text>
+        <text x="525" y="230" text-anchor="middle" fill="#B54A2C" font-size="10" font-weight="600">Lite 解决率 18.0%（+7.7）</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 裸 shell 与 ACI 的关键差异：同样是"看/搜/改/纠错"四件事，接口设计决定了模型能不能把思考落到行动</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>SWE-agent 的影响远超它当时的 12.47% 这个数字本身。它做了三件有长远意义的事。</p>
+  <p>第一，<em>把"接口设计"正式立为一个研究对象</em>。在它之前，agent 论文大多把"工具"当成黑盒——给个 bash 就完了。SWE-agent 第一次说清楚：工具怎么暴露给模型、反馈怎么回给模型，本身就是一个值得做消融、值得立原则的课题。后来几乎每一个 coding agent（OpenHands、AutoCodeRover、甚至 Devin 的公开讨论）都默认接受了 ACI 这个视角。</p>
+  <p>第二，<em>给"agent 能力"拆出一个独立维度</em>。过去谈 agent 强不强，默认等于"模型强不强"。SWE-agent 用同一套 ACI 横跨 GPT-4 Turbo 和 Claude 3 Opus，证明接口设计的提升是<em>可迁移、不绑定某一个模型</em>的——这对后来"换模型不换 scaffolding"的实践至关重要。</p>
+  <p>第三，<em>给整个 coding agent 生态开了源起头</em>。SWE-agent 把代码、数据、榜单全开源，成了 SWE-bench 上最早可复现的强基线。围绕它长出了一整套生态：mini-swe-agent（100 行复刻同等性能）、SWE-ReX（并行云执行）、SWE-smith（训练轨迹生成）、EnIGMA（把 ACI 思路搬到网络安全 CTF）。它定义的不只是一个系统，而是<em>一整类问题"该怎么动手做"的方法论</em>。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>SWE-agent 的局限也很诚实。最明显的一条：12.47% 听起来高，可那意味着<em>十个真实 Issue 它只能修一个出头</em>。SWE-bench 是真难——但这个绝对数字说明，"接口设计对了"只是把 agent 从"完全不能用"拉到"勉强能用"，离"能用"还差得远。后来的工作用更强模型 + 更好的 ACI，把 SWE-bench Verified 推到 70% 以上，靠的是<em>模型和接口一起涨</em>，单靠接口的天花板有限。</p>
+  <p>第二，ACI 的设计是<em>为 GPT-4 Turbo 手调</em>的。虽然跨模型迁移效果不错，但四条原则本身是从"看 agent 在 dev set 上犯错"反复打磨出来的，本质上是一组经验启发，不是一套可证明的最优解。后来 <em class="latin">Guardrails Beat Guidance</em> 这类大规模研究甚至发现：随机的护栏规则和专家精调的护栏一样有效——这反过来暗示，ACI 里"哪些设计真的起作用、哪些只是凑数"，还有不少没说清。</p>
+  <p>第三，SWE-agent 是一个<em>纯交互式、无训练</em>的方案。它不动模型权重，是优点也是天花板——模型不会因为"用对了工具"就学会更好的工具习惯。SWE-Gym 等后来者正是补这一刀：用 ACI 产生的轨迹去<em>训练</em> agent，把接口红利固化进权重。</p>
+  <p>最后一点，也是这个系列最关心的：SWE-agent 证明了"单 agent + 好接口"远胜"单 agent + 裸 shell"，但它<em>没有回答"要不要 agent"本身</em>。这恰恰是下一篇要捅破的窗户纸。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把 SWE-agent 放回整个 agent 发展的脉络里看，会更清楚它的分量。起步期，ReAct（第 35 篇）确立了"思考-行动-观察"的循环范式，但那时的"行动"基本是调调搜索引擎、跑跑计算器，环境很轻。到了对齐与应用期，Toolformer、Voyager 把工具调用焊得更深，但目标仍是单文件级的代码生成。软件工程这个"真实仓库级"战场，一直是空白。</p>
+  <p>2023 年底 SWE-bench 一出，这块空白被显式化：3.8% 的成绩等于在喊"现有 agent 范式不够"。SWE-agent 接住了这一棒，把 ReAct 循环第一次<em>严肃地落到软件工程环境里</em>，并给出 ACI 这个可复用的设计框架。它之后，coding agent 进入爆发期：Devin（闭源引爆）、OpenHands（开源框架）、AutoCodeRover（检索+LLM）、Agentless（连 agent 都不要）……几乎每个都承认或借鉴 ACI 的视角。</p>
+  <p>再往后，叙事转回到"编排"——puppeteer、MAS-Orchestra 把多 agent 编排做到极致，然后第 46 篇又被自己戳破"多 agent 优势是幻象"。回头看，SWE-agent 站的位置恰好是这条线的一个<em>分水岭</em>：在它之前，大家关心"agent 怎么循环"；在它之后，大家开始关心"agent 和环境之间的接口长什么样"。第 46 篇的清算，某种程度上正是 SWE-agent 这条"接口比数量重要"的思路，被推到多 agent 场景下的回响。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>SWE-agent 背后有几个值得一说的细节。第一，它是普林斯顿 NLP 组的"家族产品"。通讯作者 Karthik Narasimhan 和 Ofir Press，加上一作 John Yang、Carlos Jimenez——这批人既是 ReAct（第 35 篇）的作者，也是 SWE-bench 的作者。换句话说，<em>榜单是他们造的，参赛选手也是他们造的</em>。这种"既当裁判又当运动员"在学术界并不罕见，但像这样连贯地把一个研究线从评测到方法打通，确实少见。SWE-agent 用的 ReAct 循环，正是同组两年前自己提出的范式——这相当于一个团队自己埋火种、自己点着。</p>
+  <p>第二，时间点极其微妙。2024 年 3 月，Cognition 放出 Devin，号称"第一个 AI 软件工程师"，全网沸腾，但闭源、看不到细节。两个月后，SWE-agent 挂上 arXiv——一个开源、可复现、学术严谨的回应。很多人把 SWE-agent 理解成"Devin 的开源平替"，但读完论文你会发现它的野心更朴素也更硬核：<em>它不是要复刻 Devin，而是要把"agent 怎么和电脑打交道"这件事讲明白</em>。</p>
+  <p>第三，命名。<em class="latin">SWE</em> 是 <em class="latin">Software Engineering</em> 的缩写，也是个英语里挺常见的吐槽词（"sweet"的谐音、对苦差事的代称）。叫 SWE-agent，既点明战场，又透着一股"软件工程这活儿确实苦"的自嘲。后来这个品牌长成了一棵小树：mini-swe-agent、SWE-ReX、SWE-smith、EnIGMA……<em>SWE-</em> 成了一个前缀，像当年的 BERT-</p>
+
+  <figure>
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <circle cx="180" cy="100" r="60" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="180" y="90" text-anchor="middle" font-weight="600">10 个 agent</text>
+        <text x="180" y="108" text-anchor="middle" fill="#96897A" font-size="10">裸 shell 协作</text>
+        <text x="180" y="125" text-anchor="middle" fill="#96897A" font-size="9">又贵又乱</text>
+
+        <text x="350" y="105" text-anchor="middle" fill="#B54A2C" font-size="14" font-weight="600">VS</text>
+
+        <circle cx="520" cy="100" r="60" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="520" y="90" text-anchor="middle" font-weight="600" fill="#B54A2C">1 个 agent</text>
+        <text x="520" y="108" text-anchor="middle" fill="#B54A2C" font-size="10">+ 一套好 ACI</text>
+        <text x="520" y="125" text-anchor="middle" fill="#B54A2C" font-size="9">又便宜又准</text>
+
+        <text x="350" y="170" text-anchor="middle" fill="#96897A" font-size="10">工具的对错，比大脑的数量更值钱</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 一张轻松的对照：本系列的隐含主题，被 SWE-agent 一句话画明白了</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读完 SWE-agent，我最想强调的一点是：它表面上是"软件工程 agent"的论文，骨子里是一篇<em>关于"接口"的哲学论文</em>。它问的是一个被整个领域长期忽视的问题——<em>当一个新种类的"用户"（LM agent）出现时，我们为人类精心打磨了几十年的那些界面，到底还适不适用？</em> HCI（人机交互）是计算机科学里一整门成熟的学问，研究的是"怎么让机器迁就人"。SWE-agent 等于在说：现在多了一类用户，它该有自己的 HCI——可以叫 ACI，<em>代理-计算机交互</em>。</p>
+  <p>这个视角放到今天看，预言性有点吓人。短短两年，"agent 作为软件的一类消费者"已经从论文概念变成产业现实：coding agent 在改真实 PR，浏览 agent 在订机票，运维 agent 在查日志。每一类都在重新设计自己跟电脑的接口。SWE-agent 给出的四条原则——简单、紧凑、反馈有信息量、加护栏——几乎可以直接抄到这些新场景上。它的价值不在于那 12.47%，而在于<em>给后来所有"给 agent 设计接口"的人留了一份起手 checklist</em>。</p>
+  <p>还有一层更深的回味。第 46 篇证明"多 agent 是幻象"，SWE-agent 证明"单 agent + 好接口远胜单 agent + 差接口"。这两篇合起来，其实在悄悄改写 agent 这个词的含义：<em>一个 agent 强不强，越来越不取决于它"有几个"或者"模型多猛"，而取决于它和世界之间的那道接口设计得多认真</em>。这跟软件工程本身的历史出奇地一致——人类程序员的生产力差距，从来不是智商差距，而是工具链差距。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果 ACI 是"为 LM 设计的接口"，那当模型强到某个临界点（比如能直接吃整个仓库、能自己纠错），ACI 这层抽象会不会反而变成束缚？换句话说——<em>接口设计的红利，有没有一个"模型变强之后会自动失效"的保质期</em>？mini-swe-agent 用 100 行追平完整 SWE-agent，是不是已经是个信号？
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Agentless: Demystifying LLM-based Software Engineering Agents</h3>
+    <p style="margin:0;">SWE-agent 说"给 agent 设计好接口，它就能修 Bug"。可紧接着就有人跳出来问了一句更狠的：<em>那我们真的需要 agent 吗？</em>下一篇，伊利诺伊理工的团队用一条"定位→修复→验证"的三阶段流水线，不带任何 agent 循环、不让 LLM 自己决定下一步，却在 SWE-bench Lite 上拿下 32.00%、成本只要 0.7 美元——直接给整个 agent 热潮来了个釜底抽薪。当"无 agent"反过来打败"有 agent"，这个故事就真有意思了。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 047 篇</span>
+    <span>2026-09-16</span>
+  </footer>
+
+</div>
+</body>
+</html>
