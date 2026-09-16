@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentless 论文精读 · 大模型经典论文系列 #048</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#048</span>
+  </div>
+
+  <h1 class="title">
+    Agentless: Demystifying LLM-based Software Engineering Agents
+    <span class="en">Agentless：连 agent 都不要——一条"定位→修复→验证"流水线，反手把 agent 范式釜底抽薪</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Chunqiu Steven Xia*, Yinlin Deng*, Soren Dunn, Lingming Zhang</span>
+    <span>机构：University of Illinois Urbana-Champaign</span>
+    <span>发表：2024-07 / arXiv v2 2024-10</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2407.01489" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/OpenAutoCoder/Agentless" target="_blank" rel="noopener">GitHub</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">上一篇我们讲完 <em class="latin">SWE-agent</em>——普林斯顿那帮人专门给语言模型设计了一套"代理-计算机接口"，把 SWE-bench 真实仓库 Bug 修复率从 3.8% 拉到 12.47%，模型权重一个参数没动。当时的钩子很扎眼："既然多 agent 是幻象，单 agent + 好接口确实管用——那 agent 这件事本身，是不是也可以拆掉？"</p>
+  <p class="lead">2024 年 7 月 1 日，伊利诺伊大学香槟分校（UIUC）的 Lingming Zhang 组甩出一篇论文，标题就叫 <em class="latin">Agentless: Demystifying LLM-based Software Engineering Agents</em>——"<em>揭穿基于 LLM 的软件工程 agent 的神秘面纱</em>"。他们没去造更复杂的 agent 框架，反而做了一件几乎有点反高潮的事：把整套"思考-行动-观察"循环删干净，只留下一条死板的三段流水线——<em>定位 → 修复 → 验证</em>，不让 LLM 自己决定下一步、不让它碰工具、不让它和 shell 循环交互。结果在 SWE-bench Lite 上拿下 32.00%、平均一题只花 0.7 美元——比当时所有开源 agent 都高，还反手被 OpenAI 拿去当 GPT-4o 和 o1 的官方代码能力展示方案。当"无 agent"反过来打败"有 agent"，整个 agent 热潮被釜底抽薪了。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    不让 LLM 当自主 agent，只用一条死板的"层次化定位 → 多候选补丁 → 测试验证投票"流水线，就能在 SWE-bench Lite 上拿到 32.00% 解决率、0.70 美元一题——比所有开源 agent 都强，被 OpenAI 抄去当 GPT-4o/o1 的代码能力基准。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>顺着这个系列的脉络，第 35 篇 <em class="latin">ReAct</em> 打通"思考-行动"循环，第 47 篇 <em class="latin">SWE-agent</em> 把这个循环第一次严肃地落到真实软件仓库上，并告诉我们"接口设计比堆 agent 重要"。这条故事线到此为止，所有人都在朝"更复杂、更智能的 agent"卷——多智能体、动态编排、强化学习训练 agent……</p>
+  <p>Agentless 出现在这条时间线上的位置有点像<em>那种安静的反派</em>：2024 年 7 月挂在 arXiv，正好夹在 SWE-agent（2024.05）和 OpenHands（2024.07.23）之间。它不否定 SWE-agent 的结论，反而更狠——它把"agent 自主决策"这件事整个抽走，只留下"agent 在做的有用部分"：定位、修、验证。它的位置很微妙：既是对 SWE-agent 那套接口范式的<em>第二次工程化重排</em>，又是后来所有"无 agent"或"流水线派"工作（CodeAct 派、RepoGraph、Moatless Tools 的流水线模式）共同承认的<em>起点与靶子</em>。第 47 篇告诉我们"接口比 agent 重要"，Agentless 接着回答下一个问题——<em>那这个接口之上还需要 agent 自主决策吗？</em></p>
+
+  <figure>
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="130" x2="660" y2="130" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="10" fill="#96897A">
+        <circle cx="70" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="70" y="115" text-anchor="middle">2022</text>
+        <text x="70" y="155" text-anchor="middle">ReAct</text>
+        <text x="70" y="170" text-anchor="middle" fill="#96897A" font-size="9">思考+行动循环</text>
+
+        <circle cx="180" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="180" y="115" text-anchor="middle">2023.11</text>
+        <text x="180" y="155" text-anchor="middle">SWE-bench</text>
+        <text x="180" y="170" text-anchor="middle" fill="#96897A" font-size="9">真实仓库评测</text>
+
+        <circle cx="290" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="290" y="115" text-anchor="middle">2024.03</text>
+        <text x="290" y="155" text-anchor="middle">Devin</text>
+        <text x="290" y="170" text-anchor="middle" fill="#96897A" font-size="9">闭源引爆</text>
+
+        <circle cx="390" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="390" y="115" text-anchor="middle">2024.05</text>
+        <text x="390" y="155" text-anchor="middle">SWE-agent</text>
+        <text x="390" y="170" text-anchor="middle" fill="#96897A" font-size="9">ACI 接口设计</text>
+
+        <circle cx="490" cy="130" r="8" fill="#B54A2C"/>
+        <text x="490" y="100" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="490" y="155" text-anchor="middle" fill="#2E2A22" font-weight="600">Agentless</text>
+        <text x="490" y="170" text-anchor="middle" fill="#B54A2C" font-size="9">釜底抽薪</text>
+
+        <circle cx="590" cy="130" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="590" y="115" text-anchor="middle">2024.07+</text>
+        <text x="590" y="155" text-anchor="middle">OpenHands/MASAI</text>
+        <text x="590" y="170" text-anchor="middle" fill="#96897A" font-size="9">范式反击</text>
+
+        <circle cx="650" cy="130" r="4" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="2 2"/>
+        <text x="650" y="115" text-anchor="middle">2025+</text>
+        <text x="650" y="155" text-anchor="middle">SWE-RL</text>
+      </g>
+      <g font-family="JetBrains Mono" font-size="9" fill="#96897A">
+        <text x="350" y="215" text-anchor="middle">从"自主 agent"到"流水线 + 投票" →</text>
+        <text x="490" y="232" text-anchor="middle" fill="#B54A2C">↑ 本篇第一次把"无 agent"做成 SOTA</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型软件工程 agent 的发展脉络：Agentless 是"无 agent"路线的起点，也是对 SWE-agent 范式的反手一击</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>2024 年上半年的软件工程 agent 圈子，几乎是同一种声音：模仿 Devin。Devin 是 Cognition Labs 2024 年 3 月放出来的"AI 软件工程师"——闭源、产品化、配 IDE + 终端 + 浏览器，让 GPT-4 在循环里自己计划、敲命令、跑测试。它一炮走红，整个学术界立刻跟上：SWE-agent、OpenDevin（OpenHands 前身）、AutoCodeRover、Aider、Moatless……所有人都在做<em>同一种东西</em>：给 LLM 套上工具、把决策权交给它、让它在 30–40 轮交互里自己摸到答案。</p>
+  <p>这套范式看着挺自然——毕竟人类程序员就是这么干活：看 issue、翻代码、改一行、跑测试、再翻代码……可作者 Xia、Deng、Dunn、Zhang 在论文开头点出了三个<em>本质问题</em>，把 agent 派的合理性按住：</p>
+  <ul>
+    <li><em>工具设计又贵又脆</em>：每个 agent 框架都得在 LLM 和真实环境之间架一层抽象，把 bash、文件、测试包成 API。这层抽象输入输出格式要精心设计，错一个引号、缺一个参数，agent 就卡死——而且因为决策是迭代的，一个错误会顺着 30 轮循环放大。</li>
+    <li><em>决策不可控</em>：把"下一步做什么"交给 LLM，看似聪明，实则<em>调试地狱</em>。一个 issue 跑 40 轮，第 17 轮走错了一个分支，最后失败——你根本不知道是哪轮错的、为什么错。论文里直接说："<em>极难理解 agent 做出的决策，更难 debug 到出错的那个 turn</em>"。</li>
+    <li><em>自我反思能力差</em>：当前 LLM 还不会过滤无关/错误/误导信息——agent 把每条环境反馈都吃进上下文，一条错误反馈就会污染后面所有决策。</li>
+  </ul>
+  <p>更让作者不爽的是<em>钱</em>。SWE-agent 在 SWE-bench Lite 上一题平均要花 4.19 美元、跑十几分钟，AutoCodeRover 也得几美元。如果想让 LLM 自动修真实 GitHub 仓库的 1000 个 issue，光 API 账单就是几千美元——这离"产业可用"差得有点远。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象一个实习生被扔进一家新公司，没人告诉他流程，他得自己摸：今天试 <code class="mono">grep</code>，明天试 <code class="mono">git blame</code>，后天问同事。聪明的实习生能摸索出来，但中间会走 30 个弯路。Agentless 的做法相当于：直接给实习生一张<em>三步流程图</em>——第一步看哪些文件可能有问题、第二步在这些文件里找哪个函数、第三步生成几个候选改法并跑测试投票——不让实习生自由发挥，只让他按图索骥。听起来反直觉，但流程图的清晰度，居然换来了更高的命中率和更低的成本。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>论文里那一行问句分量很重，甚至可以说<em>整个 agent 学界两年没人敢这么问</em>：</p>
+  <div class="callout">
+    <span class="label">论文原文</span>
+    <em class="latin">Do we really have to employ complex autonomous software agents?</em><br>
+    <em>我们真的需要复杂的自主软件 agent 吗？</em>
+  </div>
+  <p>这个问法本身就把战场重新划了一遍。当时整个领域默认的优化方向是"换个更强的模型 + 加更多 agent + 设计更精细的工具"。Agentless 偏要问：如果把"<em>自主决策</em>"这件事从 agent 里抽走、不让 LLM 决定下一步、不让它碰工具、不让它和 shell 循环交互，只保留"LLM 在每个固定步骤里干点具体活"，能不能在真实仓库修 Bug 上达到甚至超过自主 agent？</p>
+  <p>这个问题之所以重要，是因为它把"agent 能力"这个含混的概念拆成了两层——<em>"让 LLM 干活"和"让 LLM 决定干什么活"</em>。前者是 LLM 的本职，后者才是 agent 风险的源头。Agentless 把后者的决策权整个拿走，逼着 LLM 只在固定位置贡献智能。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果你不能让 LLM 自由决策、不能给它工具、不能让它和 shell 循环——只允许它在一个固定流水线里出力，<em>修一个真实仓库的 GitHub issue 至少要分几步</em>？每一步 LLM 该被叫起来干点啥？先别往下看，自己列三条 LLM 应该做的具体活——读完 Agentless 的三阶段，对比一下你想漏了哪步。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>Agentless 给出的答案是一个<em>三阶段死板流水线</em>：定位（Localization）→ 修复（Repair）→ 补丁验证（Patch Validation）。整套流程没有任何 LLM 自主决策环节，每一步都由人工写死的脚本调度——LLM 只在每一步里被叫起来做一件具体的小事。整套设计的核心思想一句话能说完：<em>把 agent 在做的事拆成可控的小步骤，把决策权从 LLM 手里拿走，只让 LLM 出力</em>。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 360" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 输入 -->
+        <rect x="20" y="20" width="120" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="45" text-anchor="middle">GitHub Issue</text>
+        <text x="80" y="75" text-anchor="middle" fill="#96897A" font-size="10">问题描述 + 仓库</text>
+
+        <!-- Phase 1: Localization -->
+        <rect x="170" y="20" width="160" height="40" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="250" y="40" text-anchor="middle" fill="#B54A2C" font-weight="600">阶段 1：定位</text>
+        <text x="250" y="55" text-anchor="middle" fill="#B54A2C" font-size="10">Localization</text>
+
+        <rect x="170" y="80" width="160" height="24" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="2 2"/>
+        <text x="250" y="96" text-anchor="middle" font-size="11">1. 文件级定位</text>
+        <rect x="170" y="112" width="160" height="24" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="2 2"/>
+        <text x="250" y="128" text-anchor="middle" font-size="11">2. 类/函数级定位</text>
+        <rect x="170" y="144" width="160" height="24" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="2 2"/>
+        <text x="250" y="160" text-anchor="middle" font-size="11">3. 行级定位</text>
+
+        <!-- Phase 2: Repair -->
+        <rect x="370" y="20" width="160" height="40" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="450" y="40" text-anchor="middle" fill="#B54A2C" font-weight="600">阶段 2：修复</text>
+        <text x="450" y="55" text-anchor="middle" fill="#B54A2C" font-size="10">Repair</text>
+
+        <rect x="370" y="80" width="160" height="24" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="2 2"/>
+        <text x="450" y="96" text-anchor="middle" font-size="11">4. 多候选补丁</text>
+        <rect x="370" y="112" width="160" height="24" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="2 2"/>
+        <text x="450" y="128" text-anchor="middle" font-size="11">search/replace diff</text>
+        <rect x="370" y="144" width="160" height="24" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="2 2"/>
+        <text x="450" y="160" text-anchor="middle" font-size="11">最多 40 个候选</text>
+
+        <!-- Phase 3: Validation -->
+        <rect x="570" y="20" width="120" height="40" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="630" y="40" text-anchor="middle" fill="#24555A" font-weight="600">阶段 3：验证</text>
+        <text x="630" y="55" text-anchor="middle" fill="#24555A" font-size="10">Validation</text>
+
+        <rect x="570" y="80" width="120" height="24" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="2 2"/>
+        <text x="630" y="96" text-anchor="middle" font-size="11">5. 回归测试</text>
+        <rect x="570" y="112" width="120" height="24" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="2 2"/>
+        <text x="630" y="128" text-anchor="middle" font-size="11">6. 复现测试</text>
+        <rect x="570" y="144" width="120" height="24" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="2 2"/>
+        <text x="630" y="160" text-anchor="middle" font-size="11">7. AST 多数投票</text>
+
+        <!-- 输出 -->
+        <rect x="20" y="210" width="660" height="40" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="350" y="235" text-anchor="middle" fill="#24555A" font-weight="600">最终补丁提交（每题一票）</text>
+
+        <!-- 关键说明 -->
+        <text x="350" y="290" text-anchor="middle" fill="#96897A" font-size="11">整条流水线由人工脚本调度，LLM 在每一步被叫起做一件具体小事</text>
+        <text x="350" y="310" text-anchor="middle" fill="#96897A" font-size="11">没有任何 LLM 自主决策环节，没有 shell 循环，没有工具 API 调用</text>
+        <text x="350" y="335" text-anchor="middle" fill="#B54A2C" font-size="11" font-weight="600">↑ 这是和 SWE-agent / Devin / OpenHands 的根本差别</text>
+      </g>
+      <line x1="140" y1="40" x2="170" y2="40" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="330" y1="40" x2="370" y2="40" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="530" y1="40" x2="570" y2="40" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="630" y1="170" x2="350" y2="210" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="450" y1="170" x2="350" y2="210" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="250" y1="170" x2="350" y2="210" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)"/>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · Agentless 三阶段流水线总览：定位 → 修复 → 验证。每一步都是固定脚本调度，LLM 只做被指派的小事，不参与下一步决策</figcaption>
+  </figure>
+
+  <h3>阶段一：层次化定位（Localization）</h3>
+  <p>这是整套设计里最有"软件工程味"的一步——作者没让 LLM 一上来读整个仓库（仓库动辄几万行代码，远超上下文窗口），而是<em>分三层逐步收窄</em>。这个分层不是凭感觉设计的，是从经典<em>故障定位</em>（fault localization）那套软件工程老学问里搬过来的，只不过用 LLM 替掉了原来的频谱/切片分析。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 第一步 -->
+        <rect x="30" y="30" width="180" height="80" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="55" text-anchor="middle" font-weight="600">① 文件级定位</text>
+        <text x="120" y="75" text-anchor="middle" fill="#96897A" font-size="10">输入：仓库 tree + issue</text>
+        <text x="120" y="92" text-anchor="middle" fill="#96897A" font-size="10">+ 嵌入检索召回 top-k</text>
+
+        <!-- 第二步 -->
+        <rect x="260" y="30" width="180" height="80" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="55" text-anchor="middle" font-weight="600">② 类/函数级定位</text>
+        <text x="350" y="75" text-anchor="middle" fill="#96897A" font-size="10">输入：可疑文件的</text>
+        <text x="350" y="92" text-anchor="middle" fill="#96897A" font-size="10">"骨架"（只有签名）</text>
+
+        <!-- 第三步 -->
+        <rect x="490" y="30" width="180" height="80" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="580" y="55" text-anchor="middle" font-weight="600">③ 行级定位</text>
+        <text x="580" y="75" text-anchor="middle" fill="#96897A" font-size="10">输入：可疑类的</text>
+        <text x="580" y="92" text-anchor="middle" fill="#96897A" font-size="10">真实代码 + 上下文</text>
+
+        <line x1="210" y1="70" x2="260" y2="70" stroke="#96897A" stroke-width="1" marker-end="url(#arrow2)"/>
+        <line x1="440" y1="70" x2="490" y2="70" stroke="#96897A" stroke-width="1" marker-end="url(#arrow2)"/>
+
+        <!-- 漏斗形状 -->
+        <text x="120" y="160" text-anchor="middle" fill="#B54A2C" font-weight="600">仓库全部文件</text>
+        <text x="120" y="178" text-anchor="middle" fill="#96897A" font-size="10">数千文件</text>
+        <rect x="60" y="190" width="120" height="12" fill="#B54A2C" fill-opacity="0.4"/>
+
+        <text x="350" y="160" text-anchor="middle" fill="#B54A2C" font-weight="600">可疑文件</text>
+        <text x="350" y="178" text-anchor="middle" fill="#96897A" font-size="10">3-5 个</text>
+        <rect x="290" y="190" width="120" height="12" fill="#B54A2C" fill-opacity="0.55"/>
+
+        <text x="580" y="160" text-anchor="middle" fill="#B54A2C" font-weight="600">行级编辑位置</text>
+        <text x="580" y="178" text-anchor="middle" fill="#96897A" font-size="10">若干行 ±10</text>
+        <rect x="520" y="190" width="120" height="12" fill="#B54A2C" fill-opacity="0.75"/>
+
+        <!-- 关键洞察 -->
+        <rect x="40" y="240" width="620" height="60" rx="2" fill="#24555A" fill-opacity="0.08" stroke="#24555A" stroke-dasharray="3 3"/>
+        <text x="350" y="265" text-anchor="middle" fill="#24555A" font-size="12" font-weight="600">关键洞察：用"骨架"代替"全文"</text>
+        <text x="350" y="285" text-anchor="middle" fill="#24555A" font-size="11">每文件只给 LLM 看类/函数签名，不看实现 → 大幅省 token + 防干扰</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · Agentless 层次化定位：从仓库全部文件 → 3-5 个可疑文件 → 行级编辑位置，每层只喂 LLM 该层需要的信息</figcaption>
+  </figure>
+
+  <p><em>第一步：文件级定位</em>。Agentless 先把整个仓库的目录结构跑成一个<em>仓库结构格式</em>（类似 <code class="mono">tree</code> 命令的输出），再喂给 LLM 让它挑出最可疑的几个文件。同时，它用 OpenAI 的 <code class="mono">text-embedding-3-small</code> 把 issue 描述和文件分块做嵌入、算余弦相似度，召回 top-k 文件。<em>两路结果合并</em>——LLM 的"直觉" + 嵌入的"统计相关性"。LLM 还会顺便识别无关目录（测试目录、文档目录），把它们过滤掉，省 token。</p>
+  <p><em>第二步：类/函数级定位</em>。这一步是<em>整套设计的点睛之笔</em>。拿到可疑文件后，Agentless 不把全文喂给 LLM——它给每个文件生成一个"<em>骨架格式</em>"（skeleton format）：<em>只有类和函数的签名，没有实现</em>。LLM 看这个"骨架"就能判断"修这个 Bug 大概率要改 <code class="mono">Parser.parse_input()</code> 和 <code class="mono">validate_schema()</code> 这两个函数"。这一招把 token 用量砍掉一个数量级，同时避免了把无关实现细节塞进上下文干扰 LLM。</p>
+  <p><em>第三步：行级定位</em>。Agentless 把第二步选中的类/函数的真实代码 + 上下文喂给 LLM，让它输出"应该改第几行到第几行"。为了对冲 LLM 不确定性，这一步会<em>采样多组</em>编辑位置（最多 4 组），后续修复阶段会针对每组位置各生成一批补丁——这是 Agentless 用"采样 + 投票"对冲"无 agent 决策"的关键。</p>
+  <p>消融实验给出的定位精度数字很扎实：<em>文件级 69.7%、函数级 52.0%、行级 35.3%</em>。也就是说，光靠这条死板流水线，Agentless 能在 7 成 issue 里把可疑文件找对、5 成里把函数找对、1/3 里把行找对——这已经足以让后面的修复阶段有发挥空间。</p>
+
+  <h3>阶段二：修复（Repair）</h3>
+  <p>拿到行级编辑位置之后，Agentless 不让 LLM "重写文件"——它让 LLM 生成 <em>search/replace diff 格式</em>的补丁，就是"把这段代码替换成那段代码"。这种格式有两个好处：第一，LLM 只用关心局部修改，不用把整文件重打一遍（重打容易引入幻觉、容易漏行）；第二，diff 比"全文件重写"<em>省 10 倍 token</em>。</p>
+  <p>每个编辑位置会采样最多 10 个候选补丁。4 组编辑位置 × 10 个补丁，一题最多 40 个候选——这给后面的投票阶段留了余地。这一步的关键设计是<em>上下文窗口构造</em>：每个编辑位置前后取 ±10 行作为上下文，多个位置之间用 <code class="mono">...</code> 分隔拼起来——既给了 LLM 足够的局部上下文，又控制了 token 数。</p>
+
+  <h3>阶段三：补丁验证（Patch Validation）</h3>
+  <p>这是 Agentless 全篇<em>最聪明的一步</em>，也是它"无 agent 但有反馈"的关键。SWE-bench 只给了原始的<em>回归测试</em>（确保改动不破坏已有功能），但没有"<em>复现测试</em>"——能复现 issue 描述的那个 bug、被修好之后应该通过的测试。没有复现测试，你怎么知道哪个补丁真的修对了？</p>
+  <p>Agentless 的招数是：<em>让 LLM 自己写复现测试</em>。它先让 LLM 根据 issue 描述生成多个候选复现测试，然后在<em>未修改的原始代码</em>上跑——只有那些能"在原代码上失败"的测试才是真的复现了 bug，被留下；其他丢掉。这一步留下来的就是高质量的"bug 复现测试"。</p>
+  <p>然后三步过滤排序：</p>
+  <ol>
+    <li><em>回归测试筛选</em>：所有候选补丁先跑回归测试，只留那些<em>不破坏</em>已有功能的。</li>
+    <li><em>复现测试筛选</em>：剩下的补丁再跑复现测试，只留那些<em>真能修对 bug</em>的。</li>
+    <li><em>AST 多数投票</em>：用 AST 解析把语义等价但文本不同的补丁归一化（比如格式差异、变量名差异），然后<em>多数票</em>选出最终提交。这一步是为了对抗 LLM 输出的格式噪声。</li>
+  </ol>
+
+  <div class="formula-block">
+    $$ \text{resolve}_{\text{Agentless}} = 32.00\,\% \quad (\text{96}/300,\ \text{avg cost}=\$0.70) $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>这套验证流程，把"无 agent"和"有反馈"两件事解耦了——agent 派以为反馈必须靠 LLM 在循环里自己摸出来，Agentless 偏要在<em>不自主决策</em>的前提下，靠脚本调度测试和投票，照样获得高质量反馈信号。这是这套设计最反直觉、也最值钱的地方。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>Agentless 在 SWE-bench Lite（300 道真实 GitHub issue）上的最终成绩是：<em>32.00% 解决率、平均 0.70 美元/题</em>——当时所有开源 agent 里的最高性能，成本只有 SWE-agent 的 1/6。这个数字本身就是对"agent 派"的一记响亮耳光。但真正让 OpenAI 把它抄走当 GPT-4o/o1 官方代码能力展示的，是下面这堆结果。</p>
+
+  <table>
+    <thead>
+      <tr><th>方法</th><th>解决率（SWE-bench Lite）</th><th>平均成本/题</th><th>类型</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">Agentless（GPT-4o）</td><td>32.00%</td><td>$0.70</td><td class="text">无 agent 流水线</td></tr>
+      <tr><td class="text">SWE-agent（GPT-4 Turbo）</td><td>18.0%</td><td>$4.19</td><td class="text">agent + ACI</td></tr>
+      <tr><td class="text">AutoCodeRover</td><td>22.7%</td><td>未公开</td><td class="text">agent + 检索 API</td></tr>
+      <tr><td class="text">Aider</td><td>26.3%</td><td>$0.78</td><td class="text">流水线 + 仓库图</td></tr>
+      <tr><td class="text">Devin（闭源）</td><td>23.3%</td><td>未公开</td><td class="text">闭源 agent</td></tr>
+    </tbody>
+  </table>
+
+  <p>三个让人意外的地方：</p>
+  <ul>
+    <li><em>成本碾压</em>：Agentless 一题 0.70 美元，SWE-agent 一题 4.19 美元——同一档性能，便宜 6 倍。如果你要修 1000 个真实 issue，账单差着 3500 美元。</li>
+    <li><em>独占命中的题</em>：论文专门统计了"agent 派修对、Agentless 没修对"的题——发现 Agentless 修对了一批<em>其他所有开源 agent（甚至部分闭源商业工具）都没修对</em>的独占题。这说明它不是在抄 agent 派的答案，而是开了个新赛道。</li>
+    <li><em>选不上限还很高</em>：作者做了"上界"实验——如果<em>完美选对</em>候选补丁（不靠投票、靠神谕），能修 126 道（42.0%）。也就是说，32% 的实际成绩距离"理论上能修的"还差 10 个百分点——<em>瓶颈在补丁选择，不在生成</em>。这给后续工作（CodeAct、SWE-Gym、RepoGraph）留下了明确的发力方向。</li>
+  </ul>
+
+  <p>更妙的是<em>数据集纠错</em>这步。作者把 SWE-bench Lite 的 300 道题全部人工分类了一遍，发现 4.3% 的题<em>issue 描述里直接含了 ground truth 补丁</em>（送分题），9.7% 含了完整的"自然语言解题步骤"，5.0% 含了误导性的解法，10.0% 缺了修对 issue 必需的关键信息。把这 51 道有问题的题剔掉，剩下 249 道组成 <em class="latin">SWE-bench Lite-S</em>——更严格的版本。Agentless 在 Lite-S 上反而能拿到 33.73%，在 OpenAI 后来照搬这个思路做的 <em class="latin">SWE-bench Verified</em> 上能拿到 38.80%。这套数据集清洗工作后来被 OpenAI 直接采纳，催生了 SWE-bench Verified。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="175" y="30" text-anchor="middle" font-weight="600">自主 agent 派</text>
+        <text x="525" y="30" text-anchor="middle" font-weight="600" fill="#B54A2C">Agentless 流水线</text>
+        <line x1="350" y1="20" x2="350" y2="260" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <rect x="60" y="50" width="230" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="72" text-anchor="middle">LLM 自主决定下一步</text>
+        <rect x="410" y="50" width="230" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="72" text-anchor="middle" fill="#B54A2C">脚本固定调度三阶段</text>
+
+        <rect x="60" y="100" width="230" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="122" text-anchor="middle">30-40 轮循环交互</text>
+        <rect x="410" y="100" width="230" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="122" text-anchor="middle" fill="#B54A2C">每阶段 1-2 次 LLM 调用</text>
+
+        <rect x="60" y="150" width="230" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="172" text-anchor="middle">复杂工具 API 设计</text>
+        <rect x="410" y="150" width="230" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="172" text-anchor="middle" fill="#B54A2C">无工具，只有 prompt + 测试</text>
+
+        <rect x="60" y="200" width="230" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="222" text-anchor="middle">$4.19 / 题，难调试</text>
+        <rect x="410" y="200" width="230" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="222" text-anchor="middle" fill="#B54A2C">$0.70 / 题，易调试</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 自主 agent 派与 Agentless 流水线在四个核心维度的对比：决策权、交互轮数、工具复杂度、成本可调试性</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>Agentless 的影响是<em>三层叠加</em>的。</p>
+  <p><em>第一层：技术范式上</em>。它第一次让"无 agent 流水线"成为 SOTA，给后来所有"流水线派"工作铺了路——Aider、RepoGraph、Moatless Tools 的流水线模式、CodeAct 中的非循环变体，都直接受益于它"用层次化定位 + 多候选采样 + 测试投票"的三件套。这等于在 SWE-agent 那条 ACI 路线之外，正式开出了第二条赛道。</p>
+  <p><em>第二层：工业采用</em>。OpenAI 把它抄走，作为<em>GPT-4o 和 o1 模型官方代码能力展示</em>的基准方法——意味着每次 OpenAI 评自己新模型写代码强不强，背后跑的就是 Agentless 这套流水线。这是学术界方法被工业头部公司直接采纳的罕见案例，也是给"简单方法论也能上擂台"的强力背书。</p>
+  <p><em>第三层：评测基建</em>。它对 SWE-bench Lite 的数据集纠错，直接催生了 OpenAI 的 <em class="latin">SWE-bench Verified</em>——后者现在已经是 SWE-bench 系列事实标准的"严格版"。Lingming Zhang 组后续还搞了 SWE-bench-Live、SWE-Gym、SWE-RL 等，几乎重写了软件工程 agent 评测的整套基础设施。可以说，没有 Agentless 那次"刺破评测漏洞"的先手，就没有后来这套严格的 SWE 评测生态。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>Agentless 不是没有短板，作者自己也在论文里承认了。</p>
+  <p><em>第一，流水线刚性</em>。三阶段死板流水线最大的优势是可调试，但反过来也是它的<em>天花板</em>——遇到需要"看了修复结果、根据反馈回头再重新定位"的多轮迭代型 issue，Agentless 没法应对。它在那些"修一行就完事"的简单 bug 上表现最好，遇到需要跨多文件协同改动、需要先尝试一种解法发现不行再换另一种的复杂 issue，就力不从心。后续 CodeAct、SWE-Gym 等工作很大程度上是在补这个短板。</p>
+  <p><em>第二，补丁选择是瓶颈</em>。前文那个"42% 上界"的数字，明明白白地告诉我们：Agentless 实际命中 32%，但理论上能修 42%——缺的 10 个百分点全卡在"如何从 40 个候选补丁里选对最终那一个"。论文里的 AST 多数投票只是个朴素方案，后续像 SWE-Replay、SWE-Gym 的方法用更强的重排序模型来填这个坑。</p>
+  <p><em>第三，复现测试质量参差</em>。Agentless 一共生成出来能复现原 bug 的测试 213/300，但其中只有 94 个能在应用 ground truth 补丁后正确验证修复——也就是说，将近 1/3 的"复现测试"其实是<em>假阳性</em>。这反映了"让 LLM 仅凭 issue 描述写出能跑的复现测试"本身是个开放难题，后续 Self-Refine、CodeT 等工作也在这块发力。</p>
+  <p><em>第四，定位精度不够高</em>。行级 35.3% 听起来还行，其实意味着 2/3 的题里 LLM 选错了行——只是靠后面多候选采样 + 投票硬扛过去。后续像 RepoGraph 用更精细的代码图谱、Moatless 用更强的检索-生成交互，都在啃这块骨头。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把 Agentless 放回整个 LLM 软件工程 agent 发展的脉络里看，它的位置很微妙。起步期，<em class="latin">ReAct</em>（第 35 篇）确立了"思考-行动-观察"循环范式，那时大家的目标还很轻——调调搜索引擎、跑跑计算器。<em class="latin">Toolformer</em>、<em class="latin">Voyager</em> 把工具调用焊进模型权重，但场景仍是单文件级的代码生成。软件工程这个"真实仓库级"战场，长期是空白。</p>
+  <p>2023 年底 SWE-bench 一出，这块空白被显式化——3.8% 的成绩等于在喊"现有 agent 范式不够"。SWE-agent（第 47 篇）接住了这一棒，把 ReAct 循环第一次严肃地落到软件工程环境里，并给出 ACI 这个可复用的接口设计框架，把成绩拉到 12.47%。Devin（闭源引爆）、OpenHands（开源框架）、AutoCodeRover（检索+LLM）、Agentless（连 agent 都不要）——几乎每个新工作都承认或借鉴 ACI 的视角。</p>
+  <p>Agentless 在这条时间线上的位置，是<em>反水派的开山之作</em>。它不否定 SWE-agent 的"接口设计"结论，反而把"自主决策"这件事整个抽走，告诉我们"无 agent 也能 SOTA"。它之后，整个领域被迫分流：一边继续卷 agent（OpenHands、MASAI、CodeAct、SWE-Gym、SWE-RL），另一边卷更精细的流水线（RepoGraph、Moatless、AutoCodeRover 后续）。这种分流至今没合龙——而它的分叉起点，就是 2024 年 7 月 1 日的这篇 Agentless。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>论文里有些小细节，会让读过原文的人会心一笑。</p>
+  <p><em>第一，作者排序的"寿司梗"</em>。两位共同一作（Chunqiu Steven Xia 和 Yinlin Deng）谁排第一，作者注脚里写的是 <em class="latin">"Contributed equally with author ordering decided by Nigiri."</em>——Nigiri 是日本寿司的一种，意思是用"寿司"这种随机方式决定作者顺序。这在严肃学术圈是个俏皮的彩蛋，绕开了"谁第一谁第二"的常见争端。</p>
+  <p><em>第二，章节标题里全是猫</em>。Agentless 论文 v2 的 HTML 版本，每个章节标题旁边都带一只猫 emoji——😺（grinning cat）、🙀（weary cat）、😼（wry smile cat）、😆（grinning cat with smiling eyes）。比如 Localization 旁边是 weary cat，Repair 旁边是 wry smile cat，Patch Validation 旁边是 grinning cat with smiling eyes。这种"严肃主题 + 卡通猫"的反差萌，在 SWE 圈子被当成梗传了一阵。</p>
+  <p><em>第三，UIUC 自己打 UIUC</em>。最有意思的八卦是——Agentless 出自 UIUC 的 Lingming Zhang 组，而几乎同一时间，UIUC 还有另一拨人（Xingyao Wang 等）在做 OpenHands（前身 OpenDevin），是<em>开源 agent 框架的旗舰</em>。一个学校两个组，一个写论文论证"别用 agent"，一个推出全球最火的开源 agent 框架——这种学术同侪间的"内部对立"在 AI 圈相当罕见，也成为后来 MASAI、SWE-Gym 等论文反复引用的桥段。</p>
+  <p><em>第四，OpenAI 没怎么掏钱</em>。Agentless 被 OpenAI 抄走当 GPT-4o/o1 的官方代码能力展示方案——但作者没拿 OpenAI 一分钱资助。论文的致谢里没有任何 OpenAI 资助项。也就是说，OpenAI 等于<em>免费</em>用了一个学界开源方法当自家模型发布会的官方展示——这种"被白嫖还心甘情愿"的关系，也是 AI 开源生态的特色。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <circle cx="180" cy="100" r="55" fill="#ECE4D4" stroke="#B54A2C"/>
+        <text x="180" y="95" text-anchor="middle" fill="#B54A2C">Agentless 派</text>
+        <text x="180" y="115" text-anchor="middle" fill="#B54A2C" font-size="10">"别用 agent"</text>
+        <text x="180" y="175" text-anchor="middle" fill="#96897A" font-size="10">UIUC · Lingming Zhang 组</text>
+
+        <circle cx="520" cy="100" r="55" fill="#ECE4D4" stroke="#24555A"/>
+        <text x="520" y="95" text-anchor="middle" fill="#24555A">OpenHands 派</text>
+        <text x="520" y="115" text-anchor="middle" fill="#24555A" font-size="10">"开源 agent 旗舰"</text>
+        <text x="520" y="175" text-anchor="middle" fill="#96897A" font-size="10">UIUC · 另一拨人 + All Hands AI</text>
+
+        <text x="350" y="105" text-anchor="middle" fill="#96897A" font-size="14">⚔ VS ⚔</text>
+        <text x="350" y="40" text-anchor="middle" fill="#B54A2C" font-weight="600">同一所学校，两种范式</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · UIUC 内部的"范式对决"：Agentless（无 agent 流水线）vs OpenHands（开源 agent 框架），同期同校却立场对立</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>放长视角看，Agentless 的真正价值不在于那 32%，而在于<em>它把 agent 这个概念的边界划清楚了</em>。</p>
+  <p>agent 这个词被滥用已经很久——任何带 LLM 调用 + 工具调用的系统都自称 agent，从单轮问答到 40 轮 ReAct 循环都叫 agent。Agentless 的贡献是把这个概念切成两层——"<em>让 LLM 干活</em>"和"<em>让 LLM 决定干什么活</em>"。前者是 LLM 的本职，后者才是 agent 风险的源头。它把后者整个抽走，照样拿到了 SOTA——这是对 agent 范式的<em>釜底抽薪</em>，也是对"<em>agent 这个词到底指什么</em>"的一次语义清算。</p>
+  <p>更深一层，它和 SWE-agent、第 46 篇 MAS 幻象一起，悄悄改写了 agent 这个词的含义。第 46 篇证明"多 agent 是幻象"，SWE-agent 证明"单 agent + 好接口远胜单 agent + 差接口"，Agentless 证明"无 agent 流水线 + 测试投票也能 SOTA"。<em>这三篇合起来，等于把 agent 的"魔法光环"剥得精光</em>——剩下的只是工程问题：怎么把 LLM 在每个固定步骤里发挥好、怎么设计接口、怎么获取高质量反馈信号。这跟软件工程本身的历史出奇一致——人类程序员的生产力差距，从来不是智商差距，而是工具链差距。</p>
+  <p>放到今天看，预言性也很足。短短两年，coding agent 已经从论文概念变成产业现实——Cursor、GitHub Copilot Workspace、Cline、Devin 都在改真实 PR。但有意思的是，<em>实际部署的工业级 coding agent 几乎没有一个是纯 ReAct 自主决策的</em>——它们大多是 Agentless 式的"分阶段流水线 + 局部 agent 决策"混合体。换句话说，Agentless 的范式赢得了产业落地这一仗，哪怕在学术界它后来被 SWE-RL 等更强的训练范式盖过去。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果"自主决策"才是 agent 风险的源头，那么当模型强到某个临界点——比如能直接吃整个仓库、能自己生成并跑测试、能自己纠错——这种"自主决策的代价"会不会反过来消失？换句话说，<em>Agentless 这种"把决策权从 LLM 拿走"的红利，有没有一个"模型变强之后会自动失效"的保质期</em>？SWE-RL 用强化学习训练 agent 自己做决策，是不是已经是个反向信号？
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>OpenHands: An Open Platform for AI Software Developers as Generalist Agents</h3>
+    <p style="margin:0;">Agentless 一巴掌拍在 agent 派脸上，说"别用 agent 也能 SOTA"。可同一个 UIUC 的另一拨人不服气——他们要造的不是修 Bug 的专用 agent，而是<em>通用 AI 软件开发者平台</em>。下一篇，OpenHands（前身 OpenDevin）登场：开源、可扩展、支持任意 LLM、把"agent + 工具 + 环境"做成一整套基础设施，让所有人都能搭自己的 coding agent。当"流水线派"和"agent 平台派"在同一个学校同时开火，这场范式之争就真的有意思了。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 048 篇</span>
+    <span>2026-09-17</span>
+  </footer>
+
+</div>
+</body>
+</html>

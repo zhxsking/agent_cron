@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 47,
-  "last_run_date": "2026-09-16",
+  "last_index": 48,
+  "last_run_date": "2026-09-17",
   "papers_covered": [
     {
       "index": 1,
@@ -378,10 +378,18 @@
       "date": "2024-05-06",
       "era": "前沿演进期 2023–2024",
       "filename": "47_20260916_SWE_agent.html"
+    },
+    {
+      "index": 48,
+      "title_en": "Agentless: Demystifying LLM-based Software Engineering Agents",
+      "title_zh": "Agentless：连 agent 都不要——一条\"定位→修复→验证\"流水线，反手把 agent 范式釜底抽薪",
+      "date": "2024-07-01",
+      "era": "前沿演进期 2023–2024",
+      "filename": "48_20260917_Agentless.html"
     }
   ],
     "next_preview": {
-      "title_en": "Agentless: Demystifying LLM-based Software Engineering Agents",
-      "title_zh": "Agentless：连 agent 都不要——一条\"定位→修复→验证\"流水线，反手把 agent 范式釜底抽薪"
+      "title_en": "OpenHands: An Open Platform for AI Software Developers as Generalist Agents",
+      "title_zh": "OpenHands：把 AI 软件开发者做成开放平台——回到 agent 路线，但这次让 agent 通用起来"
     }
 }
