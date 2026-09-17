@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenHands 论文精读 · 大模型经典论文系列 #049</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#049</span>
+  </div>
+
+  <h1 class="title">
+    OpenHands: An Open Platform for AI Software Developers as Generalist Agents
+    <span class="en">OpenHands：把 AI 软件开发者做成开放平台——回到 agent 路线，但这次让 agent 通用起来</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Xingyao Wang*, Boxuan Li, Yufan Song, Frank F. Xu, ... Graham Neubig 等 24 位</span>
+    <span>机构：UIUC, CMU, Yale, UC Berkeley, All Hands AI 等 10 家</span>
+    <span>发表：2024-07 / arXiv v1（ICLR 2025）</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2407.16741" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/All-Hands-AI/OpenHands" target="_blank" rel="noopener">GitHub</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">上一篇我们讲完 Agentless——UIUC 的 Lingming Zhang 组甩出一巴掌："别用 agent，一条死板流水线也能在 SWE-bench Lite 上拿到 32%，还便宜 6 倍"。可同在 UIUC，另一拨人根本不服气。他们不仅要用 agent，还要把 agent 做成一套人人都能上手的基础设施。</p>
+  <p class="lead">2024 年 3 月 12 日，一个名叫 <em class="latin">OpenDevin</em> 的开源项目悄悄挂上 GitHub——名字直白地致敬了 Cognition AI 那个引爆全网的闭源"AI 软件工程师" <em class="latin">Devin</em>。不到四个月，它改名 <em class="latin">OpenHands</em>，挂出论文，汇聚了 UIUC、CMU、Yale、UC Berkeley 等 10 家机构的 24 位作者，拿到 ICLR 2025 录用。它要做的事只有一件：把"让 LLM 写代码、敲命令、逛网页"做成一个<em>开放、通用、安全</em>的平台，谁都能往里塞自己的 agent。当"流水线派"在喊"别用 agent"，OpenHands 反手搭了座桥——<em>agent 这条路不仅没死，还要把它做成基础设施</em>。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    OpenHands 是一个社区驱动的开源平台，用"事件流 + Docker 沙箱运行时 + 通用动作空间"三大件，让任意 LLM 都能像人类开发者一样写代码、跑命令、逛网页——同一个 agent 不改 prompt，在软件工程、网页浏览、杂项辅助三大类任务上都有竞争力。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>顺着这个系列的脉络，第 35 篇 <em class="latin">ReAct</em> 打通"思考-行动"循环，第 47 篇 <em class="latin">SWE-agent</em> 把循环落到真实仓库上并给出 ACI 接口设计，第 48 篇 <em class="latin">Agentless</em> 反手抽走"自主决策"也能 SOTA。这条故事线到此出现了一个有趣的分叉：一边是"把 agent 拆光"的流水线派，一边是"把 agent 做厚"的框架派。OpenHands 站在后者，而且是<em>站得最稳的那个</em>。</p>
+  <p>它的位置很特殊：SWE-agent 解决的是"单 agent + 好接口"，Agentless 解决的是"无 agent + 好流水线"，而 OpenHands 解决的是一个更底层的问题——<em>整个 agent 生态缺一套统一的、开放的、可复现的基础设施</em>。论文里那句定位很准：它要做的是"通用型与专用型 AI agent 的开发平台"，而不只是某个跑分高的 SE agent。换句话说，前两篇在争"agent 要不要"，OpenHands 在争"agent 该长在什么地基上"。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="135" x2="660" y2="135" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="10" fill="#96897A">
+        <circle cx="70" cy="135" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="70" y="120" text-anchor="middle">2022.10</text>
+        <text x="70" y="160" text-anchor="middle">ReAct</text>
+        <text x="70" y="175" text-anchor="middle" fill="#96897A" font-size="9">思考-行动循环</text>
+
+        <circle cx="180" cy="135" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="180" y="120" text-anchor="middle">2023.11</text>
+        <text x="180" y="160" text-anchor="middle">SWE-bench</text>
+        <text x="180" y="175" text-anchor="middle" fill="#96897A" font-size="9">真实仓库评测</text>
+
+        <circle cx="290" cy="135" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="290" y="120" text-anchor="middle">2024.03</text>
+        <text x="290" y="160" text-anchor="middle">Devin</text>
+        <text x="290" y="175" text-anchor="middle" fill="#96897A" font-size="9">闭源引爆</text>
+
+        <circle cx="390" cy="135" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="390" y="120" text-anchor="middle">2024.05</text>
+        <text x="390" y="160" text-anchor="middle">SWE-agent</text>
+        <text x="390" y="175" text-anchor="middle" fill="#96897A" font-size="9">ACI 接口</text>
+
+        <circle cx="470" cy="135" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="470" y="120" text-anchor="middle">2024.07</text>
+        <text x="470" y="160" text-anchor="middle">Agentless</text>
+        <text x="470" y="175" text-anchor="middle" fill="#96897A" font-size="9">无 agent 流水线</text>
+
+        <circle cx="560" cy="135" r="8" fill="#B54A2C"/>
+        <text x="560" y="100" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="560" y="160" text-anchor="middle" fill="#2E2A22" font-weight="600">OpenHands</text>
+        <text x="560" y="175" text-anchor="middle" fill="#B54A2C" font-size="9">开放平台</text>
+
+        <circle cx="640" cy="135" r="4" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="2 2"/>
+        <text x="640" y="120" text-anchor="middle">2024.06+</text>
+        <text x="640" y="160" text-anchor="middle">MASAI/SWE-Gym</text>
+        <text x="640" y="175" text-anchor="middle" fill="#96897A" font-size="9">模块化/训练</text>
+      </g>
+      <g font-family="JetBrains Mono" font-size="9" fill="#96897A">
+        <text x="350" y="220" text-anchor="middle">从"造 agent"到"造 agent 的地基" →</text>
+        <text x="560" y="237" text-anchor="middle" fill="#B54A2C">↑ 本篇第一次把 agent 做成开放基础设施</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型软件工程 agent 的发展脉络：OpenHands 是"开放平台派"的奠基之作，与 Agentless 的"无 agent 流水线派"同期对垒</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>2024 年上半年，软件工程 agent 圈子被一个名字点燃：<em class="latin">Devin</em>。Cognition Labs 在 3 月放出这个"AI 软件工程师"——闭源、配 IDE + 终端 + 浏览器，让 GPT-4 在循环里自己计划、敲命令、跑测试、改代码。演示视频一出，全网沸腾，"AI 程序员要抢饭碗"的标题刷屏。</p>
+  <p>可问题来了：<em>Devin 是闭源黑箱</em>。它用什么 prompt、怎么设计工具、怎么调度循环——外界一无所知。学术界想复现、想改进、想做对比实验，根本无从下手。于是 SWE-agent、AutoCodeRover、Aider、Moatless……一批开源工作跟上，但每个人都有自己的一套 agent 抽象、自己的环境接口、自己的评测脚本——<em>碎片化到了没法横向比较的地步</em>。</p>
+  <p>论文开头点了三个本质挑战，正是这个乱象的根源：</p>
+  <ul>
+    <li><em>复杂软件的创建与修改</em>：真实仓库动辄几万行，怎么让 agent 在复杂代码库里定位、编辑、重构？</li>
+    <li><em>即时信息收集</em>：修 bug 得先看报错、查文档、跑测试——agent 怎么随时调工具收集信息？</li>
+    <li><em>安全与副作用</em>：让 LLM 自由执行代码，一个 <code class="mono">rm -rf</code> 就能把用户系统搞挂——怎么隔离？</li>
+  </ul>
+  <p>这三个挑战，SWE-agent 解决了"接口"那一层，Agentless 干脆绕过了"自主决策"那一层。但<em>整个社区缺一套统一的、开放的、能复现的基础设施</em>——一个大家都能往上加 agent、加工具、加评测的公共地基。这才是 OpenHands 要填的坑。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象 2008 年之前的手机 App 生态：每个开发者各自为政，没有统一的应用商店、没有统一的开发框架、没有统一的审核标准。苹果做了 App Store + iOS SDK 之后，App 生态才真正爆发。OpenHands 想做的，就是 agent 世界的"iOS SDK + App Store"——<em>一套公共的运行时、一套统一的动作/观测协议、一个社区可以贡献 agent 的中心（AgentHub）</em>。区别只在于，它是完全开源、MIT 许可、谁都能拿去商用。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>论文要回答的问题，比"怎么修 bug"大得多：</p>
+  <div class="callout">
+    <span class="label">论文核心命题</span>
+    <em class="latin">How can we build an open, general, and safe platform for AI agents that interact with the world through software?</em><br>
+    <em>如何为"通过软件与世界交互"的 AI agent，搭建一个开放、通用、安全的平台？</em>
+  </div>
+  <p>这个问法把战场重新划了一遍。SWE-agent 问的是"怎么设计接口让单 agent 修好 bug"，Agentless 问的是"要不要 agent 都行"——它们都在优化"某个具体任务上的表现"。OpenHands 问的是更底层的：<em>这个领域要往前走，得先有一套公共地基</em>。没有统一平台，每个人造轮子、每个人报自己的分、每个 agent 没法公平对比——整个 SE agent 研究就是一盘散沙。</p>
+  <p>而且"通用"这个词分量很重。论文副标题特意加了 <em class="latin">as Generalist Agents</em>——它不想只做修 bug 的专用 agent，而是要让<em>同一个 agent</em>能写代码、能逛网页、能做杂项任务。这是对 SWE-agent / Agentless 这种"专精 SWE"路线的一次横向扩张。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果你要搭一个"通用 agent 平台"，最少需要哪几个部件？不妨先列三条：agent 怎么和环境通信？环境长什么样、怎么保证安全？怎么让别人能往里加新 agent？读完下面的架构，对比你想漏了哪块。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>OpenHands 的答案是一套由<em>三大主组件</em>构成的平台：智能体抽象（Agent）、事件流（Event Stream）、运行时环境（Runtime）。这套设计的核心思想一句话能说完：<em>把"agent 怎么和环境交互"标准化成一套统一的动作/观测协议，再把环境做成安全的 Docker 沙箱，让任何 agent 实现都能插进来跑</em>。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 用户/UI -->
+        <rect x="20" y="20" width="120" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="45" text-anchor="middle">用户 / UI</text>
+
+        <!-- Agent 抽象 -->
+        <rect x="180" y="20" width="160" height="40" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="260" y="40" text-anchor="middle" fill="#B54A2C" font-weight="600">① Agent 抽象</text>
+        <text x="260" y="55" text-anchor="middle" fill="#B54A2C" font-size="10">step(state) → action</text>
+
+        <!-- Event Stream -->
+        <rect x="370" y="20" width="160" height="40" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="450" y="40" text-anchor="middle" fill="#24555A" font-weight="600">② Event Stream</text>
+        <text x="450" y="55" text-anchor="middle" fill="#24555A" font-size="10">action / observation 历史</text>
+
+        <!-- Runtime -->
+        <rect x="560" y="20" width="120" height="40" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="620" y="40" text-anchor="middle" fill="#B54A2C" font-weight="600">③ Runtime</text>
+        <text x="620" y="55" text-anchor="middle" fill="#B54A2C" font-size="10">Docker 沙箱</text>
+
+        <!-- 运行时内部 -->
+        <rect x="560" y="90" width="120" height="24" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="2 2"/>
+        <text x="620" y="106" text-anchor="middle" font-size="11">bash shell</text>
+        <rect x="560" y="122" width="120" height="24" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="2 2"/>
+        <text x="620" y="138" text-anchor="middle" font-size="11">IPython 服务器</text>
+        <rect x="560" y="154" width="120" height="24" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="2 2"/>
+        <text x="620" y="170" text-anchor="middle" font-size="11">Chromium 浏览器</text>
+
+        <!-- AgentSkills -->
+        <rect x="180" y="90" width="160" height="24" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="2 2"/>
+        <text x="260" y="106" text-anchor="middle" font-size="11">AgentSkills 工具库</text>
+        <rect x="180" y="122" width="160" height="24" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="2 2"/>
+        <text x="260" y="138" text-anchor="middle" font-size="11">多智能体委派</text>
+        <rect x="180" y="154" width="160" height="24" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="2 2"/>
+        <text x="260" y="170" text-anchor="middle" font-size="11">AgentHub 社区中心</text>
+
+        <!-- 箭头：用户→agent -->
+        <line x1="140" y1="40" x2="180" y2="40" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)"/>
+        <!-- agent→event stream -->
+        <line x1="340" y1="40" x2="370" y2="40" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)"/>
+        <!-- event stream→runtime -->
+        <line x1="530" y1="40" x2="560" y2="40" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)"/>
+        <!-- runtime→event stream（observation 回流） -->
+        <line x1="560" y1="70" x2="450" y2="60" stroke="#24555A" stroke-width="1" marker-end="url(#arrow)" stroke-dasharray="3 3"/>
+        <text x="510" y="78" text-anchor="middle" fill="#24555A" font-size="9">observation 回流</text>
+
+        <!-- 关键说明 -->
+        <rect x="20" y="220" width="660" height="130" rx="2" fill="#24555A" fill-opacity="0.06" stroke="#24555A" stroke-dasharray="3 3"/>
+        <text x="350" y="245" text-anchor="middle" fill="#24555A" font-size="12" font-weight="600">设计哲学：把"agent 怎么和环境交互"标准化</text>
+        <text x="350" y="270" text-anchor="middle" fill="#24555A" font-size="11">agent 只需实现一个 step(state) → action 函数</text>
+        <text x="350" y="290" text-anchor="middle" fill="#24555A" font-size="11">所有 action 经 Event Stream 传给 Runtime 执行，observation 再流回来</text>
+        <text x="350" y="310" text-anchor="middle" fill="#24555A" font-size="11">环境是隔离的 Docker 沙箱，安全且可复现</text>
+        <text x="350" y="335" text-anchor="middle" fill="#B54A2C" font-size="11" font-weight="600">↑ 这是和 SWE-agent / Agentless 的根本差别：它做的是"地基"，不是"某栋楼"</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · OpenHands 三大主组件架构：Agent 抽象（生成 action）→ Event Stream（统一通信总线）→ Runtime（Docker 沙箱执行）。observation 回流形成闭环</figcaption>
+  </figure>
+
+  <h3>组件一：智能体抽象与事件流（Agent & Event Stream）</h3>
+  <p>OpenHands 把"agent"定义成一个极简的接口：一个 <code class="mono">step(state) → action</code> 函数。agent 拿到当前状态（<em class="latin">State</em>），吐出一个动作（<em class="latin">Action</em>）。状态的核心是<em>事件流</em>——一个按时间顺序记录所有动作与观测的序列，包括 agent 自己的动作和用户的交互。</p>
+  <p>动作类型受 <em class="latin">CodeAct</em> 启发，被设计成<em>基于编程语言的统一动作空间</em>：</p>
+  <ul>
+    <li><code class="mono">IPythonRunCellAction</code>：在沙箱里执行任意 Python 代码</li>
+    <li><code class="mono">CmdRunAction</code>：执行 bash 命令</li>
+    <li><code class="latin">BrowserInteractiveAction</code>：通过 BrowserGym 的领域语言操控浏览器</li>
+    <li><code class="latin">AgentDelegateAction</code>：把子任务委派给另一个 agent</li>
+  </ul>
+  <p>这套基于编程语言的动作空间，是 OpenHands 和传统 JSON 工具调用 agent 的根本分野。传统 agent 得为每个工具预定义一个 JSON schema（如 <code class="mono">search_file(pattern="def main")</code>），OpenHands 的 agent 直接写 Python：</p>
+
+  <pre><code># CodeAct 方式：把工具调用统一成可执行 Python
+print(openhands.edit_file(start=1, end=1, content="EDITED_CODE"))
+openhands.create_file('app.py')</code></pre>
+
+  <p>这样做的好处是<em>动作空间天然无限</em>——agent 甚至能在 API 不存在时自己写一个 Python 函数当工具。代价是输出更难约束，但对通用性来说，这个取舍值得。观测（<em class="latin">Observation</em>）则描述环境变化——命令的输出、代码执行的结果、浏览器的截图——回流到事件流里，agent 下一轮 <code class="mono">step</code> 就能看到。</p>
+
+  <h3>组件二：运行时环境（Runtime with Docker Sandbox）</h3>
+  <p>这是整套设计里<em>最硬核也最让人放心</em>的一块。OpenHands 给每个任务会话启动一个<em>安全隔离的 Docker 容器沙箱</em>，所有动作都在里面执行——<code class="mono">rm -rf /</code> 也删不到用户主机。沙箱内跑着一个 REST API 服务器（即 OpenHands action execution API），对外接收动作、对内调度三个子服务：</p>
+  <ol>
+    <li><em>bash shell</em>：连接由 docker image 指定的操作系统环境，执行命令</li>
+    <li><em>Jupyter IPython 服务器</em>：处理交互式 Python 代码执行请求</li>
+    <li><em>基于 Playwright 的 Chromium 浏览器</em>：提供 BrowserGym 定义的动作原语（导航、点击、输入、滚动），返回 HTML、DOM、accessibility tree、截图等丰富观测</li>
+  </ol>
+  <p>最妙的是<em>支持任意 Docker 镜像</em>——你想要一个预装 PyTorch + CUDA 的环境？自己造个镜像，OpenHands 会把 action execution API 装进去。这让"环境"不再是写死的，而是<em>可定制的</em>。</p>
+
+  <h3>组件三：AgentSkills——可扩展的人机接口</h3>
+  <p>SWE-agent 强调"精心设计的 ACI 对复杂任务很重要"，可造一堆专用工具、维护、分发都是工程噩梦。OpenHands 的解法是 <em class="latin">AgentSkills</em>：一个自动导入 IPython 环境的 <em>Python 包</em>，由不同工具函数组成。社区想加新工具？写个 Python 函数就行——<em>门槛被压到最低</em>。</p>
+  <p>纳入标准很克制：<em>不为 LLM 已能直接写代码完成的功能重复造轮子</em>（比如读 CSV 用 pandas 就行），只在"LLM 无法直接写代码完成"（如编辑文件指定行）或"涉及调用外部模型"（如语音转文本）时才加技能。当前技能含从 SWE-agent 和 Aider 改编的 <code class="mono">edit_file</code>、<code class="mono">scroll_up/down</code>、<code class="mono">parse_image/parse_pdf</code> 等。</p>
+
+  <h3>组件四：多智能体委派与 AgentHub</h3>
+  <p>通用 agent 不可能什么都强。OpenHands 用 <code class="latin">AgentDelegateAction</code> 让一个 agent 把子任务委派给另一个——比如通用 <em class="latin">CodeActAgent</em> 浏览网页能力有限，就委派给专用的 <em class="latin">BrowsingAgent</em>。这让"通用"和"专精"不再对立，而是<em>组合</em>关系。</p>
+  <p>更关键的是 <em class="latin">AgentHub</em>：一个社区贡献的智能体中心，用户可以选不同的 agent 实现（CodeAct Agent、Browsing Agent、GPTSwarm Agent、Micro Agent……）当基线。这是 OpenHands 做"平台"而非"单个 agent"的体现——<em>它卖的是地基，不是某栋楼</em>。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    传统工具调用 agent 像一个带固定工具箱的工人——老板事先给好锤子、扳手、螺丝刀，少一把就干不了活。CodeAct agent 像一个带着 3D 打印机的工人——要什么工具当场打印一个出来，甚至能打印出"打印机的零件"来组装新机器。前者的动作空间是封闭集合，后者的动作空间是<em>图灵完备</em>的。这就是 OpenHands 选 CodeAct 当默认 agent 的原因。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>OpenHands 最硬的实验结论不是某个单项分数，而是<em>同一个 agent、不改 system prompt、在三大类任务上都有竞争力</em>。这套通用性，是它和 SWE-agent / Agentless 这种"专精 SWE"路线的根本差别。</p>
+
+  <table>
+    <thead>
+      <tr><th>任务 / 基准</th><th>模型</th><th>OpenHands 结果</th><th>对比基线</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">SWE-bench Lite</td><td>claude-3-5-sonnet</td><td>26.0%</td><td class="text">SWE-agent 18.0%</td></tr>
+      <tr><td class="text">HumanEvalFix（0-shot）</td><td>gpt-4o</td><td>79.3%</td><td class="text">≈ StarCoder2-15B 的 2 倍</td></tr>
+      <tr><td class="text">ML-Bench</td><td>gpt-4o</td><td>76.5%</td><td class="text">Aider 64.4% / SWE-agent 42.6%</td></tr>
+      <tr><td class="text">WebArena</td><td>claude-3-5-sonnet</td><td>15.3%</td><td class="text">WebArena Agent 14.4%</td></tr>
+      <tr><td class="text">GPQA</td><td>gpt-4o</td><td>53.1%</td><td class="text">gpt-4 few-shot 38.8%</td></tr>
+      <tr><td class="text">GAIA</td><td>gpt-4o（GPTSwarm）</td><td>32.1%</td><td class="text">AutoGPT 13.2%</td></tr>
+    </tbody>
+  </table>
+
+  <p>三个让人印象深刻的点：</p>
+  <ul>
+    <li><em>通用性碾压</em>：同一个 CodeAct agent，在<em>软件工程</em>（SWE-bench、HumanEvalFix、ML-Bench）、<em>网页浏览</em>（WebArena、GAIA）、<em>杂项辅助</em>（GPQA）三大类上都有竞争力——而基线 agent 通常<em>专为某一类</em>设计和优化。论文原话："<em class="latin">the same CodeAct agent, without any modifications to its system prompt, demonstrates competitive performance across three major task categories</em>"。</li>
+    <li><em>成本可接受</em>：SWE-bench Lite 上用 claude-3-5-sonnet 平均一题 1.10 美元，用 gpt-4o-mini 只要 0.01 美元——比 SWE-agent 的 1.67 美元还便宜。注意 OpenHands 跑的是<em>完整 agent 循环</em>，不是 Agentless 那种死板流水线，但成本没失控。</li>
+    <li><em>SWE-bench 不是终点</em>：虽然 SWE-bench Lite 上 26.0% 略低于 Agentless 的 27.3%，但 OpenHands 的价值不在单项跑分——它的 CodeAct agent 后来在 SWE-bench Verified 上飙到 53%（2024.11），再后来甚至到 77.6%（2026.01）。<em>平台的价值会随模型变强而持续放大</em>。</li>
+  </ul>
+
+  <figure>
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="175" y="30" text-anchor="middle" font-weight="600">专精 agent（如 SWE-agent）</text>
+        <text x="525" y="30" text-anchor="middle" font-weight="600" fill="#B54A2C">OpenHands 通用 agent</text>
+        <line x1="350" y1="20" x2="350" y2="260" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <rect x="60" y="50" width="230" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="72" text-anchor="middle">专为 SWE 设计 + 优化</text>
+        <rect x="410" y="50" width="230" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="72" text-anchor="middle" fill="#B54A2C">一个 agent 跑三类任务</text>
+
+        <rect x="60" y="100" width="230" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="122" text-anchor="middle">动作空间：预定义 JSON 工具</text>
+        <rect x="410" y="100" width="230" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="122" text-anchor="middle" fill="#B54A2C">动作空间：图灵完备 Python</text>
+
+        <rect x="60" y="150" width="230" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="172" text-anchor="middle">环境：写死，难定制</text>
+        <rect x="410" y="150" width="230" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="172" text-anchor="middle" fill="#B54A2C">环境：任意 Docker 镜像</text>
+
+        <rect x="60" y="200" width="230" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="222" text-anchor="middle">单 agent，无委派</text>
+        <rect x="410" y="200" width="230" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="222" text-anchor="middle" fill="#B54A2C">AgentHub + 多智能体委派</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 专精 agent 与 OpenHands 通用 agent 在四个核心维度的对比：任务覆盖、动作空间、环境可定制性、协作能力</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>OpenHands 的影响是<em>三层叠加</em>的。</p>
+  <p><em>第一层：基础设施</em>。它第一次让 SE agent 圈有了一套统一的、开放的、可复现的平台。在那之前，每个团队造自己的轮子、报自己的分、没法横向比较。OpenHands 之后，所有"agent + 工具 + 环境"的工作都有了一个<em>公共地基</em>可以往上搭。论文表 1 的框架对比里，OpenHands 是唯一在 GUI、标准化工具库、内置沙箱、内置浏览器、多智能体协作、人机协作、AgentHub、评估框架、Agent QC 九个维度上全部打勾的系统——SWE-agent 只勾了"内置沙箱"，Agentless 几乎没勾。</p>
+  <p><em>第二层：社区与产业</em>。论文发表时已 32K GitHub stars、188+ 贡献者，截至 2026 年已超 64K stars。三位核心贡献者——CMU 教授 Graham Neubig、Robert Brennan、UIUC 博士生 Xingyao Wang——联合创立了 <em class="latin">All Hands AI</em> 公司，2024 年 9 月拿到 500 万美元种子轮（Menlo 领投，Hugging Face 联合创始人 Thom Wolf、PyTorch 创造者 Soumith Chintala 等天使投资）。一个学术论文直接长出了一家 agent 公司，这在 SE agent 圈是头一遭。</p>
+  <p><em>第三层：评测生态</em>。它集成了 15 个基准测试，覆盖软件工程、网页浏览、杂项辅助三大类，让"agent 通用性"第一次有了系统化衡量的尺子。后续的 OpenHands-Versa、SWE-bench Verified 等工作都建立在它这套评测框架之上。可以说，没有 OpenHands 把"评测基建"做厚，后面"通用 agent 到底行不行"的争论根本无从展开。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>论文附录 A 标题就叫 <em class="latin">Limitations and Future Work</em>，作者自己也承认短板。</p>
+  <p><em>第一，安全性与可靠性</em>。让 agent 执行任意代码本身就是风险——Docker 沙箱隔离了主机，但 agent 仍可能下载恶意包、泄露 API key、在沙箱里搞破坏。论文把"安全可靠的 agent"列为公开挑战，后续 V1 SDK 才引入了内置安全分析。</p>
+  <p><em>第二，多模态支持不足</em>。早期对图像、PDF 等多模态处理有限，虽然有 <code class="mono">parse_image/parse_pdf</code> 技能，但 agent 对视觉信息的理解仍靠外部模型转文本，不是原生多模态交互。论文明确把"增强多模态支持"列为未来重点。</p>
+  <p><em>第三，单体架构的局限</em>。V0 的单体架构（monolithic）导致沙箱假设僵化、可变配置蔓延、研究与生产耦合过紧——这也是后续 V1 Software Agent SDK（MLSys 2026）完全重新设计的动机。一个平台越成功，它的架构债越显眼。</p>
+  <p><em>第四，长程任务易陷入循环</em>。单 agent 在长程、多步任务上容易原地打转——生成→失败→再生成，烧 token 不出活。这催生了后续的委派机制强化、记忆增强、以及强化学习训练 agent 决策（SWE-RL）等方向。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把 OpenHands 放回整个 LLM agent 发展的脉络里看，它的位置是<em>承前启后的枢纽</em>。</p>
+  <p>起步期，<em class="latin">ReAct</em>（第 35 篇）确立了"思考-行动-观察"循环范式，那时大家的目标很轻——调调搜索引擎、跑跑计算器。<em class="latin">Toolformer</em>、<em class="latin">Voyager</em> 把工具调用焊进模型权重，但场景仍是单文件级的代码生成。软件工程这个"真实仓库级"战场，长期是空白。</p>
+  <p>2023 年底 SWE-bench 一出，这块空白被显式化——3.8% 的成绩等于在喊"现有 agent 范式不够"。SWE-agent（第 47 篇）接住这一棒，把 ReAct 循环落到软件工程环境里，给出 ACI 接口设计框架，拉到 12.47%。Devin（闭源引爆）把"AI 软件工程师"这个词炒热，但黑箱属性让学界没法跟进。Agentless（第 48 篇）反手说"别用 agent 也能 SOTA"，在 SWE-bench Lite 上 32%。</p>
+  <p>OpenHands 在这条时间线上的位置，是<em>开放平台派的奠基之作</em>。它不否定 SWE-agent 的"接口设计"结论，也不否定 Agentless 的"无 agent 也能行"结论——它回答的是更底层的问题：不管你用不用 agent，<em>这个领域要往前走，得先有一套公共地基</em>。它之后，整个领域有了两条并行的轨道：一条继续卷具体 agent 的跑分（MASAI、SWE-Gym、SWE-RL），另一条卷平台与基建（OpenHands V1 SDK、OpenHands-Versa）。这两条轨道的分叉起点，就是 2024 年 7 月的这篇 OpenHands。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>OpenHands 这篇论文背后，故事比代码还多。</p>
+  <p><em>第一，名字的由来：OpenDevin → OpenHands</em>。项目最初叫 <em class="latin">OpenDevin</em>——直白地致敬 Cognition AI 的闭源 Devin。两个创建者是阿里巴巴 Qwen 团队的 Binyuan Hui（崔一鸣）和 Junyang Lin（林俊旸）——你没看错，就是那个著名的开源大模型 Qwen 的团队。2024 年 3 月 12 日项目挂上 GitHub，开源社区迅速汇聚。后来三位核心贡献者（Graham Neubig、Robert Brennan、Xingyao Wang）联合创立 All Hands AI 公司继续推进，项目改名 <em class="latin">OpenHands</em>——"open hands"，张开的手，比"open Devin"少了一点对标、多了一点独立人格。论文脚注还特意注明："<em class="latin">While initially inspired by AI software engineer Devin, OpenHands has quickly evolved to support much wider range of applications beyond software engineering</em>"——从"致敬"走向"超越"。</p>
+  <p><em>第二，UIUC 的"内部对决"续集</em>。上一篇我们讲过，Agentless 出自 UIUC 的 Lingming Zhang 组，论证"别用 agent"；而 OpenHands 的第一作者 Xingyao Wang 同在 UIUC（Hao Peng / Heng Ji 组），做的是全球最火的开源 agent 框架。<em>一个学校两个组，一个喊"别用 agent"，一个造"agent 平台"</em>——这种学术同侪间的内部对立在 AI 圈相当罕见。更妙的是，OpenHands 论文里还引用了 Agentless，并在 SWE-bench Lite 上和它直接比跑分——同校两拨人，论文里你来我往。</p>
+  <p><em>第三，24 位作者、10 家机构</em>。这篇论文的作者名单长得像奥斯卡致辞——UIUC、CMU、Yale、UC Berkeley、Contextual AI、KAUST、ANU、HCMUT、阿里巴巴、All Hands AI。其中 Niklas Muennighoff（Contextual AI）后来在 Gemma、MTEB 等工作里都活跃。这种"跨校跨公司"的大规模合作，在 agent 圈几乎是把社区共识<em>焊进了论文署名</em>——它不是某一家之言，是整个开源社区的集体背书。</p>
+  <p><em>第四，MIT 许可证：随便商用</em>。OpenHands 选了最宽松的 MIT 许可证——<em>允许商用</em>。这意味着任何公司都能拿去改造成自己的产品。在 AI 圈"开源但限制商用"成风的当下，这个选择相当敞亮，也是它能在工业界快速铺开的原因之一。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 210" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- OpenDevin 阶段 -->
+        <rect x="30" y="70" width="180" height="60" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="95" text-anchor="middle" font-weight="600">OpenDevin</text>
+        <text x="120" y="115" text-anchor="middle" fill="#96897A" font-size="10">2024.03 致敬 Devin</text>
+        <text x="120" y="150" text-anchor="middle" fill="#96897A" font-size="10">Qwen 团队发起</text>
+
+        <!-- 箭头 -->
+        <line x1="210" y1="100" x2="270" y2="100" stroke="#B54A2C" stroke-width="1.5" marker-end="url(#arrx)"/>
+        <text x="240" y="90" text-anchor="middle" fill="#B54A2C" font-size="10">改名</text>
+
+        <!-- OpenHands 阶段 -->
+        <rect x="270" y="70" width="180" height="60" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="360" y="95" text-anchor="middle" fill="#B54A2C" font-weight="600">OpenHands</text>
+        <text x="360" y="115" text-anchor="middle" fill="#B54A2C" font-size="10">2024.07 独立人格</text>
+        <text x="360" y="150" text-anchor="middle" fill="#96897A" font-size="10">All Hands AI 接管</text>
+
+        <!-- 箭头 -->
+        <line x1="450" y1="100" x2="510" y2="100" stroke="#24555A" stroke-width="1.5" marker-end="url(#arrx)"/>
+        <text x="480" y="90" text-anchor="middle" fill="#24555A" font-size="10">长大</text>
+
+        <!-- 现在 -->
+        <rect x="510" y="70" width="160" height="60" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="590" y="95" text-anchor="middle" fill="#24555A" font-weight="600">64K+ stars</text>
+        <text x="590" y="115" text-anchor="middle" fill="#24555A" font-size="10">ICLR 2025 / V1 SDK</text>
+        <text x="590" y="150" text-anchor="middle" fill="#96897A" font-size="10">SWE-bench 77.6%</text>
+
+        <text x="350" y="40" text-anchor="middle" fill="#B54A2C" font-weight="600">从"致敬"到"超越"：一个开源项目的成人礼</text>
+      </g>
+      <defs>
+        <marker id="arrx" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · OpenHands 的成长轨迹：OpenDevin（致敬）→ OpenHands（独立）→ 64K stars 的开源平台。一个项目的"成人礼"</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>放长视角看，OpenHands 的真正价值不在于某个跑分，而在于<em>它把"agent 平台"这件事从概念做成了基建</em>。</p>
+  <p>agent 这个词被滥用已经很久——任何带 LLM 调用 + 工具调用的系统都自称 agent。第 47 篇 SWE-agent 证明"接口比 agent 重要"，第 48 篇 Agentless 证明"无 agent 也能 SOTA"，OpenHands 证明的是第三件事：<em>不管你用不用 agent，这个领域要健康往前走，得先有一套公共地基</em>。这三篇合起来，把 agent 这个概念的边界、接口、平台三个维度都划清楚了——这比任何单项跑分都值钱。</p>
+  <p>更深一层，它和 Agentless 的"对垒"其实不是谁对谁错，而是<em>两个层面的正交问题</em>。Agentless 回答的是"修 bug 这件具体事，要不要 agent"——答案是不要。OpenHands 回答的是"整个 agent 生态，要不要公共地基"——答案是要。一个在优化"某栋楼"，一个在搭"地基"。产业落地的 coding agent（Cursor、Cline、Devin）大多是 Agentless 式的分阶段流水线 + 局部 agent 决策混合体，但它们<em>都跑在类似 OpenHands 的沙箱 + 事件流地基上</em>。换句话说，Agentless 赢了"范式落地"这一仗，OpenHands 赢了"基建落地"那一仗——它们不冲突。</p>
+  <p>放到今天看，预言性也很足。短短两年，OpenHands 从一个致敬闭源产品的开源项目，长成了 ICLR 2025 论文 + All Hands AI 公司 + 64K stars 的平台。它的 CodeAct agent 在 SWE-bench Verified 上从 26% 飙到 77.6%——<em>平台的价值会随模型变强而持续放大</em>，而流水线派的红利会随模型变强而收窄。这或许是它和 Agentless 最大的差别：流水线有天花板，平台没有。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    OpenHands 强调"通用 agent 不改 prompt 跑三类任务"，可 SWE-bench Lite 上它（26%）略输 Agentless（27.3%）。当模型强到某个临界点——能直接吃整个仓库、能自己生成并跑测试——<em>通用 agent 的天花板会不会反过来盖过专用流水线</em>？换句话说，"通用 vs 专精"的取舍，是不是也有一个"模型变强之后会自动反转"的保质期？
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>MASAI: Modular Architecture for Software-engineering AI Agents</h3>
+    <p style="margin:0;">OpenHands 搭好了通用 agent 平台，可 SE agent 到底该怎么分模块？微软研究院（MSR India）给了个答案：把一个大 agent 拆成几个子 agent，每个配专属策略——有的负责定位、有的负责改、有的负责验证——用"分而治之"在 SWE-bench Lite 上拿下 28.33%。当"通用平台派"和"无 agent 流水线派"吵得不可开交，MASAI 选了第三条路：<em>不是不要 agent，而是把 agent 拆成模块</em>。下一篇，我们看模块化架构怎么和通用平台、流水线三足鼎立。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 049 篇</span>
+    <span>2026-09-18</span>
+  </footer>
+
+</div>
+</body>
+</html>

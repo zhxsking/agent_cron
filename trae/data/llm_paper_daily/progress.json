@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 48,
-  "last_run_date": "2026-09-17",
+  "last_index": 49,
+  "last_run_date": "2026-09-18",
   "papers_covered": [
     {
       "index": 1,
@@ -386,10 +386,18 @@
       "date": "2024-07-01",
       "era": "前沿演进期 2023–2024",
       "filename": "48_20260917_Agentless.html"
+    },
+    {
+      "index": 49,
+      "title_en": "OpenHands: An Open Platform for AI Software Developers as Generalist Agents",
+      "title_zh": "OpenHands：把 AI 软件开发者做成开放平台——回到 agent 路线，但这次让 agent 通用起来",
+      "date": "2024-07-23",
+      "era": "前沿演进期 2023–2024",
+      "filename": "49_20260918_OpenHands.html"
     }
   ],
     "next_preview": {
-      "title_en": "OpenHands: An Open Platform for AI Software Developers as Generalist Agents",
-      "title_zh": "OpenHands：把 AI 软件开发者做成开放平台——回到 agent 路线，但这次让 agent 通用起来"
+      "title_en": "MASAI: Modular Architecture for Software-engineering AI Agents",
+      "title_zh": "MASAI：把 SE agent 拆成子智能体——微软研究院的模块化架构，用'分而治之'在 SWE-bench Lite 上拿下 28.33%"
     }
 }
