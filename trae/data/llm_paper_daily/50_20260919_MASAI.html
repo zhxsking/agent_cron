@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MASAI 论文精读 · 大模型经典论文系列 #050</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#050</span>
+  </div>
+
+  <h1 class="title">
+    MASAI: Modular Architecture for Software-engineering AI Agents
+    <span class="en">MASAI：把一个 agent 拆成五个子智能体——微软研究院的“分而治之”，在 SWE-bench Lite 上拿下 28.33%</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Daman Arora*, Atharv Sonwane*, Nalin Wadhwa*, Abhav Mehrotra, Saiteja Utpala, Ramakrishna Bairi, Aditya Kanade, Nagarajan Natarajan（*同等贡献）</span>
+    <span>机构：Microsoft Research India（微软研究院印度）</span>
+    <span>发表：2024-06 / arXiv v1</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2406.11638" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://www.swebench.com/" target="_blank" rel="noopener">SWE-bench</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">上篇我们讲完 OpenHands——它把 agent 做成一套开放平台，谁都能往里塞自己的 agent。可在它之前一个多月，微软研究院印度（MSR India）的一支团队已经悄悄抛出另一个问题：通用平台是有了，可“一个 SE agent 到底该怎么设计”？是把 LLM 扔进一个长循环里让它自己想、自己改、自己试，还是该像真正的工程师那样——先把活拆开，再分工？</p>
+  <p class="lead">2024 年 6 月 17 日，Daman Arora、Atharv Sonwane、Nalin Wadhwa 等八人把答案挂上 arXiv。他们的结论很反直觉：别让一个 agent 从头到尾“一条道走到黑”，那样轨迹又长又贵、上下文还塞满无关信息；把它拆成五个<em>目标明确、策略各异</em>的子智能体——有人负责摸清测试设施、有人负责复现 bug、有人负责定位、有人负责改、有人负责用测试排序——反而更准、更省。在 SWE-bench Lite 上，这套“分而治之”拿下 28.33%，成为当时开源 SOTA。当“通用平台派”和“无 agent 流水线派”吵得不可开交，MASAI 选了第三条路：<em>不是不要 agent，而是把 agent 拆成模块</em>。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    MASAI 把“修一个 GitHub issue”这件复杂事，拆给五个目标明确、策略各异的子智能体——Test Template Generator、Issue Reproducer、Edit Localizer、Fixer、Ranker——用 ReAct 做导航、CoT 做补丁采样、复现的测试做排序，在 SWE-bench Lite 上以 28.33% 登顶开源 SOTA。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>顺着这个系列的脉络，第 47 篇 <em class="latin">SWE-agent</em> 把 ReAct 的“思考-行动”循环落到真实仓库上，给出 ACI 接口设计，证明“接口比堆 agent 重要”；第 48 篇 <em class="latin">Agentless</em> 反手抽走“自主决策”，用一条死板流水线也能 SOTA；第 49 篇 <em class="latin">OpenHands</em> 把 agent 做成开放平台。三篇走完，SE agent 圈形成了两条主线：<em>通用平台派</em>和<em>无 agent 流水线派</em>。</p>
+  <p>MASAI 站在两条线中间，给出第三种解法。它既不否定“agent”这个主体（这点和 Agentless 划清界限），也不把所有事压给一个“长循环 agent”（这点和 SWE-agent 划清界限）。它的主张是：<em>agent 该用，但要按软件工程师的方式用——先分而治之，再各司其职</em>。这篇论文在脉络里的位置，是“模块化派”的奠基之作——它之后，把一个大 agent 拆成定位/修复/验证子模块，几乎成了 SE agent 设计的默认范式。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="135" x2="660" y2="135" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="10" fill="#96897A">
+        <circle cx="70" cy="135" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="70" y="120" text-anchor="middle">2022.10</text>
+        <text x="70" y="160" text-anchor="middle">ReAct</text>
+        <text x="70" y="175" text-anchor="middle" fill="#96897A" font-size="9">思考-行动循环</text>
+
+        <circle cx="170" cy="135" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="170" y="120" text-anchor="middle">2023.11</text>
+        <text x="170" y="160" text-anchor="middle">SWE-bench</text>
+        <text x="170" y="175" text-anchor="middle" fill="#96897A" font-size="9">真实仓库评测</text>
+
+        <circle cx="270" cy="135" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="270" y="120" text-anchor="middle">2024.05</text>
+        <text x="270" y="160" text-anchor="middle">SWE-agent</text>
+        <text x="270" y="175" text-anchor="middle" fill="#24555A" font-size="9">已解析 #47</text>
+
+        <circle cx="380" cy="135" r="8" fill="#B54A2C"/>
+        <text x="380" y="100" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="380" y="160" text-anchor="middle" fill="#2E2A22" font-weight="600">MASAI</text>
+        <text x="380" y="175" text-anchor="middle" fill="#B54A2C" font-size="9">模块化子智能体</text>
+
+        <circle cx="480" cy="135" r="4" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="480" y="120" text-anchor="middle">2024.07</text>
+        <text x="480" y="160" text-anchor="middle">Agentless / OpenHands</text>
+        <text x="480" y="175" text-anchor="middle" fill="#24555A" font-size="9">已解析 #48 #49</text>
+
+        <circle cx="610" cy="135" r="4" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="2 2"/>
+        <text x="610" y="120" text-anchor="middle">2024.08+</text>
+        <text x="610" y="160" text-anchor="middle">DEI</text>
+        <text x="610" y="175" text-anchor="middle" fill="#96897A" font-size="9">多样性集成</text>
+      </g>
+      <g font-family="JetBrains Mono" font-size="9" fill="#96897A">
+        <text x="350" y="222" text-anchor="middle">从“造一个长循环 agent”到“把 agent 拆成模块” →</text>
+        <text x="380" y="239" text-anchor="middle" fill="#B54A2C">↑ 本篇：模块化派奠基之作</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型 SE agent 的发展脉络：MASAI 是“模块化派”的起点，与 SWE-agent 的“长循环派”、Agentless 的“无 agent 流水线派”三足鼎立</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>2024 年上半年，SWE-bench Lite 成了 SE agent 圈最热闹的角斗场——300 个真实 GitHub issue，来自 11 个 Python 仓库，谁能在最少的提示下修好最多 issue，谁就是王者。SWE-agent、AutoCodeRover、Aider、OpenDevin……一批工作轮番上阵，思路却惊人地一致：<em>把 LLM 塞进一个长 ReAct 循环，让它自己想、自己调工具、自己改、自己再试</em>。</p>
+  <p>可这条路有三个绕不开的坑，论文开篇就点破了：</p>
+  <ul>
+    <li><em>单一策略难以通吃</em>：导航仓库要用“边想边调工具”的 ReAct，可生成补丁时连续推理（CoT）往往更稳。一个长循环从头到尾只能用一种策略，等于<em>用一把锤子拧所有螺丝</em>。</li>
+    <li><em>长轨迹又贵又脏</em>：一个循环跑下来，上下文塞满了沿途所有命令输出、文件片段、失败重试。这些“无关上下文”既烧推理成本，又会让模型分心、性能下滑（论文专门引用了 lost-in-the-middle 现象）。</li>
+    <li><em>信息散落各处</em>：修一个 bug，可能要去 README 找测试怎么跑、去 test 文件找用法、去源码找根因。一个 agent 在同一根上下文里来回翻，很容易<em>捡了芝麻丢了西瓜</em>。</li>
+  </ul>
+  <p>更有意思的是，作者们注意到一个反直觉的事实：软件工程师自己面对复杂 bug 时，<em>从不一上来就埋头改</em>。他们先复现、再定位、再改、再用测试验——每个阶段用的策略还不一样。MASAI 的灵感正来源于此：既然人这么干活更靠谱，agent 为什么不能学？</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象一家小修车铺。一种修法是雇一个“全能师傅”，从接车、诊断、拆件、换件、试车全包——他确实什么都懂，但活一多就容易顾此失彼，工具摊一地，前面拆的螺丝转眼就忘了在哪儿。另一种修法是按工位分工：前台只管复现故障、诊断师傅只管找病根、维修师傅只管换件、质检员只管跑测试出报告——每个工位只盯一件事，策略各不相同。MASAI 选的是后一种，把“修一个 issue”拆成五个工位，每个工位是一个<em>目标单一、策略定制</em>的子智能体。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>论文要回答的问题，可以浓缩成一句：能不能把“修一个仓库级 issue”这件复杂事，<em>模块化拆给多个目标明确的子智能体</em>，让每个子智能体用最适合它的策略，既绕开长循环的贵与脏，又比无 agent 流水线更准？</p>
+  <p>这个问题里藏着 MASAI 最关键的两个设计取舍。第一，<em>“模块化”不等于“多智能体对话”</em>——它刻意不要 AutoGen、MetaGPT 那种 agent 之间互相聊天的协作，而是把输出从一个子智能体直接喂给下一个，像流水线一样单向传递。第二，<em>不同子智能体可以用不同策略</em>——这是它和“一个长循环用同一种策略”最大的分野。论文用一句话点题：“当问题复杂度上升，很难再设计一个能横扫所有情况的单一策略。”</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果你要把“修 bug”拆成五个子智能体，你会怎么分？先别往下看，自己在心里列五条：谁负责什么、用什么策略。读完下面的架构，对比你想的分法差在哪。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>MASAI 的核心抽象很简洁。一个 <em class="latin">MASAI agent</em> 是若干 <em class="latin">MASAI sub-agent</em> 的组合；每个子智能体用一个三元组定义：<em class="latin">⟨Input, Strategy, Output⟩</em>——输入是什么、用什么策略解题、产出什么。子智能体之间不聊天，只靠“把上一个的输出当成下一个的输入”串成流水线。为了和真实仓库交互，所有子智能体共享一套七动作的动作空间。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 360" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrowA" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 输入 -->
+        <rect x="20" y="20" width="150" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="95" y="40" text-anchor="middle">仓库 + Issue</text>
+        <text x="95" y="55" text-anchor="middle" fill="#96897A" font-size="10">输入</text>
+
+        <!-- 左轨：测试轨 -->
+        <rect x="200" y="20" width="150" height="44" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="275" y="38" text-anchor="middle" fill="#24555A" font-weight="600">① Test Template Gen</text>
+        <text x="275" y="55" text-anchor="middle" fill="#24555A" font-size="10">策略 ReAct · 摸清测试设施</text>
+
+        <rect x="200" y="100" width="150" height="44" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="275" y="118" text-anchor="middle" fill="#24555A" font-weight="600">② Issue Reproducer</text>
+        <text x="275" y="135" text-anchor="middle" fill="#24555A" font-size="10">策略 ReAct · 写复现测试</text>
+
+        <!-- 右轨：修复轨 -->
+        <rect x="380" y="20" width="150" height="44" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="455" y="38" text-anchor="middle" fill="#B54A2C" font-weight="600">③ Edit Localizer</text>
+        <text x="455" y="55" text-anchor="middle" fill="#B54A2C" font-size="10">策略 ReAct · 定位编辑点</text>
+
+        <rect x="380" y="100" width="150" height="44" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="455" y="118" text-anchor="middle" fill="#B54A2C" font-weight="600">④ Fixer</text>
+        <text x="455" y="135" text-anchor="middle" fill="#B54A2C" font-size="10">策略 CoT · 采样多补丁</text>
+
+        <!-- 汇聚：Ranker -->
+        <rect x="270" y="200" width="160" height="48" rx="2" fill="#2E2A22"/>
+        <text x="350" y="220" text-anchor="middle" fill="#F4EFE4" font-weight="600">⑤ Ranker</text>
+        <text x="350" y="237" text-anchor="middle" fill="#F4EFE4" font-size="10">用复现测试给补丁排序</text>
+
+        <!-- 输出 -->
+        <rect x="290" y="290" width="120" height="44" rx="2" fill="#24555A"/>
+        <text x="350" y="310" text-anchor="middle" fill="#F4EFE4">一个 patch</text>
+        <text x="350" y="325" text-anchor="middle" fill="#F4EFE4" font-size="10">输出</text>
+
+        <!-- 箭头：输入分流 -->
+        <line x1="170" y1="40" x2="200" y2="42" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)"/>
+        <line x1="170" y1="44" x2="380" y2="42" stroke="#96897A" stroke-width="1" marker-end="url(#arrow)"/>
+
+        <!-- 测试轨箭头 -->
+        <line x1="275" y1="64" x2="275" y2="100" stroke="#24555A" stroke-width="1" marker-end="url(#arrow)"/>
+        <line x1="275" y1="144" x2="320" y2="200" stroke="#24555A" stroke-width="1" marker-end="url(#arrow)"/>
+        <text x="240" y="180" text-anchor="middle" fill="#24555A" font-size="9">复现测试</text>
+
+        <!-- 修复轨箭头 -->
+        <line x1="455" y1="64" x2="455" y2="100" stroke="#B54A2C" stroke-width="1" marker-end="url(#arrow)"/>
+        <line x1="455" y1="144" x2="400" y2="200" stroke="#B54A2C" stroke-width="1" marker-end="url(#arrow)"/>
+        <text x="475" y="180" text-anchor="middle" fill="#B54A2C" font-size="9">候选补丁</text>
+
+        <!-- Ranker→输出 -->
+        <line x1="350" y1="248" x2="350" y2="290" stroke="#2E2A22" stroke-width="1" marker-end="url(#arrow)"/>
+
+        <!-- 轨道标签 -->
+        <text x="275" y="175" text-anchor="middle" fill="#24555A" font-size="10" font-weight="600">测试轨</text>
+        <text x="455" y="175" text-anchor="middle" fill="#B54A2C" font-size="10" font-weight="600">修复轨</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · MASAI 五子智能体架构与信息流：测试轨（①②→⑤）和修复轨（③④→⑤）在 Ranker 汇聚，复现测试成为排序补丁的“裁判”</figcaption>
+  </figure>
+
+  <h3>基础动作空间：七个动作</h3>
+  <p>所有子智能体共享一套极简动作空间，和 SWE-agent 的 ACI 思路一脉相承——<em>动作少而精，让模型不至于在动作选择上犯晕</em>：</p>
+  <ul>
+    <li><code class="mono">READ(file, class, function)</code>：读取文件/类/函数。读文件只给顶层定义签名，读函数才给完整函数体——<em>懒表示</em>，避免一上来就灌满上下文。</li>
+    <li><code class="mono">EDIT(file, class, function)</code>：标记一段要改的代码（只在唯一匹配时才标记，否则返回候选列表让模型细化查询）。</li>
+    <li><code class="mono">ADD(file)</code>：标记一个文件要新增代码（文件必须已存在）。</li>
+    <li><code class="mono">WRITE(file, contents)</code>：写入指定内容到文件。</li>
+    <li><code class="mono">LIST(folder)</code>：列目录。</li>
+    <li><code class="mono">COMMAND(command)</code>：在 shell 执行命令（带超时和长输出截断）。</li>
+    <li><code class="mono">DONE</code>：声明本子智能体目标完成。</li>
+  </ul>
+  <p>注意一个细节：<em>不是每个子智能体都拿全部动作</em>。Fixer 干脆“无动作可用”——它只读 Edit Localizer 给的代码片段，闭门生成补丁；Ranker 也只跑测试做排序。这种“按需分配动作”正是模块化的好处：每个子智能体的动作空间被剪到刚好够用，上下文不会被无关动作污染。</p>
+
+  <h3>子智能体一：Test Template Generator——先搞清楚怎么跑测试</h3>
+  <p>它只干一件事：<em>摸清这个仓库的测试基础设施</em>。策略用 ReAct，动作是 READ/LIST/COMMAND/WRITE/DONE。它读 README、翻现有测试、自己试着跑命令，直到生成一个“和 issue 无关”的模板测试用例，外加一条能跑通的执行命令。它会反复重试到模板能无异常通过为止。这一步看起来琐碎，却是后面一切的地基——<em>连测试怎么跑都不知道，谈何复现和验证</em>。</p>
+
+  <h3>子智能体二：Issue Reproducer——先把 bug 真正复现出来</h3>
+  <p>它拿到上一步的模板和命令，再读 issue 描述，写一个能复现 issue 行为的测试——而且这个测试在 bug 修好后，状态会从 fail 翻成 pass。策略仍是 ReAct。这一步是 MASAI 区别于大多数同类工作的灵魂：<em>先复现，再修</em>。复现测试不是摆设，它将在最后成为 Ranker 给补丁排序的“裁判”。</p>
+
+  <h3>子智能体三：Edit Localizer——别盲改，先定位</h3>
+  <p>它用 ReAct 在仓库里导航，READ/LIST/EDIT/ADD/COMMAND/DONE 全开，找出该改的文件、类、函数，用 EDIT/ADD 把这些位置标记出来。如果 ReAct 跑完没标记任何位置，它就退而求其次，从自己读过的位置里挑一组。论文 RQ3 专门对比了它和朴素的 RAG 检索定位——结果很说明问题（见实验结果）。</p>
+
+  <h3>子智能体四：Fixer——闭门采样，多出几个候选</h3>
+  <p>这是策略切换最妙的一环。Fixer 拿到 issue 描述和 Edit Localizer 标出的代码片段，<em>没有动作可用</em>，策略换成 CoT，连续采样生成多个候选补丁。为什么用 CoT 不用 ReAct？因为生成补丁是个“想清楚再写”的活，不需要边写边调工具——而且<em>采样多个</em>给后面留出排序空间。这一步是 MASAI 摆脱“一条道走到黑”的关键：与其让 LLM 改一次失败就陷在长循环里反复重试，不如一次性多采几个、最后一起挑。</p>
+
+  <h3>子智能体五：Ranker——用复现测试当裁判</h3>
+  <p>Ranker 拿到 Fixer 的多个候选补丁和 Issue Reproducer 写的复现测试，把这些补丁逐个跑测试，看哪个能让测试从 fail 翻 pass。能翻的排前面，最终输出排第一的那个补丁。这一步把“复现→修复→验证”真正闭成了环：<em>同一个测试，先复现 bug，后验证修复</em>。论文 RQ4 的数据证明，这个“带测试的排序”比“让 LLM 凭感觉排序”或“随机挑”都强得多。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <rect x="10" y="75" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="70" y="95" text-anchor="middle">仓库 + Issue</text>
+        <text x="70" y="112" text-anchor="middle" fill="#96897A" font-size="9">scikit-learn #13142</text>
+        <text x="70" y="124" text-anchor="middle" fill="#96897A" font-size="9">GaussianMixture 不一致</text>
+
+        <rect x="160" y="75" width="110" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="215" y="95" text-anchor="middle" fill="#24555A">①模板测试</text>
+        <text x="215" y="112" text-anchor="middle" fill="#24555A" font-size="9">ReAct</text>
+
+        <rect x="295" y="75" width="110" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="350" y="95" text-anchor="middle" fill="#24555A">②复现测试</text>
+        <text x="350" y="112" text-anchor="middle" fill="#24555A" font-size="9">fail → pass</text>
+
+        <rect x="430" y="40" width="110" height="50" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="485" y="60" text-anchor="middle" fill="#B54A2C">③定位编辑点</text>
+        <text x="485" y="77" text-anchor="middle" fill="#B54A2C" font-size="9">ReAct</text>
+
+        <rect x="430" y="110" width="110" height="50" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="485" y="130" text-anchor="middle" fill="#B54A2C">④采样多补丁</text>
+        <text x="485" y="147" text-anchor="middle" fill="#B54A2C" font-size="9">CoT</text>
+
+        <rect x="565" y="75" width="120" height="50" rx="2" fill="#2E2A22"/>
+        <text x="625" y="95" text-anchor="middle" fill="#F4EFE4">⑤Ranker</text>
+        <text x="625" y="112" text-anchor="middle" fill="#F4EFE4" font-size="9">跑测试排序</text>
+
+        <line x1="130" y1="100" x2="160" y2="100" stroke="#96897A" marker-end="url(#arrow3)"/>
+        <line x1="270" y1="100" x2="295" y2="100" stroke="#96897A" marker-end="url(#arrow3)"/>
+        <line x1="130" y1="95" x2="430" y2="60" stroke="#96897A" marker-end="url(#arrow3)"/>
+        <line x1="130" y1="105" x2="430" y2="125" stroke="#96897A" marker-end="url(#arrow3)"/>
+        <line x1="405" y1="100" x2="565" y2="95" stroke="#96897A" marker-end="url(#arrow3)"/>
+        <line x1="540" y1="70" x2="565" y2="92" stroke="#96897A" marker-end="url(#arrow3)"/>
+        <line x1="540" y1="130" x2="565" y2="108" stroke="#96897A" marker-end="url(#arrow3)"/>
+
+        <text x="350" y="30" text-anchor="middle" fill="#B54A2C" font-weight="600">端到端流水线：复现 → 定位 → 采样 → 排序</text>
+        <text x="350" y="180" text-anchor="middle" fill="#96897A" font-size="9">实线箭头表示信息单向传递（子智能体之间不对话）</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · MASAI 端到端流水线（以 scikit-learn #13142 为例）：测试轨产出复现测试，修复轨产出候选补丁，两条轨在 Ranker 交汇</figcaption>
+  </figure>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    传统长循环 agent 像一个“从头包到尾”的全能师傅——接车、诊断、拆件、换件、试车全他一个人干，活一多就顾此失彼，工具摊一地，前面拆的螺丝转眼忘在哪儿。MASAI 像一家按工位分工的修车铺：前台只管复现故障、诊断师傅只管找病根、维修师傅只管换件、质检员只管跑测试出报告。每个工位只盯一件事、用最顺手的工具，师傅之间不闲聊，只递交接车单。少说话、多干活，正是 MASAI 刻意避开“多智能体对话”的原因。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>MASAI 在 SWE-bench Lite 上用 GPT-4o 当底座，拿到 28.33% 的解决率——当时开源 SOTA，压过 SWE-agent、AutoCodeRover、Aider、OpenDevin 等一众同期工作。但论文最有价值的不是这个总分，而是它把每个设计决策都拆开做了消融，告诉你<em>到底是哪一步在起作用</em>。</p>
+
+  <h3>发现一：ReAct 定位，远胜朴素 RAG</h3>
+  <p>RQ3 对比 Edit Localizer 的 ReAct 导航和朴素的 RAG 检索定位。结果是：RAG 能定位到 126 个相关位置却只修好 12 个；MASAI 的 ReAct 定位修好 52 个，<em>相对提升 31.7%</em>。结论很直白：定位这步，得让模型主动在仓库里“逛”起来，光靠嵌入相似度检索不够。</p>
+
+  <h3>发现二：采样+排序，碾压迭代修复</h3>
+  <p>这是全文最漂亮的对照实验（RQ4）。Fixer 一次性采样 5 个候选补丁，再由 Ranker 用复现测试排序——这套打法能恢复“上帝视角”潜能的多少？</p>
+
+  <table>
+    <thead>
+      <tr><th>选择策略</th><th>1 个样本</th><th>5 个样本</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">Oracle（上帝视角，理论天花板）</td><td>23.33%</td><td>35.00%</td></tr>
+      <tr><td class="text">Random（随机挑）</td><td>—</td><td>22.28%</td></tr>
+      <tr><td class="text">LLM 无测试（让模型凭感觉排序）</td><td>—</td><td>23.33%</td></tr>
+      <tr><td class="text">LLM 带测试（Ranker，本文方法）</td><td>—</td><td>28.33%</td></tr>
+    </tbody>
+  </table>
+
+  <p>读这张表要看三个对比。第一，<em>采样多比采样少强</em>：上帝视角下 1 个样本 23.33%、5 个样本 35.00%，多采样把天花板抬高了 12 个百分点。第二，<em>光采样不排序没用</em>：随机挑只有 22.28%，比单采样还低——候选多了反而容易挑错。第三，也是最关键的——<em>复现测试是排序的灵魂</em>：让 LLM 不带测试排序只有 23.33%，几乎没比随机好；可一旦像 MASAI 那样用复现测试当裁判（Ranker），直接飙到 28.33%，吃下了上帝视角 35% 里的一大半。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 坐标轴 -->
+        <line x1="80" y1="240" x2="660" y2="240" stroke="#96897A" stroke-width="1"/>
+        <line x1="80" y1="240" x2="80" y2="40" stroke="#96897A" stroke-width="1"/>
+        <!-- y 轴刻度 -->
+        <g font-size="10" fill="#96897A" text-anchor="end">
+          <text x="74" y="244">0</text>
+          <text x="74" y="190">10</text>
+          <text x="74" y="136">20</text>
+          <text x="74" y="82">30</text>
+          <text x="74" y="44">40</text>
+          <line x1="76" y1="190" x2="80" y2="190" stroke="#96897A"/>
+          <line x1="76" y1="136" x2="80" y2="136" stroke="#96897A"/>
+          <line x1="76" y1="82" x2="80" y2="82" stroke="#96897A"/>
+          <line x1="76" y1="44" x2="80" y2="44" stroke="#96897A"/>
+        </g>
+        <text x="40" y="140" text-anchor="middle" fill="#96897A" font-size="10" transform="rotate(-90 40 140)">解决率 (%)</text>
+
+        <!-- Oracle 5 samples 35% -->
+        <rect x="120" y="49" width="70" height="191" fill="#96897A" fill-opacity="0.25" stroke="#96897A"/>
+        <text x="155" y="42" text-anchor="middle" fill="#2E2A22" font-weight="600">35.00</text>
+        <text x="155" y="260" text-anchor="middle" fill="#96897A" font-size="10">Oracle</text>
+        <text x="155" y="273" text-anchor="middle" fill="#96897A" font-size="9">5 样本·天花板</text>
+
+        <!-- Ranker w/ test 28.33% -->
+        <rect x="230" y="87" width="70" height="153" fill="#B54A2C" fill-opacity="0.85" stroke="#B54A2C"/>
+        <text x="265" y="80" text-anchor="middle" fill="#B54A2C" font-weight="600">28.33</text>
+        <text x="265" y="260" text-anchor="middle" fill="#B54A2C" font-size="10" font-weight="600">Ranker 带测试</text>
+        <text x="265" y="273" text-anchor="middle" fill="#B54A2C" font-size="9">本文方法</text>
+
+        <!-- LLM w/o test 23.33% -->
+        <rect x="340" y="114" width="70" height="126" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="375" y="107" text-anchor="middle" fill="#2E2A22">23.33</text>
+        <text x="375" y="260" text-anchor="middle" fill="#96897A" font-size="10">LLM 无测试</text>
+        <text x="375" y="273" text-anchor="middle" fill="#96897A" font-size="9">凭感觉排序</text>
+
+        <!-- Random 22.28% -->
+        <rect x="450" y="120" width="70" height="120" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="485" y="113" text-anchor="middle" fill="#2E2A22">22.28</text>
+        <text x="485" y="260" text-anchor="middle" fill="#96897A" font-size="10">Random</text>
+        <text x="485" y="273" text-anchor="middle" fill="#96897A" font-size="9">随机挑</text>
+
+        <!-- 1 sample 23.33% -->
+        <rect x="560" y="114" width="70" height="126" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="595" y="107" text-anchor="middle" fill="#2E2A22">23.33</text>
+        <text x="595" y="260" text-anchor="middle" fill="#96897A" font-size="10">Oracle 1 样本</text>
+        <text x="595" y="273" text-anchor="middle" fill="#96897A" font-size="9">单采样天花板</text>
+
+        <!-- 标注：测试带来的提升 -->
+        <line x1="265" y1="87" x2="375" y2="114" stroke="#B54A2C" stroke-width="1" stroke-dasharray="3 3"/>
+        <text x="330" y="95" text-anchor="middle" fill="#B54A2C" font-size="9">+5.0 ← 测试当裁判</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · RQ4 关键对照：带复现测试的 Ranker（28.33%）吃下上帝视角（35%）的大半，而“凭感觉排序”几乎没比随机挑强——复现测试是排序的灵魂</figcaption>
+  </figure>
+
+  <p>这张表还顺带戳破了当时一个流行迷信：很多人相信“让 agent 在长循环里反复自我修复”是最强打法。MASAI 用数据反驳了它——<em>与其让模型改一次失败就在循环里反复重试，不如一次性多采几个、最后用测试一起挑</em>。迭代修复会把模型困在失败的上下文里越陷越深，采样+排序则给它一次“重新开始”的机会。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>MASAI 的影响是<em>范式级</em>的，它给 SE agent 圈立了一根新的设计坐标系。</p>
+  <p><em>第一，把“模块化”立成默认范式</em>。在它之前，SE agent 主流是“一个长循环 agent”；在它之后，把一个大 agent 拆成定位/修复/验证子模块，几乎成了新工作的默认起点。后续无论是 HyperAgent 的 Planner/Navigator/Editor/Executor，还是各类“定位-修复-验证”三段式工作，都能看到 MASAI 的影子。论文那句“当问题复杂度上升，很难再设计一个能横扫所有情况的单一策略”，成了这个圈子的共识。</p>
+  <p><em>第二，把“复现测试”抬到一等公民</em>。在它之前，很多 agent 只在最后被动跑 held-out 测试判输赢；MASAI 把“先复现、再用复现测试排序补丁”做成显式环节，证明了“测试不只是判官，更是排序信号”。这个思路后来被 DEI、Kozuchi 等一众工作继承——<em>测试驱动的候选排序</em>成了 SWE-bench 上的标准操作。</p>
+  <p><em>第三，把“分而治之”带进 agent 设计</em>。它和 SWE-agent 的“接口派”、Agentless 的“流水线派”、OpenHands 的“平台派”一起，把 SE agent 的设计空间划出了四个正交维度：<em>接口、流水线、模块、平台</em>。后来者要造新 agent，几乎都得先回答“我站哪个维度、和 MASAI 的模块化差在哪”。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>论文第 7 节标题就叫 <em class="latin">Limitations</em>，作者自己也坦承短板。</p>
+  <p><em>第一，强依赖复现测试</em>。Ranker 的全部威力来自“能复现 bug 的测试”。可不是每个 issue 都能写出干净的复现测试——有些是性能退化、有些是 UI 行为、有些要复杂环境才能触发。一旦复现写不出来，排序信号就没了，整套打法的红利大幅缩水。论文承认这点，把“弱复现场景下的鲁棒性”列为开放问题。</p>
+  <p><em>第二，模块边界是手工设计的</em>。五个子智能体、各自的目标和策略，都是人凭工程直觉定的。这套划分在 SWE-bench Lite 上好用，换到别的任务形态（比如写新功能、做重构）未必最优。如何自动学到“最优模块划分”，论文没回答，留给了后续的动态编排路线（第 44、45 篇的 puppeteer、MAS-Orchestra 正是在接这棒）。</p>
+  <p><em>第三，子智能体之间不对话，信息只单向传递</em>。这是优点（省、不跑偏），也是局限——当定位错了，Fixer 只能在错误位置上盲改，Ranker 也只能在错补丁里挑“最不烂的”，没有“回头让 Localizer 重定位”的反馈回路。后来 Reflexion、CRITIC 那条“自我纠正”线，正是补这个缺口。</p>
+  <p><em>第四，SOTA 红利短命</em>。28.33% 的开源 SOTA 只守了很短一段时间——Agentless、OpenHands、DEI 等紧随其后。但这恰恰说明模块化思路被迅速吸收和超越了，而不是被否定。MASAI 的价值不在某个分数，而在它立的坐标系。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把 MASAI 放回整个 LLM agent 发展的脉络里看，它的位置是<em>“模块化派”的开山之作</em>。</p>
+  <p>起步期，<em class="latin">ReAct</em>（第 35 篇）确立了“思考-行动-观察”循环范式，那时大家调调搜索引擎、跑跑计算器就心满意足。<em class="latin">Toolformer</em>、<em class="latin">Voyager</em> 把工具调用焊进模型权重，但场景仍是单文件级的代码生成。真实仓库级这个战场，长期是空白。</p>
+  <p>2023 年底 SWE-bench 一出，这块空白被显式化——3.8% 的成绩等于在喊“现有 agent 范式不够”。SWE-agent（第 47 篇）接住这棒，把 ReAct 循环落到软件工程环境里，给出 ACI 接口设计框架。Devin（闭源引爆）把“AI 软件工程师”这个词炒热。Agentless（第 48 篇）反手说“别用 agent 也能 SOTA”。OpenHands（第 49 篇）把 agent 做成开放平台。</p>
+  <p>MASAI 在这条时间线上的位置，是<em>第三条路的开端</em>。它不否定 SWE-agent 的“接口设计”结论，也不否定 Agentless 的“分阶段”结论——它回答的是：“agent 该用，但要按工程师的方式用——先分而治之，再各司其职”。它之后，整个 SE agent 圈形成了四足鼎立的格局：接口派、流水线派、模块派、平台派。下一篇要讲的 DEI，则是从“多样性”这个全新角度，给模块派和流水线派都补了一记重拳——它发现<em>不同的 agent 解的题竟然不一样</em>，组队反而更强。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>MASAI 这篇论文，背后细节比代码有意思。</p>
+  <p><em>第一，名字是个巧妙的双关</em>。MASAI 既是 <em class="latin">Modular Architecture for Software-engineering AI</em> 的首字母缩写，又恰好拼成“Maasai”——东非草原上那个以勇敢和集体协作著称的游牧民族“马赛人”。团队有没有意借用这层意思，论文没说，但“分工协作、各司其职”的画面感，和论文的主张惊人地契合。一个缩写同时喊出了“模块化”和“集体协作”，算是起名界的彩蛋。</p>
+  <p><em>第二，微软研究院印度的“软件工程 + AI”老牌据点</em>。这篇八位作者全来自 MSR India，通讯作者是 Aditya Kanade 和 Nagarajan Natarajan。MSR India 长期在程序分析、自动推理、软件工程 AI 上深耕，这篇不是孤例——它和后面一连串 SE agent 工作形成了微软在这个方向上的持续投入。值得注意的是，三位一作 Daman Arora、Atharv Sonwane、Nalin Wadhwa 标注“同等贡献、按字母序排列”——这种把功劳平摊给学生作者的标注，在工业研究院里算相当厚道。</p>
+  <p><em>第三，示例选得很有戏</em>。论文 Figure 2 用的示例是 scikit-learn 的 issue #13142——两个 <em class="latin">GaussianMixture</em> 相关函数行为不一致。选这个当例子有讲究：它不是那种“一眼能看出哪儿错”的简单 bug，但也不至于复杂到看不懂——刚好能让人跟着五个子智能体的流程走一遍，体会“先复现、再定位、再采样、再排序”是怎么一步步收敛的。挑示例的水平，往往比挑方法更能看出一个团队会不会讲故事。</p>
+  <p><em>第四，SOTA 只守了一小会儿</em>。28.33% 登顶开源 SOTA 的时候，论文还特意老实写了一句：“这个领域很新、变得很快，图 1 里所有方法都是过去三个月内做出来的。”果不其然，Agentless、OpenHands、DEI 紧随其后就把分数刷上去了。但 MASAI 没有被“分数被超”这件事困住——因为后来者几乎都在用它立的“模块化”坐标系里说话。这或许是论文最体面的结局：<em>SOTA 会被刷掉，坐标系不会被刷掉</em>。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 项目经理 MASAI -->
+        <circle cx="350" cy="60" r="34" fill="#2E2A22"/>
+        <text x="350" y="56" text-anchor="middle" fill="#F4EFE4" font-weight="600">MASAI</text>
+        <text x="350" y="72" text-anchor="middle" fill="#F4EFE4" font-size="9">项目经理</text>
+        <text x="350" y="110" text-anchor="middle" fill="#96897A" font-size="10">“别一个人扛，分五个工位”</text>
+
+        <!-- 五个工位 -->
+        <g font-size="10">
+          <rect x="30" y="150" width="110" height="48" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+          <text x="85" y="170" text-anchor="middle" fill="#24555A">① 摸测试设施</text>
+          <text x="85" y="186" text-anchor="middle" fill="#24555A" font-size="9">ReAct</text>
+
+          <rect x="160" y="150" width="110" height="48" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+          <text x="215" y="170" text-anchor="middle" fill="#24555A">② 复现 bug</text>
+          <text x="215" y="186" text-anchor="middle" fill="#24555A" font-size="9">ReAct</text>
+
+          <rect x="290" y="150" width="110" height="48" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+          <text x="345" y="170" text-anchor="middle" fill="#B54A2C">③ 定位编辑点</text>
+          <text x="345" y="186" text-anchor="middle" fill="#B54A2C" font-size="9">ReAct</text>
+
+          <rect x="420" y="150" width="110" height="48" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+          <text x="475" y="170" text-anchor="middle" fill="#B54A2C">④ 采样补丁</text>
+          <text x="475" y="186" text-anchor="middle" fill="#B54A2C" font-size="9">CoT</text>
+
+          <rect x="550" y="150" width="120" height="48" rx="2" fill="#2E2A22" fill-opacity="0.12" stroke="#2E2A22"/>
+          <text x="610" y="170" text-anchor="middle">⑤ 排序选最优</text>
+          <text x="610" y="186" text-anchor="middle" font-size="9">跑测试</text>
+        </g>
+
+        <!-- 连线 -->
+        <line x1="320" y1="90" x2="85" y2="150" stroke="#96897A" stroke-width="1" stroke-dasharray="3 3"/>
+        <line x1="330" y1="92" x2="215" y2="150" stroke="#96897A" stroke-width="1" stroke-dasharray="3 3"/>
+        <line x1="350" y1="94" x2="345" y2="150" stroke="#96897A" stroke-width="1" stroke-dasharray="3 3"/>
+        <line x1="370" y1="92" x2="475" y2="150" stroke="#96897A" stroke-width="1" stroke-dasharray="3 3"/>
+        <line x1="380" y1="90" x2="610" y2="150" stroke="#96897A" stroke-width="1" stroke-dasharray="3 3"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 一个项目经理（MASAI）把活拆给五个工位专员：每个工位目标单一、策略定制，专员之间不闲聊、只递交接车单</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>放长视角看，MASAI 的真正贡献不在于 28.33% 这个分数，而在于它给 SE agent 圈立了<em>一根新的设计坐标轴</em>：模块化。</p>
+  <p>第 47 篇 SWE-agent 证明“接口比 agent 重要”，第 48 篇 Agentless 证明“无 agent 也能 SOTA”，第 49 篇 OpenHands 证明“这个领域要公共地基”。MASAI 证明的是第四件事：<em>agent 该用，但要按工程师的方式用——先分而治之，再各司其职</em>。这四篇合起来，把 SE agent 的设计空间划出了四个正交维度。后来者要造新 agent，几乎都得先回答“我站哪个维度、和别人差在哪”——这种“坐标系”层面的贡献，远比单项跑分值钱。</p>
+  <p>更深一层，MASAI 和 Agentless 的“对垒”其实不是谁对谁错，而是<em>两个层面的互补</em>。Agentless 回答的是“修 bug 这件具体事，能不能不靠自主决策”——能。MASAI 回答的是“agent 该怎么组织才更高效”——按模块拆、各用各的策略、最后用测试排序。一个在质疑“要不要 agent”，一个在优化“agent 怎么搭”。产业落地的 coding agent（Cursor、Cline、Devin）大多是 Agentless 式的分阶段流水线 + 局部 agent 决策的混合体，但流水线里的每个 agent，几乎都是 MASAI 式的<em>目标单一、策略定制</em>的子模块。换句话说，Agentless 赢了“要不要 agent”这一仗，MASAI 赢了“agent 内部怎么组织”那一仗——它们不冲突，甚至合在一起才是产业最优解。</p>
+  <p>放到今天看，MASAI 最经得起时间检验的设计，是“复现测试当排序裁判”这一招。在模型还不够强时，靠测试信号从一堆候选里挑最优，是性价比最高的打法。可当模型强到某个临界点——能一次性生成正确补丁、能自己跑测试自我纠正——这套“采样+排序”的红利会不会收窄？这或许是它和 Agentless 共同的“保质期”问题。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    MASAI 的 Ranker 全靠“能复现 bug 的测试”当裁判。可如果一个 issue 根本写不出干净的复现测试（比如“某个图表渲染颜色偏了”），整套排序信号就失效。你觉得这种“弱复现”场景，是该换个排序信号（比如让 LLM 当裁判），还是干脆回到“一个长循环 agent 自己试”？换句话说，<em>当测试信号不可靠时，模块化派还剩什么</em>？
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Diversity Empowers Intelligence: Integrating Expertise of Software Engineering Agents</h3>
+    <p style="margin:0;">MASAI 把一个 agent 拆成五个子智能体，可 Salesforce AI Research 偏要问另一个问题：如果<em>不同的 agent 解的题根本不一样</em>——Aider 解的、Moatless 解的、Agentless 解的、OpenDevin 解的，解集几乎不重叠——那把它们组队，会不会反杀最强单 agent？他们用 DEI 框架给出答案：一组开源 agent 单兵最高 27.3%，组队后 34.3%，最强组合冲到 55%。论文里那句“一座花园的美，从不只在一朵花”成了点睛之笔。当“模块化派”讲分而治之，“多样性集成派”讲百花齐放——下一篇，看 SE agent 怎么从“分治”走向“集成”。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 050 篇</span>
+    <span>2026-09-19</span>
+  </footer>
+
+</div>
+</body>
+</html>
