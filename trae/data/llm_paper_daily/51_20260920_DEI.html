@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEI 论文精读 · 大模型经典论文系列 #051</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#051</span>
+  </div>
+
+  <h1 class="title">
+    Diversity Empowers Intelligence: Integrating Expertise of Software Engineering Agents
+    <span class="en">DEI：多样即智慧——不同 SWE agent 解的题竟几乎不重叠，组队后 34.3% 反杀最强单 agent，ICLR 2025 的多样性集成范式</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Kexun Zhang, Weiran Yao, Zuxin Liu, Yihao Feng, Zhiwei Liu, Rithesh Murthy, Tian Lan, Lei Li, Renze Lou, Jiacheng Xu, Bo Pang, Yingbo Zhou, Shelby Heinecke, Silvio Savarese, Huan Wang, Caiming Xiong</span>
+    <span>机构：Salesforce AI Research / Carnegie Mellon University</span>
+    <span>发表：2024-08 / arXiv（ICLR 2025 录用）</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2408.07060" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/SalesforceAIResearch/DEI" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://salesforce-research-dei-agents.github.io/" target="_blank" rel="noopener">Project</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">想象一家软件公司里有四位顶尖工程师，每人都能独立修好约 27% 的 GitHub bug。你也许会想：选最强的那位、把奖金全发给他就行。可当你把四人各自修好的 bug 清单摊在桌上一比，会看到一个反直觉的画面——他们修好的题，几乎不重叠。</p>
+  <p class="lead">换句话说，这不是"谁更强"的问题，而是"谁擅长哪一类题"。Aider 擅长改 diff、Moatless 擅长搜代码、Agentless 不让模型自己决策、OpenDevin 先复现 bug 再动手——四套手艺，四拨人马。本文要回答的问题是：能不能别再卷"单一最强 agent"，转而把这些各有所长的 agent 组成一个"评审委员会"，让它们合力？</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    不同 SWE agent 各有所长、解的题几乎不重叠；DEI 用一个挂在所有 agent 之上的"元模块 + 重排序"委员会，把开源组合的解决率从 27.3% 拉到 34.3%（+25%），最佳组合冲到 55%，登顶 SWE-Bench Lite。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>把镜头拉远，这是大模型"软件工程 agent"这条支线连续第五篇。前四篇像在回答同一个问题的不同侧面：第 047 篇 <em class="latin">SWE-agent</em> 说"给 agent 一套对的人机接口比堆十个 agent 更管用"；第 048 篇 <em class="latin">Agentless</em> 反手一问"那连 agent 都不要行不行"；第 049 篇 <em class="latin">OpenHands</em> 把 agent 做成开放平台；第 050 篇 <em class="latin">MASAI</em> 把一个 agent 拆成五个子智能体分工。四篇都默认一个前提：要造一个"最强单体"。</p>
+  <p>DEI 换了个姿势。它不再问"谁是冠军"，而是问"组一支全明星队会怎样"。它承接了前面所有 agent 的成果——把 <em class="latin">Aider</em>、<em class="latin">Moatless</em>、<em class="latin">Agentless</em>、<em class="latin">OpenDevin</em> 当成现成的"队员"，自己只做一件事：当教练，挑哪份补丁该上场。这一步把 SWE agent 的研究重心从"单体设计"推向"集成与编排"，是这条支线从单打走向团战的转折点。</p>
+
+  <figure>
+    <!-- 图 1：SWE agent 发展时间线，高亮本篇位置 -->
+    <svg viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="tl-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="120" x2="660" y2="120" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- SWE-bench -->
+        <circle cx="80" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="100" text-anchor="middle">2023.10</text>
+        <text x="80" y="150" text-anchor="middle" fill="#2E2A22">SWE-bench</text>
+
+        <!-- SWE-agent -->
+        <circle cx="200" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="200" y="100" text-anchor="middle">2024.02</text>
+        <text x="200" y="150" text-anchor="middle" fill="#2E2A22">SWE-agent</text>
+
+        <!-- Agentless -->
+        <circle cx="290" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="290" y="100" text-anchor="middle">2024.05</text>
+        <text x="290" y="150" text-anchor="middle" fill="#2E2A22">Agentless</text>
+
+        <!-- OpenHands -->
+        <circle cx="380" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="380" y="100" text-anchor="middle">2024.07</text>
+        <text x="380" y="150" text-anchor="middle" fill="#2E2A22">OpenHands</text>
+
+        <!-- MASAI -->
+        <circle cx="470" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="470" y="100" text-anchor="middle">2024.06</text>
+        <text x="470" y="150" text-anchor="middle" fill="#2E2A22">MASAI</text>
+
+        <!-- 本篇 DEI 高亮 -->
+        <circle cx="560" cy="120" r="9" fill="#B54A2C"/>
+        <circle cx="560" cy="120" r="13" fill="none" stroke="#B54A2C" stroke-width="1" opacity="0.4"/>
+        <text x="560" y="88" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇 · 2024.08</text>
+        <text x="560" y="150" text-anchor="middle" fill="#2E2A22" font-weight="600">DEI（集成）</text>
+
+        <!-- 下期预告：SWE-Search 虚线 -->
+        <circle cx="640" cy="120" r="5" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="2 2"/>
+        <text x="640" y="100" text-anchor="middle">2024.10</text>
+        <text x="640" y="150" text-anchor="middle" fill="#96897A">SWE-Search?</text>
+
+        <!-- 支线注释 -->
+        <text x="40" y="205" font-size="10.5" fill="#96897A">单打路线（单体 / 无 agent / 平台 / 模块化）</text>
+        <text x="560" y="205" font-size="10.5" fill="#B54A2C" text-anchor="end" font-weight="600">团战路线（多样性集成）</text>
+        <line x1="430" y1="200" x2="540" y2="200" stroke="#B54A2C" stroke-width="1" stroke-dasharray="3 3"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · SWE agent 支线发展脉络：前四篇都在造"单体冠军"，本篇 DEI 把重心转向"全明星队集成"</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要理解 DEI 的动机，得先看它出生时 SWE agent 圈子的"内卷"长什么样。2024 年中，<em class="latin">SWE-bench Lite</em> 是公认主考场——300 道从真实 GitHub 仓库抠出来的 issue，模型得读懂 issue、在庞大代码库里找到相关文件、生成能通过隐藏单元测试的补丁。榜单上挤着一票开源 agent，成绩都在 27% 上下挤成一团：SWE-agent、Aider、Moatless Tools、Agentless、OpenDevin……彼此咬得很紧，谁也甩不开谁。</p>
+  <p>圈子默认的叙事是"刷分"：谁能在 300 道题上多对一两道，谁就是新王者。但作者们盯着榜单时发现了一件被所有人忽略的事——<em>这些分数相近的 agent，对的具体题目几乎完全不一样</em>。Agentless 会的那批，OpenDevin 未必会；Moatless 拿下的，Aider 可能压根没碰过。这背后是各自的设计哲学差异：OpenDevin 会先把 bug 复现一遍拿反馈，而 Agentless 干脆不让模型自主决策、走"定位→修复→验证"的固定流水线；Aider 用简单的 diff 格式提交，Moatless 则靠代码搜索 + 检索双管齐下。不同的工具、不同的工作流、不同的提示词，造就了不同的"拿手好戏"。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    把 SWE-bench Lite 想象成一家综合医院的 300 个病例。每个 agent 像一个专科医生：Agentless 是流程严谨的"全科流水线医生"，OpenDevin 是爱先做检查再下诊断的"实验派医生"，Moatless 是会翻病历索引的"检索派医生"，Aider 是手快利落的"手术派医生"。他们各自能治好的病人加起来，远超任何一个人单独看的病号数——但医院一直在评"谁是最佳主治医师"，从没人想过开个联合会诊。
+  </div>
+
+  <p>作者算了一笔账：一组平均解决率只有 26.6% 的 agent，如果存在一个"全知评审员"能永远从候选补丁里挑出正确的那份，合力能解掉 54.3% 的题——几乎是单兵最优的两倍。这个数字像一根刺：它说明真正的瓶颈不在"哪个 agent 最强"，而在"我们根本没把这些各有所长的 agent 用在一起"。问题只剩一个：上哪儿去找这个"全知评审员"？</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>DEI 要回答的核心问题只有一句话：<em>在没有"全知评审员"的情况下，能否用一个可学习的元策略，从一堆各有所长 agent 产出的候选补丁里，自动挑出最可能正确的那一份</em>——让组合的表现逼近"理论上限"，并超过任何单个 agent。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果四份补丁摆在评审员面前，他凭什么判断哪份对？他既看不到隐藏的单元测试，也跑不动整套测试套件。先猜猜：一个强大的 LLM，只读 issue 描述和补丁前后的代码，能不能当好这个评审员？差多远？
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>DEI 的设计哲学是"不动队员，只加教练"。它把自己定位成一个挂在任何现有 agent 框架之上的<em>元模块</em>——你不改 Aider、不改 OpenDevin，只把它们产生的候选补丁收上来，交给 DEI 的评审委员会打分、重排、选最优。下面分三步拆解。</p>
+
+  <h3>第一步：把 SWE agent 问题形式化成 CMDP</h3>
+  <p>作者先把"修 GitHub issue"这件事，套进一个带上下文的马尔可夫决策过程（Contextual MDP）里，记作 $\mathcal{M}=(\mathcal{S},\mathcal{C},\mathcal{A},\mathcal{R},\mathcal{P},p_0,\rho)$。$\mathcal{S}$ 是状态（文件当前长什么样），$\mathcal{C}$ 是上下文（仓库信息 + issue 描述），$\mathcal{A}$ 是动作（搜索、编辑这类工具调用），$\mathcal{R}$ 是奖励（补丁对不对）。这套记号不是炫技，而是为了给后面的"元策略"留位置：每个 agent 是一条策略 $\pi_i$，DEI 要学的是一个站在它们之上的元策略 $\pi^*$。</p>
+
+  <div class="formula-block">
+    $$\hat{a} \;=\; \arg\max_{a_i \in \mathcal{A}_{\text{cand}}(c)} \; \text{Score}_{\pi^*}\!\big(a_i,\; c\big)$$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>翻译成人话：给定一个 issue 的上下文 $c$，多个 agent 各自交上一份候选补丁 $a_i$，元策略 $\pi^*$ 给每份打分，分数最高的 $\hat{a}$ 就是 DEI 的最终答案。整套框架要解决的就是"怎么把这个 $\text{Score}$ 学好"。</p>
+
+  <h3>第二步：DEI 框架——一个"评审委员会"元模块</h3>
+  <p>DEI 的元策略不靠训练大模型，而是<em>用一个强大的 LLM 当评审员</em>，对每份候选补丁走"输入构造 → 解释生成 → 打分重排"的多阶段流水线。它像在 agent 团队之上加了一层"评审委员会"：委员们不写代码，只读代码、挑毛病、投票。下图是这套元模块的整体结构。</p>
+
+  <figure>
+    <!-- 图 2：DEI 架构 / 方法示意图 -->
+    <svg viewBox="0 0 700 340" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrA" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 上层：DEI 元模块 -->
+        <rect x="210" y="20" width="280" height="70" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="350" y="48" text-anchor="middle" fill="#B54A2C" font-weight="600">DEI 元模块（评审委员会）</text>
+        <text x="350" y="70" text-anchor="middle" fill="#B54A2C" font-size="10.5">输入构造 → 解释 → 打分重排</text>
+
+        <!-- 四个 agent 队员 -->
+        <rect x="30" y="170" width="130" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="95" y="200" text-anchor="middle">Aider</text>
+
+        <rect x="200" y="170" width="130" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="265" y="200" text-anchor="middle">Moatless</text>
+
+        <rect x="370" y="170" width="130" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="435" y="200" text-anchor="middle">Agentless</text>
+
+        <rect x="540" y="170" width="130" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="605" y="200" text-anchor="middle">OpenDevin</text>
+
+        <!-- 候选补丁 -->
+        <text x="350" y="250" text-anchor="middle" fill="#96897A" font-size="10.5">候选补丁 a₁, a₂, a₃, a₄</text>
+
+        <!-- 最终输出 -->
+        <rect x="270" y="280" width="160" height="46" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="350" y="308" text-anchor="middle" fill="#24555A" font-weight="600">最优补丁 â（提交）</text>
+
+        <!-- 箭头：agent → 候选补丁 -->
+        <line x1="95" y1="220" x2="280" y2="245" stroke="#96897A" stroke-width="1" marker-end="url(#arr)"/>
+        <line x1="265" y1="220" x2="320" y2="245" stroke="#96897A" stroke-width="1" marker-end="url(#arr)"/>
+        <line x1="435" y1="220" x2="380" y2="245" stroke="#96897A" stroke-width="1" marker-end="url(#arr)"/>
+        <line x1="605" y1="220" x2="420" y2="245" stroke="#96897A" stroke-width="1" marker-end="url(#arr)"/>
+
+        <!-- 候选补丁 → DEI -->
+        <line x1="350" y1="90" x2="350" y2="250" stroke="#B54A2C" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrA)" transform="rotate(180 350 170)"/>
+        <line x1="350" y1="255" x2="350" y2="100" stroke="#B54A2C" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrA)"/>
+
+        <!-- DEI → 最优补丁 -->
+        <line x1="350" y1="90" x2="350" y2="278" stroke="#24555A" stroke-width="1" marker-end="url(#arr)" opacity="0"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · DEI 元模块结构：四个现成 agent 各交一份候选补丁，DEI 评审委员会统一打分重排，输出最优补丁 â</figcaption>
+  </figure>
+
+  <h3>第三步：DeiBase——一个简单却有效的实现</h3>
+  <p>"元策略"听上去很玄，作者交出的第一版实现却朴素得可爱，取名 <em class="latin">DeiBase</em>。它分两个关键动作：先<em>构造评审输入</em>，再<em>打分重排</em>。</p>
+
+  <p>构造输入时，DeiBase 给每份补丁喂四样东西：① issue 的原始描述；② agent 自己定位出来的相关代码片段（说明它为什么改这里）；③ 改之前的代码；④ 改之后的代码。两个设计选择藏在里面：整个仓库太大塞不进上下文，所以只给 agent 认为相关的片段；前后代码都给，是为了让评审员像看 diff 一样直接对照"改了啥"。接着，评审员（实现里用 GPT-4o）会先为每份补丁生成一段"解释"，再给它打一个 1–10 的分，分数最高的候选就是 DEI 的提交。下图是这条流水线。</p>
+
+  <figure>
+    <!-- 图 3：DeiBase 数据 / 评审流程图 -->
+    <svg viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 四输入 -->
+        <rect x="15" y="65" width="110" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="70" y="86" text-anchor="middle">四项输入</text>
+        <text x="70" y="102" text-anchor="middle" font-size="9.5" fill="#96897A">issue/相关</text>
+        <text x="70" y="113" text-anchor="middle" font-size="9.5" fill="#96897A">前码/后码</text>
+
+        <!-- 解释生成 -->
+        <rect x="165" y="65" width="110" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="220" y="86" text-anchor="middle">解释生成</text>
+        <text x="220" y="102" text-anchor="middle" font-size="9.5" fill="#96897A">为每份补丁</text>
+        <text x="220" y="113" text-anchor="middle" font-size="9.5" fill="#96897A">写理由</text>
+
+        <!-- 打分 -->
+        <rect x="315" y="65" width="110" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="370" y="86" text-anchor="middle">打分 1–10</text>
+        <text x="370" y="102" text-anchor="middle" font-size="9.5" fill="#96897A">GPT-4o</text>
+        <text x="370" y="113" text-anchor="middle" font-size="9.5" fill="#96897A">当评审员</text>
+
+        <!-- 重排 -->
+        <rect x="465" y="65" width="110" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="520" y="86" text-anchor="middle">重排选优</text>
+        <text x="520" y="102" text-anchor="middle" font-size="9.5" fill="#96897A">取最高分</text>
+
+        <!-- 输出 -->
+        <rect x="600" y="65" width="90" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="645" y="95" text-anchor="middle" fill="#24555A" font-weight="600">最优补丁</text>
+
+        <line x1="125" y1="90" x2="165" y2="90" stroke="#96897A" marker-end="url(#arr2)"/>
+        <line x1="275" y1="90" x2="315" y2="90" stroke="#96897A" marker-end="url(#arr2)"/>
+        <line x1="425" y1="90" x2="465" y2="90" stroke="#96897A" marker-end="url(#arr2)"/>
+        <line x1="575" y1="90" x2="600" y2="90" stroke="#96897A" marker-end="url(#arr2)"/>
+
+        <text x="70" y="145" text-anchor="middle" font-size="10" fill="#96897A">Step 1</text>
+        <text x="220" y="145" text-anchor="middle" font-size="10" fill="#96897A">Step 2</text>
+        <text x="370" y="145" text-anchor="middle" font-size="10" fill="#96897A">Step 3</text>
+        <text x="520" y="145" text-anchor="middle" font-size="10" fill="#96897A">Step 4</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · DeiBase 评审流水线：四项输入 → 解释 → 1–10 打分 → 重排选最优。没有训练，纯靠 GPT-4o 当评审员</figcaption>
+  </figure>
+
+  <p>作者还设计了三档不同的"委员组合"来验证思路：<em class="latin">DeiBase-1</em>（仅榜单 top-2 的两个 agent，看小组合行不行）、<em class="latin">DeiBase-2</em>（五个高性能闭源 agent，看强强联手的上限）、<em class="latin">DeiBase-Open</em>（Aider + Moatless + Agentless + OpenDevin 四个全开源 agent，保证别人能复现整条流水线）。最关键的是最后这档——它用全开源的"平民阵容"去挑战榜单上那些闭源大块头。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>实验在 <em class="latin">SWE-Bench Lite</em> 上跑，回答两个研究问题：agent 们到底有多"多样"？DEI 这套评审委员会到底能帮多少？两个答案都相当刺激。</p>
+
+  <p><strong>多样性惊人。</strong>一组平均解决率只有 26.6% 的 agent，"全知评审员"上限（oracle）能解 54.3%——也就是说，把队员们的拿手题并集起来，覆盖面几乎翻倍。这直接坐实了"不同 agent 解的题几乎不重叠"的猜想，也说明集成路线的"天花板"远没到顶。</p>
+
+  <p><strong>DeiBase 真的能逼近这个天花板。</strong>全开源的 <em class="latin">DeiBase-Open</em> 把组合解决率从单兵最优的 27.3% 拉到 34.3%，相对提升 25%，反超了榜单上一票闭源方案。最猛的一组直接干到 55%，登顶 <em class="latin">SWE-Bench Lite</em> 榜首。下面这张表把关键数字摆在一起。</p>
+
+  <table>
+    <thead>
+      <tr><th>配置</th><th>单兵最优</th><th>组合（DEI）</th><th>相对提升</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">DeiBase-Open（4 个开源 agent）</td><td>27.3%</td><td>34.3%</td><td>+25%</td></tr>
+      <tr><td class="text">最佳组合（登顶 SWE-Bench Lite）</td><td>—</td><td>55.0%</td><td>榜首</td></tr>
+      <tr><td class="text">Oracle 上限（全知评审员）</td><td>26.6% 均值</td><td>54.3%</td><td>理论上限</td></tr>
+    </tbody>
+  </table>
+
+  <figure>
+    <!-- 图 4：单兵 vs DEI vs Oracle 关键对比 -->
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 坐标轴 -->
+        <line x1="220" y1="40" x2="220" y2="230" stroke="#96897A" stroke-width="1"/>
+        <line x1="220" y1="230" x2="660" y2="230" stroke="#96897A" stroke-width="1"/>
+        <!-- 刻度 -->
+        <g font-size="10" fill="#96897A" text-anchor="end">
+          <text x="214" y="234">0%</text>
+          <text x="214" y="176">20%</text>
+          <text x="214" y="118">40%</text>
+          <text x="214" y="60">60%</text>
+        </g>
+        <line x1="218" y1="172" x2="222" y2="172" stroke="#96897A"/>
+        <line x1="218" y1="114" x2="222" y2="114" stroke="#96897A"/>
+        <line x1="218" y1="56" x2="222" y2="56" stroke="#96897A"/>
+
+        <!-- 单兵最优 27.3 -->
+        <rect x="260" y="151" width="60" height="79" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="290" y="245" text-anchor="middle">单兵最优</text>
+        <text x="290" y="146" text-anchor="middle" font-size="11" fill="#2E2A22">27.3%</text>
+
+        <!-- DEI-Open 34.3 -->
+        <rect x="360" y="131" width="60" height="99" fill="#B54A2C" fill-opacity="0.85" stroke="#B54A2C"/>
+        <text x="390" y="245" text-anchor="middle" fill="#B54A2C" font-weight="600">DEI-Open</text>
+        <text x="390" y="126" text-anchor="middle" font-size="11" fill="#B54A2C" font-weight="600">34.3%</text>
+
+        <!-- 最佳组 55 -->
+        <rect x="460" y="71" width="60" height="159" fill="#24555A" fill-opacity="0.85" stroke="#24555A"/>
+        <text x="490" y="245" text-anchor="middle" fill="#24555A" font-weight="600">最佳组合</text>
+        <text x="490" y="66" text-anchor="middle" font-size="11" fill="#24555A" font-weight="600">55.0%</text>
+
+        <!-- Oracle 54.3 虚线参照 -->
+        <rect x="560" y="73" width="60" height="157" fill="none" stroke="#96897A" stroke-width="1" stroke-dasharray="4 3"/>
+        <text x="590" y="245" text-anchor="middle" fill="#96897A">Oracle 上限</text>
+        <text x="590" y="68" text-anchor="middle" font-size="11" fill="#96897A">54.3%</text>
+
+        <!-- 标注：DEI 接近 oracle -->
+        <text x="640" y="100" text-anchor="end" font-size="10" fill="#96897A">↑ DEI 已逼近理论上限</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 单兵最优 27.3% → DEI-Open 34.3% → 最佳组合 55%，且 DeiBase 已逼近 Oracle 理论上限 54.3%</figcaption>
+  </figure>
+
+  <p>消融实验里还有几个有意思的发现：去掉"解释生成"这一步，打分质量会掉，说明让评审员先"说人话"再打分比直接打分更稳；只用两个 top agent 的 <em class="latin">DeiBase-1</em> 也能反超单兵最优，证明集成增益主要来自"多样性"而非"堆人数"；而且<em>评审员用更强的 LLM，增益越明显</em>——这等于在暗示：LLM 确实是个不错的代码评审员，模型越强，教练越称职。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>DEI 给 SWE agent 这条支线换了个心智模型：从"刷单一最强"转向"组合最优"。它第一次系统量化了 agent 之间的"解题多样性"，并给出一个开箱即用的集成范式——不重新造 agent，只加一层评审委员会。这对工业界尤其友好：企业手里往往已经攒了好几个内部 agent，与其推翻重来，不如用 DEI 思路把它们编成一支队伍。</p>
+  <p>更深一层的贡献是<em>它实证了"LLM 是合格的代码评审员"</em>。DeiBase 没训练任何模型，纯靠 GPT-4o 读补丁打分，就把组合解决率推到 34.3%、逼近 54.3% 的理论上限。这等于给后续工作指了路：与其苦练更强的"写代码 agent"，不如先把"读代码、判代码"的评审能力做大做强——因为评审员的天花板，就是整支队伍的天花板。</p>
+  <p>论文也直接催生了后续延伸。同一作者 Kexun Zhang 紧接着推出了 <em class="latin">SWE-Search</em>，把"委员会投票"升级成"蒙特卡洛树搜索"——把集成范式从"事后选优"推进到"事中探索"。多个 SWE agent 排行榜系统也开始把"多样性集成"当作标配策略，DEI 成了这条路线被反复引用的起跳点。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>DEI 不是没代价。最直白的一条：<em>贵</em>。要让一组 agent 各跑一遍，再让一个强力 LLM 把所有候选补丁都读一遍打分，算力开销是单 agent 的好几倍——54.3% 的 oracle 上限，是用"跑 N 个 agent"换来的。在成本敏感的工业场景里，这套"全明星队"未必划算。</p>
+  <p>第二，它押注"现有 agent 之间真的够多样"。如果未来某天某个 agent 全面碾压同行、解题集合高度重叠，DEI 的增益就会塌掉——它的天花板是队友间的互补性，而不是无穷大。第三，评审员离"全知"还有距离：34.3% vs 54.3% 的 oracle，中间差了整整 20 个百分点，说明 DeiBase 那个朴素的 GPT-4o 评审员远没把多样性红利吃满，重排序策略还有大量改进空间。</p>
+  <p>作者自己点出的未来方向包括：把评审员从"事后打分"升级成"事中参与"（这也是 SWE-Search 走的路）、用更便宜的"小模型评审员 + 少量强模型复核"来降本、以及研究"怎样主动构造互补的 agent 组合"而不是被动挑现成的。这些后来都被一一接住了。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把视野从 SWE agent 支线放大到整条大模型 agent 主线，能看清楚 DEI 卡在哪一级台阶上。最早的 agent 是"单兵循环"：ReAct 把"思考-行动"织成循环（第 035 篇），Reflexion 把失败写进语言记忆重试（第 031 篇）。接着是"多智能体协作"：MetaGPT、AutoGen、ChatDev（第 038–041 篇）让一群 agent 像团队一样分工。再到"动态编排"：MacNet、puppeteer、MAS-Orchestra（第 043–045 篇）把协作拓扑从静态图推向会学习的编排。</p>
+  <p>而 SWE agent 这条支线自成一体：SWE-agent 立"人机接口"标杆 → Agentless 质疑"要不要 agent" → OpenHands 做成平台 → MASAI 拆成模块化子智能体。<em>DEI 正是这条支线从"单体设计"转向"集成编排"的那个拐点</em>——它不再关心"怎么造一个更好的 agent"，而是关心"怎么把已有的好 agent 用到极致"。这与主线上"动态编排"的演进遥相呼应：一边是编排多智能体，一边是集成多 agent，本质都是"从单打走向团战"。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>这篇论文最好玩的彩蛋，藏在缩写里。<em class="latin">DEI</em> 全称是 Diversity Empowered Intelligence，但这三个字母恰好撞上了企业界近年最热门的另一个缩写——DEI（Diversity, Equity & Inclusion，多元、公平与包容）。论文里那句题词"A garden's beauty never lies in one flower. Diversity in all its forms is the path to greatness"（一座花园的美从不只在一朵花上，多样性通向伟大），读起来简直像在企业 DEI 培训会上念的口号。</p>
+  <p>更逗的是系统图里真的有一个盒子，老老实实标着 "DEI committee review"（DEI 委员会评审）。ICLR 2025 的评审忍不住在 meta review 里吐槽了一句："Fun acronym, and having a box labeled 'DEI committee review' in your system diagram is hilarious :)"——好玩的缩写，而且系统图里放一个写着"DEI 委员会评审"的盒子，太搞笑了。能在严肃的顶会评审里被夸"好笑"，大概也是这篇论文独一份的待遇。</p>
+  <p>还有一条暗线：第一作者 Kexun Zhang 来自卡内基梅隆，在 Salesforce AI Research 实习期间做出 DEI，紧接着就和别人合作推出了 <em class="latin">SWE-Search</em>——把这篇"委员会投票"的思路升级成"树形探索"。一个实习生，半年内连发两篇 SWE agent 方向的代表作，这条研究脉络本身就挺"多样性"的。</p>
+
+  <figure>
+    <!-- 图 5：轻松插图——DEI 委员会评审 -->
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 会议桌 -->
+        <ellipse cx="350" cy="120" rx="170" ry="55" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="124" text-anchor="middle" fill="#96897A" font-size="11">DEI committee review</text>
+
+        <!-- 四个 agent 队员围坐 -->
+        <g fill="#ECE4D4" stroke="#96897A">
+          <circle cx="200" cy="70" r="20"/>
+          <circle cx="500" cy="70" r="20"/>
+          <circle cx="200" cy="170" r="20"/>
+          <circle cx="500" cy="170" r="20"/>
+        </g>
+        <text x="200" y="74" text-anchor="middle" font-size="10">Aider</text>
+        <text x="500" y="74" text-anchor="middle" font-size="10">Moatless</text>
+        <text x="200" y="174" text-anchor="middle" font-size="10">Agentless</text>
+        <text x="500" y="174" text-anchor="middle" font-size="10">OpenDevin</text>
+
+        <!-- 评审员（中间，GPT-4o） -->
+        <circle cx="350" cy="40" r="16" fill="#B54A2C" fill-opacity="0.85" stroke="#B54A2C"/>
+        <text x="350" y="44" text-anchor="middle" fill="#F4EFE4" font-size="9" font-weight="600">评审员</text>
+        <text x="350" y="22" text-anchor="middle" fill="#B54A2C" font-size="10">GPT-4o</text>
+
+        <!-- 评审员给各队员打分 -->
+        <text x="290" y="58" font-size="11" fill="#B54A2C">8</text>
+        <text x="410" y="58" font-size="11" fill="#B54A2C">6</text>
+        <text x="290" y="158" font-size="11" fill="#B54A2C">9 ✓</text>
+        <text x="410" y="158" font-size="11" fill="#B54A2C">4</text>
+
+        <!-- 输出箭头 -->
+        <line x1="350" y1="175" x2="350" y2="205" stroke="#24555A" stroke-width="1.2" marker-end="url(#arr3)"/>
+        <text x="350" y="216" text-anchor="middle" fill="#24555A" font-size="10">提交最高分补丁</text>
+      </g>
+      <defs>
+        <marker id="arr3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#24555A"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · "DEI 委员会评审"：评审员 GPT-4o 居中打分，四位 agent 队员各交一份补丁，最高分者当选——顶会评审都觉得这图"太搞笑了"</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读完整篇，我最大的感触是 DEI 用一种"反内卷"的姿态点破了一个行业执念。过去两年，所有人都在拼"单一最强 agent"——谁在 SWE-bench 多对一道题谁就是王者。可 DEI 的数据冷冰冰地指出：你卷出来的"最强"，也只覆盖了 27% 的题；而把几个 27% 的"非最强"组合起来，能覆盖 55%。这在管理学上有个现成的对应——<em>全明星队常常打不过配合默契的平民队</em>，因为前者每个位置都强但重叠，后者每个位置都不同但互补。</p>
+  <p>这个洞察放到更大的图景里更值得玩味。它其实在暗示一种"agent 时代的分工经济学"：与其追求一个无所不能的通用 agent，不如培育一批各有所长的专业 agent，再用一个强大的"评审/编排层"把它们编排起来。这和人类社会从"通才工匠"走向"分工流水线 + 管理层"的历史如出一辙。DEI 的评审员 GPT-4o，某种程度上就是这支 agent 团队的"项目经理"。</p>
+  <p>当然，这条路也藏着隐忧。如果"评审员"才是天花板，那会不会最终所有团队都用同一个最强的闭源评审员、所有差异化又被抹平？又或者，当某个 agent 真的强到解题集合全面覆盖时，"多样性"这个红利会不会像泡沫一样破掉？这些疑问，恰恰是 DEI 留给下一篇的悬念。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果你是这家"agent 医院"的院长，手里预算只够养两个 agent + 一个评审员。你会挑两个"风格迥异但都中等"的，还是挑一个"最强 + 一个互补"的？DEI 的数据，更支持哪一种组队哲学？
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>SWE-Search: Enhancing Software Agents with Monte Carlo Tree Search and Iterative Refinement</h3>
+    <p style="margin:0;">DEI 的评审员只能"事后从现成补丁里挑"，离 54.3% 的理论上限还差 20 个点。同一作者 Kexun Zhang 紧接着换了个姿势：与其等 agent 交卷再投票，不如让它一边解题一边像下棋那样在"思维树"上探索、回溯、再决策——把"委员会投票"升级成"蒙特卡洛树搜索"。下期见。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 051 篇</span>
+    <span>2026-09-20</span>
+  </footer>
+
+</div>
+</body>
+</html>

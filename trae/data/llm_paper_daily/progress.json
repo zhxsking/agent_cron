@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 50,
-  "last_run_date": "2026-09-19",
+  "last_index": 51,
+  "last_run_date": "2026-09-20",
   "papers_covered": [
     {
       "index": 1,
@@ -402,10 +402,18 @@
       "date": "2024-06-17",
       "era": "前沿演进期 2023–2024",
       "filename": "50_20260919_MASAI.html"
+    },
+    {
+      "index": 51,
+      "title_en": "Diversity Empowers Intelligence: Integrating Expertise of Software Engineering Agents",
+      "title_zh": "DEI：多样即智慧——不同 SWE agent 解的题竟几乎不重叠，组队后 34.3% 反杀最强单 agent，ICLR 2025 的多样性集成范式",
+      "date": "2024-08-13",
+      "era": "前沿演进期 2023–2024",
+      "filename": "51_20260920_DEI.html"
     }
   ],
     "next_preview": {
-      "title_en": "Diversity Empowers Intelligence: Integrating Expertise of Software Engineering Agents",
-      "title_zh": "DEI：多样即智慧——不同 SE agent 解的题竟不重叠，组队后 34.3% 反杀最强单 agent，ICLR 2025 的多样性集成范式"
+      "title_en": "SWE-Search: Enhancing Software Agents with Monte Carlo Tree Search and Iterative Refinement",
+      "title_zh": "SWE-Search：把蒙特卡洛树搜索塞进 SWE agent——DEI 作者的下一篇：从'委员会投票'走向'树形探索'"
     }
 }
