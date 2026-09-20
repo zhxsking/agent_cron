@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SWE-Search 论文精读 · 大模型经典论文系列 #052</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#052</span>
+  </div>
+
+  <h1 class="title">
+    SWE-Search: Enhancing Software Agents with Monte Carlo Tree Search and Iterative Refinement
+    <span class="en">SWE-Search：把蒙特卡洛树搜索塞进 SWE agent——DEI 作者的下一篇：从"委员会投票"走向"树形探索"</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Antonis Antoniades*, Albert Örwall*, Kexun Zhang, Yuxi Xie, Anirudh Goyal, William Yang Wang</span>
+    <span>机构：UC Santa Barbara / Moatless AI / Carnegie Mellon University / National University of Singapore / Mila</span>
+    <span>发表：2024-10 / arXiv（ICLR 2025 录用）</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2410.20285" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/aorwall/moatless-tree-search" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://streamlit.moatless.ai" target="_blank" rel="noopener">Demo</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">想象一位围棋棋手，每落一子前都要"在脑子里走完几十手"。她不是顺着一条线往下算，而是同时摆出十几条变化图，看到哪条死路就回退换一条，看到哪条好路就再多算几步。人类高手下棋靠的不是"一手走到底"，而是这种<em>树形探索 + 回溯</em>的本能。</p>
+  <p class="lead">可你看看现在的大模型 agent——它们解题的方式更像是个只会"一条道走到黑"的愣头青：定位到 A 文件就改 A 文件，改完提交，跑测试，对了开心，错了……它还是接着改 A 文件。第 051 篇 DEI 用一个"评审委员会"在事后挑补丁，但解题过程本身依然是线性的。SWE-Search 想干的事就一句话：能不能让 agent 在解题时就像下围棋一样，<em>边走边回头、边走边换路</em>？</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    SWE-Search 把蒙特卡洛树搜索（MCTS）塞进 SWE agent：用一个能在 git 提交树上来回切换状态的 Action Agent 做探索，用一个既给数字又写人话的 Value Agent 做评估，再用一个会"辩论"的 Discriminator Agent 做终选——五个模型在 SWE-bench 上平均相对提升 23%，让开源小模型逼近 GPT-4o。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>这是 SWE agent 支线的第六篇，也是 DEI 的"亲儿子"。第 047 篇 <em class="latin">SWE-agent</em> 立"人机接口"标杆，第 048 篇 <em class="latin">Agentless</em> 反手问"那连 agent 都不要行不行"，第 049 篇 <em class="latin">OpenHands</em> 把 agent 做成开放平台，第 050 篇 <em class="latin">MASAI</em> 把一个 agent 拆成五个子智能体，第 051 篇 <em class="latin">DEI</em> 把多个现成 agent 编成"评审委员会"。前五篇都在回答"怎么造/挑一个更好的 agent 或补丁"，但解题过程本身始终是<em>线性</em>的——一次行动只指向下一个状态，错了也只能硬着头皮往下走。</p>
+  <p>SWE-Search 换了个姿势。它不再问"agent 怎么走得更好"，而是问"<em>agent 能不能像棋手一样边走边回溯</em>"。它把 DEI 的"事后投票"翻了个面：评审员不等到 agent 交卷才打分，而是边解题边打分，让 agent 知道"这条思路看着不行，回上一个岔路口换条路"。这把 SWE agent 的研究重心从"事中线性 + 事后集成"推向"事中树形探索"，是这条支线从单线流水走向搜索式推理的拐点。</p>
+
+  <figure>
+    <!-- 图 1：SWE agent 支线发展时间线，高亮本篇位置 -->
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="tl-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="125" x2="660" y2="125" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- SWE-agent -->
+        <circle cx="80" cy="125" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="105" text-anchor="middle">2024.02</text>
+        <text x="80" y="155" text-anchor="middle" fill="#2E2A22">SWE-agent</text>
+        <text x="80" y="170" text-anchor="middle" font-size="9.5">人机接口</text>
+
+        <!-- Agentless -->
+        <circle cx="200" cy="125" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="200" y="105" text-anchor="middle">2024.05</text>
+        <text x="200" y="155" text-anchor="middle" fill="#2E2A22">Agentless</text>
+        <text x="200" y="170" text-anchor="middle" font-size="9.5">无 agent</text>
+
+        <!-- OpenHands -->
+        <circle cx="320" cy="125" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="320" y="105" text-anchor="middle">2024.07</text>
+        <text x="320" y="155" text-anchor="middle" fill="#2E2A22">OpenHands</text>
+        <text x="320" y="170" text-anchor="middle" font-size="9.5">开放平台</text>
+
+        <!-- MASAI -->
+        <circle cx="440" cy="125" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="440" y="105" text-anchor="middle">2024.06</text>
+        <text x="440" y="155" text-anchor="middle" fill="#2E2A22">MASAI</text>
+        <text x="440" y="170" text-anchor="middle" font-size="9.5">模块化</text>
+
+        <!-- DEI -->
+        <circle cx="540" cy="125" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="540" y="105" text-anchor="middle">2024.08</text>
+        <text x="540" y="155" text-anchor="middle" fill="#2E2A22">DEI</text>
+        <text x="540" y="170" text-anchor="middle" font-size="9.5">委员会投票</text>
+
+        <!-- 本篇 SWE-Search 高亮 -->
+        <circle cx="630" cy="125" r="9" fill="#B54A2C"/>
+        <circle cx="630" cy="125" r="13" fill="none" stroke="#B54A2C" stroke-width="1" opacity="0.4"/>
+        <text x="630" y="88" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇 · 2024.10</text>
+        <text x="630" y="155" text-anchor="middle" fill="#2E2A22" font-weight="600">SWE-Search</text>
+        <text x="630" y="170" text-anchor="middle" font-size="9.5" fill="#B54A2C">树形探索</text>
+
+        <!-- 分组注释 -->
+        <text x="40" y="215" font-size="10.5" fill="#96897A">线性范式（事后集成 / 流水线）</text>
+        <text x="630" y="215" font-size="10.5" fill="#B54A2C" text-anchor="end" font-weight="600">搜索范式（事中探索）</text>
+        <line x1="585" y1="210" x2="615" y2="210" stroke="#B54A2C" stroke-width="1" stroke-dasharray="3 3"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · SWE agent 支线脉络：前五篇都是线性解题 + 事后处理，本篇 SWE-Search 把"事中搜索"塞进来，从单线流水走向树形探索</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要理解 SWE-Search 的动机，得先看它出生时 SWE agent 圈子的两个心病。第一块心病来自硬件层：<em>agent 不能回退</em>。SWE-bench 上一个标准 agent 跑一遍的流程是：读 issue → 在仓库里搜相关文件 → 编辑代码 → 跑测试 → 提交。这条路是单向的——一旦改了 A 文件，再发现应该改 B 文件，要么硬着头皮在 A 上叠补丁，要么干脆推倒重来从头跑一遍。前者越改越糟，后者贵得肉疼。论文里有一句话很扎心：<em>"current LLM-based software agents often follow linear, sequential processes that prevent backtracking"</em>——它们压根没有"回退"这个动作。</p>
+  <p>第二块心病来自评估层：<em>没有"中间分"</em>。DEI 的评审员之所以能挑对补丁，是因为它在 agent 全跑完后看 diff，这时候"对/错"已经是尘埃落定的事实。可一旦你想让 agent 边跑边回头，就立刻撞上一个新问题：凭什么判断"这条思路该不该继续"？跑到一半的轨迹既不是对的也不是错的，它是<em>"还看不出对错"</em>。这就要给中间状态打分——一个不像围棋有终局胜负、不像象棋有明确评估函数的诡异场景。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    把 SWE agent 想象成在陌生城市找餐厅的旅人。线性 agent 是"走错一条街就硬走到天黑"的愣头青——撞墙了也不回头；DEI 是"派五个人各走一条街，事后比谁先到"的委员会——但是五个人都得走到底才有结果。SWE-Search 想做的是"边走边看地图、走错就回头换条路"的聪明旅人——可问题来了：走到一半，你怎么知道这条路"看着还行"？这就是它要解决的第二个难题：给"半路状态"打分。
+  </div>
+
+  <p>作者敏锐地抓住了第三块心病——它在 DEI 的局限性讨论里已经露头：DEI 把评审员从"事后"挪到"事中"听上去简单，但传统 MCTS 的"评估函数"在 SWE 场景里压根不存在。围棋有模拟到终局，象棋有手写评估函数，但"修 GitHub bug 走到一半"该怎么估分？这是 SWE-Search 真正要回答的核心难题。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>SWE-Search 要回答的核心问题可以拆成三句：第一，<em>能不能给 SWE agent 装上"回退"能力</em>，让它像棋手一样在解题树上探索、换路、回溯，而不是一条道走到黑？第二，<em>能不能用一个 LLM 当"价值函数"，给中间状态同时打出一个数字 + 一段人话解释</em>，让搜索过程既有量化信号又有可读的反馈？第三，<em>能不能在搜索结束时用一个"辩论式"评审员把多条候选解里最优的那条挑出来</em>，逼近"全知评审员"的理论上限？</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果让你设计"给修 bug 走到一半的状态打分"的函数，你会给它看什么？只看测试通过率够不够？如果只跑到一半还没跑测试呢？先猜一猜：要让一个 LLM 评判"这条思路行不行"，最少需要喂它哪几样东西？SWE-Search 的答案藏在第三节里。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>SWE-Search 的设计哲学是"<em>不动模型，只加搜索 + 反馈</em>"。它不训练新模型，而是把现成的 LLM 当成三块拼图：一块负责在树上探索、一块负责给节点打分、一块负责在树叶辩论选优。下面分四步拆解。</p>
+
+  <h3>第一步：把"修 GitHub issue"形式化成带历史的 MDP</h3>
+  <p>作者先把任务套进一个带上下文与历史的 MDP，记作 $\mathcal{M}=(\mathcal{S},\mathcal{C},\mathcal{A},\mathcal{V},\mathcal{P},p_0,\rho)$。其中 $\mathcal{S}$ 是状态（当前仓库长什么样、文件上下文是什么），$\mathcal{C}$ 是上下文（仓库元信息 + issue 描述），$\mathcal{A}$ 是动作空间，$\mathcal{V}$ 是价值函数，$\mathcal{P}$ 是状态转移。这套记号的关键变化在于：价值函数 $v$ 不只看当前状态和动作，<em>还看完整历史</em>$\{s_i\}_{i=0}^{t-1}, \{a_i\}_{i=0}^{t-1}$——这就破了马尔可夫假设。形式化如下：</p>
+
+  <div class="formula-block">
+    $$ \max_{\pi} V_T(\rho) = \max_{\pi} \mathbb{E}_{\tau} \left[ \sum_{t=0}^T \mathcal{R}(s_{t,\tau}, a_{t,\tau}, c) \;\middle|\; c \sim \rho;\, \pi \right] $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>翻译成人话：agent 的目标是找一个策略 $\pi$，让其在所有可能轨迹上累积奖励的期望最大。论文用这套记号给后面的搜索和价值函数留位置——它强调"非马尔可夫"，是在暗示 SWE 任务里历史很重要：你前几步搜过哪些文件、改过哪些代码，会直接决定下一步该怎么走。</p>
+
+  <h3>第二步：Moatless-Adapted——给 agent 装上"回退"能力</h3>
+  <p>这一步是 SWE-Search 的地基。作者在 <em class="latin">moatless-tools</em>（论文作者 Örwall 自己维护的 SWE agent 框架）之上做了三件关键改造：</p>
+
+  <ul>
+    <li><em>状态机改造成树</em>：原本 moatless-tools 是个线性状态机——一个状态只能转下一个状态。改造后每个状态可以扩展出多个子状态，整张图变成一棵树。</li>
+    <li><em>git 提交树做"快照"</em>：每次代码改动都 commit 一次，每个状态持有一个 commit 引用。想回退？直接 checkout 之前的 commit 即可，仓库瞬间恢复到那个时刻的样子。</li>
+    <li><em>动作类型放开</em>：原本 <em class="latin">Plan</em> 状态只能转到 <em class="latin">Edit</em>，作者把这条限制拆掉——<em class="latin">Plan</em> 可以转到任意状态（<em class="latin">Search</em>、<em class="latin">View</em>、<em class="latin">Edit</em>、<em class="latin">Commit</em> 等）。这一改是搜索能展开的关键：搜索要的就是"在任意节点都可以走任意岔路"。</li>
+  </ul>
+
+  <p>动作空间本身被组织成两层：动作类型 $t \in \mathcal{T}$（<em class="latin">Search</em>、<em class="latin">Plan</em>、<em class="latin">Edit</em> 等）和该类型下的具体动作 $a \in \mathcal{A}_t$。形式化记作 $\mathcal{A} = \{(t, \tau, a) \mid t \in \mathcal{T}, a \in \mathcal{A}_t\}$。这套两层结构让 agent 在 <em class="latin">Plan</em> 节点既可以选择"搜代码"也可以选择"改代码"，而不是被钉死在一条流水线上。</p>
+
+  <h3>第三步：Value Agent——一个既给数字又写人话的"中间评审员"</h3>
+  <p>这是 SWE-Search 最有意思的设计。传统 MCTS 的评估靠模拟到终局，但 SWE 没有终局——你不可能在解题半路把所有测试跑完。作者的解法是<em>用一个 LLM 当评估函数</em>，但不是简单的"打 0–100 分"，而是输出一个"混合价值"：</p>
+
+  <ul>
+    <li><em>数字分数</em>：一个 0–100 的效用估计值，用于 UCT 公式计算；</li>
+    <li><em>自然语言解释</em>：一段话讲清楚"为什么这个状态好/不好"——比如"文件 X 的搜索还没覆盖到 issue 提到的关键函数"。</li>
+  </ul>
+
+  <p>关键是这段<em>人话解释</em>不是装饰品，它会作为反馈喂给父节点，让父节点下一次展开时知道"该往哪边走"。这就是 SWE-Search 标题里那个 <em>iterative refinement</em>（迭代精化）的真意——价值函数不只为搜索打分，它本身是个会写笔记的"复盘员"，把每条岔路的经验写成语言，留给后续探索参考。</p>
+
+  <div class="formula-block">
+    $$ v(s_{t,\tau}, a_{t,\tau}, \{s_i\}_{i=0}^{t-1}, \{a_i\}_{i=0}^{t-1}) = \big(\, \text{Score}_{\text{LLM}}(\cdot),\; \text{Explanation}_{\text{LLM}}(\cdot) \,\big) $$
+    <span class="eqn mono">(2)</span>
+  </div>
+
+  <p>价值函数的输入也很有讲究：不只看当前状态，还要看<em>完整轨迹</em>（之前搜过什么、改过什么）、<em>文件上下文</em>（当前能看到哪些代码片段）、以及<em>已执行的测试结果</em>。论文后面专门做了消融实验证明这三样缺一不可，缺了哪样打分都会糊掉。</p>
+
+  <figure>
+    <!-- 图 2：SWE-Search 架构 / 三 agent 协作示意图 -->
+    <svg viewBox="0 0 700 360" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrA" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+        <marker id="arrT" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#24555A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 上层：Discriminator Agent -->
+        <rect x="240" y="20" width="220" height="58" rx="2" fill="#24555A" fill-opacity="0.14" stroke="#24555A"/>
+        <text x="350" y="44" text-anchor="middle" fill="#24555A" font-weight="600">Discriminator Agent</text>
+        <text x="350" y="62" text-anchor="middle" fill="#24555A" font-size="10.5">多智能体辩论 → 终选</text>
+
+        <!-- 中层：Value Agent -->
+        <rect x="240" y="135" width="220" height="58" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="350" y="159" text-anchor="middle" fill="#B54A2C" font-weight="600">Value Agent（混合价值）</text>
+        <text x="350" y="177" text-anchor="middle" fill="#B54A2C" font-size="10.5">数字分数 + 自然语言解释</text>
+
+        <!-- 下层：Action Agent 在 MCTS 树上 -->
+        <rect x="50" y="245" width="600" height="100" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="266" text-anchor="middle" fill="#2E2A22" font-weight="600">Action Agent（在 Moatless-Adapted 状态树上探索）</text>
+
+        <!-- 树节点示意 -->
+        <g font-size="10" fill="#2E2A22">
+          <circle cx="120" cy="305" r="8" fill="#ECE4D4" stroke="#96897A"/>
+          <text x="120" y="308" text-anchor="middle">根</text>
+          <circle cx="200" cy="290" r="6" fill="#ECE4D4" stroke="#96897A"/>
+          <circle cx="200" cy="325" r="6" fill="#ECE4D4" stroke="#96897A"/>
+          <circle cx="290" cy="290" r="7" fill="#B54A2C" fill-opacity="0.55" stroke="#B54A2C"/>
+          <circle cx="290" cy="325" r="6" fill="#ECE4D4" stroke="#96897A"/>
+          <circle cx="400" cy="290" r="6" fill="#ECE4D4" stroke="#96897A"/>
+          <circle cx="400" cy="325" r="8" fill="#24555A" fill-opacity="0.55" stroke="#24555A"/>
+          <circle cx="500" cy="305" r="6" fill="#ECE4D4" stroke="#96897A"/>
+          <circle cx="580" cy="290" r="6" fill="#ECE4D4" stroke="#96897A"/>
+          <circle cx="580" cy="325" r="6" fill="#ECE4D4" stroke="#96897A"/>
+
+          <line x1="128" y1="303" x2="194" y2="291" stroke="#96897A" stroke-width="1"/>
+          <line x1="128" y1="307" x2="194" y2="323" stroke="#96897A" stroke-width="1"/>
+          <line x1="206" y1="289" x2="283" y2="290" stroke="#96897A" stroke-width="1"/>
+          <line x1="206" y1="325" x2="283" y2="325" stroke="#96897A" stroke-width="1"/>
+          <line x1="297" y1="290" x2="394" y2="290" stroke="#96897A" stroke-width="1"/>
+          <line x1="297" y1="325" x2="394" y2="325" stroke="#96897A" stroke-width="1"/>
+          <line x1="408" y1="305" x2="494" y2="305" stroke="#96897A" stroke-width="1"/>
+          <line x1="506" y1="305" x2="574" y2="290" stroke="#96897A" stroke-width="1"/>
+          <line x1="506" y1="305" x2="574" y2="325" stroke="#96897A" stroke-width="1"/>
+        </g>
+
+        <!-- 箭头：Agent ↔ Value -->
+        <line x1="350" y1="245" x2="350" y2="195" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrA)"/>
+        <line x1="335" y1="195" x2="335" y2="245" stroke="#96897A" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#arr)"/>
+
+        <!-- 箭头：Value → Discriminator -->
+        <line x1="350" y1="135" x2="350" y2="80" stroke="#24555A" stroke-width="1.2" marker-end="url(#arrT)"/>
+
+        <!-- 终选输出 -->
+        <rect x="490" y="20" width="170" height="58" rx="2" fill="#24555A" fill-opacity="0.18" stroke="#24555A"/>
+        <text x="575" y="44" text-anchor="middle" fill="#24555A" font-weight="600">最终补丁 â</text>
+        <text x="575" y="62" text-anchor="middle" fill="#24555A" font-size="10.5">提交</text>
+        <line x1="460" y1="49" x2="490" y2="49" stroke="#24555A" marker-end="url(#arrT)"/>
+
+        <!-- 图例 -->
+        <text x="50" y="20" font-size="10" fill="#96897A">红 = Value 评估中</text>
+        <text x="50" y="32" font-size="10" fill="#96897A">青 = Discriminator 终选</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · SWE-Search 三 agent 协作架构：Action Agent 在 MCTS 树上探索（底层），Value Agent 给每个节点既打分又写解释（中层），Discriminator Agent 在树叶辩论终选（顶层）</figcaption>
+  </figure>
+
+  <h3>第四步：MCTS + Discriminator——把搜索变成"棋手 + 评审团"</h3>
+  <p>搜索算法用的是 AlphaZero 风格的 MCTS：四步循环——选择（Selection，按 UCT 公式挑最有潜力的子节点）、扩展（Expansion，让 Action Agent 走一步新动作）、评估（Evaluation，调 Value Agent 给数字 + 解释）、回传（Backpropagation，把分数往父节点传）。但作者做了两个关键改造：</p>
+
+  <ul>
+    <li><em>反馈循环</em>：Value Agent 给出的"人话解释"会喂给父节点，让下一次扩展时 Action Agent 知道"上次那条岔路为什么不行"——这是标题里 <em>iterative refinement</em> 的实操。</li>
+    <li><em>终选走辩论</em>：MCTS 跑完一棵树会留下若干"叶子候选补丁"，传统做法是直接取价值函数最高那个。但 SWE-Search 不信这个——它搞了个 <em>Discriminator Agent</em>，让多个 agent 各自为不同的候选补丁辩护、互相挑刺，最后由一个 judge agent 拍板。这一步是借鉴多智能体辩论框架（Du et al. 2023、Khan et al. 2024）的产物。</li>
+  </ul>
+
+  <figure>
+    <!-- 图 3：MCTS 四步循环 + 反馈回路 -->
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arr2A" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 四步 -->
+        <rect x="20" y="65" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="85" text-anchor="middle">① Selection</text>
+        <text x="80" y="103" text-anchor="middle" font-size="10" fill="#96897A">UCT 选最优子节点</text>
+
+        <rect x="175" y="65" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="235" y="85" text-anchor="middle">② Expansion</text>
+        <text x="235" y="103" text-anchor="middle" font-size="10" fill="#96897A">Action Agent 走新动作</text>
+
+        <rect x="330" y="65" width="120" height="50" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="390" y="85" text-anchor="middle" fill="#B54A2C">③ Evaluation</text>
+        <text x="390" y="103" text-anchor="middle" font-size="10" fill="#B54A2C">Value Agent 打分 + 写解释</text>
+
+        <rect x="485" y="65" width="120" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="545" y="85" text-anchor="middle">④ Backprop</text>
+        <text x="545" y="103" text-anchor="middle" font-size="10" fill="#96897A">分数回传到根</text>
+
+        <!-- 主流程箭头 -->
+        <line x1="140" y1="90" x2="175" y2="90" stroke="#96897A" marker-end="url(#arr2)"/>
+        <line x1="295" y1="90" x2="330" y2="90" stroke="#96897A" marker-end="url(#arr2)"/>
+        <line x1="450" y1="90" x2="485" y2="90" stroke="#96897A" marker-end="url(#arr2)"/>
+        <line x1="605" y1="90" x2="640" y2="90" stroke="#96897A" marker-end="url(#arr2)"/>
+        <path d="M645 90 Q 670 90 670 50 Q 670 25 80 25 Q 50 25 50 60" fill="none" stroke="#96897A" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#arr2)"/>
+
+        <!-- 反馈回路 -->
+        <path d="M390 117 Q 390 165 235 165 Q 175 165 175 130" fill="none" stroke="#B54A2C" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arr2A)"/>
+        <text x="300" y="185" text-anchor="middle" fill="#B54A2C" font-size="10.5">人话解释 → 喂给父节点（iterative refinement）</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · SWE-Search 的 MCTS 四步循环：标准选择—扩展—评估—回传，多出一条从 Value Agent 写回父节点的"语言反馈"回路</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>实验在 <em class="latin">SWE-bench-Lite</em>（300 道真实 GitHub issue）上跑，跨五个模型：两个闭源（<em class="latin">GPT-4o</em>、<em class="latin">GPT-4o-mini</em>）+ 三个开源（<em class="latin">Qwen2.5-72B-Instruct</em>、<em class="latin">Llama-3.1-70B-Instruct</em>、<em class="latin">DeepSeek-Coder-V2</em>）。基线是 <em class="latin">Moatless-Adapted</em>——也就是论文自己改造的那套带树结构的 moatless-tools，但不接 MCTS、只走线性流程，这样能干净地分离出"搜索"本身的贡献。下面这张表把关键数字摆在一起。</p>
+
+  <table>
+    <thead>
+      <tr><th>模型</th><th>Moatless-Adapted</th><th>SWE-Search</th><th>相对提升</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">GPT-4o</td><td>25.7%</td><td>31.0%</td><td>+20.6%</td></tr>
+      <tr><td class="text">GPT-4o-mini</td><td>14.0%</td><td>17.0%</td><td>+21.4%</td></tr>
+      <tr><td class="text">Qwen2.5-72B-Instruct</td><td>22.3%</td><td>24.7%</td><td>+10.8%</td></tr>
+      <tr><td class="text">Llama-3.1-70B-Instruct</td><td>14.7%</td><td>17.7%</td><td>+20.4%</td></tr>
+      <tr><td class="text">DeepSeek-Coder-V2</td><td>17.3%</td><td>21.0%</td><td>+21.4%</td></tr>
+      <tr><td class="text">五模型平均</td><td>18.8%</td><td>22.3%</td><td>+23%（相对）</td></tr>
+    </tbody>
+  </table>
+
+  <p>几个让人眼前一亮的发现：</p>
+
+  <p><strong>开源小模型逼近 GPT-4o。</strong>装上 SWE-Search 的 <em class="latin">Qwen2.5-72B</em> 解掉 24.7%，已经摸到了 GPT-4o 单线 25.7% 的尾巴。论文标题里"smaller, open source models to approach GPT-4o"那句不是 PR 套话——这等于在说"用搜索换参数"，是个非常有诱惑力的方向。</p>
+
+  <p><strong>搜索深度越深，效果越好。</strong>作者专门画了"搜索深度 vs 准确率"的曲线：随着推理时算力（迭代次数）增加，性能持续爬升，没有饱和迹象。这是 SWE-Search 最有分量的论据——它在为 SWE agent 这条路线画了一条"测试时算力扩展曲线"，呼应了第 021 篇 <em class="latin">Scaling Test-Time Compute</em> 那条通用推理曲线。</p>
+
+  <p><strong>价值函数的三样输入缺一不可。</strong>消融实验里，把"轨迹历史"或"文件上下文"或"测试结果"任一项去掉，价值函数的判断质量都会显著下滑。这印证了那句话：SWE 任务里历史很重要，半路状态没有历史根本没法判。</p>
+
+  <p><strong>Different Models 解的题"几乎不重叠"。</strong>这是 DEI 的多样性发现在 SWE-Search 里的回声——五个模型各自解掉的题集，重叠度仍然很低。这暗示着 SWE-Search 的天花板远没到顶：理论上你把五个模型 + 搜索的并集起来，覆盖面会远超 31%。</p>
+
+  <figure>
+    <!-- 图 4：Moatless-Adapted vs SWE-Search 跨模型对比 -->
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 坐标轴 -->
+        <line x1="220" y1="40" x2="220" y2="230" stroke="#96897A" stroke-width="1"/>
+        <line x1="220" y1="230" x2="660" y2="230" stroke="#96897A" stroke-width="1"/>
+        <g font-size="10" fill="#96897A" text-anchor="end">
+          <text x="214" y="234">0%</text>
+          <text x="214" y="178">10%</text>
+          <text x="214" y="122">20%</text>
+          <text x="214" y="66">30%</text>
+        </g>
+        <line x1="218" y1="172" x2="222" y2="172" stroke="#96897A"/>
+        <line x1="218" y1="116" x2="222" y2="116" stroke="#96897A"/>
+        <line x1="218" y1="60" x2="222" y2="60" stroke="#96897A"/>
+
+        <!-- GPT-4o -->
+        <rect x="240" y="85" width="40" height="145" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="280" y="56" width="40" height="174" fill="#B54A2C" fill-opacity="0.85" stroke="#B54A2C"/>
+        <text x="260" y="245" text-anchor="middle" font-size="10">GPT-4o</text>
+        <text x="260" y="80" text-anchor="middle" font-size="10" fill="#96897A">25.7</text>
+        <text x="300" y="51" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">31.0</text>
+
+        <!-- GPT-4o-mini -->
+        <rect x="345" y="151" width="40" height="79" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="385" y="134" width="40" height="96" fill="#B54A2C" fill-opacity="0.85" stroke="#B54A2C"/>
+        <text x="365" y="245" text-anchor="middle" font-size="10">4o-mini</text>
+        <text x="365" y="146" text-anchor="middle" font-size="10" fill="#96897A">14.0</text>
+        <text x="405" y="129" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">17.0</text>
+
+        <!-- Qwen -->
+        <rect x="450" y="104" width="40" height="126" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="490" y="91" width="40" height="139" fill="#B54A2C" fill-opacity="0.85" stroke="#B54A2C"/>
+        <text x="470" y="245" text-anchor="middle" font-size="10">Qwen2.5-72B</text>
+        <text x="470" y="99" text-anchor="middle" font-size="10" fill="#96897A">22.3</text>
+        <text x="510" y="86" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">24.7</text>
+
+        <!-- Llama -->
+        <rect x="555" y="147" width="40" height="83" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="595" y="130" width="40" height="100" fill="#B54A2C" fill-opacity="0.85" stroke="#B54A2C"/>
+        <text x="575" y="245" text-anchor="middle" font-size="10">Llama-3.1-70B</text>
+        <text x="575" y="142" text-anchor="middle" font-size="10" fill="#96897A">14.7</text>
+        <text x="615" y="125" text-anchor="middle" font-size="10" fill="#B54A2C" font-weight="600">17.7</text>
+
+        <!-- 图例 -->
+        <rect x="240" y="20" width="14" height="10" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="260" y="29" font-size="10" fill="#96897A">Moatless-Adapted（线性基线）</text>
+        <rect x="430" y="20" width="14" height="10" fill="#B54A2C" fill-opacity="0.85" stroke="#B54A2C"/>
+        <text x="450" y="29" font-size="10" fill="#B54A2C">SWE-Search（MCTS）</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 五个模型在 SWE-bench-Lite 上的对比：灰柱是 Moatless-Adapted 线性基线，红柱是 SWE-Search。每个模型都因搜索获得 10–21% 的相对提升</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>SWE-Search 给 SWE agent 这条支线换了个心智模型：从"线性解题 + 事后集成"转向"<em>事中搜索 + 迭代反馈</em>"。它第一次把蒙特卡洛树搜索的完整范式（选择—扩展—评估—回传）成功搬进 SWE 场景，并解决了最棘手的"中间状态评估"难题——用一个 LLM 既给数字又写人话解释。这对工业界是个直接的诱惑：与其等一个更大的模型出现，不如用现有模型多搜几步。</p>
+  <p>更深一层的贡献是它<em>把"测试时算力扩展"这条曲线画进了 SWE agent 领域</em>。第 021 篇 Scaling Test-Time Compute 给通用推理画过一条，SWE-Search 给 SWE agent 也画了一条，而且曲线还没到饱和——这意味着"搜索深度"是 SWE agent 的另一个可扩展维度，跟"模型规模"、"训练数据"是并列的。论文里那句"pathway to improve software agents without requiring larger models or additional training data"，是在向整个圈子喊话：别只盯着模型大小卷，搜索也是一条路。</p>
+  <p>论文也直接催生了后续延伸。同一作者团队和紧邻的工作把"事中搜索"思路继续推：<em class="latin">Satori-SWE</em>、<em class="latin">SWE-Replay</em> 等都从不同角度改造 SWE-Search——前者用更精细的过程奖励，后者干脆绕开价值函数、改用"重放关键步"来降本。多个 SWE agent 排行榜系统也开始把"搜索 + 多候选"当作标配策略，SWE-Search 成了这条路线被反复引用的起跳点。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>SWE-Search 的代价非常直白：<em>贵</em>。论文自己的成本分析里写得清清楚楚——在 GPT-4o 上，Moatless-Adapted 跑一遍 SWE-bench-Lite 花 40.86 美元，SWE-Search 要花 576 美元，是基线的 14 倍。Qwen2.5-72B 上是 8.5 美元 vs 42.5 美元，5 倍。这意味着 SWE-Search 在成本敏感的工业场景里不一定划算——你多花了 14 倍的钱，才换来 5 个百分点的提升。</p>
+  <p>第二，它押注"<em>LLM 是合格的中途评审员</em>"。Value Agent 用一个 LLM 给半路状态打分，这个 LLM 自己有偏差、有错判——论文后面专门做了"价值函数能否分辨成功轨迹"的实验（附录 F），结论是它能分辨，但远不是完美。这意味着 MCTS 的搜索方向有时候会被价值函数带偏，搜索树会往错误的方向深扎。</p>
+  <p>第三，Discriminator Agent 的辩论机制也有局限——多个 agent 辩论最终靠一个 judge 拍板，judge 自身的偏好会决定结果。论文承认这一点，但没给彻底的解法。作者点出的未来方向包括：用更便宜的小模型当 Value Agent + 强模型做关键节点复核来降本、把搜索从"事后选优"拓到"事中规划"、以及研究"如何主动构造互补的搜索分支"。这些后来都被一一接住了——尤其是 SWE-Replay，干脆绕过了价值函数这层。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把视野从 SWE agent 支线放大到整条大模型搜索主线，能看清楚 SWE-Search 卡在哪一级台阶上。最早的"搜索式推理"是第 027 篇 <em class="latin">Tree of Thoughts</em>——把 CoT 升级成树形探索，让通用 LLM 在思维树上前瞻、回溯。第 028 篇 <em class="latin">Graph of Thoughts</em> 进一步把树拓成图。但这些都是"在思维空间里搜索"，没有真实环境反馈。</p>
+  <p>另一条线是"测试时算力扩展"——第 021 篇 Scaling Test-Time Compute 给通用推理画了扩展曲线，第 022 篇 <em class="latin">Let's Verify Step by Step</em> 用过程奖励模型给推理每步打分。这两条线在 SWE-Search 这里汇合：SWE-Search 把 ToT 的"树形探索"和 PRM 的"过程评估"同时搬进 SWE 场景，再叠加上真实 git 提交树作为环境反馈——这是 SWE agent 第一次同时拥有"树形探索 + 中途评估 + 真实反馈"。</p>
+  <p>同时，SWE agent 主线也在演进：SWE-agent 立"人机接口"标杆 → Agentless 质疑"要不要 agent" → OpenHands 做成平台 → MASAI 拆成模块化 → DEI 编排多 agent。<em>SWE-Search 正是这条支线从"线性范式"转向"搜索范式"的那个拐点</em>——它不再问"怎么让 agent 走得更好"，而是问"agent 能不能像棋手一样边走边回头"。这与主线上"动态编排"遥相呼应：一边是编排多个 agent，一边是搜索单 agent 的多条思路，本质都是"从单线走向多线"。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>这篇论文最好玩的地方，藏在它的"血缘"里。第一作者位置上挂着两个名字——<em class="latin">Antonis Antoniades</em>（UC Santa Barbara）和 <em class="latin">Albert Örwall</em>（Moatless AI），两人共享一作（论文里那个 † 标记）。后者其实就是 <em class="latin">moatless-tools</em> 这个开源 SWE agent 框架的作者——一个瑞典人，把项目描述成"a hobby project where I experiment with some ideas I have about how LLMs can be used to edit code"（我业余搞着玩的小项目，试试 LLM 怎么改大代码库）。SWE-Search 这篇 ICLR 2025 论文，本质上就是把 Örwall 的"业余爱好"装上了 MCTS 引擎。</p>
+  <p>第三作者 <em class="latin">Kexun Zhang</em> 是 DEI 的第一作者——这意味着 DEI 和 SWE-Search 是同一个人主导的"姊妹篇"。一个实习生/学生，半年内连发两篇 SWE agent 方向的代表作：DEI 走"事后投票"路线，SWE-Search 走"事中树形搜索"路线。论文里那句"a new paradigm for autonomous software development"喊得响，但回头看，这俩姊妹篇合起来才是一条完整的演进叙事。</p>
+  <p>还有一个隐藏的彩蛋在 Demo 上——SWE-Search 提供了一个 Streamlit 在线演示（streamlit.moatless.ai）。你可以亲手喂一个 GitHub issue 进去看它怎么在树上来回切换状态、走 dead-end 回头、写人话解释。对一个学术论文配套 demo 来说，这种"能让人直观看到搜索过程"的可视化相当罕见——也暗示作者很清楚：SWE-Search 的卖点不是分数，是<em>搜索过程本身</em>。</p>
+
+  <figure>
+    <!-- 图 5：轻松插图——国际象棋棋盘类比 MCTS -->
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 棋盘格 -->
+        <g>
+          <rect x="80" y="40" width="40" height="40" fill="#ECE4D4" stroke="#96897A"/>
+          <rect x="120" y="40" width="40" height="40" fill="#2E2A22" fill-opacity="0.85"/>
+          <rect x="160" y="40" width="40" height="40" fill="#ECE4D4" stroke="#96897A"/>
+          <rect x="200" y="40" width="40" height="40" fill="#2E2A22" fill-opacity="0.85"/>
+
+          <rect x="80" y="80" width="40" height="40" fill="#2E2A22" fill-opacity="0.85"/>
+          <rect x="120" y="80" width="40" height="40" fill="#ECE4D4" stroke="#96897A"/>
+          <rect x="160" y="80" width="40" height="40" fill="#B54A2C" fill-opacity="0.55" stroke="#B54A2C" stroke-width="1.5"/>
+          <rect x="200" y="80" width="40" height="40" fill="#ECE4D4" stroke="#96897A"/>
+
+          <rect x="80" y="120" width="40" height="40" fill="#ECE4D4" stroke="#96897A"/>
+          <rect x="120" y="120" width="40" height="40" fill="#B54A2C" fill-opacity="0.55" stroke="#B54A2C" stroke-width="1.5"/>
+          <rect x="160" y="120" width="40" height="40" fill="#2E2A22" fill-opacity="0.85"/>
+          <rect x="200" y="120" width="40" height="40" fill="#ECE4D4" stroke="#96897A"/>
+        </g>
+
+        <!-- 标注 -->
+        <text x="160" y="32" text-anchor="middle" fill="#B54A2C" font-weight="600">Value Agent: 75 ✓</text>
+        <text x="140" y="112" text-anchor="middle" fill="#B54A2C" font-size="10">高分节点</text>
+        <text x="140" y="172" text-anchor="middle" fill="#B54A2C" font-size="10">展开</text>
+
+        <!-- 右侧类比文字 -->
+        <text x="320" y="60" font-size="13" fill="#2E2A22">线性 agent：</text>
+        <text x="320" y="80" font-size="11" fill="#96897A">走一步 → 改下一步 → 走到底</text>
+        <text x="320" y="98" font-size="11" fill="#96897A">撞墙？硬着头皮继续</text>
+
+        <text x="320" y="135" font-size="13" fill="#B54A2C" font-weight="600">SWE-Search：</text>
+        <text x="320" y="155" font-size="11" fill="#96897A">走一步 → Value 打分 + 写解释</text>
+        <text x="320" y="173" font-size="11" fill="#96897A">不行？git checkout 回上一岔路口</text>
+        <text x="320" y="191" font-size="11" fill="#96897A">换条岔路继续探索</text>
+
+        <!-- 棋子图标 -->
+        <text x="180" y="108" text-anchor="middle" fill="#F4EFE4" font-size="20">♟</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 把 SWE-Search 想象成下棋：每走一步先评估（红格 = Value Agent 给高分），不行就 git 回退到上一个岔路口换条路</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读完整篇，我最大的感触是 SWE-Search 把"搜索"这条通用推理路线真正焊进了 SWE agent。在此之前，SWE agent 圈子的演进基本是沿着"接口设计 / 流水线 / 多 agent 编排"这三个轴走，每个轴都在优化"agent 怎么走"，但默认 agent 是<em>线性</em>走的。SWE-Search 是第一个把"边走边回头"这条腿接上的工作——它不卷模型、不卷接口，卷的是<em>解题过程的形状</em>。从一条线变成一棵树，是 SWE agent 范式的一次形态跃迁。</p>
+  <p>放到更大的图景里看，这其实呼应了整个大模型圈子过去两年的转向——从"训练时算力扩展"走向"测试时算力扩展"。第 020 篇 o1 用 RL 训思维链、第 021 篇画测试时扩展曲线、第 027 篇 ToT 把搜索塞进推理，都是同一种转向的不同侧面。SWE-Search 把这套思路搬进 SWE，是在说：SWE agent 不该只靠训练堆参数，也可以靠搜索堆深度。这是个很有想象力的方向——尤其当开源模型参数卷不动的时候。</p>
+  <p>当然，这条路也藏着隐忧。最直接的一条：SWE-Search 的"贵"是结构性的，不是工程优化能解决的——一棵搜索树的节点数随深度指数膨胀，再聪明的剪枝也压不住。如果搜索深度本身就是 SWE agent 的扩展维度，那成本曲线会不会爆炸？又或者，当价值函数自身的判断质量是天花板时，再深的搜索也只是把错误的方向走得更远？这些疑问，恰恰是 SWE-Search 留给下一篇的悬念。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果你是 SWE agent 团队的技术负责人，预算只够跑一次推理。你会选"用 SWE-Search 在一个 70B 开源模型上多搜几步"，还是"直接调用一次 GPT-4o 走线性流程"？换句话说：当搜索深度本身就是个可扩展维度时，"小模型 + 深搜索"和"大模型 + 浅搜索"哪个更划算？SWE-Search 的数据，更支持哪一种？
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>SWE-Replay: Efficient Test-Time Scaling for Software Engineering Agents</h3>
+    <p style="margin:0;">SWE-Search 把 MCTS 装进 SWE agent 的代价是 14 倍成本——而这 14 倍里很多是浪费在"价值函数判错方向、往死胡同深扎"上。下篇 SWE-Replay 干脆绕开价值函数：它不从头搜树，而是从历史轨迹里挑"关键中间步"在它之前重放、在那之后分叉——不靠 LLM 估分，靠"重用过去的经验"来扩展。它能比 SWE-Search 更省、更准吗？下期见。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 052 篇</span>
+    <span>2026-09-21</span>
+  </footer>
+
+</div>
+</body>
+</html>
