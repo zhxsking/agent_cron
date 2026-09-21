@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SWE-Replay 论文精读 · 大模型经典论文系列 #053</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#053</span>
+  </div>
+
+  <h1 class="title">
+    SWE-Replay: Efficient Test-Time Scaling for Software Engineering Agents
+    <span class="en">SWE-Replay：绕开价值函数，从历史轨迹里挑关键步重放——比 SWE-Search 更省更准的 SWE agent 测试时算力扩展</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Yifeng Ding, Lingming Zhang</span>
+    <span>机构：Siebel School of Computing and Data Science, University of Illinois Urbana-Champaign</span>
+    <span>发表：2026-01 / arXiv（ICML 投稿）</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2601.22129" target="_blank" rel="noopener">arXiv</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">上篇 SWE-Search 把蒙特卡洛树搜索塞进 SWE agent，换来的是平均 23% 的相对提升——但代价是 14 倍的采样成本。14 倍！这意味着跑完一个 SWE-bench 任务，agent 可能要在仓库里反复"列目录、读 README、打开同一个入口文件"几十次，每次都从第 0 步开始。你看着 token 账单蹭蹭往上涨，心里只剩一个念头：<em>它刚才不是已经看过这个文件了吗？</em></p>
+  <p class="lead">更扎心的是，SWE-Search 想省钱，靠的是再养一个"价值 agent"给每一步打分、提前剪枝。可这个打分员自己也是个 LLM，它会<em>判错方向</em>——把对的岔路口标成死胡同，把死胡同当成金矿往里扎。而且它只认"流水线式"的固定工具调用，碰上会自己现场写 bash 脚本的现代 agent（比如 SWE-agent）就抓瞎了。这篇 SWE-Replay 抛出的问题就一句话：能不能<em>不靠任何 LLM 当评委</em>，照样把测试时算力扩展做得又省又准？</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    SWE-Replay 不再每次从头采样，而是把跑过的轨迹存进"档案库"，按"探索稀有程度 + 推理段落数"挑出关键中间步，在它之前恢复环境、在它之后换一条路重放——既绕开了价值函数、又能用在任意现代 agent 上，在 SWE-Bench Verified 上把成本砍掉最多 17.4%，性能反而涨了最多 3.8%。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>这是 SWE agent 支线的第七篇，也是<em>测试时算力扩展</em>这条小脉络的第二个拐点。第 047 篇 <em class="latin">SWE-agent</em> 立了"人机接口"标杆，第 048 篇 <em class="latin">Agentless</em> 反问"那连 agent 都不要行不行"，第 049 篇 <em class="latin">OpenHands</em> 把 agent 做成开放平台，第 050 篇 <em class="latin">MASAI</em> 把一个 agent 拆成五个子智能体，第 051 篇 <em class="latin">DEI</em> 把多个 agent 编成"评审委员会"，第 052 篇 <em class="latin">SWE-Search</em> 把 MCTS 装进 agent 让它"边走边回溯"。前六篇都在回答"怎么造/挑/搜一个更好的 agent 或补丁"，而 SWE-Search 已经把重心推到了"<em>测试时多采样换性能</em>"这条新轴上。</p>
+  <p>SWE-Replay 站在 SWE-Search 的肩膀上，却做了一个看似更朴素、实则更彻底的选择：它不养价值 agent、不搞树搜索，而是<em>把已经跑过的轨迹当资产重用</em>——从中间某个"值得重新想想"的步骤分叉出去。这把测试时扩展从"靠外部裁判剪枝"拉回到"靠经验重放省力"，是这条小脉络从"加评委"走向"复用历史"的拐点，也为后面"训练时自博弈"打开了思路。</p>
+
+  <figure>
+    <!-- 图 1：SWE agent 支线发展时间线，高亮本篇位置 -->
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowT" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="130" x2="660" y2="130" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <circle cx="70" cy="130" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="70" y="110" text-anchor="middle">2024.05</text>
+        <text x="70" y="155" text-anchor="middle" fill="#2E2A22">SWE-agent</text>
+
+        <circle cx="190" cy="130" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="190" y="110" text-anchor="middle">2024.07</text>
+        <text x="190" y="155" text-anchor="middle" fill="#2E2A22">Agentless</text>
+
+        <circle cx="310" cy="130" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="310" y="110" text-anchor="middle">2024.06</text>
+        <text x="310" y="155" text-anchor="middle" fill="#2E2A22">MASAI</text>
+
+        <circle cx="430" cy="130" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="430" y="110" text-anchor="middle">2024.08</text>
+        <text x="430" y="155" text-anchor="middle" fill="#2E2A22">DEI</text>
+
+        <circle cx="510" cy="130" r="6" fill="#ECE4D4" stroke="#24555A"/>
+        <text x="510" y="110" text-anchor="middle" fill="#24555A">2024.10</text>
+        <text x="510" y="155" text-anchor="middle" fill="#24555A">SWE-Search</text>
+
+        <circle cx="610" cy="130" r="9" fill="#B54A2C"/>
+        <text x="610" y="100" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇</text>
+        <text x="610" y="118" text-anchor="middle" fill="#B54A2C">2026.01</text>
+        <text x="610" y="155" text-anchor="middle" fill="#2E2A22" font-weight="600">SWE-Replay</text>
+
+        <text x="40" y="200" fill="#96897A" font-size="10">支线主题：从"造一个 agent" → "挑一个 agent" → "搜一个 agent" → "重放一个 agent"</text>
+        <text x="40" y="218" fill="#96897A" font-size="10">本篇定位：测试时扩展的第二个拐点——绕开价值函数，靠历史重用省钱</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · SWE agent 支线发展脉络，SWE-Replay 接在 SWE-Search 之后，把"加评委"换成"重用历史"</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>测试时扩展（test-time scaling）的核心思路很朴素：同一个任务，让 agent 多跑几遍、多采几条轨迹，再用测试反馈从里面挑一个能跑通补丁的解。Brown 等人早在 2024 年就观察到，SWE 任务的解决率随采样数<em>对数线性</em>上升——多采一条，多一份希望。听起来很美，直到你算算账：每采一条轨迹，agent 都要从第 0 步开始，把"列目录、读 README、打开入口文件"这一套前戏再走一遍。SWE agent 单条轨迹动辄几十步、每步几千 token，采 16 条就是 16 倍的重复浪费，而且这些重复<em>几乎不产生新信息</em>——前 5 步看到的仓库，第 16 次看到的时候还是那个仓库。</p>
+  <p>省钱的路子并不是没人走过。SWE-Search 用 MCTS 配一个"价值 agent"给每步打分，提前剪掉看着不行的分支；Satori-SWE 让 agent 自己给自己之前生成的轨迹打分，靠"自我改进"少采几条。但这俩兄弟有两个共同的、也是致命的毛病：</p>
+  <ul>
+    <li><em>评委自己也会出错</em>。价值 agent 和奖励模型本质都是 LLM，它们对中间步的估计会有<em>校准偏差</em>（miscalibration）——把好岔路口判成死路，于是正确的解被提前剪掉；把死胡同当成金矿，于是算力继续往里砸。一句话，<em>裁判不可靠，剪枝就是赌博</em>。</li>
+    <li><em>评委只认固定工具</em>。这些方法都是给"流水线式"agent 设计的——那种 agent 调用的是预设好的"结构化搜索/检索工具"，评委只要照着工具模板写个 prompt 就能给分。可现代 agent（比如 SWE-agent）不一样，它<em>自己现场写 bash 脚本</em>当工具用，这次写个 <code>grep -rn</code>，下次写个 <code>find . -name</code>，没有模板可套。评委连"这一步在干嘛"都看不懂，更别说打分了。</li>
+  </ul>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    把测试时扩展想象成"派 16 个实习生去摸同一个仓库"。naive 做法是 16 个人各自从大门口排长队登记、领门禁卡、再走到工位——前 5 步的动作一模一样，纯属浪费时间。SWE-Search 的做法是再雇一个"领班"站在门口给每个人打分，看着不行就让他别进去了——可领班自己也看走眼，而且他只会照着"标准访客登记表"打分，碰上自己临时写脚本干活的实习生就懵了。SWE-Replay 干的是另一件事：让前一个实习生把走过的路记下来，后面的实习生<em>从某个关键岔路口接着走</em>，不用每次从大门口重新排。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>能不能在不依赖任何 LLM 评委、不限定 agent 架构的前提下，让测试时扩展<em>少跑重复的前戏、把算力花在真正该多想几遍的关键步上</em>——同时还不掉点性能？更直白地说：能不能<em>不养裁判、也能省下那 14 倍里大部分的冤枉钱</em>？</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果你是个老程序员，被派去修同一个 bug 16 次，你第二次起会怎么"复用"第一次的经验？你会<em>从哪一步开始换路</em>？是越早换越好（省的事多），还是越晚换越好（已经摸清的部分别浪费）？先想想看，再往下读 SWE-Replay 的答案。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>SWE-Replay 的核心直觉一句话：<em>已经走过的路不必再走，值得多想几遍的岔路口才该多采几条</em>。它维护一个"轨迹档案库"（archive），初始放一条从零采的轨迹进去，然后反复做一件事——按概率决定这次是"从头探索一条新路"（explore），还是"从档案里挑一条旧轨迹、在某个关键中间步之前恢复环境、之后换条路重放"（exploit）。新采的轨迹再塞回档案，循环往复。整个过程<em>没有一个 LLM 评委出场</em>，挑哪一步完全靠两个轻量信号：这步能带 agent 去多稀罕的地方、这步背后藏了多少真正的推理。</p>
+
+  <figure>
+    <!-- 图 2：SWE-Replay 整体架构：探索-利用循环 + 档案库 -->
+    <svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowA" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrowA2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#24555A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 档案库 -->
+        <rect x="270" y="20" width="160" height="56" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="44" text-anchor="middle" font-weight="600">轨迹档案库</text>
+        <text x="350" y="62" text-anchor="middle" fill="#96897A" font-size="10">archive of trajectories</text>
+
+        <!-- 决策点 -->
+        <circle cx="350" cy="150" r="26" fill="#F4EFE4" stroke="#B54A2C" stroke-width="1.5"/>
+        <text x="350" y="146" text-anchor="middle" font-size="11" fill="#B54A2C">stochastic</text>
+        <text x="350" y="160" text-anchor="middle" font-size="11" fill="#B54A2C">sample</text>
+        <text x="350" y="195" text-anchor="middle" fill="#96897A" font-size="10">按概率二选一</text>
+
+        <!-- 探索：从零采 -->
+        <rect x="60" y="230" width="200" height="56" rx="2" fill="#24555A" fill-opacity="0.10" stroke="#24555A"/>
+        <text x="160" y="254" text-anchor="middle" fill="#24555A" font-weight="600">explore</text>
+        <text x="160" y="272" text-anchor="middle" fill="#24555A" font-size="10">从第 0 步采一条新轨迹</text>
+
+        <!-- 利用：挑步重放 -->
+        <rect x="440" y="230" width="200" height="56" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="540" y="254" text-anchor="middle" fill="#B54A2C" font-weight="600">exploit</text>
+        <text x="540" y="272" text-anchor="middle" fill="#B54A2C" font-size="10">挑关键步 → 恢复环境 → 分叉重放</text>
+
+        <!-- 连线 -->
+        <line x1="350" y1="76" x2="350" y2="124" stroke="#96897A" marker-end="url(#arrowA)"/>
+        <line x1="324" y1="150" x2="180" y2="230" stroke="#24555A" marker-end="url(#arrowA2)"/>
+        <line x1="376" y1="150" x2="520" y2="230" stroke="#B54A2C" marker-end="url(#arrowA)"/>
+        <!-- 回流到档案库 -->
+        <path d="M160 230 C 160 110, 300 96, 320 76" fill="none" stroke="#24555A" stroke-dasharray="3 3" marker-end="url(#arrowA2)"/>
+        <path d="M540 230 C 540 110, 400 96, 380 76" fill="none" stroke="#B54A2C" stroke-dasharray="3 3" marker-end="url(#arrowA)"/>
+        <text x="120" y="120" fill="#24555A" font-size="10">新轨迹入库</text>
+        <text x="500" y="120" fill="#B54A2C" font-size="10">分叉轨迹入库</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · SWE-Replay 的探索-利用循环：每次先按概率决定走 explore 还是 exploit，新采的轨迹都回流进档案库，下一轮可被重用</figcaption>
+  </figure>
+
+  <p>下面把 exploit 这条路拆成三步讲清楚：怎么挑步、怎么重放、怎么分叉。</p>
+
+  <h3>第一步：挑出值得重放的关键中间步</h3>
+  <p>挑步是整篇文章最精巧的地方。SWE-Replay 用了一个<em>四级流水线</em>，从粗到细地筛出"该在哪儿换路"——而且全程不问任何 LLM"这步好不好"。</p>
+
+  <p><strong>① 过滤掉引入回归失败的轨迹。</strong>档案库里不是每条轨迹都值得重用。SWE-Replay 先把那些最终补丁<em>把仓库里原本能过的测试搞挂</em>的轨迹整个删掉。理由很实在：会引入回归的轨迹，往往中间就埋着"看了不该看的文件"这种误导性步骤，重用它们只会把同样的错再传一遍。它借用 <em class="latin">Agentless</em> 的办法从仓库里抽现有回归测试来判，不用 LLM、也不信 LLM 生成的测试（那些自己都不一定对）。这一步是粗筛，<em>把坏账先清出库</em>。</p>
+
+  <p><strong>② 用"文件级抽象"给步骤分组，按稀有度抽组。</strong>这是最关键的一步。直接拿原始环境输出当"状态"来比相似度不行——那玩意儿又长又几乎独一无二，比不出有意义的"同一类"。SWE-Replay 的取巧办法是：把每一步用一个轻量抽象表示——<em>在这步之前 agent 已经看过哪些文件</em>（一个文件集合）。这样一来，所有"看到过同样一组文件"的步骤就被归到同一个抽象状态 <em class="latin">s_i</em>。然后，它按"稀有度"给每个状态分一个采样概率——<em>被更少步骤到达的状态，更值得回去再探</em>：</p>
+
+  <div class="formula-block">
+    $$ p_i = \mathrm{softmax}\!\left(\frac{1}{v_i}\right) = \frac{e^{1/v_i}}{\sum_{j=1}^{n} e^{1/v_j}} $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>这里 <em class="latin">v_i</em> 是落在状态 <em class="latin">s_i</em> 里的具体步骤数。<em class="latin">v_i</em> 越小（到这儿的步骤越少），<em class="latin">1/v_i</em> 越大，这个状态被选中的概率就越高。用 softmax 而不是贪心选最稀有的，是为了<em>保留采样多样性</em>——附录 A.7 验证了 softmax 比硬挑效果更好。一句话：这一步把"该多探哪片仓库"用<em>文件访问频率</em>这个客观信号回答了，完全不靠 LLM 评分。</p>
+
+  <p><strong>③ 在组内按"推理段落数"挑具体那一步。</strong>选定一个抽象状态后，组里可能还有好几步都到达过它。SWE-Replay 在这些步骤里挑<em>推理最密集</em>的那一步作为分叉点。直觉是：需要 agent 多想几段话才决定下一步的，往往是关键决策点，在这里换条路最有希望走出新解。这里有个特别精巧的反直觉点——<em>它不用推理的原始 token 长度，而用段落数</em>。原因是：推理内容里常常夹杂大段复制的代码片段、原始输入，这些把 token 数撑得很长却几乎不带来"思考密度"。论文举了个对照：第 19 步推理文本更长，但内容是两份详尽却信息量低的编辑草稿；第 18 步短得多，却是好几段精炼地分析程序逻辑的洞察。消融实验也证实：段落数（60.0%）压过原始 token 长度（58.0%），<em>结构化切分比堆字数更能反映思考质量</em>。</p>
+
+  <p><strong>④ 用随机采样平衡探索与利用。</strong>前三步挑出了"一个状态 + 状态里推理最密的那一步"，但 SWE-Replay 不会每次都铁定去 exploit 这一步。它用一个概率在"从头采条新的"和"从这步分叉"之间二选一，避免过早锁死在某条看似稀有的路径上。这是整条流水线最朴素也最稳的一环——<em>不贪心、靠掷骰子留余地</em>。</p>
+
+  <figure>
+    <!-- 图 3：步骤选择的四级流水线 -->
+    <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowB" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 第①级 -->
+        <rect x="30" y="40" width="150" height="70" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="105" y="62" text-anchor="middle" fill="#24555A" font-weight="600">① 过滤</text>
+        <text x="105" y="80" text-anchor="middle" font-size="10" fill="#96897A">删掉引入回归</text>
+        <text x="105" y="94" text-anchor="middle" font-size="10" fill="#96897A">失败的轨迹</text>
+
+        <!-- 第②级 -->
+        <rect x="210" y="40" width="170" height="70" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="295" y="62" text-anchor="middle" fill="#24555A" font-weight="600">② 文件级抽象分组</text>
+        <text x="295" y="80" text-anchor="middle" font-size="10" fill="#96897A">按"看过哪些文件"</text>
+        <text x="295" y="94" text-anchor="middle" font-size="10" fill="#96897A">分组 + 稀有度 softmax</text>
+
+        <!-- 第③级 -->
+        <rect x="410" y="40" width="160" height="70" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="490" y="62" text-anchor="middle" fill="#24555A" font-weight="600">③ 推理段落数</text>
+        <text x="490" y="80" text-anchor="middle" font-size="10" fill="#96897A">组内挑推理</text>
+        <text x="490" y="94" text-anchor="middle" font-size="10" fill="#96897A">最密的那一步</text>
+
+        <!-- 第④级 -->
+        <rect x="600" y="40" width="80" height="70" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="640" y="70" text-anchor="middle" fill="#B54A2C" font-weight="600">④ 随机</text>
+        <text x="640" y="88" text-anchor="middle" fill="#B54A2C" font-size="10">explore/</text>
+        <text x="640" y="100" text-anchor="middle" fill="#B54A2C" font-size="10">exploit</text>
+
+        <!-- 箭头串起来 -->
+        <line x1="180" y1="75" x2="210" y2="75" stroke="#96897A" marker-end="url(#arrowB)"/>
+        <line x1="380" y1="75" x2="410" y2="75" stroke="#96897A" marker-end="url(#arrowB)"/>
+        <line x1="570" y1="75" x2="600" y2="75" stroke="#96897A" marker-end="url(#arrowB)"/>
+
+        <!-- 关键洞察标注 -->
+        <text x="30" y="160" fill="#24555A" font-size="11" font-weight="600">关键设计点</text>
+        <line x1="30" y1="166" x2="680" y2="166" stroke="#96897A" stroke-width="0.5" stroke-dasharray="2 3"/>
+
+        <text x="30" y="190" font-size="10" fill="#2E2A22">① 不信 LLM 测试，只用仓库现有回归测试</text>
+        <text x="30" y="212" font-size="10" fill="#2E2A22">② "该多探哪片仓库"用文件访问频率回答，不问 LLM</text>
+        <text x="30" y="234" font-size="10" fill="#2E2A22">③ 段落数 &gt; token 长度：结构 &gt; 堆字数（60.0% vs 58.0%）</text>
+        <text x="30" y="256" font-size="10" fill="#2E2A22">④ softmax + 随机采样保留多样性，不贪心</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 挑步的四级流水线：从粗筛到细挑，全程没有一个 LLM 评委出场</figcaption>
+  </figure>
+
+  <h3>第二步：在挑中的步之前恢复环境</h3>
+  <p>挑好分叉点 <em class="latin">s_t</em> 后，不能直接让 agent 从那儿继续——agent 跑 SWE 任务时改的是真实文件系统、跑的是真实命令，环境状态（哪些文件被改过、当前工作目录、git 状态）都得对上。SWE-Replay 的做法是<em>把这条轨迹在 <em class="latin">s_t</em> 之前那一系列动作（s_1, s_2, …, s_{t-1}）重放一遍</em>，把环境恢复到分叉前的样子。这一步看着朴素，却是省钱的真正来源——前面那些"列目录、读 README"的动作只跑一次（在重放时），后续所有分叉都从这个已恢复的状态接着走，<em>重复的前戏只演一遍</em>。</p>
+
+  <h3>第三步：在分叉点采一个新动作</h3>
+  <p>环境恢复好之后，SWE-Replay 让 agent 在 <em class="latin">s_t</em> 这一步重新采样一个新动作 <em class="latin">s'_t</em>，替换掉原来的 <em class="latin">s_t</em>，然后接着往下探索。带温度采样让这个新动作大概率走和原来不同的路——这正是"重用历史但不复读历史"的关键：前面的共识部分复用、在这一步换思路、之后又自由展开。新采出来的轨迹塞回档案库，下一轮可能又被挑中做新的分叉点。整个机制<em>不靠任何打分</em>，只靠"哪些文件被看得少"和"哪步推理想得多"两个客观信号——也正是它能在 SWE-agent 这种"自己写 bash"的现代 agent 上跑通的根本原因。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>论文在 SWE-Bench Verified（主流基准）、SWE-Bench Pro（更难、更接近真实分布）和 SWE-Bench Multilingual（多语言）三个基准上验证。结果可以拆成"省钱"和"不掉点甚至涨点"两条线看。</p>
+
+  <table>
+    <thead>
+      <tr><th>基准 / 维度</th><th>naive 从头采</th><th>SWE-Replay</th><th>变化</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">SWE-Bench Verified 成本</td><td>baseline</td><td>−17.4%（最多）</td><td>省钱</td></tr>
+      <tr><td class="text">SWE-Bench Verified 解决率</td><td>baseline</td><td>+3.8%（最多）</td><td>涨点</td></tr>
+      <tr><td class="text">SWE-Bench Pro</td><td>baseline</td><td>一致更省/更准</td><td>可迁移</td></tr>
+      <tr><td class="text">SWE-Bench Multilingual</td><td>baseline</td><td>一致更省/更准</td><td>可迁移</td></tr>
+      <tr><td class="text">覆盖的 LLM 后端</td><td>—</td><td>3 种</td><td>稳健</td></tr>
+      <tr><td class="text">覆盖的 agent 脚手架</td><td>—</td><td>2 种</td><td>稳健</td></tr>
+    </tbody>
+  </table>
+
+  <p>几个值得拎出来说的发现：</p>
+  <ul>
+    <li><em>省钱和涨点居然能同时发生</em>。常见的省成本方法都是"砍掉一些采样换来掉点"，SWE-Replay 却是<em>少花钱反而多解题</em>——它把省下来的算力投到了"稀有文件区"和"高推理步"上，命中正确解的概率反而更高。</li>
+    <li><em>消融把"段落数 &gt; token 长度"坐实</em>。把推理强度的度量从段落数换成原始 token 长度，性能从 60.0% 掉到 58.0%——一个看似微不足道的"怎么数思考量"的小决定，带来 2 个点的差距。</li>
+    <li><em>它真的把探索推向了长尾</em>。论文专门分析了 agent 访问文件的分布：naive 采样的轨迹反复在少数热门文件上打转，SWE-Replay 则明显把访问推向<em>访问频率更低的长尾文件</em>——这正是"按稀有度抽状态"在数据上的直观体现。</li>
+    <li><em>跨 agent、跨模型都成立</em>。3 个不同 LLM 后端、2 种不同 agent 脚手架都一致地显示出成本下降、性能不降反升，说明这套机制不是某个特定 agent 的奇技淫巧，而是<em>普适的复用规律</em>。</li>
+  </ul>
+
+  <figure>
+    <!-- 图 4：naive / SWE-Search / SWE-Replay 三方对比 -->
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="116" y="30" text-anchor="middle" font-weight="600">naive 从头采</text>
+        <text x="350" y="30" text-anchor="middle" font-weight="600" fill="#24555A">SWE-Search</text>
+        <text x="584" y="30" text-anchor="middle" font-weight="600" fill="#B54A2C">SWE-Replay（本篇）</text>
+
+        <line x1="233" y1="20" x2="233" y2="260" stroke="#96897A" stroke-dasharray="4 4"/>
+        <line x1="467" y1="20" x2="467" y2="260" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <!-- 采样方式 -->
+        <text x="20" y="60" fill="#96897A" font-size="10">采样方式</text>
+        <rect x="20" y="70" width="193" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="116" y="92" text-anchor="middle">每次从第 0 步重头采</text>
+        <rect x="254" y="70" width="193" height="34" fill="#24555A" fill-opacity="0.10" stroke="#24555A"/>
+        <text x="350" y="92" text-anchor="middle" fill="#24555A">MCTS + 价值 agent 剪枝</text>
+        <rect x="488" y="70" width="193" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="584" y="92" text-anchor="middle" fill="#B54A2C">档案库 + 关键步分叉重放</text>
+
+        <!-- 是否需要 LLM 评委 -->
+        <text x="20" y="130" fill="#96897A" font-size="10">需要 LLM 评委</text>
+        <rect x="20" y="140" width="193" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="116" y="162" text-anchor="middle">否</text>
+        <rect x="254" y="140" width="193" height="34" fill="#24555A" fill-opacity="0.10" stroke="#24555A"/>
+        <text x="350" y="162" text-anchor="middle" fill="#24555A">是（价值 agent）</text>
+        <rect x="488" y="140" width="193" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="584" y="162" text-anchor="middle" fill="#B54A2C">否</text>
+
+        <!-- 对现代 agent -->
+        <text x="20" y="200" fill="#96897A" font-size="10">适配现代 agent</text>
+        <rect x="20" y="210" width="193" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="116" y="232" text-anchor="middle">是（但浪费）</text>
+        <rect x="254" y="210" width="193" height="34" fill="#24555A" fill-opacity="0.10" stroke="#24555A"/>
+        <text x="350" y="232" text-anchor="middle" fill="#24555A">否（只认流水线工具）</text>
+        <rect x="488" y="210" width="193" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="584" y="232" text-anchor="middle" fill="#B54A2C">是（不限定工具）</text>
+
+        <!-- 底注 -->
+        <text x="20" y="270" fill="#96897A" font-size="10">SWE-Replay 把 SWE-Search 的两个痛点（评委失准、不通用）一并绕开</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 三种测试时扩展范式的关键差异：SWE-Replay 既不靠评委、又能用在现代 agent 上</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>SWE-Replay 是第一个<em>不依赖任何 LLM 评委、又能用在任意现代 agent 上</em>的高效测试时扩展方法。这件事的意义不止于"又省了点钱"：</p>
+  <ul>
+    <li><em>它把"评委"从测试时扩展里彻底摘出去</em>。SWE-Search 和 Satori-SWE 都得养一个会失准的裁判，SWE-Replay 证明了——靠"文件访问稀有度"和"推理段落数"两个<em>客观、可观测、不靠模型估计</em>的信号，就能挑出值得重放的步。<em>测试时扩展不需要再带一个会出错的模型当评委</em>。</li>
+    <li><em>它打通了现代 agent 这道坎</em>。SWE-agent 这种"自己写 bash"的灵活 agent 之前没法用 MCTS 式的方法省力，因为评委看不懂它临时写的脚本。SWE-Replay 的挑步信号不依赖工具语义，<em>天然适配任何脚手架</em>，3 个 LLM 后端、2 种脚手架的稳定结果就是证据。</li>
+    <li><em>它把"探索推向长尾"的洞察为后续工作铺了路</em>。长尾文件往往是冷门但真正藏 bug 的地方，SWE-Replay 用稀有度信号把算力往那儿引——这个思路可以接上后面"训练时自博弈"的工作：让 agent 自己学会主动去看那些不容易看到的角落。</li>
+  </ul>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>SWE-Replay 不是银弹，论文自己也点出了几条软肋：</p>
+  <ul>
+    <li><em>过滤还得靠现有回归测试</em>。第①级筛选用仓库自带的回归测试判定轨迹好坏，可不少仓库根本没有像样的回归测试套件——这一步在测试稀疏的项目上会失灵。用 LLM 生成测试又回到"信不信 LLM"的老问题，论文选择不用是对的，但留下了空白。</li>
+    <li><em>档案库的开销随轮次增长</em>。每采一条新轨迹都入档，档案库越滚越大，挑步的代价也水涨船高。长时间运行下，需要更好的档案管理/淘汰策略，否则省钱效果会被挑步成本吃掉。</li>
+    <li><em>它仍在"测试时"打转</em>。重放是在<em>推理阶段</em>复用历史，没把"哪些步值得多想"这件事<em>焊进模型权重</em>。一个自然的下一步是：能不能把这些"高价值分叉点"当成训练信号，让 agent 在训练时就学会主动往稀有文件区探？这正是后面 <em class="latin">Self-play SWE-RL</em> 这类工作要接的棒。</li>
+  </ul>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把 SWE agent 这条支线拉长看，能看出一条很清晰的"重心迁移"曲线：从"造一个 agent"（SWE-agent → OpenHands），到"挑一个 agent"（DEI 委员会投票），到"搜一个 agent"（SWE-Search 上 MCTS），再到本篇"重放一个 agent"（SWE-Replay 复用历史）。每一步都在回答"怎么用得起更多算力"——naive 多采贵，SWE-Search 加评委也贵还失准，SWE-Replay 干脆不请评委、复用历史，把成本压到最低的同时性能反超。</p>
+  <p>但所有这些方法都还停留在<em>推理时</em>。下一棒很自然会问：能不能把"该多探哪片仓库、该在哪步多想"这件事<em>训练进模型</em>，让 agent 一上来就自觉往稀有文件区看？这就从测试时扩展跨进了训练时自博弈——也是下期要讲的方向。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>SWE-Replay 的两位作者 <em class="latin">Yifeng Ding</em> 和 <em class="latin">Lingming Zhang</em> 都来自 UIUC 的 Siebel 计算与数据科学学院。熟悉 SWE agent 支线的读者会注意到一条隐藏的"师承链"：SWE-Search 的作者里也有 <em class="latin">Lingming Zhang</em>——也就是说，<em>SWE-Replay 直接出自 SWE-Search 同一个课题组</em>。这就不难理解为什么 SWE-Replay 对 SWE-Search 的痛点（评委失准、不通用）抓得这么准：它是"自己人拆自己的台"，精准踩在上一作的局限上做改进。这种"同一课题组前作立靶、后作补刀"的节奏，在 SWE agent 这条支线上已经不是第一次了。</p>
+  <p>另一个值得一提的小细节是"段落数打败 token 长度"那个消融。这是个特别有"软件工程直觉"的发现——<em>思考的密度不等于思考的字数</em>。一个工程师写一大段贴满原始代码的"分析"，往往不如几段干净利落的逻辑拆解。SWE-Replay 用段落数当代理，等价于承认"会分段的人，通常是想得更清楚的人"。这种把人类写作直觉塞进 agent 评估的小决定，是这篇论文最有人情味的地方。</p>
+
+  <figure>
+    <!-- 图 5：趣味插图——"重放"的轻松类比 -->
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- naive：每次重新排队 -->
+        <text x="100" y="30" text-anchor="middle" fill="#96897A" font-weight="600">naive：每次重新排队</text>
+        <rect x="30" y="50" width="140" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="100" y="69" text-anchor="middle">登记领卡</text>
+        <rect x="30" y="90" width="140" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="100" y="109" text-anchor="middle">读 README</text>
+        <rect x="30" y="130" width="140" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="100" y="149" text-anchor="middle">打开入口文件</text>
+        <rect x="30" y="170" width="140" height="30" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="100" y="189" text-anchor="middle" fill="#24555A">换路</text>
+        <text x="100" y="210" text-anchor="middle" fill="#96897A" font-size="10">×16 次重复前 3 步</text>
+
+        <!-- SWE-Replay：从岔路口接着走 -->
+        <text x="540" y="30" text-anchor="middle" fill="#B54A2C" font-weight="600">SWE-Replay：从岔路口接着走</text>
+        <rect x="470" y="50" width="140" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="540" y="69" text-anchor="middle">登记领卡</text>
+        <rect x="470" y="90" width="140" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="540" y="109" text-anchor="middle">读 README</text>
+        <rect x="470" y="130" width="140" height="30" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="540" y="149" text-anchor="middle">打开入口文件</text>
+        <rect x="470" y="170" width="140" height="30" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C"/>
+        <text x="540" y="189" text-anchor="middle" fill="#B54A2C">换路（只跑一次前 3 步）</text>
+        <text x="540" y="210" text-anchor="middle" fill="#B54A2C" font-size="10">前 3 步复用历史</text>
+
+        <!-- 中间箭头 -->
+        <path d="M180 110 C 320 90, 380 90, 470 110" fill="none" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrowA)"/>
+        <text x="325" y="95" text-anchor="middle" fill="#B54A2C" font-size="10">复用前作经验</text>
+      </g>
+      <defs>
+        <marker id="arrowA" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · "重新排队"还是"从岔路口接着走"——SWE-Replay 的核心直觉一句话讲完</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读完整篇，我最大的感受是 SWE-Replay 做了一个非常"克制"的选择。它没有引入任何新模型、没有训练任何东西、没有搞复杂的搜索算法——它只是<em>把已经跑过的轨迹当资产</em>，配两个不依赖 LLM 的轻量信号挑出关键步。这种"少即是多"的姿态，在一片"再加一个 agent、再训一个评委"的喧嚣里显得格外清醒：很多时候，省钱的钥匙不在于更聪明的裁判，而在于<em>别让前人走过的路白走</em>。</p>
+  <p>更值得玩味的是它对"思考密度"的处理。用段落数而不是 token 长度度量推理强度，看似是个工程小细节，背后其实藏着一种<em>对人写作直觉的尊重</em>——会分段的人，多半是想得更清楚的人。这种"把人类表达直觉当代理信号"的思路，可能比再训一个奖励模型更稳、更便宜，也更不容易过拟合。</p>
+  <p>展望一下：SWE-Replay 把"哪些步值得多想"这件事留在了推理阶段。下一步很自然是把这些高价值分叉点当成训练数据，让 agent 在训练时就学会主动往稀有文件区探——也就是从"测试时重放"走向"训练时自博弈"。当测试时扩展的复用规律被摸清之后，把它焊进权重只是时间问题。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果 SWE-Replay 的档案库无限增长下去，挑步的代价会越来越高。你觉得该用什么策略淘汰档案里的旧轨迹？是按"最近被重放次数"淘汰（冷门轨迹反而留着），还是按"最终是否跑通"淘汰（只留成功的）？这两种策略各自会把探索推向哪个方向？想想看，下篇可能会给你一个相关的答案。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Toward Training Superintelligent Software Agents through Self-Play SWE-RL</h3>
+    <p style="margin:0;">SWE-Replay 把"该多探哪片仓库"留在了推理阶段——那能不能把这件事<em>焊进模型权重</em>？下篇 Self-play SWE-RL（SSR）走的就是这条路：让一个 LLM agent 在沙箱仓库里自己给自己注入 bug、再自己修，完全不依赖人工 issue 或测试用例，靠自博弈把软件智能体推向"超智能"。当测试时扩展走到尽头，训练时自博弈接棒——下期见。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 053 篇</span>
+    <span>2026-09-22</span>
+  </footer>
+
+</div>
+</body>
+</html>
