@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Self-play SWE-RL 论文精读 · 大模型经典论文系列 #054</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#054</span>
+  </div>
+
+  <h1 class="title">
+    Toward Training Superintelligent Software Agents through Self-Play SWE-RL
+    <span class="en">Self-play SWE-RL：让 agent 自己给自己出题——从测试时扩展走向训练时自博弈，迈向超智能软件智能体</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Yuxiang Wei, Zhiqing Sun, Emily McMilin, Jonas Gehring, David Zhang, Gabriel Synnaeve, Daniel Fried, Lingming Zhang, Sida Wang</span>
+    <span>机构：Meta FAIR, Meta TBD Lab, UIUC, CMU</span>
+    <span>发表：2025-12 / arXiv（ICML 2026）</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2512.18552" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://openreview.net/forum?id=0ophJB76sC" target="_blank" rel="noopener">OpenReview</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">想象你在学做手术。但有个死规矩：你只能照着别的医生写好的"病例报告"练——别人记了多少例，你就只能练多少例，一个字都不能自己加。练到后来你会发现，无论多么勤奋，你的天花板永远卡在"前人愿意写多少例"上。今天大多数软件 agent 也是这么被训练出来的：它们的"病例"就是 GitHub 上的 issue 和 pull request，每一条都是某个真人开发者亲手写的。有人写，agent 才有得学；没人写，agent 就只能干瞪眼。</p>
+  <p class="lead">上篇 SWE-Replay 还在"测试时"做文章——把跑过的轨迹重放、复用，省点采样钱。而这篇论文换了个更大的问法：<em>如果 agent 能自己给自己造病例呢？</em>同一个 LLM，一会儿扮演"往代码里塞 bug 的捣蛋鬼"，一会儿扮演"修 bug 的修理工"，两头都是它自己，谁都不靠人类喂题。这正是 AlphaGo 当年走的那条路——不学人类棋谱，自己跟自己下。只不过这次下的不是围棋，是真实仓库里的代码。有人管它叫"软件 agent 的 AlphaGo 时刻"。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    Self-play SWE-RL（SSR）让一个 LLM 同时当"出题人"和"解题人"——它往真实代码仓库里注入 bug、再自己修，靠强化学习闭环自博弈；只用 Docker 镜像、不要人类标注的 issue 和测试，却在 SWE-bench Verified 上反超靠人类数据训练的基线 +10.4 分，迈出"超智能软件 agent"的第一步。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>这是 SWE agent 支线的第八篇，更是整条脉络的<em>范式拐点</em>。前七篇——从第 047 篇 <em class="latin">SWE-agent</em> 立"人机接口"标杆，到第 048 篇 <em class="latin">Agentless</em> 反问"连 agent 都不要行不行"，再到第 052、053 篇 <em class="latin">SWE-Search</em> / <em class="latin">SWE-Replay</em> 把 MCTS 和轨迹重放塞进<em>测试时</em>——都在回答"怎么在推理阶段把一个 agent 调得更强"。可这些把戏再花哨，agent 的"底子"还是靠人类数据训练出来的：GitHub issue 是人写的，pass-to-pass 测试是人标的，连 SWE-bench Verified 都得靠人逐条复核。</p>
+  <p>SSR 把战场从"测试时"挪到了<em>训练时</em>，并且问了一个更狠的问题：<em>如果连训练数据都不靠人，会怎样？</em>它承接了上篇 SWE-Replay"少花冤枉钱"的思路，却把钱省到了更根本的地方——不是省推理时的采样，而是省掉"等人类写 issue"这个无限期的等待。从这个意义上，SSR 既是 SWE agent 支线的延续，又是它的一次"断奶"：agent 第一次被允许<em>自己养自己</em>。论文标题里的 <em class="latin">superintelligent</em> 不是夸张，它在说一件很具体的事——当 agent 不再受限于人类能写出的题，它的能力上限就不再由人类决定。</p>
+
+  <figure>
+    <!-- 图 1：SWE agent 支线发展时间线，高亮本篇位置 -->
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowT" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="140" x2="660" y2="140" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <circle cx="70" cy="140" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="70" y="120" text-anchor="middle">2024.05</text>
+        <text x="70" y="165" text-anchor="middle" fill="#2E2A22">SWE-agent</text>
+
+        <circle cx="180" cy="140" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="180" y="120" text-anchor="middle">2024.07</text>
+        <text x="180" y="165" text-anchor="middle" fill="#2E2A22">Agentless</text>
+
+        <circle cx="290" cy="140" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="290" y="120" text-anchor="middle">2024.08</text>
+        <text x="290" y="165" text-anchor="middle" fill="#2E2A22">DEI</text>
+
+        <circle cx="400" cy="140" r="6" fill="#ECE4D4" stroke="#24555A"/>
+        <text x="400" y="120" text-anchor="middle" fill="#24555A">2024.10</text>
+        <text x="400" y="165" text-anchor="middle" fill="#24555A">SWE-Search</text>
+
+        <circle cx="500" cy="140" r="6" fill="#ECE4D4" stroke="#24555A"/>
+        <text x="500" y="120" text-anchor="middle" fill="#24555A">2026.01</text>
+        <text x="500" y="165" text-anchor="middle" fill="#24555A">SWE-Replay</text>
+
+        <circle cx="610" cy="140" r="9" fill="#B54A2C"/>
+        <text x="610" y="108" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇</text>
+        <text x="610" y="126" text-anchor="middle" fill="#B54A2C">2025.12</text>
+        <text x="610" y="165" text-anchor="middle" fill="#2E2A22" font-weight="600">SSR 自博弈</text>
+
+        <text x="40" y="215" fill="#96897A" font-size="10">支线主题：造 agent → 挑 agent → 搜 agent → 重放 agent → 让 agent 自己养自己</text>
+        <text x="40" y="233" fill="#96897A" font-size="10">本篇定位：范式拐点——从"测试时扩展"跃迁到"训练时自博弈"，第一次断开人类数据依赖</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · SWE agent 支线发展脉络，SSR 是从"靠人喂题"走向"自己出题"的拐点</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要理解 SSR 为什么值得做，得先看清今天软件 agent 的"食物链"长什么样。第 045 篇我们讲过 <em class="latin">SWE-RL</em>——同一作者 Yuxiang Wei 在 2025 年 2 月发的开山之作：它用 GRPO 强化学习，把 GitHub 上真人 PR 的"issue 描述 + 代码上下文 + oracle 补丁"当训练信号，训出 Llama3-SWE-RL-70B，在 SWE-bench Verified 上拿到 41%。这是把 RL 真正规模化搬进软件工程的第一次。可它留下一个明显的尾巴：<em>训练数据全是从 GitHub 挖的人写的 PR</em>。</p>
+  <p>这不是 SWE-RL 一个人的毛病，是整条 agent RL 路线的通病。后来出的 DeepSWE、DeepSeek V3.1、MiniMax M1/M2、Kimi K2、Code World Model——一个比一个猛，但训练时喂的 issue 描述和测试用例，<em>几乎全是人写或人审过的</em>。连 SWE-bench Verified 这个评测集，名字里带"Verified"，正是因为原始 SWE-bench 的人标数据<em>不够干净</em>，得再花大力气人工逐条复核。这条链路有个天然的天花板：</p>
+  <ul>
+    <li><em>人类写题的速度是有限的</em>。GitHub 上的高质量 PR 不是无限供应，标一个能跑通、有 fail-to-pass 测试的 issue，背后是一个开发者几小时甚至几天的工作。数据增长跟不上模型胃口增长。</li>
+    <li><em>人类写题的难度是有上限的</em>。人能想出来的 bug，终究是"人这个量级"的 bug。如果目标是超越人类的 superintelligence，那靠人出的题，agent 最多也只能学到"人会的"。</li>
+    <li><em>人写的题还可能是错的</em>。issue 描述含糊、测试标错预期，这些噪声在 RL 里会被放大——agent 学着去拟合一个本身就有 bug 的信号。</li>
+  </ul>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    把软件 agent 想象成一个棋手。SWE-RL 那条路，相当于让它看几百万盘人类高手对局的棋谱来学棋——棋谱多、棋谱好，它就强；棋谱里夹着错招，它也照学。SSR 走的是 AlphaZero 那条路：不看任何人类棋谱，只给它棋盘规则和"赢了给分"，让它自己跟自己下，下到超越所有人类棋手。这里的"棋盘规则"就是真实仓库里的代码和测试执行器——赢了给分，就是补丁跑通了测试。
+  </div>
+
+  <p>当然，"自己出题"这件事也不是没人试过。SWE-smith 和 BugPilot 让 LLM 大规模合成 bug 来当训练数据，可它们<em>仍然需要现成的测试套件和解析器</em>当裁判，还得请教师模型做蒸馏——人类依赖没真断开，只是换了个壳。更关键的是，这些方法是<em>静态</em>的：bug 生成流水线一开始就定死了，不会因为 agent 变强而调难度。agent 都已经会做难题了，它还在喂简单题，等于在浪费时间。SSR 要补的，正是这个"动态、自适应、零人类依赖"的缺口。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>一句话：<em>能不能让一个 LLM agent，只靠"真实仓库的源码和已装好的依赖"（一个 Docker 镜像），自己跟自己玩出越来越难的 bug 修复任务，并且越玩越强——全程不碰一条人类写的 issue 或测试？</em></p>
+  <p>拆开来看，这其实捆了三个子问题：第一，<em>出题</em>——agent 怎么在一个真实仓库里"造"出一个合法的 bug？第二，<em>判题</em>——没有人类标的测试，怎么知道这个 bug 是"真的"、修好了算"对的"？第三，<em>难度自适应</em>——怎么让出的题随 agent 水平涨，不会一直出简单题把 agent 惯坏，也不会一上来出难题把 agent 打自闭？</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果让你给一个会写代码的 AI 出"自己修自己造的 bug"这道题，你最先卡在哪？大概率是"判题"——agent 自己造的 bug，凭啥说它修对了？人类出的题有 fail-to-pass 测试当裁判，agent 自己出的题，裁判去哪找？先别急着往下翻，猜猜 SSR 怎么绕过这个"既当运动员又当裁判"的死结。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>SSR 的核心招式可以用一句话讲完：<em>同一个 LLM，分饰两角——先当"出题人"往仓库里注入 bug，再当"解题人"把 bug 修回去，两头共用一套权重，靠强化学习一起更新</em>。难的是怎么让这个"自己出题自己答"的循环转得起来、转得有用、转得越来越难。下面把它拆成三步讲。</p>
+
+  <h3>第一步：出题——bug 注入（bug injection）</h3>
+  <p>agent 拿到一个 Docker 镜像——里面是一个真实的开源仓库，源码装好、依赖装好，但<em>没有人类标的 issue 或测试集</em>。它要做的是在这个仓库里"造"一个 bug。怎么造？SSR 给了两类招数：</p>
+  <ul>
+    <li><em>代码删除</em>（code removal）：agent 在仓库里探一圈，找到一段"删掉会让某个测试从 pass 变 fail"的代码，把它删掉——这个被删的片段，连同那个会因此失败的测试，合起来就是一个"合法 bug"。关键是，这个 bug 的"题面"不是自然语言描述，而是一个<em>测试补丁</em>（test patch）：它形式化地规定了"修好之后，这个测试得重新通过"。</li>
+    <li><em>历史感知回退</em>（history-aware reversion）：随着训练推进，agent 已经修过一批 bug。这时它可以去翻"早期自己修过的补丁"，把那个补丁<em>撤回</em>——让仓库回到"修之前"的坏状态。这等于把"agent 当年犯过的错"重新拿出来当题，而且这些错天然是"agent 当年水平够得着、现在可能已经会了"的难度，恰好是好的复习材料。</li>
+  </ul>
+  <p>这两招不是二选一，论文发现<em>组合用效果最好</em>：代码删除造"新题型"，历史回退造"复习题"，两类混着喂，agent 学得最稳。</p>
+
+  <figure>
+    <!-- 图 2：SSR 自博弈整体架构——出题人与解题人共用权重 -->
+    <svg viewBox="0 0 700 340" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowA" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrowA2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#24555A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 仓库输入 -->
+        <rect x="30" y="40" width="160" height="56" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="110" y="64" text-anchor="middle">Docker 镜像</text>
+        <text x="110" y="82" text-anchor="middle" fill="#96897A" font-size="10">源码 + 依赖，无人类 issue/测试</text>
+
+        <!-- 出题人 -->
+        <rect x="30" y="140" width="160" height="60" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="110" y="166" text-anchor="middle" fill="#B54A2C" font-weight="600">出题人（注入）</text>
+        <text x="110" y="184" text-anchor="middle" fill="#B54A2C" font-size="10">删代码 / 回退补丁</text>
+
+        <!-- bug 制品 -->
+        <rect x="280" y="140" width="140" height="60" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="166" text-anchor="middle">bug 制品</text>
+        <text x="350" y="184" text-anchor="middle" fill="#96897A" font-size="10">测试补丁 + 坏代码状态</text>
+
+        <!-- 解题人 -->
+        <rect x="510" y="140" width="160" height="60" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="590" y="166" text-anchor="middle" fill="#24555A" font-weight="600">解题人（修复）</text>
+        <text x="590" y="184" text-anchor="middle" fill="#24555A" font-size="10">生成补丁 patch</text>
+
+        <!-- 测试执行器当裁判 -->
+        <rect x="280" y="250" width="140" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="272" text-anchor="middle">测试执行器</text>
+        <text x="350" y="288" text-anchor="middle" fill="#96897A" font-size="10">跑 fail-to-pass = 裁判</text>
+
+        <!-- RL 更新 -->
+        <rect x="510" y="250" width="160" height="50" rx="2" fill="#B54A2C" fill-opacity="0.08" stroke="#B54A2C"/>
+        <text x="590" y="272" text-anchor="middle" fill="#B54A2C">RL 策略更新</text>
+        <text x="590" y="288" text-anchor="middle" fill="#B54A2C" font-size="10">两角共用一套权重</text>
+
+        <!-- 箭头 -->
+        <line x1="110" y1="96" x2="110" y2="140" stroke="#96897A" stroke-width="1" marker-end="url(#arrowA)"/>
+        <line x1="190" y1="170" x2="280" y2="170" stroke="#96897A" stroke-width="1" marker-end="url(#arrowA)"/>
+        <line x1="420" y1="170" x2="510" y2="170" stroke="#96897A" stroke-width="1" marker-end="url(#arrowA)"/>
+        <line x1="590" y1="200" x2="430" y2="250" stroke="#24555A" stroke-width="1" marker-end="url(#arrowA2)"/>
+        <line x1="350" y1="250" x2="350" y2="200" stroke="#96897A" stroke-width="1" marker-end="url(#arrowA)"/>
+        <line x1="350" y1="275" x2="510" y2="270" stroke="#B54A2C" stroke-width="1" marker-end="url(#arrowA)"/>
+
+        <!-- 共用权重标注 -->
+        <path d="M110 200 Q 200 230 280 170" stroke="#24555A" stroke-dasharray="3 3" fill="none" opacity="0.6"/>
+        <text x="180" y="225" text-anchor="middle" fill="#24555A" font-size="9">同权重</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · SSR 自博弈闭环：出题人注入 bug、解题人修复，测试执行器当裁判，两角共用一套 LLM 权重由 RL 一起更新</figcaption>
+  </figure>
+
+  <h3>第二步：判题——让测试执行器当"不偏不倚"的裁判</h3>
+  <p>回到刚才那个"既当运动员又当裁判"的死结。SSR 的解法很妙：它不让 LLM 当裁判，而是让<em>仓库自带的测试执行器</em>当裁判。具体说，每个"bug 制品"由三样东西组成：一段被改坏的代码、一个因此从 pass 变 fail 的测试、以及一份形式化的测试补丁。解题人交的作业是一个修复补丁，<em>跑一下那个测试，从 fail 重新变 pass，就算修对了</em>——这是机器判分，不是 LLM 判分，没有主观偏差。</p>
+  <p>但光"能跑通测试"还不够，否则出题人可以钻空子：删掉一行无关紧要的注释，测试照样从 pass 变 fail（因为根本没跑那个测试），这算个啥 bug？SSR 加了一道<em>一致性检查</em>（consistency check）：注入的 bug 必须（1）能通过测试解析器的合法性校验，（2）经过<em>反向变异测试</em>——把补丁撤销后测试重新通过、打上补丁后测试重新失败，确认这个 bug 是"真的"而不是投机取巧。只有过了这两关的 bug，才算一道合法训练题。</p>
+
+  <div class="formula-block">
+    $$ r = \mathbb{1}[\text{test}(patch_{\text{fix}}) = \text{pass}] \cdot \mathbb{1}[\text{consistency}(bug) = \text{valid}] $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>奖励公式 (1) 看着简单，但它藏着一个关键设计：<em>奖励同时约束出题人和解题人</em>。解题人拿到的奖励是"修没修对"，出题人拿到的奖励是"你出的题够不够合法、够不够难倒当前的解题人"——出题人要是老出 trivial bug，解题人都修对了，出题人那边的"难度信号"就趋平，RL 会推着它去出更难的题。这就是难度自适应的来源：<em>出题人和解题人互相较劲</em>，题自然越出越难。</p>
+
+  <figure>
+    <!-- 图 3：训练流程——从仓库到自博弈闭环 -->
+    <svg viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowF" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <rect x="10" y="65" width="110" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="65" y="86" text-anchor="middle">真实仓库</text>
+        <text x="65" y="102" text-anchor="middle" fill="#96897A" font-size="10">Docker</text>
+
+        <rect x="160" y="65" width="110" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="215" y="86" text-anchor="middle">出题人探仓库</text>
+        <text x="215" y="102" text-anchor="middle" fill="#96897A" font-size="10">找可删/可回退</text>
+
+        <rect x="310" y="65" width="110" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="365" y="86" text-anchor="middle">一致性校验</text>
+        <text x="365" y="102" text-anchor="middle" fill="#96897A" font-size="10">合法 bug?</text>
+
+        <rect x="460" y="65" width="110" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="515" y="86" text-anchor="middle">解题人修</text>
+        <text x="515" y="102" text-anchor="middle" fill="#96897A" font-size="10">生成补丁</text>
+
+        <rect x="610" y="65" width="80" height="50" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="650" y="86" text-anchor="middle" fill="#24555A">跑测试</text>
+        <text x="650" y="102" text-anchor="middle" fill="#24555A" font-size="10">= 裁判</text>
+
+        <line x1="120" y1="90" x2="160" y2="90" stroke="#96897A" marker-end="url(#arrowF)"/>
+        <line x1="270" y1="90" x2="310" y2="90" stroke="#96897A" marker-end="url(#arrowF)"/>
+        <line x1="420" y1="90" x2="460" y2="90" stroke="#96897A" marker-end="url(#arrowF)"/>
+        <line x1="570" y1="90" x2="610" y2="90" stroke="#96897A" marker-end="url(#arrowF)"/>
+
+        <!-- 反馈回路 -->
+        <path d="M650 115 Q 650 150 365 150 Q 65 150 65 115" stroke="#B54A2C" stroke-width="1" fill="none" marker-end="url(#arrowF)" stroke-dasharray="4 3"/>
+        <text x="358" y="166" text-anchor="middle" fill="#B54A2C" font-size="10">RL 反馈：奖励回传，更新共用权重，难度自适应涨</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · SSR 训练流程：仓库 → 出题 → 校验 → 解题 → 测试当裁判 → RL 反馈闭环</figcaption>
+  </figure>
+
+  <h3>第三步：迭代——越来越高阶的 bug 课程</h3>
+  <p>SSR 不是跑一遍就完，它是一个<em>在线迭代</em>的过程。每一轮，出题人基于"当前 agent 的水平"出题，解题人尝试修，没修对的 bug 会被记下来——这些"agent 当前还修不对的题"会被<em>留作更高阶的训练样本</em>，下一轮再喂。换句话说，agent 自己的失败，成了它自己的课程表：哪里跌倒，就把哪里的题加进下一轮。论文把这种"失败模式自动变训练信号"的机制，称作 curriculum 的自动生长。</p>
+  <p>这里有个细节值得点出：SSR <em>没有用任何教师模型做蒸馏</em>。这跟之前 SWE-smith、BugPilot 那些靠教师模型生成 bug 的路子完全不同——后者如果教师模型本身菜，生成的 bug 也菜；SSR 的"出题质量"只受仓库本身和 RL 信号约束，不绑死在某个教师身上。这也是它能往 superintelligence 走的前提：<em>不靠一个比它聪明的"老师"喂题，才能突破老师的天花板</em>。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>实验在 SWE-bench Verified 和 SWE-Bench Pro 两个权威基准上跑。基线模型是 <em class="latin">CWM-sft</em>（Code World Model 的 SFT 版本），对照是一个<em>超参完全相同、但训练数据用人类 GitHub PR</em> 的 RL 基线。结果有几个让人眼前一亮的发现。</p>
+
+  <table>
+    <thead>
+      <tr><th>设置</th><th>SWE-bench Verified</th><th>SWE-Bench Pro</th><th>说明</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">人类数据 RL 基线</td><td>基线</td><td>基线</td><td class="text">同超参，喂人类 PR</td></tr>
+      <tr><td class="text">仅注入（injection-only）</td><td>25.2</td><td>—</td><td class="text">只训练出题人</td></tr>
+      <tr><td class="text">仅修复（repair-only）</td><td>33.5</td><td>—</td><td class="text">只训练解题人</td></tr>
+      <tr><td class="text">完整自博弈 SSR</td><td>38.0</td><td>—</td><td class="text">两角联合训练</td></tr>
+      <tr><td class="text">SSR 自我提升幅度</td><td>+10.4</td><td>+7.8</td><td class="text">相对人类数据基线</td></tr>
+    </tbody>
+  </table>
+
+  <p>第一组数字最直白：<em>完整自博弈（SSR）38.0%，碾压仅注入 25.2% 和仅修复 33.5%</em>。这说明"出题"和"解题"不是两个独立任务，<em>必须联训</em>才有效——只学造 bug 不学修，或者只学修不学造，都拿不到自博弈的红利。这跟 AlphaZero 的经验一致：光当"白方"或光当"黑方"都练不成棋神，得两边一起轮转。</p>
+  <p>第二组数字更值得琢磨：SSR 在<em>整条训练轨迹上</em>都稳定地超过人类数据基线，且提升幅度 +10.4 / +7.8。注意一个细节——<em>评测用的是自然语言 issue</em>，而 SSR 训练时<em>根本没见过自然语言 issue</em>（它只见过测试补丁）。也就是说，agent 从"只会读测试补丁"的训练里，<em>泛化</em>到了"能读懂人话写的 issue"。这个泛化是自博弈路线最硬的证据：它不是在评测集上过拟合，而是真的学到了"理解软件怎么构造"的通用能力。</p>
+
+  <figure>
+    <!-- 图 4：人类数据 RL vs SSR 自博弈 关键差异对比 -->
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="175" y="28" text-anchor="middle" font-weight="600">人类数据 RL（如 SWE-RL）</text>
+        <text x="525" y="28" text-anchor="middle" font-weight="600" fill="#B54A2C">SSR 自博弈（本篇）</text>
+        <line x1="350" y1="20" x2="350" y2="240" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <rect x="40" y="50" width="270" height="32" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="70" text-anchor="middle">数据：人类 GitHub issue + PR</text>
+
+        <rect x="40" y="92" width="270" height="32" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="112" text-anchor="middle">裁判：人类标的 fail-to-pass 测试</text>
+
+        <rect x="40" y="134" width="270" height="32" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="154" text-anchor="middle">难度：人写多难就多难（静态）</text>
+
+        <rect x="40" y="176" width="270" height="32" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="175" y="196" text-anchor="middle">天花板：人类能力上限</text>
+
+        <rect x="390" y="50" width="270" height="32" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="70" text-anchor="middle" fill="#B54A2C">数据：Docker 镜像，零人类 issue</text>
+
+        <rect x="390" y="92" width="270" height="32" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="112" text-anchor="middle" fill="#B54A2C">裁判：仓库自带测试执行器</text>
+
+        <rect x="390" y="134" width="270" height="32" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="154" text-anchor="middle" fill="#B54A2C">难度：随 agent 水平自适应涨</text>
+
+        <rect x="390" y="176" width="270" height="32" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="525" y="196" text-anchor="middle" fill="#B54A2C">天花板：理论上无上限</text>
+
+        <text x="175" y="232" text-anchor="middle" fill="#96897A" font-size="10">+10.4 Verified / +7.8 Pro</text>
+        <text x="525" y="232" text-anchor="middle" fill="#B54A2C" font-size="10" font-weight="600">反超人类数据基线</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 人类数据 RL 与 SSR 自博弈在数据/裁判/难度/天花板四个维度上的根本差异</figcaption>
+  </figure>
+
+  <p>还有一个被论文反复强调的发现：把"代码删除"和"历史感知回退"两种 bug 注入策略<em>组合</em>用，效果最好（38.0%）。单用任何一种都会掉点。这说明 bug 的<em>多样性</em>比单一策略的纯度更重要——agent 需要见各种花样的 bug，才能学到"软件是怎么坏、又该怎么修"的通用规律，而不是背某一种 bug 模板。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>这篇论文的意义，往小里说，是给 SWE agent 找到了一条<em>不依赖人类标注</em>的训练路径，把数据成本从"等开发者写 PR"降到"拉一个 Docker 镜像"；往大里说，它给"软件 agent 怎么走向 superintelligence"指了一条具体的路。这两层意义都值得展开。</p>
+  <p>第一层，<em>它把 SWE agent 的数据瓶颈从"无限期"压成了"自动再生"</em>。之前所有 SWE agent 的进步，背后都站着一支隐形的"标注大军"——开发者写 issue、标测试、审 PR、复核 SWE-bench。这支队伍的产出速度，就是 agent 进步的速度。SSR 之后，agent 可以自己生成训练信号，意味着<em>算力取代人力成为唯一的扩张资源</em>。这对工业界的影响是直接的：以前要养一支数据团队，现在要养一个 Docker 集群。</p>
+  <p>第二层，<em>它把 AlphaZero 的范式从封闭游戏搬到了开放领域</em>。AlphaZero 能赢，是因为围棋有明确的胜负规则；SSR 之所以难，是因为"软件修没修好"这个规则远不如围棋清晰——它要靠测试执行器来近似"胜负"。论文证明这个近似是<em>够用</em>的：哪怕裁判只是"跑测试看 pass/fail"，agent 也能从自博弈里学到真本事。这为后续所有"开放领域自博弈"工作（不只是软件，还可以是数学、科学推理）铺了一块地基。</p>
+  <p>第三层，它给"agent 会不会超越人类"这个焦虑，提供了一个<em>技术上可验证</em>的回答路径。论文标题写的是 <em class="latin">first step toward</em>——第一步。它没说自己已经造出超智能，但它说清楚了：超智能的必要条件之一，是<em>不靠人喂题</em>。SSR 是这个条件的第一次大规模实证。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>论文自己很坦诚，标题里的 <em class="latin">albeit early</em>（虽然还很早）不是谦虚。几个明显的局限得说清楚：</p>
+  <ul>
+    <li><em>裁判仍是近似的</em>。"测试跑通"不等于"修对了"——测试覆盖不全的 bug，agent 可能修出一个"让测试通过但引入新 bug"的补丁。这个<em>奖励黑客</em>（reward hacking）风险在自博弈里会被放大，因为没有人类标注当最后兜底。论文用一致性检查缓解了一部分，但没根治。</li>
+    <li><em>仓库得能跑起来</em>。SSR 的前提是 Docker 镜像里源码和依赖都装好、测试能执行。可真实世界有大量仓库<em>装不起来</em>——依赖断裂、环境腐化、测试套件缺失。这些仓库 SSR 现在碰不了，意味着它的"真实世界"其实还是"能跑测试的真实世界"。</li>
+    <li><em>bug 的"难"是相对当前 agent 的</em>。如果 agent 一开始太菜，出题人为了"让它修得对"，会倾向于出简单 bug——这可能导致<em>早期课程太浅</em>，训练效率低。论文靠"失败 bug 留作高阶样本"缓解，但这个自适应课程的稳定性还需要更多验证。</li>
+    <li><em>规模还小</em>。论文用的是 CWM-sft 这个量级的基座，没在最大的前沿模型上验证。自博弈的收益是否会随规模继续涨，是个开放问题——毕竟 AlphaZero 的奇迹是在固定规则、完美信息游戏里发生的，软件修复是不是同等"友好"，尚无定论。</li>
+  </ul>
+  <p>未来方向上，论文暗示了几条：把自博弈从"单仓库"扩到"跨仓库"迁移学习、把裁判从"测试执行器"升级成更细粒度的程序分析、以及——最让人期待也最危险的一条——让 agent 不仅修 bug，还能<em>自己提出新功能、自己设计测试</em>，从"修"走向"造"。这一步如果走通，"agent 自己写软件"就不再是口号。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把 SSR 放回大模型整条发展线上看，它的位置很特别。从第 001 篇 <em class="latin">Transformer</em> 立起"注意力即一切"，到第 002–004 篇 BERT/GPT-2/GPT-3 把预训练范式跑通，再到第 005 篇 <em class="latin">Chinchilla</em> 定下"算力最优"配比——这一段都在回答"<em>模型怎么练</em>"。第 006 篇 <em class="latin">InstructGPT</em> 把对齐拉进来，第 024–028 篇 CoT/ToT/GoT 把"推理范式"的种子埋下，到第 020 篇 <em class="latin">o1</em> 用 RL 训思维链，推理范式正式起飞。</p>
+  <p>软件 agent 这条支线是第 047 篇才真正分叉出来的：<em class="latin">SWE-agent</em> 立"接口"标杆，<em class="latin">Agentless</em> 反问"要不要 agent"，<em class="latin">OpenHands</em> / <em class="latin">MASAI</em> / <em class="latin">DEI</em> 把单 agent 编成多 agent 委员会，<em class="latin">SWE-Search</em> / <em class="latin">SWE-Replay</em> 把测试时算力扩展塞进 agent。这条支线前半段的主题是"<em>怎么用 agent</em>"，后半段是"<em>怎么省着用 agent</em>"。</p>
+  <p>SSR 站在这个拐点上，把问题从"用"翻到了"<em>养</em>"：不再问"怎么让一个已训练好的 agent 更强"，而是问"怎么让 agent 自己把自己训练强"。它承接了 SWE-Replay"复用经验"的直觉，却把"经验"的来源从"agent 跑过的轨迹"升级成"agent 自己造的题"。这等于把"扩展轴"从测试时搬到了训练时——而训练时的扩展，理论上没有上限。从这个意义看，SSR 不只是 SWE agent 支线的第八篇，更可能是"训练时自博弈期"这条新脉络的第 001 篇。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>这篇论文背后有个挺有意思的"师承"故事。第一作者 Yuxiang Wei 是 UIUC 的博士生，导师是 Lingming Zhang（软件工程测试领域的大牛），同时 2024–2025 年在 Meta FAIR 的 CodeGen/CodeLlama 组当学生研究员。他个人主页上挂着一句很有态度的自我介绍：<em>"I train code agents."</em>（我训练代码 agent。）就这一句，没多余的。这位老兄的研究轨迹本身就串起了一条小脉络：先是 <em class="latin">Magicoder</em>（ICML'24，用合成数据训代码模型），再是 <em class="latin">SelfCodeAlign</em>（NeurIPS'24，自对齐），然后 <em class="latin">SWE-RL</em>（NeurIPS'25，把 RL 搬进软件工程），到这篇 <em class="latin">Self-Play SWE-RL</em>（ICML'26，自博弈）。你可以看出一条清晰的"越来越不靠人"的演进——从合成数据，到自对齐，到 RL，再到自博弈。他自己就是这条路的活样本。</p>
+  <p>论文发表过程也挺有戏剧性。v1 在 2025 年 12 月 21 日挂上 arXiv，正赶上年底 AI 圈"圣诞总结"的流量高峰。有人当天就在 X 上喊出"<em>这是软件 agent 的 AlphaGo 时刻</em>"——这个类比之所以传得开，是因为 AlphaZero 当年也是"零人类数据 + 自博弈"打爆人类棋手，叙事结构太像了。不过 SSR 的作者们在论文里很克制，没自己吹"AlphaGo 时刻"，只老老实实写了 <em class="latin">first step toward</em>。倒是从 v1 到 v2（2026 年 5 月）到 v3（6 月），他们改了好几版，最后被 ICML 2026 接收，算是把"自博弈训软件 agent"这条路在顶会上盖了章。</p>
+  <p>还有一个跨论文的彩蛋。SSR 里反复对比的 <em class="latin">Absolute Zero</em>（清华团队，2025 年 5 月）是同一年冒出来的"自博弈训推理"工作——它让一个模型自己出数学/代码题、自己解。SSR 和 Absolute Zero 几乎是同一时间、不同地点、各自把"自博弈"搬进了自己最熟的领域（一个是软件工程，一个是数学推理）。这种"两个团队不约而同想到同一招"的巧合，往往意味着一个范式正在成型——而下一篇，我们正好去读 Absolute Zero。</p>
+
+  <figure>
+    <!-- 图 5：自博弈三步走的趣味类比 -->
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 三个阶段：学棋谱 → 自己下棋 → 自己造棋局 -->
+        <circle cx="120" cy="110" r="48" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="100" text-anchor="middle" fill="#96897A">看人类棋谱</text>
+        <text x="120" y="118" text-anchor="middle" fill="#96897A" font-size="10">SWE-RL</text>
+        <text x="120" y="132" text-anchor="middle" fill="#96897A" font-size="10">2025.02</text>
+
+        <circle cx="350" cy="110" r="48" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="350" y="100" text-anchor="middle" fill="#24555A">自己跟自己下</text>
+        <text x="350" y="118" text-anchor="middle" fill="#24555A" font-size="10">SSR（本篇）</text>
+        <text x="350" y="132" text-anchor="middle" fill="#24555A" font-size="10">2025.12</text>
+
+        <circle cx="580" cy="110" r="48" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="580" y="100" text-anchor="middle" fill="#B54A2C">自己造棋局</text>
+        <text x="580" y="118" text-anchor="middle" fill="#B54A2C" font-size="10">Absolute Zero</text>
+        <text x="580" y="132" text-anchor="middle" fill="#B54A2C" font-size="10">下一篇</text>
+
+        <line x1="168" y1="110" x2="302" y2="110" stroke="#96897A" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#arrowFun)"/>
+        <line x1="398" y1="110" x2="532" y2="110" stroke="#96897A" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#arrowFun)"/>
+
+        <text x="350" y="190" text-anchor="middle" fill="#96897A" font-size="10">软件 agent 的"断奶"三步：靠人喂 → 自博弈 → 自出题</text>
+      </g>
+      <defs>
+        <marker id="arrowFun" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 从"看棋谱"到"自己下棋"再到"自己造棋局"——软件 agent 断奶三步走</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读完这篇，我最想提醒读者的一件事是：<em>别把"自博弈"当成万能解药</em>。SSR 的成功有一个不显眼但关键的前提——它有"<em>仓库自带的测试执行器</em>"当裁判。围棋的胜负是上帝定的，软件的"修没修对"是测试执行器定的；可一旦换到一个<em>没有客观裁判</em>的领域（比如开放式对话、创意写作），自博弈就会遇到"谁来当裁判"的死结。SSR 能跑通，本质上是因为软件工程恰好有一个还算可靠的自动裁判。这个前提，不是所有领域都满足。</p>
+  <p>另一个值得琢磨的点：SSR 的"泛化"——从测试补丁泛化到自然语言 issue——到底是怎么发生的？论文给了现象，但机制还没完全讲透。一种猜测是：agent 在自博弈里学到的是"<em>软件是怎么构造的</em>"这种通用规律，而读 issue 和读测试补丁都只是这个规律的两种"投影"。如果这个猜测成立，那 SSR 学到的就比"修 bug"更广——它在学一种"软件的本体论"。这跟 SWE-RL 当年发现的"在软件数据上做 RL，连数学和通用语言都涨点"是同一个谜：软件里到底藏着什么，让模型变得更聪明？这个问题，可能比"怎么训得更猛"更值得追。</p>
+  <p>最后留一个有点危险的念头：SSR 让 agent 自己给自己出题，这意味着 agent <em>见过的 bug 类型会越来越脱离人类经验</em>。短期看，这是好事——它学的题比人能想到的更多样；长期看，如果 agent 自己造的 bug 越来越古怪、越来越不像人类会犯的错，那它在"修人类犯的错"这件事上，是不是反而会<em>失准</em>？就像一个只跟自己下棋的棋手，可能下不出人类喜欢的那几步。这个"自博弈导致的分布漂移"，是这条路上一个还没人认真回答的隐患。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果一个软件 agent 完全靠自博弈训出来，从没见过人类写的 issue，那当它去修一个真实开源项目里"人类风格"的 bug 时，你猜它会更擅长、还是更不擅长？换句话说——脱离人类数据的训练，会不会让 agent 离"人类真实工作流"越来越远？欢迎你想完再去看下一篇 Absolute Zero，看看清华团队在数学推理上给出了什么不一样的答案。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Absolute Zero: Reinforced Self-play Reasoning with Zero Data</h3>
+    <p style="margin:0;">SSR 在软件工程里把自博弈跑通了，那数学推理呢？下一篇我们读清华团队的 Absolute Zero——同一个"零人类数据 + 自博弈"的范式，换到数学和代码推理赛道上，结果竟然也反超了用几万条人类标注训出来的模型。同样是自博弈，软件和数学这两条路，到底在哪分了叉？</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 054 篇</span>
+    <span>2026-09-23</span>
+  </footer>
+
+</div>
+</body>
+</html>
