@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 54,
-  "last_run_date": "2026-09-23",
+  "last_index": 55,
+  "last_run_date": "2026-09-24",
   "papers_covered": [
     {
       "index": 1,
@@ -434,10 +434,18 @@
       "date": "2025-12-21",
       "era": "自博弈训练期 2025–",
       "filename": "54_20260923_Self_Play_SWE_RL.html"
+    },
+    {
+      "index": 55,
+      "title_en": "Absolute Zero: Reinforced Self-play Reasoning with Zero Data",
+      "title_zh": "Absolute Zero：零数据自博弈推理——一个模型自己出题、自己解，竟反超几万条人类标注训出来的模型",
+      "date": "2025-05-06",
+      "era": "自博弈训练期 2025–",
+      "filename": "55_20260924_Absolute_Zero.html"
     }
   ],
   "next_preview": {
-    "title_en": "Absolute Zero: Reinforced Self-play Reasoning with Zero Data",
-    "title_zh": "Absolute Zero：零数据自博弈推理——一个模型自己出数学题、自己解，竟反超几万条人类标注训出来的模型"
+    "title_en": "R-Zero: Self-Evolving Reasoning LLM from Zero Data",
+    "title_zh": "R-Zero：双模型自博弈——把 AZR 的一个模型演双角，拆成挑战者与解题者两个模型分头进化"
   }
 }

@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Absolute Zero 论文精读 · 大模型经典论文系列 #055</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#055</span>
+  </div>
+
+  <h1 class="title">
+    Absolute Zero: Reinforced Self-play Reasoning with Zero Data
+    <span class="en">Absolute Zero：零数据自博弈推理——一个模型自己出题、自己解，竟反超几万条人类标注训出来的模型</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Andrew Zhao, Yiran Wu, Yang Yue, Tong Wu, Quentin Xu, Yang Yue, Matthieu Lin, Shenzhi Wang, Qingyun Wu, Zilong Zheng, Gao Huang</span>
+    <span>机构：清华大学 · 北京通用人工智能研究院 BIGAI · 宾夕法尼亚州立大学</span>
+    <span>发表：2025-05 · NeurIPS 2025 Spotlight</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2505.03335" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/LeapLabTHU/Absolute-Zero-Reasoner" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://andrewzh112.github.io/absolute-zero-reasoner/" target="_blank" rel="noopener">Project</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">上一篇我们读完了 Self-Play SWE-RL，看着软件 agent 学会"自己给自己出 bug 题、自己修"，在那个结尾我们预告了它的孪生兄弟——一个让模型自己出数学和代码题、自己解的工作。现在，我们到了。</p>
+  <p class="lead">想象一个永远不会"被题难住"的学生：题库里的题做完了，老师又出不了更难的，于是他自己造题——造完自己解，解完自己判对错，判错了就换种造法。没有人类老师，只有一个能跑 Python 的"自动判卷机"。这不是科幻，这就是 2025 年 5 月挂在 arXiv 上的 <em class="latin">Absolute Zero</em>。它的名字里藏着物理学"绝对零度"的梗——降到最低的外部依赖，逼近自我进化的极限态。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    让一个模型同时当"出题人""解题人""验证人"，只用一个 Python 解释器当裁判，完全不依赖任何外部人工数据，就能在代码和数学推理上反超用几万到几十万条人类数据训练的模型。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>把这篇论文放回大模型整条发展线上，它的位置很特别：它站在"推理范式期"和"自博弈训练期"的交界处。第 020 篇 <em class="latin">o1</em> 用强化学习训练思维链，把推理范式点燃；第 013 篇 <em class="latin">DeepSeek-R1</em> 证明纯 RL 能让模型自发"顿悟"出反思。但这些工作的共同前提是——<em>得有人先准备好题库</em>。R1 虽号称 <em class="latin">zero</em>，跳过了 SFT，可 RL 阶段依然喂的是人工精心整理的问答对。</p>
+  <p>Absolute Zero 干的是一件更狠的事：它把<em>题库本身也交给模型自己造</em>。这等于把"扩展轴"从"测试时多想一会儿"（o1 那条线）和"训练时多喂几万题"（R1 那条线），挪到了"训练时让模型自己无限造题"。它承接了上一篇 SSR"软件 agent 自博弈"的直觉，却把舞台从软件工程换成了更纯粹的数学与代码推理——也正因为任务更纯粹、裁判更硬（代码能跑就是能跑），它成了"自博弈训练期"里第一个被顶会盖章的范式样板。</p>
+
+  <figure>
+    <!-- 图 1：大模型发展时间线，标注本篇位置 -->
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <line x1="40" y1="120" x2="660" y2="120" stroke="#96897A" stroke-width="1"/>
+
+        <circle cx="70" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="70" y="100" text-anchor="middle">2017</text>
+        <text x="70" y="150" text-anchor="middle">Transformer</text>
+        <text x="70" y="164" text-anchor="middle" font-size="9">#001</text>
+
+        <circle cx="180" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="180" y="100" text-anchor="middle">2022</text>
+        <text x="180" y="150" text-anchor="middle">InstructGPT</text>
+        <text x="180" y="164" text-anchor="middle" font-size="9">#006</text>
+
+        <circle cx="290" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="290" y="100" text-anchor="middle">2022</text>
+        <text x="290" y="150" text-anchor="middle">CoT</text>
+        <text x="290" y="164" text-anchor="middle" font-size="9">#024</text>
+
+        <circle cx="400" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="400" y="100" text-anchor="middle">2024.09</text>
+        <text x="400" y="150" text-anchor="middle">o1</text>
+        <text x="400" y="164" text-anchor="middle" font-size="9">#020</text>
+
+        <circle cx="500" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="500" y="100" text-anchor="middle">2025.01</text>
+        <text x="500" y="150" text-anchor="middle">DeepSeek-R1</text>
+        <text x="500" y="164" text-anchor="middle" font-size="9">#013</text>
+
+        <circle cx="600" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="600" y="100" text-anchor="middle">2025.12</text>
+        <text x="600" y="150" text-anchor="middle">Self-Play SWE-RL</text>
+        <text x="600" y="164" text-anchor="middle" font-size="9">#054</text>
+
+        <!-- 本篇高亮 -->
+        <circle cx="555" cy="120" r="9" fill="#B54A2C"/>
+        <circle cx="555" cy="120" r="13" fill="none" stroke="#B54A2C" stroke-width="1" opacity="0.4"/>
+        <text x="555" y="88" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="555" y="200" text-anchor="middle" fill="#2E2A22" font-weight="600">Absolute Zero</text>
+        <text x="555" y="214" text-anchor="middle" font-size="9">#055 · 2025.05</text>
+        <line x1="555" y1="129" x2="555" y2="178" stroke="#B54A2C" stroke-width="1" stroke-dasharray="2 2"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的位置：Absolute Zero 站在"推理范式期"向"自博弈训练期"的交界处</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要理解 Absolute Zero 为什么重要，得先理解一个让整个 post-training 圈子焦虑的词：<em>数据墙</em>。</p>
+  <p>预训练阶段早就撞过一次墙——高质量人类文本的增长跟不上模型规模的膨胀，Chinchilla 早就告诉我们"数据不够，模型再大也是浪费"。大家本以为 post-training（强化学习对齐这一段）能松口气，毕竟这里数据需求小得多。可 R1 之后人们发现：训练一个会推理的模型，你需要<em>大量带标准答案的题</em>——数学题、代码题、逻辑题，每道都得人来出、人来验。出题的"标注大军"产出速度，又成了模型进步的速度上限。数据墙，从 pretraining 搬到了 post-training。</p>
+  <p>更深的焦虑在论文摘要里写得明明白白：如果未来真的出现超越人类的 AI，那"由人类出题"本身就是一个天花板——人出的题，对超智能系统来说可能<em>太简单了</em>。你的题库撑死了教出一个跟你差不多聪明的学生，教不出比你更聪明的。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象你是个围棋老师，要教一个可能比你强的学生。传统 RLVR 像你把人类下过的棋谱摆给他看、给他出题；可人类棋谱终归有限，你出的题也超不过你的水平。AlphaZero 的解法是——别当老师了，给学生一个棋盘和胜负规则，让他自己跟自己下几百万盘。Absolute Zero 干的就是这件事，只不过把"棋盘"换成了"Python 解释器"，把"胜负规则"换成了"代码跑出来的结果"。
+  </div>
+
+  <p>既有方法各自卡在哪里？<em class="latin">DeepSeek-R1-Zero</em> 号称跳过 SFT，但 RL 阶段仍然依赖人工整理的题库；<em class="latin">STaR</em> 这类自训练方法只为<em>已有的题</em>生成推理链，不自己出题；<em class="latin">rStar-Math</em> 用蒙特卡洛树搜索加小模型奖励模型做"深度思考"，但仍在数学单域、仍依赖现成题。它们都解决了一半问题——"怎么训"，但没解决另一半——"题从哪来"。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>论文要回答的问题可以一句话说清：<em>能不能让一个模型完全不依赖任何外部人工数据，自己给自己造题、自己解、自己验证，还能在真实推理任务上变强？</em></p>
+  <p>这里每个限定词都是硬约束。"不依赖外部人工数据"——不只是不要 SFT 数据，连 RL 用的题库都不要；"自己造题自己解自己验证"——三个角色得由同一套权重包揽；"还能在真实任务上变强"——不能只在自造的题上自娱自乐，得迁移到人类出的标准 benchmark 上有实打实的提升。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果让模型自己出题自己解，最容易出什么毛病？给你三秒猜一下，再往下看。<br><br>答案的核心就一个词：<em>作弊</em>。出题人可以专门出自己会的简单题刷分，或者出一些"看起来难实则有漏洞"的题——反正裁判也是它自己。这正是"自博弈"在开放领域最难的地方：围棋有上帝定的胜负，开放推理任务没有。Absolute Zero 怎么破这个局？往下看它的方法。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>Absolute Zero 的方法叫 <em class="latin">Absolute Zero Reasoner</em>（AZR）。它的核心是一个自我进化的三步闭环，由同一套模型权重交替扮演三个角色。</p>
+
+  <h3>三角色分工：出题、解题、验证</h3>
+  <p>先说人话：AZR 让一个模型当"命题老师"，负责造题；当"考生"，负责解题；当"阅卷老师"，负责判对错。但阅卷老师不是模型自己——它把判卷的活儿外包给了一个<em>Python 解释器</em>。这是整个设计最妙的一笔：裁判不学习、不可收买、不会累，代码跑出来对就是对、错就是错。出题人想作弊？可以，但它没法让 Python 解释器"睁一只眼闭一只眼"。</p>
+
+  <figure>
+    <!-- 图 2：AZR 三角色架构图 -->
+    <svg viewBox="0 0 700 340" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrow2b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="13" fill="#2E2A22">
+        <!-- 单一模型权重（共享） -->
+        <rect x="270" y="20" width="160" height="44" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="350" y="47" text-anchor="middle" fill="#24555A" font-weight="600">同一套模型权重</text>
+
+        <!-- 三个角色 -->
+        <rect x="40" y="110" width="180" height="60" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="130" y="138" text-anchor="middle" font-weight="600">① Propose 出题</text>
+        <text x="130" y="156" text-anchor="middle" font-size="10" fill="#96897A">生成 (程序,输入,输出)</text>
+
+        <rect x="260" y="110" width="180" height="60" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="138" text-anchor="middle" font-weight="600">② Solve 解题</text>
+        <text x="350" y="156" text-anchor="middle" font-size="10" fill="#96897A">据题面给出答案</text>
+
+        <rect x="480" y="110" width="180" height="60" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="570" y="138" text-anchor="middle" fill="#B54A2C" font-weight="600">③ Verify 验证</text>
+        <text x="570" y="156" text-anchor="middle" font-size="10" fill="#B54A2C">Python 解释器执行</text>
+
+        <!-- 权重到角色的连线 -->
+        <line x1="310" y1="64" x2="130" y2="108" stroke="#96897A" stroke-width="1" marker-end="url(#arrow2)"/>
+        <line x1="350" y1="64" x2="350" y2="108" stroke="#96897A" stroke-width="1" marker-end="url(#arrow2)"/>
+        <line x1="390" y1="64" x2="570" y2="108" stroke="#96897A" stroke-width="1" marker-end="url(#arrow2)"/>
+
+        <!-- 闭环箭头：出题→解题→验证→回出题 -->
+        <line x1="220" y1="140" x2="260" y2="140" stroke="#B54A2C" stroke-width="1" marker-end="url(#arrow2b)"/>
+        <line x1="440" y1="140" x2="480" y2="140" stroke="#B54A2C" stroke-width="1" marker-end="url(#arrow2b)"/>
+
+        <!-- 验证结果回流 -->
+        <path d="M570,170 Q570,230 350,230 Q130,230 130,170" fill="none" stroke="#B54A2C" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arrow2b)"/>
+        <text x="350" y="252" text-anchor="middle" fill="#B54A2C" font-size="11">奖励信号回流：题目难度 / 答案对错</text>
+
+        <!-- 奖励更新 -->
+        <rect x="220" y="280" width="260" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="307" text-anchor="middle">TRR++ 更新权重（无外部数据）</text>
+        <line x1="350" y1="258" x2="350" y2="278" stroke="#96897A" stroke-width="1" marker-end="url(#arrow2)"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · AZR 自我进化闭环：同一套权重轮流当出题人、解题人，Python 解释器当不可收买的裁判</figcaption>
+  </figure>
+
+  <p>具体到造题环节，AZR 造的不是自然语言题，而是一个三元组：$(程序\ p,\ 输入\ i,\ 输出\ o)$，要求 $p(i)=o$。也就是说，命题老师得写一段 Python 代码 $p$、给一个输入 $i$、再标一个预期输出 $o$，三者得在 Python 里跑通且对得上。出题完成后，这套三元组会先过 Python 执行器筛一遍——程序得能跑、得有返回值、还得"安全"（禁用了 <em class="latin">os</em>/<em class="latin">sys</em>/<em class="latin">shutil</em> 这些能搞破坏的模块）。只有过了这一关的题，才进题库 buffer。</p>
+
+  <h3>三种推理模式：顺向、逆向、归纳</h3>
+  <p>题造好了，怎么解？AZR 设计了三种"推理模式"，对应人对推理的三种基本方式。这正是这篇论文最有想法的地方——它不是让模型只练一种题型，而是练三种"思维方向"。</p>
+
+  <figure>
+    <!-- 图 3：三种推理模式数据流程图 -->
+    <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- Deduction -->
+        <text x="105" y="30" text-anchor="middle" font-weight="600" fill="#24555A">Deduction 顺向演绎</text>
+        <text x="105" y="44" text-anchor="middle" font-size="9" fill="#96897A">给规则推结果</text>
+        <rect x="20" y="60" width="70" height="30" fill="#ECE4D4" stroke="#96897A"/><text x="55" y="79" text-anchor="middle">程序 p</text>
+        <rect x="100" y="60" width="70" height="30" fill="#ECE4D4" stroke="#96897A"/><text x="135" y="79" text-anchor="middle">输入 i</text>
+        <rect x="180" y="60" width="70" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/><text x="215" y="79" text-anchor="middle" fill="#B54A2C">求:输出?</text>
+        <line x1="90" y1="75" x2="100" y2="75" stroke="#96897A" marker-end="url(#arrow3)"/>
+        <line x1="170" y1="75" x2="180" y2="75" stroke="#96897A" marker-end="url(#arrow3)"/>
+        <text x="105" y="110" text-anchor="middle" font-size="9" fill="#96897A">验证：与 Python 实跑结果比对</text>
+
+        <!-- Abduction -->
+        <text x="105" y="145" text-anchor="middle" font-weight="600" fill="#24555A">Abduction 逆向归溯</text>
+        <text x="105" y="159" text-anchor="middle" font-size="9" fill="#96897A">给结果反推输入</text>
+        <rect x="20" y="175" width="70" height="30" fill="#ECE4D4" stroke="#96897A"/><text x="55" y="194" text-anchor="middle">程序 p</text>
+        <rect x="100" y="175" width="70" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/><text x="135" y="194" text-anchor="middle" fill="#B54A2C">求:输入?</text>
+        <rect x="180" y="175" width="70" height="30" fill="#ECE4D4" stroke="#96897A"/><text x="215" y="194" text-anchor="middle">输出 o</text>
+        <line x1="90" y1="190" x2="100" y2="190" stroke="#96897A" marker-end="url(#arrow3)"/>
+        <line x1="170" y1="190" x2="180" y2="190" stroke="#96897A" marker-end="url(#arrow3)"/>
+        <text x="105" y="225" text-anchor="middle" font-size="9" fill="#96897A">验证：候选输入跑一遍看是否得 o</text>
+
+        <!-- Induction -->
+        <text x="450" y="85" text-anchor="middle" font-weight="600" fill="#24555A">Induction 归纳反演</text>
+        <text x="450" y="99" text-anchor="middle" font-size="9" fill="#96897A">从样例归纳规则</text>
+        <rect x="340" y="115" width="100" height="30" fill="#ECE4D4" stroke="#96897A"/><text x="390" y="134" text-anchor="middle">可见样例</text>
+        <rect x="450" y="115" width="100" height="30" fill="#ECE4D4" stroke="#96897A"/><text x="500" y="134" text-anchor="middle">描述</text>
+        <rect x="560" y="115" width="100" height="30" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/><text x="610" y="134" text-anchor="middle" fill="#B54A2C">求:程序?</text>
+        <line x1="440" y1="130" x2="450" y2="130" stroke="#96897A" marker-end="url(#arrow3)"/>
+        <line x1="550" y1="130" x2="560" y2="130" stroke="#96897A" marker-end="url(#arrow3)"/>
+        <text x="500" y="165" text-anchor="middle" font-size="9" fill="#96897A">验证：在隐藏测试样例上跑该程序</text>
+        <text x="500" y="185" text-anchor="middle" font-size="9" fill="#96897A">（隐藏部分样例，防硬编码）</text>
+
+        <!-- 三个模式汇入验证器 -->
+        <text x="350" y="265" text-anchor="middle" fill="#B54A2C" font-size="11" font-weight="600">三种模式共用同一个 Python 验证器当裁判</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 三种推理模式：顺向演绎、逆向归溯、归纳反演，分别练"推结果""反推输入""归纳规则"三种思维方向</figcaption>
+  </figure>
+
+  <p>对应到人话，这三种模式可以这样理解：</p>
+  <ul>
+    <li><em>顺向演绎</em>（deduction）：给你程序和输入，让你算输出。这是最"正"的推理——<em>已知规则和前提，推结果</em>。就像给你一个函数和自变量，求函数值。</li>
+    <li><em>逆向归溯</em>（abduction）：给你程序和输出，让你反推一个能产生这个输出的输入。这是"倒着想"——<em>已知结果和规则，反推原因</em>。注意它不要求还原出题者的原始输入（因为多个输入可能映射到同一个输出），只要找一个合法的就行。</li>
+    <li><em>归纳反演</em>（induction）：给你几个能看到的样例和一段描述，让你归纳出一般规则（写程序）。这是最"高级"的推理——<em>从样例猜规律</em>，就像让你看几组输入输出反推函数。这一步刻意隐藏了部分测试样例，是为了防止模型耍小聪明把可见样例硬编码进去。</li>
+  </ul>
+
+  <div class="callout">
+    <span class="label">一个细节</span>
+    论文特意澄清：这三个标签——deduction / abduction / induction——描述的只是"代码任务的三种格式"，不是说模型真学到了逻辑学里完整的演绎/归纳/溯因系统。但用三种不同方向训练，确实比单一题型更能逼出泛化能力，这点后面实验会证实。
+  </div>
+
+  <h3>可验证代码奖励：为什么是 Python 当裁判</h3>
+  <p>整个方法最关键的设计，是<em>奖励的来源</em>。AZR 不用学习型奖励模型（那种容易被钻空子的"AI 判官"），而是用 Python 解释器的执行结果直接当奖励：程序能跑且输出正确，就给正奖励；否则零。这个选择不是随便定的，背后有三重考虑。</p>
+  <p>第一，Python 是<em>客观、确定、可执行</em>的"地面真值"环境。它不依赖任何学习型模型，从根源上压制了奖励作弊——出题人再怎么想偷懒，也没法让 Python 解释器对它网开一面。第二，Python 涵盖极广的"可计算任务空间"，既开放（能造的题无穷无尽）又可验证（对错一目了然），把"开放性"和"接地性"统一在一个载体里。第三，同一个 Python 解释器既能判"题是否合法"（出题阶段），又能判"答案是否正确"（解题阶段），一个裁判两用。</p>
+
+  <h3>TRR++：让奖励"按角色公平"地更新</h3>
+  <p>训练算法不是普通的 GRPO，而是作者提出的 <em class="latin">TRR++</em>（Task-Relative REINFORCE++）。背景是：AZR 同时训两个角色（出题人、解题人）、三个模式，凑出 6 个"任务-角色"组合。如果用全局一个 batch 基线来归一化奖励，不同组合的难度差异会把信号搅乱——出题的奖励和解题的奖励混在一起算均值标准差，不公平。</p>
+  <p>TRR++ 的做法是：对这 6 个组合<em>分别</em>估计均值和标准差做基线归一化，让每个角色、每种模式都有自己的"参照系"。配置上用 clipped PPO 目标，每 batch 跑 1 个 policy epoch，学习率 $10^{-6}$，500 步，熵系数 0.001，<em>无 KL 约束</em>（既没 KL loss 也没 KL reward，给模型更大的自由探索空间）。</p>
+
+  <h3>出题人奖励：逼它出"恰到好处"的难题</h3>
+  <p>防止"出题人作弊刷分"的关键，在出题人的奖励函数设计上。AZR 给每个新题采样 8 次解题尝试，算成功率 $s$（8 次里解对几次的比例）。出题人的奖励这样定：</p>
+
+  <div class="formula-block">
+    $$ R_{\text{propose}} = \begin{cases} 0 & \text{若 } s = 0 \text{（太难，全解不出）} \\ 1 - s & \text{若 } s > 0 \text{（越接近"恰好能解"奖励越高）} \end{cases} $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>这个函数妙在哪儿：$s=0$（8 次全错，题太难）奖励是 0；$s=1$（8 次全对，题太简单）奖励也是 0；只有当成功率 $s$ 介于 0 和 1 之间、且越接近 0（越难但仍可解）时奖励越高。也就是说，出题人想拿高分，得专门挑那种"<em>难到只有少数人能解、但又不是完全没人能解</em>"的题——这正是教育心理学里"最近发展区"的思路，也是 AlphaZero 式自博弈"对手段恰到好处"的推广。这等于逼着出题人当个"会因材施教"的好老师，而不是出简单题刷通过率。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>实验结果里有两件事最让人意外。先看主结果——7B 模型，零数据，能不能打过用大量人工数据训练的模型？</p>
+
+  <table>
+    <thead>
+      <tr><th>模型（7B）</th><th>基座</th><th>外部数据量</th><th>代码均</th><th>数学均</th><th>总均</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">Qwen2.5-7B-Coder（基座）</td><td>Coder</td><td>—</td><td>56.6</td><td>23.9</td><td>40.2</td></tr>
+      <tr><td class="text">AceCoder-RM</td><td>Ins</td><td>22k</td><td>58.3</td><td>37.4</td><td>47.9</td></tr>
+      <tr><td class="text">CodeR1-LC2k</td><td>Ins</td><td>2k</td><td>60.5</td><td>35.6</td><td>48.0</td></tr>
+      <tr><td class="text">SimpleRL-Zoo</td><td>Base</td><td>8.5k</td><td>54.0</td><td>38.5</td><td>46.3</td></tr>
+      <tr><td class="text">ORZ</td><td>Base</td><td>57k</td><td>55.6</td><td>41.6</td><td>48.6</td></tr>
+      <tr><td class="text">PRIME-Zero</td><td>Coder</td><td>484k</td><td>37.2</td><td>45.8</td><td>41.5</td></tr>
+      <tr><td class="text"><strong>AZR（本文）</strong></td><td>Coder</td><td><strong>0</strong></td><td><strong>61.6</strong></td><td><strong>39.1</strong></td><td><strong>50.4</strong></td></tr>
+    </tbody>
+  </table>
+  <p>AZR-Coder-7B 以 <em>零外部数据</em> 拿到总分 50.4，全面超过用 2k 到 484k 人工数据训练的一众模型——CodeR1（48.0）、AceCoder（47.9）、SimpleRL-Zoo（46.3）、ORZ（48.6）、PRIME-Zero（41.5）。这个"零数据反超海量数据"的结果，是论文最直接的卖点。</p>
+
+  <h3>第一件让人意外的事：代码训练，数学居然也涨</h3>
+  <p>真正让圈内人挠头的，是这个现象：AZR <em>只在代码任务上自对弈</em>，一道数学题都没让它见过，可数学 benchmark 却大涨。看看具体数字。</p>
+
+  <table>
+    <thead>
+      <tr><th>Benchmark</th><th>基座起始</th><th>AZR 后</th><th>提升</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">HumanEval+</td><td>80.5</td><td>83.5</td><td>+3.0</td></tr>
+      <tr><td class="text">LiveCodeBench Gen</td><td>19.9</td><td>31.7</td><td>+11.8</td></tr>
+      <tr><td class="text">AIME 2024</td><td>6.7</td><td>20.0</td><td>+13.3</td></tr>
+      <tr><td class="text">AMC 2023</td><td>40.0</td><td>57.5</td><td>+17.5</td></tr>
+      <tr><td class="text">MATH-500</td><td>54.0</td><td>72.6</td><td>+18.6</td></tr>
+      <tr><td class="text">Minerva Math</td><td>17.3</td><td>36.4</td><td>+19.1</td></tr>
+      <tr><td class="text">OlympiadBench</td><td>21.9</td><td>38.2</td><td>+16.3</td></tr>
+    </tbody>
+  </table>
+  <p>数学平均从 23.9 飙到 39.1（+15.2）。AIME 2024 从 6.7 涨到 20.0，OlympiadBench 从 21.9 涨到 38.2——这些可都是没在训练里出现过的数学题。<em>纯代码自对弈，竟产生了迁移到数学的通用推理能力</em>。这跟上一篇 SSR 发现的"软件训练让数学也涨点"是同一个谜：可计算任务里到底藏着什么，让模型整体变聪明了？这个问题，目前还没有彻底的解释。</p>
+
+  <figure>
+    <!-- 图 4：跨域泛化对比图 代码训练→数学涨 -->
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <text x="350" y="24" text-anchor="middle" font-weight="600">只在代码任务自对弈，数学为何也涨？</text>
+        <text x="120" y="50" text-anchor="middle" fill="#96897A">训练只碰代码</text>
+        <text x="580" y="50" text-anchor="middle" fill="#B54A2C" font-weight="600">数学竟大涨</text>
+
+        <!-- 训练域：代码 -->
+        <rect x="40" y="65" width="160" height="40" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="120" y="89" text-anchor="middle" fill="#24555A">代码自对弈（训练）</text>
+
+        <!-- 评估域：代码 + 数学 -->
+        <rect x="280" y="65" width="120" height="40" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="340" y="89" text-anchor="middle">代码 bench</text>
+        <rect x="420" y="65" width="160" height="40" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="500" y="89" text-anchor="middle" fill="#B54A2C">数学 bench（未训练）</text>
+
+        <line x1="200" y1="85" x2="280" y2="85" stroke="#96897A" marker-end="url(#arrow4)"/>
+        <line x1="400" y1="85" x2="420" y2="85" stroke="#96897A" marker-end="url(#arrow4)"/>
+        <defs>
+          <marker id="arrow4" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+          </marker>
+        </defs>
+
+        <!-- 提升条形 -->
+        <text x="60" y="140">AIME 2024</text>
+        <rect x="180" y="128" width="6.7" height="14" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="195" y="140" fill="#96897A" font-size="10">6.7</text>
+        <rect x="240" y="128" width="20" height="14" fill="#B54A2C" fill-opacity="0.5" stroke="#B54A2C"/>
+        <text x="266" y="140" fill="#B54A2C" font-weight="600">20.0 (+13.3)</text>
+
+        <text x="60" y="168">AMC 2023</text>
+        <rect x="180" y="156" width="40" height="14" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="228" y="168" fill="#96897A" font-size="10">40.0</text>
+        <rect x="280" y="156" width="57.5" height="14" fill="#B54A2C" fill-opacity="0.5" stroke="#B54A2C"/>
+        <text x="345" y="168" fill="#B54A2C" font-weight="600">57.5 (+17.5)</text>
+
+        <text x="60" y="196">MATH-500</text>
+        <rect x="180" y="184" width="54" height="14" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="242" y="196" fill="#96897A" font-size="10">54.0</text>
+        <rect x="280" y="184" width="72.6" height="14" fill="#B54A2C" fill-opacity="0.5" stroke="#B54A2C"/>
+        <text x="360" y="196" fill="#B54A2C" font-weight="600">72.6 (+18.6)</text>
+
+        <text x="60" y="224">Minerva Math</text>
+        <rect x="180" y="212" width="17.3" height="14" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="204" y="224" fill="#96897A" font-size="10">17.3</text>
+        <rect x="240" y="212" width="36.4" height="14" fill="#B54A2C" fill-opacity="0.5" stroke="#B54A2C"/>
+        <text x="284" y="224" fill="#B54A2C" font-weight="600">36.4 (+19.1)</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 跨域泛化：训练只在代码域，数学 benchmark 却全面上涨（灰=基座，红=AZR 后）</figcaption>
+  </figure>
+
+  <h3>第二件让人意外的事：自博弈没把模型"训废"</h3>
+  <p>强化学习有个老问题：训完之后 pass@1 可能涨了，但 pass@k（多采几次能蒙对的覆盖面）可能反而塌了——模型把答案分布压窄了，多样性丢了，这对后续测试时扩展（像 o1 那种采多条再投票）是致命的。审稿人正是拿这点质疑 AZR。</p>
+  <p>作者的 rebuttal 补了一组漂亮的实验：AZR-Base-7B 在 MBPP++/HumanEval++/LiveCodeBench/AIME25 上，<em>从 pass@1 到 pass@512 一致超过基座</em>（比如 LiveCodeBench pass@256 提升 +8.0，AIME25 pass@512 提升 +6.7）。这意味着训练后答案层的语义熵仍然健康，没有塌缩——自博弈没把模型"训成一根筋"，反而保留了多样性，利于后续 test-time scaling。这把审稿人的质疑直接转化成了 AZR 的一个加分项。</p>
+
+  <div class="callout">
+    <span class="label">一个自发涌现的彩蛋</span>
+    论文还报告了一个有意思的现象：AZR 在自对弈中<em>自发涌现</em>出"先写注释再写代码"（comment-then-code）的 ReAct 风格行为——没人显式教它这么做，是可验证环境自己"逼"出来的良性行为。这让人想起 R1 报告里模型自发学会反思和验证的桥段：好奖励信号会自己长出好习惯。
+  </div>
+
+  <p>Scaling 上也站得住：Qwen2.5-Coder 三档，3B 从 35.0 涨到 40.7、7B 从 40.2 涨到 50.4、14B 从 40.1 涨到 53.3，提升随规模放大。不过跨模型类的验证给了一个冷水——Llama 3.1 8B 只从 16.0 涨到 19.2，提升有限。作者归因于 Llama 基座的代码/反思能力较弱，这暗示 AZR 的收益<em>依赖基座底子</em>，不是任何模型都能无脑套用。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>这篇论文的意义，可以分三层来读。</p>
+  <p>第一层，<em>它给"post-training 数据墙"提供了一个被顶会盖章的可行解</em>。当人工题库枯竭，只要存在一个可执行验证环境（这里是 Python），模型就能自生成无限课程。它把数据墙问题从"等人类出题"转移到了"设计可验证环境"——而环境的边界，理论上比人类题库宽得多。这一层最直接，也最容易被工业界抄走。</p>
+  <p>第二层，<em>它把 AlphaZero 的范式从封闭游戏搬到了开放推理</em>。AlphaZero 能赢，靠的是围棋有上帝定的胜负规则；AZR 之所以难，是因为开放推理没有那种现成规则。它的破局是把 Python 执行器当"地面真值"，用代码的可执行性近似出"胜负"。论文证明这个近似是够用的——这为后续所有"开放领域自博弈"工作（不只数学，还可延伸到形式化证明、web 交互、模拟器）铺了一块地基。</p>
+  <p>第三层，<em>跨域泛化的证据</em>。纯代码自对弈让数学大涨，暗示推理能力可以脱离具体域迁移。这呼应了上一篇 SSR 的同类发现，也指向一个更深的猜想：可计算任务里可能藏着某种"通用的推理本体论"，模型在学它而不是在背某个域的题。如果这个猜想成立，那"在哪个域自对弈"可能没那么重要——只要域足够可验证、足够丰富，学到的能力就能迁移。</p>
+  <p>同期定位上，AZR 和几个工作形成对照：和它最像的是 <em class="latin">R-Zero</em>（也是零数据自博弈），但 R-Zero 用<em>两个独立模型</em>（挑战者+解题者）分离优化，AZR 是<em>单模型双角色</em>联合更新；<em class="latin">rStar-Math</em> 用 MCTS 加小模型过程奖励做数学单域，仍依赖现成题；<em class="latin">SPIN</em> 这类自对齐微调目标是模仿人类分布，而 AZR 目标是<em>超越人类题上限</em>。AZR 站在"单模型、自出题、跨域"这个独特交叉点上。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>论文自己很坦诚，几个明显的局限得说清楚：</p>
+  <ul>
+    <li><em>任务域受限</em>。当前只能生成 Python 可执行代码任务，论文提出但<em>未演示</em>在 web、形式化数学、模拟器、物理世界的开放自改进。能不能搬出代码域，是它能不能真成"通用自博弈范式"的关键。</li>
+    <li><em>确定性约束</em>。只支持确定性程序，限制了可学任务范围——带随机性、状态依赖的任务它现在碰不了。</li>
+    <li><em>验证器不够安全</em>。禁用模块表加只跑 2 次执行，不等于安全沙箱和形式确定性。错误接受的提案会污染奖励；生产环境需要更强隔离（论文已集成 <em class="latin">Sandbox-Fusion</em> 作为更安全执行器，但离"绝对安全"还有距离）。</li>
+    <li><em>基座依赖</em>。Llama 3.1 8B 提升弱（16.0→19.2，反低于 SimpleRL 的 20.5），说明 AZR 受基座代码/反思能力制约。基座底子薄，自博弈也榨不出油水。</li>
+    <li><em>规模与"超智能"动机的差距</em>。审稿人 oKgA 指出，当前规模与论文摘要里"超对齐/超智能"的雄心之间仍有 gap——从 7B 到真超智能，路还长。</li>
+  </ul>
+  <p>未来方向上，论文和后续社区工作指向几条：扩展到其他可验证环境（Lean/Isabelle 形式化证明、web 交互、物理模拟器）；对弱基座先做中间 SFT 再上 AZR（<em class="latin">OctoThinker</em> 思路）；探索对称或自适应的 proposer 奖励与熵正则。还有一条最值得追——也是最危险的——让模型不仅解题，还能<em>自己提出全新的任务类型</em>，从"在给定格式内自博弈"走向"自己发明新的博弈"。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把 AZR 放回整条发展线上，脉络很清晰。第 001 篇 <em class="latin">Transformer</em> 立起"注意力即一切"，第 002–004 篇 BERT/GPT-2/GPT-3 把预训练范式跑通，第 005 篇 <em class="latin">Chinchilla</em> 定下算力最优配比——这一段都在回答"<em>模型怎么练</em>"。第 006 篇 <em class="latin">InstructGPT</em> 把对齐拉进来，第 024–028 篇 CoT/ToT/GoT 把推理范式种子埋下，到第 020 篇 <em class="latin">o1</em> 用 RL 训思维链、第 013 篇 <em class="latin">DeepSeek-R1</em> 证明纯 RL 能自发顿悟，推理范式正式起飞。</p>
+  <p>但 o1 和 R1 都有一个没明说的前提：<em>题是人出的</em>。第 021 篇 <em class="latin">Scaling Test-Time Compute</em> 把"测试时多想"的扩展定律立起来，第 022–023 篇过程奖励模型把"怎么打分"做细——这一支还在"人出题、模型学"的框架内。AZR 站在这个拐点上，把问题从"<em>怎么用/训一个模型</em>"翻到了"<em>题从哪来</em>"：它把题库来源也交给模型自己。</p>
+  <p>它和上一篇第 054 篇 <em class="latin">Self-Play SWE-RL</em> 几乎是同一时间、不同地点、各自把"自博弈"搬进了自己最熟的领域——SSR 搬进软件工程（裁判是测试执行器），AZR 搬进数学与代码推理（裁判是 Python 解释器）。这种"两个团队不约而同想到同一招"的巧合，往往意味着一个范式正在成型。下一篇，我们正好顺着这条线，去读 AZR 最直接的对照工作——<em class="latin">R-Zero</em>。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>这篇论文的名字本身就是一个值得琢磨的梗。<em>Absolute Zero</em>（绝对零度）是个双关：物理学里绝对零度是分子运动降到最低的极限态，喻指 AZR 把外部依赖降到了最低；同时致敬 <em class="latin">AlphaZero</em>——从零开始自我对弈的那个传奇。所以这名字一口气点了两个题：既是"降到零外部数据"，又是"AlphaZero 的开放领域复刻"。有人通俗解释："这名字来自它从零外部数据起步——没有人写的题、没有数据集，只有 AI 和一个能检查它工作的工具。"</p>
+  <p>团队背景也值得一提。通讯作者 <em class="latin">Gao Huang</em>（黄高）是清华自动化系教授，<em>Leap Lab</em>（跃实验室）负责人——GitHub 组织名 <em class="latin">LeapLabTHU</em> 就来自这里。他是 DenseNet 的一作，在计算机视觉和高效网络设计上是知名人物，这两年把方向转到了推理与自进化。另一位通讯 <em class="latin">Zilong Zheng</em>（郑子龙）在 BIGAI（北京通用人工智能研究院）。所以这是一支清华系强推理组牵头的作品。</p>
+  <p>发表过程也挺有戏剧性。arXiv v1 在 2025 年 5 月 6 日挂上，<em>第二天</em>（5 月 7 日）就出了 v2，可见发布后迭代得飞快；v3 到 10 月 16 日。它最终被接收为 NeurIPS 2025 的 <em>Spotlight</em>（聚光灯论文，比普通录用更稀罕）。OpenReview 上还有个有意思的花絮：一位审稿人 oKgA 给了 5 分（满分录用），但末尾吐槽了一句"我不喜欢作者施压要更高评分的方式"——暗示作者在 rebuttal 里争取评分挺强势。但两位审稿人最后都因为 rebuttal 补充的 pass@512、MMLU-Pro、前沿难度实验<em>主动提分</em>。作者还很会做人，在 rebuttal 里专门点名感谢那位质疑的审稿人："正是审稿人的质疑引导我们发现 AZR 在高 pass@512 上也表现强劲"——把质疑转化成了亮点。</p>
+  <p>项目主页上还放了个出圈的 demo，叫"<em>Spinning Hexagon Vibe Check</em>"（旋转六边形氛围测试）：让 AZR-Coder-14B 写一个"旋转六边形里 10 个弹球碰撞"的 pygame 动画，并和 GPT-4o-mini、Qwen2.5-72B-Instruct、Qwen2.5-32B-Instruct 同台对比。结果 AZR 生成的代码物理碰撞最真实——一个零数据训练出来的 14B 模型，在这个"杂活"上压过了大它好几倍的指令模型。这种"小而精"的反差感，成了它在社区出圈的引子。</p>
+
+  <figure>
+    <!-- 图 5：自博弈"断奶"三步的趣味类比 -->
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowFun" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 三步：靠人喂 → 自己跟自己下 → 自己造棋局 -->
+        <circle cx="120" cy="110" r="48" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="120" y="100" text-anchor="middle" fill="#96897A">人喂题</text>
+        <text x="120" y="118" text-anchor="middle" fill="#96897A" font-size="10">R1 / o1</text>
+        <text x="120" y="132" text-anchor="middle" fill="#96897A" font-size="10">2024–25</text>
+
+        <circle cx="350" cy="110" r="48" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="350" y="100" text-anchor="middle" fill="#24555A">自己跟自己下</text>
+        <text x="350" y="118" text-anchor="middle" fill="#24555A" font-size="10">SSR（上篇）</text>
+        <text x="350" y="132" text-anchor="middle" fill="#24555A" font-size="10">2025.12</text>
+
+        <circle cx="580" cy="110" r="48" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="580" y="100" text-anchor="middle" fill="#B54A2C">自己造棋局</text>
+        <text x="580" y="118" text-anchor="middle" fill="#B54A2C" font-size="10">AZR（本篇）</text>
+        <text x="580" y="132" text-anchor="middle" fill="#B54A2C" font-size="10">2025.05</text>
+
+        <line x1="168" y1="110" x2="302" y2="110" stroke="#96897A" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#arrowFun)"/>
+        <line x1="398" y1="110" x2="532" y2="110" stroke="#96897A" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#arrowFun)"/>
+
+        <text x="350" y="190" text-anchor="middle" fill="#96897A" font-size="10">推理模型的"断奶"三步：靠人喂 → 自博弈 → 自出题</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 从"人喂题"到"自己跟自己下"再到"自己造棋局"——推理模型断奶三步走</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读完这篇，我最想提醒读者的一件事，和上一篇 SSR 一脉相承：<em>别把"自博弈"当万能解药</em>。AZR 能跑通，本质上是因为它恰好找到了一个"还算可靠的自动裁判"——Python 解释器。围棋的胜负是上帝定的，代码的对错是解释器定的；可一旦换到一个<em>没有客观裁判</em>的领域（开放式对话、创意写作、价值判断），自博弈就会撞上"谁来当裁判"的死结。AZR 的成功，有个不显眼但关键的前提：可验证环境存在。这个前提，不是所有领域都满足。</p>
+  <p>另一个值得琢磨的，是那个跨域泛化的谜。AZR 只在代码上自对弈，数学却大涨。一种猜想是：可计算任务里藏着某种"通用的推理骨架"——演绎、归溯、归纳这三种思维方向，本就是数学推理的底层操作。模型在代码上反复练"给规则推结果""给结果反推原因""从样例归纳规律"，等于把数学推理的"肌肉"也顺带练了。如果这个猜想成立，那 AZR 学到的就比"写代码"更广——它在学一种<em>结构化的推理本体论</em>。这跟 SWE-RL 当年发现的"软件训练让数学也涨"是同一个谜题的不同切面：可计算任务里到底藏着什么，让模型整体变聪明？这个问题，可能比"怎么训得更猛"更值得追。</p>
+  <p>最后留一个更远的联想。AZR 用 Python 当裁判，本质上是因为 Python 能"跑"——它有执行语义。那如果未来我们想要在"无法直接执行"的领域自博弈（比如科学假设的验证、策略的好坏），该怎么办？一种可能是：造一个"可执行的世界模型"当裁判——让 AI 自己学一个能模拟世界规律的模型，再用这个模型当裁判训练另一个 AI。这就从"自博弈"走向了"自建擂台"。听起来像科幻，但 AlphaZero 当年也是这么一步步从棋盘走到蛋白质折叠的。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果有一天，模型在所有"有客观裁判"的领域都自博弈到了极限，剩下的提升空间会不会全集中在"没有客观裁判"的领域？那时候，"谁来当裁判"会不会成为 AI 进化的下一个、也是最后一个瓶颈？欢迎你想一想，我们下一篇再见。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>R-Zero: Self-Evolving Reasoning LLM from Zero Data</h3>
+    <p style="margin:0;">同样是零数据自博弈，R-Zero 却把 AZR 的"一个模型演双角"拆成了"挑战者"和"解题者"两个独立模型分头进化。单模型双角色 vs 双模型分离优化，自博弈的两条路究竟谁更优？下一篇，我们去读这场"自擂台"的另一个擂主。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 055 篇</span>
+    <span>2026-09-24</span>
+  </footer>
+
+</div>
+</body>
+</html>
