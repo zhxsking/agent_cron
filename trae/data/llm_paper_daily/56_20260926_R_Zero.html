@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>R-Zero 论文精读 · 大模型经典论文系列 #056</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#056</span>
+  </div>
+
+  <h1 class="title">
+    R-Zero: Self-Evolving Reasoning LLM from Zero Data
+    <span class="en">R-Zero：双模型自博弈——把 AZR 的一个模型演双角，拆成挑战者与解题者两个模型分头进化</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Chengsong Huang, Wenhao Yu, Xiaoyang Wang, Hongming Zhang, Zongxia Li, Ruosen Li, Jiaxin Huang, Haitao Mi, Dong Yu</span>
+    <span>机构：Tencent AI Seattle Lab; Washington University in St. Louis; University of Maryland; UT Dallas</span>
+    <span>发表：2025-08 / arXiv（ICLR 2026 录用）</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2508.05004" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/Chengsong-Huang/R-Zero" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://chengsong-huang.github.io/R-Zero.github.io/" target="_blank" rel="noopener">Project</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">想象一个学生，桌上没有课本、没有习题册、也没有老师。他唯一的伙伴是另一个版本的自己——一个专门负责"出刁钻难题"的自己。两个人互相较劲：出题的那个，专门挑"刚好难倒你一点点"的题；解题的那个，咬着牙把题啃下来。第二天，出题者变得更刁钻，解题者变得更强。日复一日，两个"自己"就这么在没有外界输入的情况下越变越厉害。</p>
+
+  <p class="lead">这不是科幻，这是腾讯 AI Lab 在 2025 年 8 月放出的 R-Zero 干的事。上一篇我们看了 Absolute Zero（AZR）——一个模型自己出题、自己验题、自己解题的"孤独天才"。R-Zero 给这套范式动了个手术：把 AZR 里那个"一个模型演双角"拆成<em>两个真正独立的模型</em>，一个叫 Challenger（挑战者），一个叫 Solver（解题者），让它们像下棋的左右手互搏一样协同进化，而且<em>连代码执行器这种外部裁判都不需要</em>。结果，一个 4B 的小模型，靠纯自博弈把数学推理平均涨了 6.49 分，还顺手让通用推理涨了 7.54 分。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    R-Zero 把"一个模型自演自演"拆成"挑战者 + 解题者"两个独立模型协同进化，用"模型对自己答得犹不犹豫"当奖励信号，实现零外部数据、零人工标注、甚至零外部裁判的纯自博弈推理训练。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>在大模型的演进谱系里，R-Zero 站在<em>自博弈训练期</em>这条线上，而且是 AZR（#055）之后最直接、最自觉的"续章"。它的位置很微妙：既继承了 AZR"零数据、自己出题自己学"的核心主张，又戳中了 AZR 的两个软肋——单模型自我博弈的"自指困境"，以及对代码执行器这种外部裁判的依赖。</p>
+
+  <p>更准确地说，R-Zero 解决的是通往超智能路上那个最根本的瓶颈：<em>人类标注的天花板</em>。RLHF、RLVR 这些方法把模型推到了"会做人类会做的题"的高度，可一旦模型想超过人类，谁来给它出比人类更难的题？谁来判它答得对不对？R-Zero 的答案是：让另一个模型来——而且是同一个起点、分头进化出来的另一个模型。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="tarrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="120" x2="665" y2="120" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <circle cx="70" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="70" y="100" text-anchor="middle">2017</text>
+        <text x="70" y="148" text-anchor="middle" fill="#2E2A22">Transformer</text>
+
+        <circle cx="165" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="165" y="100" text-anchor="middle">2018–20</text>
+        <text x="165" y="148" text-anchor="middle" fill="#2E2A22">BERT/GPT-2/3</text>
+
+        <circle cx="265" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="265" y="100" text-anchor="middle">2022</text>
+        <text x="265" y="148" text-anchor="middle" fill="#2E2A22">Chinchilla/InstructGPT</text>
+
+        <circle cx="380" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="380" y="100" text-anchor="middle">2023–24</text>
+        <text x="380" y="148" text-anchor="middle" fill="#2E2A22">LLaMA/DeepSeek/SWE-agent</text>
+
+        <circle cx="495" cy="120" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="495" y="100" text-anchor="middle">2024–25</text>
+        <text x="495" y="148" text-anchor="middle" fill="#2E2A22">o1/R1 推理范式</text>
+
+        <circle cx="575" cy="120" r="6" fill="#ECE4D4" stroke="#24555A"/>
+        <text x="575" y="100" text-anchor="middle" fill="#24555A">2025</text>
+        <text x="575" y="148" text-anchor="middle" fill="#2E2A22">AZR（#055）</text>
+
+        <circle cx="635" cy="120" r="9" fill="#B54A2C"/>
+        <text x="635" y="92" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇</text>
+        <text x="635" y="148" text-anchor="middle" fill="#2E2A22" font-weight="600">R-Zero</text>
+
+        <text x="605" y="200" text-anchor="middle" fill="#24555A" font-size="10">自博弈训练期 2025–</text>
+        <line x1="495" y1="170" x2="635" y2="178" stroke="#24555A" stroke-width="0.6" opacity="0.5"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络与 R-Zero 的位置：它紧接 AZR，把"零数据自博弈"从单模型推进到双模型协同进化</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要理解 R-Zero 为何出现，得先看它要拆解的"前情"。一条线是 RLVR——用"可验证奖励"的强化学习（比如做数学题，对就对、错就错，奖励是 0/1）把 DeepSeek-R1、o1 这类推理模型推上了新高度。但 RLVR 有个死穴：它<em>需要大量现成的、带标准答案的题</em>。这些题哪来？人类一道一道出。人类标注既贵又慢，而且更致命的是——人类出的题，难度永远超不过人类自己。要造超智能，这条路有天花板。</p>
+
+  <p>第二条线是 AZR 开的"自博弈"路：模型自己出题、自己验、自己解，彻底不靠人。但 AZR 留了两个坑。其一，它让<em>同一个模型</em>既当出题者又当解题者，自指会带来"自我欺骗"——出题者和解题者共享一套权重，容易陷入自己跟自己和解的舒适区，也就是论文里说的"漂移"和"多样性幻象"。其二，AZR 验证题目靠一个<em>外部代码执行器</em>当裁判，所以它主要活跃在"写代码"这种能跑能验的领域；一旦进入开放式推理（比如纯数学推导、开放问答），没有现成的执行器可用，这套机制就卡壳了。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    把 AZR 想成一个运动员"左手跟右手打乒乓球"：左手发什么球，右手都知道；打着打着，左右手会默契地"友好放水"，比赛越来越没有强度。而 R-Zero 干的事，是另起一张球台，把左右手<em>拆成两个独立的运动员</em>，各自训练、各自涨球，再回来对打——左手不知道右手最近练了什么杀招，反而能逼出真本事。同时，R-Zero 把"裁判"从外聘的代码执行器，换成了运动员自己"答这题时犹不犹豫"的内心戏。
+  </div>
+
+  <p>此外还有 label-free RL 这一脉：它不用人工标注的答案，靠模型自己的置信度、熵这些内部信号当奖励。但它<em>仍然需要一堆现成的题目</em>来训——题还是别人的。R-Zero 把这最后一点"对外部题库的依赖"也砍掉了：题，让 Challenger 自己造。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>一句话：能不能在<em>零外部数据、零人工标注、零外部验证裁判</em>的前提下，让模型自己造出一条"难度刚好卡在自己能力边缘"的训练课程，从而持续自我进化？</p>
+
+  <p>拆开看，这其实是三个子问题叠在一起：第一，<em>谁来出题</em>——没有人工题库，题从哪来？第二，<em>怎么判断一题"好"</em>——没有标准答案，怎么知道 Challenger 出的题不是垃圾、不是抄自己、也不是难得没边？第三，<em>怎么知道答得对不对</em>——没有外部裁判，Solver 练完怎么给奖励？R-Zero 用一招回答了这三个问题：<em>用 Solver 答题时的"自洽程度"同时当做出题的难度标尺、做出题的质量筛子、又当解题的训练奖励</em>。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果让你给一个学生设计"自适应难度"的出题器，你怎么衡量"这题难度刚好"？最直觉的做法可能是看"答对率"——但 R-Zero 选的不是"答对率低=难"，而是盯上一个很反直觉的甜点：答对率恰好接近 50%。先别往下看，想想为什么不是"越难越好"，而是要卡在"五五开"？
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>R-Zero 的全貌是一个"双模型、四阶段、循环迭代"的闭环。同一个 base LLM 被初始化成两个角色：Challenger（$Q_\theta$，负责出题）和 Solver（$S_\phi$，负责解题）。它俩<em>各自独立训练</em>，但在时间上交替推进、互相喂数据，形成共进化（co-evolution）。下面拆四步。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 360" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowA" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- base LLM -->
+        <rect x="280" y="20" width="140" height="44" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="46" text-anchor="middle">同一 base LLM</text>
+
+        <!-- Challenger -->
+        <rect x="70" y="110" width="170" height="60" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="155" y="138" text-anchor="middle" fill="#B54A2C" font-weight="600">Challenger  Q_θ</text>
+        <text x="155" y="158" text-anchor="middle" fill="#B54A2C" font-size="10">出题者（独立权重）</text>
+
+        <!-- Solver -->
+        <rect x="460" y="110" width="170" height="60" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="545" y="138" text-anchor="middle" fill="#24555A" font-weight="600">Solver  S_φ</text>
+        <text x="545" y="158" text-anchor="middle" fill="#24555A" font-size="10">解题者（独立权重）</text>
+
+        <line x1="320" y1="64" x2="180" y2="108" stroke="#96897A" marker-end="url(#arrowA)"/>
+        <line x1="380" y1="64" x2="520" y2="108" stroke="#96897A" marker-end="url(#arrowA)"/>
+
+        <!-- uncertainty reward loop -->
+        <text x="350" y="200" text-anchor="middle" fill="#96897A" font-size="11">① Challenger 出题 → Solver 答 m 次 → 多数投票得伪标签</text>
+        <text x="350" y="218" text-anchor="middle" fill="#B54A2C" font-size="11">② 用 Solver 答题"自洽度"算不确定性奖励 → GRPO 更新 Challenger</text>
+
+        <path d="M240,140 C330,140 330,150 460,140" fill="none" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrowA)" stroke-dasharray="5 3"/>
+        <text x="350" y="132" text-anchor="middle" fill="#B54A2C" font-size="10">题目喂给 Solver</text>
+
+        <!-- dataset -->
+        <rect x="230" y="250" width="240" height="48" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="278" text-anchor="middle">③ 过滤"五五开"题 → 造数据集</text>
+
+        <line x1="155" y1="170" x2="250" y2="248" stroke="#96897A" marker-end="url(#arrowA)"/>
+
+        <!-- solver training -->
+        <rect x="460" y="250" width="170" height="48" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="545" y="278" text-anchor="middle" fill="#24555A">④ GRPO 训 Solver</text>
+
+        <line x1="470" y1="274" x2="460" y2="274" stroke="#96897A" marker-end="url(#arrowA)"/>
+
+        <!-- back loop -->
+        <path d="M545,298 C545,335 200,335 155,176" fill="none" stroke="#96897A" stroke-width="1" marker-end="url(#arrowA)" stroke-dasharray="4 3"/>
+        <text x="350" y="345" text-anchor="middle" fill="#96897A" font-size="11">⑤ 回到 ①：更强的 Solver 反过来定新的难度边界 → 共进化</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · R-Zero 双模型协同进化架构：Challenger 与 Solver 从同一基模型独立初始化，通过"出题—答题—不确定性奖励—造题库—训练"循环交替进化</figcaption>
+  </figure>
+
+  <h3>第一步：Challenger 训练——怎么定义一道"好题"</h3>
+  <p>Challenger 是个会出数学题的语言模型，用 GRPO 来训。关键全在那个"好题"的奖励函数上。R-Zero 把它拆成三块：不确定性奖励、重复惩罚、格式检查惩罚。</p>
+
+  <p>先说核心的<em>不确定性奖励</em>。对 Challenger 出的一道题 $x$，让当前（冻结的）Solver 回答 $m$ 次，得到 $\{y_1,\dots,y_m\}$。把出现最多的答案当"伪标签" $\tilde{y}(x)$（多数投票，self-consistency 的思路），再算 Solver 的经验正确率 $\hat{p}(x;S_\phi)=\frac{1}{m}\sum_{j=1}^{m}\mathbb{1}\{y_j=\tilde{y}(x)\}$。不确定性奖励这么定义：</p>
+
+  <div class="formula-block">
+    $$ r_{\text{uncertainty}}(x;\phi)=1-2\left|\hat{p}(x;S_\phi)-\tfrac{1}{2}\right| $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>看这个式子：当 $\hat{p}=0.5$（Solver 一半对一半错，最纠结）时奖励最大为 1；当 $\hat{p}=0$（全错，难得没边）或 $\hat{p}=1$（全对，太简单）时奖励为 0。回到前面那个思考题——答案就在这儿：<em>卡在五五开的题才是"刚好在能力边缘"的题</em>。全错说明题本身可能就有毛病（歧义、超纲、没解），伪标签不可信；全对说明没学到新东西。只有"差一点就答对"的题，才是 Solver 跳一跳能够得着、最有学习价值的那道。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- axes -->
+        <line x1="80" y1="200" x2="640" y2="200" stroke="#96897A"/>
+        <line x1="80" y1="200" x2="80" y2="40" stroke="#96897A"/>
+        <text x="648" y="204" fill="#96897A">p̂</text>
+        <text x="70" y="36" text-anchor="end" fill="#96897A">r</text>
+
+        <!-- p ticks -->
+        <text x="80" y="218" text-anchor="middle" fill="#96897A">0</text>
+        <text x="360" y="218" text-anchor="middle" fill="#96897A">0.5</text>
+        <text x="640" y="218" text-anchor="middle" fill="#96897A">1.0</text>
+        <line x1="360" y1="198" x2="360" y2="206" stroke="#96897A"/>
+
+        <!-- r ticks -->
+        <line x1="76" y1="60" x2="84" y2="60" stroke="#96897A"/>
+        <text x="70" y="64" text-anchor="end" fill="#96897A">1</text>
+
+        <!-- triangle: peak at p=0.5 -->
+        <polyline points="80,200 360,60 640,200" fill="none" stroke="#B54A2C" stroke-width="2.2"/>
+
+        <!-- peak marker -->
+        <circle cx="360" cy="60" r="5" fill="#B54A2C"/>
+        <text x="360" y="48" text-anchor="middle" fill="#B54A2C" font-weight="600">甜点区：能力边缘</text>
+        <text x="150" y="180" fill="#96897A" font-size="10">太难 · 伪标签不可信</text>
+        <text x="520" y="180" fill="#96897A" font-size="10">太简单 · 学不到</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 不确定性奖励曲线：一个倒 V，峰值落在 Solver 正确率 50% 处——"刚好难一点点"才是好题</figcaption>
+  </figure>
+
+  <p>光有不确定性奖励还不够，Challenger 会偷懒——反复出同一道"五五开"的题刷分。所以加一个<em>重复惩罚</em>：用 BLEU 算题目两两相似度，把相似的聚成一簇，簇越大惩罚越重，$r_{\text{rep}}(x_i)=\lambda\frac{|C_k|}{B}$（$B$ 是 batch 大小，实验里 $\lambda=1$）。还有一道<em>格式检查</em>：题目必须老老实实包在 <code>&lt;question&gt;&lt;/question&gt;</code> 标签里，不合规直接奖励归零，后面的都不算了。最终：</p>
+
+  <div class="formula-block">
+    $$ r_i=\max\bigl(0,\;r_{\text{uncertainty}}(x_i;\phi)-r_{\text{rep}}(x_i)\bigr) $$
+    <span class="eqn mono">(2)</span>
+  </div>
+
+  <p>拿这组奖励做 GRPO 的优势估计，更新 Challenger 的权重。注意一个关键设计：训 Challenger 时，Solver 是<em>冻结</em>的——这样"难度标尺"在一段训练里是稳定的，否则两个一起动，标尺自己乱晃，就量不准了。</p>
+
+  <h3>第二步：造 Solver 的训练集——课程生成器</h3>
+  <p>Challenger 训完一轮后，用它采一大批候选题。每道题让 Solver 答 $m$ 次，多数投票得伪标签，算经验正确率 $\hat{p}_i$。然后<em>只留下落在"信息带"里的题</em>：$|\hat{p}_i-0.5|\leq\delta$——也就是既不太简单也不太难的。这一步同时干两件事：一是把太难太易的剔掉，二是顺带做了质量控制——$\hat{p}_i$ 很低往往说明题本身就有歧义、伪标签不可靠，一并清掉，让训练数据又干净又难度校准。</p>
+
+  <h3>第三步：Solver 训练——把"自己投出来的答案"当标准</h3>
+  <p>用上一步筛出的题训 Solver，也用 GRPO，但奖励简单得多：对一道题 $x_i$ 和它的伪标签 $\tilde{y}_i$，Solver 生成的每个答案给一个二值奖励——</p>
+
+  <div class="formula-block">
+    $$ r_j=\begin{cases}1,& x_j \text{ 与伪标签 } \tilde{y}_i \text{ 匹配}\\ 0,& \text{否则}\end{cases} $$
+    <span class="eqn mono">(3)</span>
+  </div>
+
+  <p>这里妙就妙在：<em>标准答案是 Solver 自己多数投票投出来的</em>。这等于让模型用"自己的共识"教自己——只要题卡在能力边缘、伪标签可信，这个自举（self-bootstrapping）的循环就能转起来，不需要任何外部裁判。这也是 R-Zero 能摆脱代码执行器、走向开放式推理的根本原因。</p>
+
+  <h3>第四步：迭代——共进化的飞轮</h3>
+  <p>四步走完算一轮。下一轮回到第一步，但此时 Solver 已经变强了，它定义的"50% 甜点"自然水涨船高，逼着 Challenger 出更难的题；Challenger 变强又逼着 Solver 再涨。两个模型像爬天梯一样交替上升。论文跑了三轮，分数逐轮爬升；而且这套机制是<em>模型无关</em>的，换不同骨干 LLM 都能涨。</p>
+
+  <p>一个重要的领域选择：R-Zero 把出题限定在<em>数学</em>域。不是因为只想做数学，而是因为数学题答案客观——可以靠多数投票生成靠谱伪标签，不必像 AZR 那样依赖代码执行器。这是"用域的选择来换掉外部裁判"的工程权衡。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>效果相当能打。以 Qwen3-4B-Base 为骨干，三轮自博弈后，数学推理平均分从 42.58 涨到约 49.07（<em>+6.49</em>）；更意外的是，<em>只用数学题训出来的推理能力，竟然泛化到了通用领域</em>——MMLU-Pro / SuperGPQA / BBEH 这些通用推理基准平均从 32.06 涨到 39.60（<em>+7.54</em>）。这说明模型学的不是"背数学套路"，而是某种更底层的推理能力。</p>
+
+  <table>
+    <thead>
+      <tr><th>指标（Qwen3-4B-Base）</th><th>基线</th><th>R-Zero</th><th>提升</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">数学推理平均</td><td>42.58</td><td>49.07</td><td>+6.49</td></tr>
+      <tr><td class="text">通用推理平均</td><td>32.06</td><td>39.60</td><td>+7.54</td></tr>
+      <tr><td class="text">Qwen3-8B-Base 数学推理</td><td>48.64</td><td>53.72</td><td>+5.51</td></tr>
+    </tbody>
+  </table>
+
+  <p>几个更值得玩味的发现：</p>
+  <ul>
+    <li><em>模型无关</em>：换 Qwen3-8B-Base、甚至更小的骨干，都能持续涨分，说明这套范式不挑模型，是个通用"自进化引擎"。</li>
+    <li><em>迭代缩放</em>：分数随迭代轮次单调爬升，没有很快饱和——意味着"再算一轮"是条可行的扩展轴。</li>
+    <li><em>与监督数据协同</em>：把 R-Zero 当作一种"中间训练"（mid-training），先用它自博弈打底、再在带标签数据上微调，比直接微调还高。它不是 SFT 的对手，而是 SFT 的前菜。</li>
+    <li><em>难度自适应</em>：分析显示，Challenger 出的题难度会随 Solver 变强而自然抬升——"课程"真的是动态生成、贴合水平的，不是写死的。</li>
+  </ul>
+
+  <figure>
+    <svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="175" y="28" text-anchor="middle" font-weight="600">AZR（#055）</text>
+        <text x="525" y="28" text-anchor="middle" font-weight="600" fill="#B54A2C">R-Zero（本篇）</text>
+        <line x1="350" y1="18" x2="350" y2="240" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <rect x="40" y="52" width="270" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="50" y="74">一个模型演双角（共享权重）</text>
+        <rect x="410" y="52" width="270" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="420" y="74" fill="#B54A2C">两个独立模型（Challenger/Solver）</text>
+
+        <rect x="40" y="100" width="270" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="50" y="122">外部代码执行器当裁判</text>
+        <rect x="410" y="100" width="270" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="420" y="122" fill="#B54A2C">自洽投票当奖励，无需裁判</text>
+
+        <rect x="40" y="148" width="270" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="50" y="170">强项：可验的代码域</text>
+        <rect x="410" y="148" width="270" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="420" y="170" fill="#B54A2C">强项：开放式数学推理</text>
+
+        <rect x="40" y="196" width="270" height="34" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="50" y="218">软肋：单模型自指、易漂移</text>
+        <rect x="410" y="196" width="270" height="34" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="420" y="218" fill="#B54A2C">缓解：双模型分头进化、互为外锚</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · AZR 与 R-Zero 的关键差异：从"单模型 + 外部裁判"走向"双模型 + 内在自洽"</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>R-Zero 的意义不在于涨了几分，而在于它把"自博弈"这条通往超智能的路<em>又往前推实了一截</em>。它证明了三件之前存疑的事：</p>
+  <ul>
+    <li><em>双模型拆分优于单模型自演</em>：把出题与解题分到两套独立权重，能缓解 AZR 那种自指带来的舒适区与漂移——两个角色彼此互为"外部锚点"，反而更逼得出真本事。</li>
+    <li><em>自洽可以替代外部裁判</em>：用"模型自己答得犹不犹豫"当奖励，绕开了对代码执行器的依赖，让零数据自博弈第一次真正走进<em>开放式推理</em>领域，而不只是代码生成。</li>
+    <li><em>纯自博弈能泛化</em>：只拿数学题自训，通用推理也涨——这是"学到了推理本身"而非"背了题库"的有力证据，也呼应了 o1/R1 时代"推理能力可迁移"的主张。</li>
+  </ul>
+  <p>它被 ICLR 2026 收录，也直接催生了同一团队后续的 R-Few、R-Diverse 等一串工作——这串"R-家族"正在把"零数据/少数据自进化"做成一个正经的研究子领域。而它"当 mid-training 前菜 + 协同 SFT"的发现，也给了工业界一条很实际的配方：先用自博弈打底，再上人工数据精修。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>R-Zero 不是银弹，它自己也坦承了几道坎。首先是<em>稳定性</em>：纯零数据自博弈会"漂移"——Challenger 和 Solver 有时携手滑进某个局部最优，题目多样性表面热闹实则同质（论文附录专门写了"Beyond Label Noise: Unpacking the Roots of Instability"来拆这个根）。这正是它后续 R-Few 要补的洞：加一点点人类监督来稳住共进化。</p>
+  <p>其次是<em>域的局限</em>：能脱离代码执行器，靠的是数学题答案客观、可多数投票。但开放式问答、长文写作这类没有"客观对错"的领域，多数投票生成的伪标签本身就不靠谱，R-Zero 直接套用会失效——怎么在没有可验证性的域里做自博弈，是悬而未决的难题。</p>
+  <p>再就是<em>规模与收敛</em>：目前验证的主要是 4B–8B 的小模型，自博弈飞轮在百亿、千亿规模上能不能持续转、会不会更早饱和、算力代价是否划算，都还需检验。Challenger 和 Solver 是否要共享部分参数（附录 D 讨论了这个权衡）也是开放问题。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把镜头拉远，看清这条线怎么走到 R-Zero 的。起步是 Transformer（2017）给的并行底座；预训练范式期 BERT/GPT 系列证明了"先无监督学语言、再下游微调"的威力；规模化探索期 Chinchilla 校准了"模型与数据"的配比，InstructGPT 用人类反馈把模型对齐到"听人话"。对齐与应用期 CoT、ReAct、各种 agent 把模型从"会答"推向"会推理、会用工具"。前沿演进期 LLaMA、DeepSeek 系列把开源和性价比做到极致，SWE-agent 把"软件工程 agent"做成正经赛道。</p>
+
+  <p>真正的转折是推理范式期：o1 与 DeepSeek-R1 证明<em>强化学习 + 可验证奖励</em>能训出会"先想后答"的推理模型。但这立刻撞上"人类标注的天花板"——题和答案都得人出。于是自博弈训练期登场：Absolute Zero（AZR）率先喊出"零数据、自己出题自己学"，但单模型 + 代码裁判；R-Zero 紧接着把它升级成<em>双模型 + 自洽奖励</em>，走向开放式推理。R-Zero 既是 AZR 的"2.0"，也把"超智能要不要靠人类"这个终极问题，又往"不需要"这边推了一步。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>几个有意思的细节。第一，R-Zero 的命名明显是冲着 AZR 去的——AZR 叫"Absolute Zero"（绝对零度），R-Zero 索性直接叫"Zero"，赤裸裸地宣告"我也是零数据那一挂的，但我更进一步"。这种命名上的"隔空喊话"，在自博弈这条小赛道里已经成了暗号：后来的 R-Few（加一点点人类数据）、R-Diverse（治多样性幻象）都姓 R，像是同一个实验室在给自己续族谱。</p>
+  <p>第二，论文的核心奖励——"卡在 50% 正确率的题才是好题"——其实是个非常"教育学"的直觉：维果茨基的"最近发展区"理论说的正是这个——给学生的任务要刚好在"现有水平"和"潜在水平"之间，跳一跳够得着。R-Zero 等于把这个几十年的教育心理学原理，用一道数学公式焊进了强化学习的奖励函数。AI 训练的尽头，居然是教育学的开头。</p>
+  <p>第三，方法里那个"用 BLEU 聚类防 Challenger 抄自己"的小设计，透着一种心酸的幽默——研究者得想方设法防止一个 AI 在没人监督时偷懒刷分。它就像个会钻空子的学生，你不盯着它多样性，它就给你交 100 道同一道"五五开"的题交差。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 靶子 / 甜点区示意 -->
+        <circle cx="350" cy="100" r="70" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="350" cy="100" r="50" fill="#ECE4D4" stroke="#96897A"/>
+        <circle cx="350" cy="100" r="28" fill="#B54A2C" fill-opacity="0.18" stroke="#B54A2C"/>
+        <circle cx="350" cy="100" r="6" fill="#B54A2C"/>
+        <text x="350" y="60" text-anchor="middle" fill="#96897A" font-size="10">太难 / 太易</text>
+        <text x="350" y="80" text-anchor="middle" fill="#96897A" font-size="10">（外圈：学不到）</text>
+        <text x="350" y="148" text-anchor="middle" fill="#B54A2C" font-size="10">能力边缘甜点区</text>
+        <text x="350" y="166" text-anchor="middle" fill="#B54A2C" font-size="10">＝ 最近发展区</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 一道"好题"长什么样：正中红心是 Solver 正确率 50% 的甜点——刚好难一点点</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读下来我最受触动的，是 R-Zero 把"难度"这件事重新定义了。我们直觉里"难题"=答对率低的题，但 R-Zero 用一个倒 V 曲线告诉你：难题不是"难倒你"的题，是"让你犹豫"的题。这个 50% 甜点，本质上是在用信息论的语言重写教育学的"最近发展区"——不确定性最大处，信息增益也最大。这套思路未必只在 AI 训练里有用：自适应学习系统、甚至给人类出题的助教，是不是也该按"学习者答得犹不犹豫"来动态调难度，而不是按"答对率"一刀切？</p>
+
+  <p>另一个判断：R-Zero 代表的不只是又一种训练 trick，而是"数据范式"的一次位移——从"人出题、人定答案"，到"模型出题、自洽定答案"。如果这条路能扛住规模和稳定性，人类标注的角色会从"提供知识"退化成"提供校准与护栏"。这也是为什么同一团队紧接着就去做 R-Few——他们自己也清楚，纯零数据目前还不够稳，得加一点点人当锚。两条腿走路，可能才是通向超智能的现实姿态。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果有一天 Solver 真的强到几乎什么题都能答对，"50% 甜点"会越来越难找——Challenger 还出得出"刚好难倒它"的题吗？当两个模型能力都接近上限，这个自博弈飞轮是会越转越快，还是会卡死？你觉得该用什么办法给"已经没有对手的 Solver"继续制造困难？
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Guided Self-Evolving LLMs with Minimal Human Supervision（R-Few）</h3>
+    <p style="margin:0;">R-Zero 那个"纯零数据自博弈会漂移"的软肋，被同一团队亲手补上了——下一篇，他们只往自博弈里掺了一丁点儿人类示例当锚，就稳住了共进化的飞轮。"R-Zero"之后是"R-Few"，从绝对零度走向"几乎零度"，零数据自进化的现实路线怎么走？下期见分晓。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 056 篇</span>
+    <span>2026-09-26</span>
+  </footer>
+
+</div>
+</body>
+</html>
