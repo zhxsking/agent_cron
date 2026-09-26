@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 56,
-  "last_run_date": "2026-09-26",
+  "last_index": 57,
+  "last_run_date": "2026-09-27",
   "papers_covered": [
     {
       "index": 1,
@@ -450,10 +450,18 @@
       "date": "2025-08-07",
       "era": "自博弈训练期 2025–",
       "filename": "56_20260926_R_Zero.html"
+    },
+    {
+      "index": 57,
+      "title_en": "Guided Self-Evolving LLMs with Minimal Human Supervision",
+      "title_zh": "R-Few：给纯自博弈的 R-Zero 掺一丁点儿人类示例当锚，就稳住了会漂移的共进化飞轮",
+      "date": "2025-12-02",
+      "era": "自博弈训练期 2025–",
+      "filename": "57_20260927_R_Few.html"
     }
   ],
   "next_preview": {
-    "title_en": "Guided Self-Evolving LLMs with Minimal Human Supervision",
-    "title_zh": "R-Few：给纯自博弈的 R-Zero 掺一点人类监督——极少人工示例当锚，就稳住共进化、告别漂移"
+    "title_en": "The Path of Self-Evolving Large Language Models: Achieving Data-Efficient Learning via Intrinsic Feedback",
+    "title_zh": "Self-aware RL：让模型自己学会\"知难而退\"——用自预测难度 + 主动求助，从内在反馈走出数据高效自进化"
   }
 }
