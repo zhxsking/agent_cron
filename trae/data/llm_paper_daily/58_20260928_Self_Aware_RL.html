@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Self-aware RL 论文精读 · 大模型经典论文系列 #058</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#058</span>
+  </div>
+
+  <h1 class="title">
+    The Path of Self-Evolving Large Language Models: Achieving Data-Efficient Learning via Intrinsic Feedback
+    <span class="en">Self-aware RL：让模型自己学会“知难而退”——用自预测难度 + 主动求助，从内在反馈走出数据高效自进化</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Hangfan Zhang, Siyuan Xu, Zhimeng Guo, Huaisheng Zhu, Shicheng Liu, Xinrun Wang, Qiaosheng Zhang, Yang Chen, Peng Ye, Lei Bai, Shuyue Hu</span>
+    <span>机构：Pennsylvania State University, Singapore Management University, Shanghai AI Laboratory（上海人工智能实验室）</span>
+    <span>发表：2025-10 / arXiv:2510.02752</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2510.02752" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://arxiv.org/html/2510.02752v1" target="_blank" rel="noopener">HTML</a>
+  </div>
+
+  <p class="lead">上一篇 R-Few 给我们留了个尾巴：要稳住会漂移的自博弈飞轮，靠“外部塞人类锚”是管用的，可锚该塞多少、什么时候塞，还是得人定。这多少有点扫兴——我们费尽心思想让模型自己变强，到头来关键的开关还攥在人手里。</p>
+
+  <p class="lead">这一篇，换一支团队换个思路，把那个开关从外面挪进了模型自己肚子里：与其让人类判断“这题难不难、该不该求助”，不如让模型<em>自己学会知难而退</em>。它能预测一道题对自己有多难，会挑“踮起脚够得着”的题来练；遇到够不着、但很值钱的高墙，它会主动举手——“这题我做不动，借我看一眼答案”。结果呢：只用了不到 1.2% 的额外数据，就在数学推理上拿到 53.8% 的相对提升。人类监督的开关，终于拨到了模型自己手里。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    Self-aware RL 给“出题—解题”的自进化循环装了两块“自我感知”的零件：一是让出题者预测题目的通过率、并学着校准到真实通过率，从而只挑“挑战但可解”的题；二是让模型自己识别“超出能力边界却很值钱”的题、主动求助外部数据破壁——用不到 1.2% 的外部数据，就走出了一条数据高效的自进化之路。
+  </div>
+
+  <hr class="rule">
+
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>Self-aware RL 站在<em>自博弈训练期 2025–</em>这条线上，位置非常讲究：它接着 R-Few（#057）往下走，但不是 R-Few 的“小修小补”，而是<em>换了哲学</em>。R-Few 的锚是“人塞进去”的，本质还是外部监督；Self-aware RL 把锚变成了模型<em>自己长出来的</em>——它自己评估难度、自己决定求助，监督的来源从“外部人类”变成了“内在反馈”。</p>
+
+  <p>它的承前启后也很清楚：承前，它继承了 AZR/R-Zero 那套“generator 出题 + solver 解题”的自进化骨架，连“用代码解释器当裁判”这个可验证奖励的设定都原样沿用；启后，它把 self-evolving 这条线从“能不能自己变强”推进到了“能不能<em>知道自己哪不行、还知道怎么补</em>”——也就是把<em>元认知</em>（对自己的认知）引进了训练循环。这一步很关键：往后所有“会自我评估、会主动求助”的 agent，几乎都能从这里找到影子。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="tarrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="130" x2="665" y2="130" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <circle cx="70" cy="130" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="70" y="110" text-anchor="middle">2025.05</text>
+        <text x="70" y="160" text-anchor="middle" fill="#2E2A22">#055 AZR</text>
+        <text x="70" y="175" text-anchor="middle" fill="#96897A">单模型零数据</text>
+
+        <circle cx="210" cy="130" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="210" y="110" text-anchor="middle">2025.08</text>
+        <text x="210" y="160" text-anchor="middle" fill="#2E2A22">#056 R-Zero</text>
+        <text x="210" y="175" text-anchor="middle" fill="#96897A">双模型·会漂移</text>
+
+        <circle cx="350" cy="130" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="110" text-anchor="middle">2025.12</text>
+        <text x="350" y="160" text-anchor="middle" fill="#2E2A22">#057 R-Few</text>
+        <text x="350" y="175" text-anchor="middle" fill="#96897A">外部塞人类锚</text>
+
+        <circle cx="500" cy="130" r="8" fill="#B54A2C"/>
+        <text x="500" y="96" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="500" y="112" text-anchor="middle" fill="#B54A2C" font-weight="600">2025.10</text>
+        <text x="500" y="160" text-anchor="middle" fill="#2E2A22" font-weight="600">#058 Self-aware RL</text>
+        <text x="500" y="175" text-anchor="middle" fill="#96897A">内在反馈·知难而退</text>
+
+        <circle cx="635" cy="130" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="635" y="110" text-anchor="middle">2026+</text>
+        <text x="635" y="160" text-anchor="middle" fill="#2E2A22">开放世界自进化</text>
+
+        <line x1="90" y1="130" x2="195" y2="130" stroke="#96897A" stroke-width="1" marker-end="url(#tarrow)"/>
+        <line x1="230" y1="130" x2="335" y2="130" stroke="#96897A" stroke-width="1" marker-end="url(#tarrow)"/>
+        <line x1="370" y1="130" x2="478" y2="130" stroke="#B54A2C" stroke-width="1.5" marker-end="url(#tarrow)"/>
+        <line x1="518" y1="130" x2="615" y2="130" stroke="#96897A" stroke-width="1" marker-end="url(#tarrow)"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 自进化谱系：AZR 零数据 → R-Zero 双模型漂移 → R-Few 外部锚 → 本篇 Self-aware RL 把监督开关从外部拨进模型内部</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>要看懂 Self-aware RL，得先回到自进化这条路的老毛病上。RLVR（可验证奖励的强化学习）这条路，靠的是“答案对不对”这种干净信号来训模型——DeepSeek-R1 用 GRPO 把它玩出了花，o1、Kimi-K2 都靠它吃饭。可问题明摆着：你得有一大堆<em>题目</em>来喂。题目哪来？得靠人类专家一道道出、一道道标，又贵又慢，是整个 LLM 训练的瓶颈。</p>
+
+  <p>于是有人想：让模型自己出题、自己解题、自己给自己反馈，不就能绕开人类标注了吗？这就是 self-evolving RL。AZR、R-Zero、WebEvolver 一票工作都是这条思路。可这条思路有两个绕不开的坎：</p>
+
+  <p><em>第一坎：题目难度对不上。</em>模型自己出的题，常常不是太易就是太难。太易，解题者全做对，学不到东西；太难，全做错，连“错在哪”都看不出来。更要命的是，模型的能力是<em>动态变化</em>的——昨天还觉得难的题，今天可能就 trivial 了。难度得跟着能力跑，可出题者根本不知道解题者现在啥水平。</p>
+
+  <p><em>第二坎：会撞墙、会停滞。</em>自进化的天花板，其实是基座模型自己能想到的题。一旦它把能出的题出尽了，难度就上不去，循环就停滞了。模型被自己的“知识边界”卡住，翻不过去。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    想象一个自学成才的棋手，没有教练，只能自己跟自己下棋出题。他要么出的题太简单（自己早就会了），要么太难（怎么下都输，输完也不知为啥）。更要命的是，他的棋力是被自己脑子里那些棋谱框住的——想突破，得有人偶尔给他摆一盘他没见过的名局。R-Few 的做法是“教练偶尔塞几道标准题当锚”；Self-aware RL 的思路更狠：让这个棋手<em>自己学会评估“这盘棋我现在下得动吗”</em>，下不动了，自己举手“教练，这盘借我看一眼”。
+  </div>
+
+  <p>论文的核心论点就在这儿：解这两个坎的钥匙，是<em>self-awareness</em>——模型得“知道自己知道什么、不知道什么、边界在哪”。只有先知道边界，才能挑准“半懂不懂”的题（坎一），也才知道什么时候该翻墙求助（坎二）。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果让你给一个自学模型装“自我感知”，你会让它感知什么？是“这题我做得对不对”，还是“这题我做得动吗”？这两个问题看起来像，其实差得很远——一个看结果，一个看能力。先想想，哪个对“挑题来练”更有用？
+  </div>
+
+  <hr class="rule">
+
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>论文要解决的问题，一句话：<em>怎么让模型在不靠人定难度、不靠人定求助时机的前提下，自己挑准“挑战但可解”的题来练，并在撞到能力墙时主动借一点外部数据翻过去？</em></p>
+
+  <p>这里有个微妙的设计取舍。R-Few 已经证明“掺一点人类数据”能稳住自进化，可它的锚是<em>固定地从外部塞进去</em>的——塞多少、塞哪些，都得人事先定好。Self-aware RL 不满足于此，它想回答一个更狠的问题：<em>能不能连“什么时候该用外部数据”都让模型自己判断？</em>换句话说，人类监督不再是“定时定量”的喂饭，而是变成模型“饿了才点”的外卖——只有模型自己觉得撞墙了、且这堵墙值得翻，它才会主动去借那一点点外部答案。</p>
+
+  <p>这就是论文标题里“Intrinsic Feedback”（内在反馈）的真正含义：反馈不来自外部裁判，而来自模型对自身能力的<em>自评估</em>。它要的不是更多数据，而是更聪明的“知道自己几斤几两”。</p>
+
+  <hr class="rule">
+
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>Self-aware RL 的整体骨架，是 generator（出题者）和 solver（解题者）迭代协同的自进化循环——这部分和 R-Zero 一脉相承。但它不靠外部人类锚，而是往循环里焊了两块“自我感知”的零件：<em>self-aware difficulty prediction</em>（自我感知难度预测）和 <em class="latin">self-aware limit breaking</em>（自我感知破壁）。两块零件一个管“出题别瞎出”，一个管“撞墙别硬刚”。我们一个一个拆。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowA" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- Generator 出题 + 预测难度 -->
+        <rect x="20" y="30" width="190" height="60" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="115" y="52" text-anchor="middle" fill="#B54A2C" font-weight="600">Generator 出题者</text>
+        <text x="115" y="70" text-anchor="middle" fill="#B54A2C">核心①：预测通过率 μ(x)</text>
+        <text x="115" y="84" text-anchor="middle" fill="#B54A2C">+ 生成代码题</text>
+
+        <!-- Solver 解题 N rollouts -->
+        <rect x="250" y="30" width="160" height="60" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="330" y="55" text-anchor="middle">Solver 解题者</text>
+        <text x="330" y="72" text-anchor="middle" fill="#96897A">N 次 rollout</text>
+        <text x="330" y="86" text-anchor="middle" fill="#96897A">真实通过率 k/N</text>
+        <line x1="210" y1="60" x2="245" y2="60" stroke="#96897A" marker-end="url(#arrowA)"/>
+
+        <!-- 代码解释器裁判 -->
+        <rect x="445" y="30" width="160" height="60" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="525" y="52" text-anchor="middle">代码解释器</text>
+        <text x="525" y="70" text-anchor="middle" fill="#96897A">可验证奖励</text>
+        <text x="525" y="84" text-anchor="middle" fill="#96897A">(执行结果对不对)</text>
+        <line x1="410" y1="60" x2="440" y2="60" stroke="#96897A" marker-end="url(#arrowA)"/>
+
+        <!-- 中间分隔 -->
+        <line x1="40" y1="130" x2="660" y2="130" stroke="#96897A" stroke-dasharray="3 3" opacity="0.5"/>
+
+        <!-- 任务过滤器 -->
+        <rect x="60" y="165" width="200" height="70" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="160" y="188" text-anchor="middle" fill="#24555A" font-weight="600">任务过滤器 Task Filter</text>
+        <text x="160" y="206" text-anchor="middle" fill="#24555A">核心②：价值 + 难度</text>
+        <text x="160" y="222" text-anchor="middle" fill="#24555A">新题(perplexity) 且 够难(μ)</text>
+
+        <!-- 外部求解器 limit breaking -->
+        <rect x="300" y="165" width="180" height="70" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="390" y="188" text-anchor="middle" fill="#24555A" font-weight="600">Limit Breaking 破壁</text>
+        <text x="390" y="206" text-anchor="middle" fill="#24555A">超出能力边界</text>
+        <text x="390" y="222" text-anchor="middle" fill="#24555A">→ 主动求助外部答案</text>
+        <line x1="260" y1="200" x2="295" y2="200" stroke="#96897A" marker-end="url(#arrowA)"/>
+
+        <!-- 奖励聚合 -->
+        <rect x="520" y="165" width="150" height="70" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="595" y="188" text-anchor="middle">奖励聚合</text>
+        <text x="595" y="205" text-anchor="middle" fill="#96897A">难度预测奖</text>
+        <text x="595" y="220" text-anchor="middle" fill="#96897A">+ 结果奖 + 格式奖</text>
+        <line x1="480" y1="200" x2="515" y2="200" stroke="#96897A" marker-end="url(#arrowA)"/>
+
+        <!-- 策略更新 -->
+        <rect x="220" y="290" width="260" height="50" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="350" y="320" text-anchor="middle" fill="#B54A2C" font-weight="600">REINFORCE++ 策略更新</text>
+
+        <!-- 循环回箭头 -->
+        <path d="M 595 235 Q 595 270 350 270 Q 115 270 115 95" stroke="#96897A" stroke-width="1" fill="none" stroke-dasharray="4 3" marker-end="url(#arrowA)"/>
+        <text x="350" y="263" text-anchor="middle" fill="#96897A">迭代自进化循环</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · Self-aware RL 框架总览：generator 预测难度 μ(x)，solver 解题得真实通过率 k/N；任务过滤器筛出“新且难”的题走 limit breaking 主动求助，三类奖励聚合后更新策略</figcaption>
+  </figure>
+
+  <p>先说一个工程上的选择：整套系统跑在<em>代码生成</em>环境上。为什么选代码？因为它有 Python 解释器当裁判——给段代码，跑一下就知道对错，这种可验证信号最稳。具体玩法是：generator 出一段“带可执行结果的代码题”，solver 要预测这段代码执行后的输出，猜对了就拿到正的结果奖励。这样奖励信号完全自动化，不靠人。</p>
+
+  <h3>零件一：自我感知难度预测（Self-aware Difficulty Prediction）</h3>
+  <p>出题这边，Self-aware RL 让 generator 干一件 R-Zero 没干的事：<em>出题的同时，预测这题 solver 能做对几次</em>。具体说，generator 出一道题 x，要顺便输出一个预测通过率 $\mu(x)$——它估计 solver 做 N 次 rollout 里能对几次。比如它说“这题我估摸着 solver 做 8 次能对 4 次”，那 $\mu(x)=0.5$。</p>
+
+  <p>光预测还不行，得<em>预测得准</em>。solver 真做完 N 次后，会得到一个真实通过率 $k/N$（k 是做对的次数）。系统拿 generator 的预测 $\mu(x)$ 跟真实 $k/N$ 对比，给一个“难度预测奖励”——预测越准，奖励越高：</p>
+
+  <div class="formula-block">
+    $$ \mathcal{R}_{\text{diff}}(x) = 1 - \big|\,\mu(x) - \tfrac{k}{N}\,\big| $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>这个设计妙就妙在，它逼着 generator <em>学会校准自己的难度感知</em>。一开始它估得不准没关系，奖励会一点点把它拽到“估得准”的方向上去。等它估准了，奇妙的事就发生了：它出的题，难度自然落在“挑战但可解”的甜区——因为只有这种题，它才估得出真实的、非 0 非 1 的通过率，才能拿到高分。太易的题它估 $\mu\approx1$，太难的估 $\mu\approx0$，但只要真实通过率也分别是 1 和 0，预测也算准——可这种题学不到东西。所以系统还配套了一个<em>自适应课程</em>：优先挑 $\mu(x)$ 落在中间区段（既非全对也非全错）的题来真正训练。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <line x1="60" y1="150" x2="640" y2="150" stroke="#96897A" stroke-width="1"/>
+        <text x="60" y="175" text-anchor="middle" fill="#96897A">μ=0（太难）</text>
+        <text x="350" y="175" text-anchor="middle" fill="#96897A">μ=0.5（甜区）</text>
+        <text x="640" y="175" text-anchor="middle" fill="#96897A">μ=1（太易）</text>
+
+        <path d="M 60 150 Q 180 150 230 80 Q 350 30 470 80 Q 520 150 640 150" stroke="#96897A" stroke-width="1.5" fill="none"/>
+
+        <rect x="232" y="30" width="236" height="120" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C" stroke-dasharray="3 2"/>
+        <text x="350" y="22" text-anchor="middle" fill="#B54A2C" font-weight="600">挑战但可解的甜区</text>
+        <text x="350" y="55" text-anchor="middle" fill="#B54A2C" font-weight="600">优先练这块</text>
+        <text x="350" y="72" text-anchor="middle" fill="#B54A2C">预测非0非1，校准信号强</text>
+
+        <text x="135" y="145" text-anchor="middle" fill="#96897A">全错→学不到</text>
+        <text x="565" y="145" text-anchor="middle" fill="#96897A">全对→学不到</text>
+        <line x1="232" y1="148" x2="232" y2="152" stroke="#B54A2C" stroke-width="2"/>
+        <line x1="468" y1="148" x2="468" y2="152" stroke="#B54A2C" stroke-width="2"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 难度预测校准出的自适应课程：generator 估准后，自然把训练集中在“踮起脚够得着”的中间甜区</figcaption>
+  </figure>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    把 generator 想象成一个会出卷的老师。R-Zero 的老师是闭眼出题，出完才知道学生考几分。Self-aware RL 的老师，每出一道题都先押注“这题我班学生大概 50% 的人能做对”。押得越准，奖金越高。逼着逼着，这位老师就学会了“摸学生的底”——他出的题，难度自然卡在学生“跳一跳够得着”的地方。这正是教育里说的“最近发展区”，只不过这回是模型自己估出来的。
+  </div>
+
+  <p>注意一个关键点：这里没有外部裁判来定“这题难不难”。难度是<em>模型相对自己当前能力</em>估出来的——同一道题，solver 变强后 $\mu$ 就升，generator 会自动调高它的难度评级。所以这套课程是<em>动态跟随能力变化</em>的，天生解决了前面说的“难度得跟着能力跑”的坎一。</p>
+
+  <h3>零件二：自我感知破壁（Self-aware Limit Breaking）</h3>
+  <p>难度预测管的是“挑准题来练”，可它解决不了“撞墙”——当 generator 出的题<em>全部超出 solver 当前能力</em>（N 次 rollout 全错），强化学习就拿不到任何有效梯度，循环就卡死了。R-Zero 在这种地方往往会停滞。Self-aware RL 的第二块零件，就是专门对付这堵墙的。</p>
+
+  <p>思路是这样的：当一道题 solver 怎么做都做不对（说明够难、够墙），系统不是直接扔掉它，而是先过一道“任务过滤器”判断<em>这题值不值得翻</em>。判断标准有两个维度——</p>
+
+  <ul>
+    <li><em>新颖度（novelty）</em>：用困惑度（perplexity）估。困惑度高，说明这题对模型来说是“没见过的生面孔”，新颖；困惑度低，说明跟它已会的题太像，翻不翻都无所谓。</li>
+    <li><em>难度（difficulty）</em>：用 generator 自己预测的 $\mu(x)$ 估。$\mu$ 越接近 0，越说明这题远超当前能力。</li>
+  </ul>
+
+  <p>只有当一道题<em>既新颖又够难</em>——也就是“值得翻的墙”——系统才会启动 limit breaking：让一个更强的外部模型（论文里用的是 Qwen2.5-Coder-32B）来解这题，把正确答案借过来，喂给 solver 当学习信号。这样一来，solver 就能借这一点点外部数据，<em>翻过自己原本翻不过的墙</em>，扩展能力边界。</p>
+
+  <p>论文里这个“借答案”的频率是受控的，靠两个超参卡着：$\tau=0.1$（控制什么时候触发破壁）、$\gamma=5$（控制借来的数据权重）。关键在于——<em>绝大多数题还是模型自己解、自己学，只有极少数撞墙的、又很值钱的题，才去借</em>。所以全文才敢说“用了不到 1.2% 的额外数据”。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowB" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <rect x="20" y="40" width="160" height="50" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="100" y="70" text-anchor="middle">solver 全做错</text>
+        <line x1="180" y1="65" x2="215" y2="65" stroke="#96897A" marker-end="url(#arrowB)"/>
+
+        <rect x="220" y="20" width="220" height="90" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="330" y="45" text-anchor="middle" fill="#24555A" font-weight="600">任务过滤器</text>
+        <text x="330" y="65" text-anchor="middle" fill="#24555A">新颖? (perplexity 高)</text>
+        <text x="330" y="82" text-anchor="middle" fill="#24555A">且 够难? (μ ≈ 0)</text>
+        <text x="330" y="99" text-anchor="middle" fill="#24555A">→ 这墙值得翻</text>
+        <line x1="440" y1="65" x2="475" y2="65" stroke="#96897A" marker-end="url(#arrowB)"/>
+
+        <rect x="480" y="40" width="180" height="50" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="570" y="62" text-anchor="middle" fill="#B54A2C" font-weight="600">Limit Breaking</text>
+        <text x="570" y="80" text-anchor="middle" fill="#B54A2C">借外部模型答案</text>
+
+        <text x="100" y="170" text-anchor="middle" fill="#96897A">否则：扔掉，不浪费算力</text>
+        <text x="570" y="170" text-anchor="middle" fill="#B54A2C">借来的答案喂回 solver 训练</text>
+        <path d="M 570 90 Q 570 130 570 155" stroke="#B54A2C" stroke-width="1" fill="none" stroke-dasharray="3 2" marker-end="url(#arrowB)"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · Limit Breaking 流程：solver 全错时，先过任务过滤器判断“墙值不值得翻”，值得才借外部答案——把求助从“无脑全借”变成“按需点餐”</figcaption>
+  </figure>
+
+  <h3>零件三：奖励聚合与策略更新</h3>
+  <p>两块零件焊好后，每一轮训练的总奖励是三类信号加起来的：<em>难度预测奖励</em>（generator 估得准不准）+ <em>结果奖励</em>（solver 代码执行对不对）+ <em>格式奖励</em>（输出格式规不规范）。这三类一起，喂给 REINFORCE++ 这个 RL 算法做策略更新。REINFORCE++ 的目标函数长这样：</p>
+
+  <div class="formula-block">
+    $$ \mathcal{J}(\theta\,|\,x,y)=\frac{1}{|y|}\sum_{t=1}^{|y|}\min\!\left(w_{t}(\pi_{\theta})\hat{A}_{t},\ \text{clip}\big(w_{t}(\pi_{\theta}),1-\varepsilon,1+\varepsilon\big)\hat{A}_{t}\right) $$
+    <span class="eqn mono">(2)</span>
+  </div>
+
+  <p>其中 $w_t(\pi_\theta)$ 是重要性采样比，$\hat{A}_t$ 是归一化的优势项：</p>
+
+  <div class="formula-block">
+    $$ \hat{A}_{t}=\frac{r-\text{mean}_{\text{batch}}(r)}{\text{std}_{\text{batch}}(r)} $$
+    <span class="eqn mono">(3)</span>
+  </div>
+
+  <p>这套就是现在 LLM 后训练里很主流的 PPO 变体，重点不在公式本身，而在<em>奖励 r 里掺进了“难度预测奖励”这个新信号</em>——这是把“自我感知”写进训练目标的关键一步。generator 不仅要出好题，还要会“估自己出的题”，估不准就拿不到这部分分。</p>
+
+  <hr class="rule">
+
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>团队拿 Qwen2.5-Coder-3B 当基座，在 9 个基准上做评测——数学推理（MATH500、AMC'23、OlympiadBench 等）和代码生成（LiveCodeBench 等）都有。训练时模型只见过代码题，数学题是<em>域外</em>的，等于考它“学会的能不能迁移”。核心结果以相对提升来算（相对基座 Qwen2.5-Coder-3B）：</p>
+
+  <table>
+    <thead>
+      <tr><th>基准</th><th>类型</th><th>相对提升</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">MATH500</td><td class="text">数学推理</td><td>+29.8%</td></tr>
+      <tr><td class="text">AMC'23</td><td class="text">数学推理</td><td>+77.8%</td></tr>
+      <tr><td class="text">OlympiadBench</td><td class="text">数学推理</td><td>+82.4%</td></tr>
+      <tr><td class="text">LiveCodeBench</td><td class="text">代码生成</td><td>+22.3%</td></tr>
+      <tr><td class="text">数学推理均值（9 基准）</td><td class="text">综合</td><td>+53.8%</td></tr>
+    </tbody>
+  </table>
+
+  <p>几个点值得反复咂摸：</p>
+
+  <ul>
+    <li><em>域外也涨、域内也涨</em>：训练只在代码上做，可数学推理这种“从没见过的题型”反而涨得最猛——AMC'23 涨 77.8%、OlympiadBench 涨 82.4%。这说明 self-aware RL 学到的不是“某类题的套路”，而是更底层的<em>推理能力本身</em>，能跨域迁移。这点很反直觉：一个在代码环境里练出来的模型，数学竞赛题进步最明显。</li>
+    <li><em>53.8% 的相对提升 + 不到 1.2% 的数据</em>：这是论文最常被引用的卖点。对比一下，传统 RLVR 要靠一大堆人类出的高质量题；self-aware RL 几乎全靠自己出题，只在极少数撞墙时刻借一点点外部答案，就拿到了这种量级的提升。</li>
+    <li><em>“知难而退”的消融很说明问题</em>：去掉难度预测，模型就开始瞎练——要么练太易的题浪费时间，要么撞太难的墙卡死；去掉 limit breaking，遇到墙就停滞，性能上不去。两块零件是互补的：一个管“平时练得准”，一个管“卡壳了能翻墙”。</li>
+  </ul>
+
+  <figure>
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <text x="175" y="28" text-anchor="middle" font-weight="600">朴素自进化（会撞墙停滞）</text>
+        <text x="525" y="28" text-anchor="middle" font-weight="600" fill="#B54A2C">Self-aware RL（知难而退）</text>
+        <line x1="350" y1="20" x2="350" y2="240" stroke="#96897A" stroke-dasharray="4 4"/>
+
+        <path d="M 60 200 Q 120 150 175 120 Q 220 100 230 100 Q 240 100 250 102" stroke="#96897A" stroke-width="2" fill="none"/>
+        <text x="175" y="225" text-anchor="middle" fill="#96897A">撞墙后水平停滞</text>
+        <circle cx="230" cy="100" r="4" fill="#96897A"/>
+        <text x="230" y="90" text-anchor="middle" fill="#96897A">撞墙点</text>
+
+        <path d="M 380 200 Q 440 140 525 95 Q 590 70 640 55" stroke="#B54A2C" stroke-width="2" fill="none"/>
+        <text x="525" y="225" text-anchor="middle" fill="#B54A2C">撞墙时借答案翻过去，继续涨</text>
+        <circle cx="525" cy="95" r="4" fill="#B54A2C"/>
+        <text x="525" y="85" text-anchor="middle" fill="#B54A2C">翻墙后更高</text>
+
+        <line x1="60" y1="200" x2="640" y2="200" stroke="#96897A" stroke-width="1"/>
+        <text x="60" y="220" text-anchor="middle" fill="#96897A">训练初期</text>
+        <text x="640" y="220" text-anchor="middle" fill="#96897A">训练后期</text>
+        <text x="20" y="200" text-anchor="middle" fill="#96897A" transform="rotate(-90 20 200)">性能</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 训练曲线对比：朴素自进化撞墙后停滞，Self-aware RL 靠 limit breaking 翻过能力墙后持续上升（示意，依论文分析）</figcaption>
+  </figure>
+
+  <p>更细的分析还揭示了一个有意思的现象：<em>难度预测本身会随着训练变准</em>。一开始 generator 估 $\mu$ 估得离谱，训着训着，它估的通过率和 solver 真实的通过率越来越吻合——也就是说，模型不仅变强了，还<em>更了解自己了</em>。这种“边学边长出元认知”的过程，是这篇论文最迷人的地方。</p>
+
+  <hr class="rule">
+
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>Self-aware RL 的影响，我觉得要分三层看。</p>
+
+  <p>第一层，最直接的：<em>它把“何时求助”的决定权从人类手里拿走了</em>。R-Few 还得人定“塞多少锚、什么时候塞”，Self-aware RL 让模型自己判断“我撞墙了没、这墙值不值得翻”。这是自进化从“半自动”走向“全自动”的关键一跃——监督不再是定时喂饭，而是按需点餐。</p>
+
+  <p>第二层，更深的：<em>它给自进化装上了元认知</em>。之前所有 self-evolving 的工作（AZR、R-Zero、WebEvolver）都缺一样东西——模型不知道自己“几斤几两”。Self-aware RL 用“难度预测奖励”把“自我评估”焊进了训练目标，让模型边变强边学会估自己。这等于给自进化补上了那块一直缺的“反思能力”，意义比单纯的性能提升更大。</p>
+
+  <p>第三层，往远了看：<em>它给“数据高效”立了个新标杆</em>。不到 1.2% 的额外数据，换来 53.8% 的相对提升——这个比例直接打脸了“要变强就得堆海量人类数据”的惯性思维。如果这条路能走通，那通向更强模型的关键瓶颈，就不再是“人能标多少题”，而是“模型能不能自己评估自己”。这一步对超智能的经济学意义非凡。</p>
+
+  <hr class="rule">
+
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>当然，Self-aware RL 不是终点，它自己也留了一串问号。</p>
+
+  <p>首先，<em>“自我评估”准不准，强依赖难度预测机制的质量</em>。论文自己也承认，难度预测不一定总跟人类判断对得上——模型觉得“这题我做得动”，未必真做得动。一旦 $\mu$ 估偏了，挑的题就不准，训练效率就掉。这套机制本质是“用一个可能有偏的自我感知，去校准另一个可能有偏的自我感知”，鲁棒性还得经更多场景验证。</p>
+
+  <p>其次，<em>它还是离不开一个“裁判”</em>。整套系统跑在代码环境上，靠 Python 解释器判对错——这是可验证奖励的命根子。可现实世界里大量任务（写文章、做规划、开放式对话）没有这种干净裁判。把 self-aware RL 搬到没有标准答案的开放世界，难度预测和 limit breaking 还玩得转吗？这是它最大的软肋，也是下一篇预告要啃的硬骨头。</p>
+
+  <p>再者，<em>limit breaking 借的是更强模型的答案</em>。论文用 Qwen2.5-Coder-32B 当外部求解器——可万一没有这么个“更强的老师”呢？如果模型已经是最强的，撞墙了找谁借？这把 self-aware RL 的天花板，钉死在了“得有个更强的外部模型可借”上，离真正的“自我超越”还差一截。</p>
+
+  <p>最后，<em>验证范围偏窄</em>。目前主要在数学和代码上验证，搬到多步规划、agent 协作、实时决策这些更开放的场景，会不会还这么稳，是开放的问号。论文自己的未来方向也点到了：往多智能体、实时决策这些更复杂的交互域扩展。</p>
+
+  <hr class="rule">
+
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把视线拉远，看看自进化这条路是怎么走到 Self-aware RL 的。它的根，是 RL 里那个最古老的执念——<em>让智能体在没有人类教导的情况下自己变强</em>。AlphaZero 在围棋上把这事做到了极致，可语言没有围棋那种完美裁判，搬到 LLM 上就水土不服。</p>
+
+  <p>RLVR 这一支（DeepSeek-R1 的 GRPO、o1、Kimi-K2）证明了“用可验证奖励训推理”可行，但被“得有海量人类出的题”卡住。self-evolving RL 这一支（AZR #055、R-Zero #056、WebEvolver）想用“模型自己出题”破这个卡点，却撞上两个坎：题目难度对不上、循环会停滞。R-Few（#057）用“外部塞人类锚”稳住了漂移，但求助时机还得人定。</p>
+
+  <p>Self-aware RL 就站在这道坎上：<em>它把求助的开关，从外部人类挪进了模型自己</em>。难度预测解决了“挑准题”，limit breaking 解决了“撞墙能翻”——两件事都靠模型对自身的感知。从“绝对零度”（AZR）到“双模型零度”（R-Zero），到“外部锚的几乎零度”（R-Few），再到“内在反馈的几乎零度”（Self-aware RL），这条线每一步都在把“人类监督”往后推一格，把“模型自主”往前推一格。</p>
+
+  <p>可它们都有个共同的命门——<em>离不开一个能判对错的裁判</em>。代码解释器也好、数学标准答案也好，总得有个 oracle。下一步自然要问：连裁判都没有的开放世界里，模型怎么自进化？这就是下一篇要拆的事。</p>
+
+  <hr class="rule">
+
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>这篇论文背后有个挺有意思的细节：第一作者 Hangfan Zhang 是宾州州立大学的学生，这项工作是他在上海人工智能实验室实习期间做的。通讯作者是上海 AI Lab 的 Shuyue Hu，团队里还有 Lei Bai、Peng Ye 这些上海 AI Lab 的熟名字。所以这其实是<em>学界（宾州州立）+ 产业界（上海 AI Lab）</em>合作的产物——一个美国在读博士，在中国实验室实习时，给自进化这条路添了块“自我感知”的零件。</p>
+
+  <p>更妙的是那个“知难而退”的隐喻。整篇论文最反直觉的地方在于：它让模型<em>学会承认自己不会</em>。在 AI 圈，我们这些年都在追“让模型什么都答得出”的幻觉——幻觉（hallucination）本质上就是模型“不会装会”。Self-aware RL 反其道而行，它训练的第一个目标，居然是让模型诚实地说“这题我估摸着自己做不动”。一个会判断“我不行”的模型，反而比一个“我什么都行”的模型更能进步——这个道理，跟人类学习其实一模一样：能承认不会，才会去学。</p>
+
+  <figure>
+    <svg viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <rect x="40" y="40" width="280" height="100" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="180" y="65" text-anchor="middle" fill="#96897A">“我什么都行”的模型</text>
+        <text x="180" y="88" text-anchor="middle" fill="#96897A">（不会装会 → 幻觉）</text>
+        <text x="180" y="115" text-anchor="middle" fill="#96897A" font-size="10">“3.14 是 π 的精确值吗？</text>
+        <text x="180" y="128" text-anchor="middle" fill="#96897A" font-size="10">当然！它甚至更精确……”</text>
+
+        <rect x="380" y="40" width="280" height="100" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="520" y="65" text-anchor="middle" fill="#B54A2C" font-weight="600">“这题我做不动”的模型</text>
+        <text x="520" y="88" text-anchor="middle" fill="#B54A2C">（会判断边界 → 反而能学）</text>
+        <text x="520" y="115" text-anchor="middle" fill="#B54A2C" font-size="10">“μ≈0，这题超我了，</text>
+        <text x="520" y="128" text-anchor="middle" fill="#B54A2C" font-size="10">借我看一眼答案吧。”</text>
+
+        <path d="M 320 90 Q 350 70 380 90" stroke="#96897A" stroke-width="1" fill="none" marker-end="url(#a2)"/>
+      </g>
+      <defs>
+        <marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><span class="fig-num">图 6</span> · 一个轻松的对照：会承认“我不行”的模型，反而比“我什么都行”的模型更能进步</figcaption>
+  </figure>
+
+  <p>还有个跨时空的呼应值得说。Self-aware RL 的“挑挑战但可解的题来练”，本质就是教育心理学里的“最近发展区”——上一期 R-Few 借了维果茨基的同一个概念，这期 Self-aware RL 用<em>模型自己估出来的</em>通过率把它实现了。一个 90 年前的教育理论，被两篇 2025 年的论文从不同角度塞进了大模型训练——R-Few 是“老师给方向”，Self-aware RL 是“学生自估水平”，维果茨基大概想不到自己的理论会以这种方式复活。</p>
+
+  <hr class="rule">
+
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读完 Self-aware RL，我最深的感受是：<em>它把自进化的逻辑，从“练得更猛”转向了“练得更聪明”</em>。之前所有 self-evolving 工作，都在卷“怎么出更多题、怎么解更多题”，本质是算力与数据的军备竞赛。Self-aware RL 换了个视角：与其闷头练，不如先学会<em>判断什么值得练</em>。难度预测让模型练在刀刃上，limit breaking 让它在卡壳时知道求助——两件事都不是让它更“勤快”，而是让它更“有自知之明”。</p>
+
+  <p>这其实揭示了一个被长期忽视的真相：<em>阻碍模型变强的，常常不是能力不够，而是不知道自己能力的边界在哪</em>。一个不知道自己几斤几两的模型，要么在舒适区原地打转，要么撞墙撞到头破血流；一个会自估水平的模型，反而能把每一分算力花在最该花的地方。Self-aware RL 给的，正是这块一直缺的“元认知地图”。</p>
+
+  <p>这跟人类学习也惊人地一致。最好的学习者，不是做题最多的，而是最会判断“这题对我现在有没有用”的——他们知道哪些题踮脚够得着该啃、哪些题暂时够不着该借答案、哪些题太简单该跳过。Self-aware RL 把这种“学习策略”刻进了模型训练，让人隐隐看到一种可能：未来的模型会不会不只学到知识，还学到“怎么学”？</p>
+
+  <p>往远了想，这种“自我感知 + 按需求助”的范式，可能不止于推理训练。在 agent 工具调用、自主决策这些更开放的场景里，“模型自己估这步做不做得出、做不出就调个工具或问问人”的循环，也许比“全靠人写好流程”更可扩展。Self-aware RL 给的，也许是一个通用 agent 范式的开头。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    Self-aware RL 让模型自己学会了“知难而退”——可它退的前提，是身后还站着个 Python 解释器当裁判，告诉它“你做对了/做错了”。如果连这个裁判都没有呢？在写文章、做规划、开放式对话这些没有标准答案的任务里，模型连“我做得对不对”都无从知道，又拿什么去校准自己的难度感知？下一期，我们就来看一个把这道最后命门也拆了的尝试。
+  </div>
+
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>OpenSkill: Open-World Self-Evolution for LLM Agents（OpenSkill：开放世界自进化）</h3>
+    <p style="margin:0;">Self-aware RL 把“何时求助”拨进了模型自己手里，可它还是离不开一个能判对错的裁判——代码解释器。可现实世界里，写文章、做决策，哪来的标准答案给你判对错？下一篇，换一支团队拆这最后一道命门：在<em>没有目标监督</em>的开放世界里，agent 怎么从文档、代码库、网页里，<em>自己搭一个验证器</em>出来——技能和“裁判”都从零长出来。从“内在反馈”到“自建裁判”，自进化的下一站怎么走？下期见分晓。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 058 篇</span>
+    <span>2026-09-28</span>
+  </footer>
+
+</div>
+</body>
+</html>
