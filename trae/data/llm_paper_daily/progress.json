@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 58,
-  "last_run_date": "2026-09-28",
+  "last_index": 59,
+  "last_run_date": "2026-09-29",
   "papers_covered": [
     {
       "index": 1,
@@ -466,10 +466,18 @@
       "date": "2025-10-03",
       "era": "自博弈训练期 2025–",
       "filename": "58_20260928_Self_Aware_RL.html"
+    },
+    {
+      "index": 59,
+      "title_en": "OpenSkill: Open-World Self-Evolution for LLM Agents",
+      "title_zh": "OpenSkill：开放世界自进化——没有标准答案时，agent 如何从零给自己搭一个\"验证器\"",
+      "date": "2026-06-04",
+      "era": "自博弈训练期 2025–",
+      "filename": "59_20260929_OpenSkill.html"
     }
   ],
   "next_preview": {
-    "title_en": "OpenSkill: Open-World Self-Evolution for LLM Agents",
-    "title_zh": "OpenSkill：开放世界自进化——没有标准答案时，agent 如何从零给自己搭一个\"验证器\""
+    "title_en": "SkillAlchemy: Open-World Agent Skill Creation",
+    "title_zh": "SkillAlchemy：开放世界的技能炼金术"
   }
 }

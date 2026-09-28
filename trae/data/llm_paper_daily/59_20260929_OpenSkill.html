@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenSkill 论文精读 · 大模型经典论文系列 #059</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  /* 中文没有真实斜体设计，混排斜体会被浏览器"伪斜体"强行倾斜 CJK 字形，
+     可读性差且违背"禁止伪斜体"的初衷。默认 <em> 用于中文/中英混排强调，
+     改用颜色+字重区分，不使用斜体。 */
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  /* 仅当强调内容是纯英文/拉丁字母（如论文英文标题、模型英文名等）时，
+     才使用 Lora 的真实 ital 轴斜体：<em class="latin">Attention</em> */
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#059</span>
+  </div>
+
+  <h1 class="title">
+    OpenSkill: Open-World Self-Evolution for LLM Agents
+    <span class="en">OpenSkill：开放世界自进化——没有标准答案时，agent 如何从零给自己搭一个“验证器”</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Zhiling Yan*, Dingjie Song*, Hanrong Zhang 等 11 人（* 共同一作）</span>
+    <span>机构：Lehigh · UIC · UBC/Vector · Salesforce AI Research · MGH/Harvard</span>
+    <span>发表：2026-06 · arXiv 2606.06741 · EMNLP 2026</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2606.06741" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/OpenLAIR/OpenSkill" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://openlair.github.io/openskill/" target="_blank" rel="noopener">Project</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">想象你刚入职一家公司，主管把一个文件夹拍在你桌上：“把这批医疗数据算出骨密度指标，出一份分析报告。”说完人就走了。没有培训手册，没有前辈带教，甚至没有“交作业标准”——你不知道报告该长什么样，更不知道交上去之后，谁来判断你做得对不对。公司只有一句要求：在岗自我提升。</p>
+  <p class="lead">过去几篇我们一路追着“自进化”这条主线：Self-play SWE-RL 让 agent 自己给自己出软件任务（第 54 篇），Absolute Zero 让模型自己出题自己解（第 55 篇），R-Zero 把出题人和解题人拆成两个模型（第 56 篇），R-Few 给自博弈掺了一丁点人类示例当锚（第 57 篇），上一篇 Self-aware RL 又教会模型“知难而退”、主动求助（第 58 篇）。但不知道你注意到没有，这些方法都有一个共同的“暗桩”：背后总站着一个能判对错的裁判——代码跑测试、数学对答案。可主管拍在你桌上的这种活儿，裁判在哪？报告写得对不对，没有任何标准答案可对。上一篇结尾我们留下的正是这个问题：裁判不在场，自进化的飞轮还转得起来吗？</p>
+  <p class="lead">2026 年 6 月，一支来自理海大学、UIC、Salesforce 等机构的团队交出了他们的回答：裁判不在场，那就自己“请”一个——从开放世界里请。他们给系统起名 <em class="latin">OpenSkill</em>：让 agent 在没有标准答案的世界里，自己查资料写“技能小抄”，再自己出一份“模拟考”来批改小抄，改到满意才带进考场。听起来像自欺欺人？可它最后在三个基准上拿下了所有自动化方法里的最好成绩，离人类专家亲手写的技能只差一步之遥。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    把 agent 扔进“没有标准答案、没有裁判、没有前辈笔记”的开放世界，OpenSkill 让它自己检索资料写出可复用的技能小抄，再用从开放世界锚定的自建虚拟测试批改、迭代小抄——全程不偷看任何标准答案，最终成为三个基准、两套目标模型上的最强自动化方法，与人类专家技能只差 1–3 个百分点。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>如果把“自进化 agent”这条线看成一部长剧，前几季的主角们各有各的靠山：Voyager 有《我的世界》这个“自带说明书”的环境（第 36 篇），Reflexion 有环境反馈当镜子（第 31 篇），自博弈系列有代码和数学这种“天生可验证”的领域（第 54–55 篇）。而 OpenSkill 是那个把所有靠山都撤掉的剧组：只发一句任务描述，其余全靠你自己。</p>
+  <p>它站在两条线索的交汇点上。一条是<em>技能线</em>：从 Voyager 的技能库，到 AgentFactory、AutoSkill、Memento 这些从自身轨迹里攒技能的框架，再到 SkillsBench 这个专门证明“技能质量才是瓶颈”的基准；另一条是<em>验证线</em>：从 Let’s Verify Step by Step 的过程监督（第 22 篇），到自博弈 RL 的自产验证信号。OpenSkill 把两条线拧在一起，提出了一个此前没人正面回答的问题：<em>当环境不给验证信号时，验证信号能不能也从开放世界里自己长出来？</em>这一问，直接开启了“开放世界自进化”这个新的研究方向——两个月后的 SkillAlchemy 等后续工作，都在它趟出的这条河里继续划桨。</p>
+
+  <figure>
+    <!-- 图 1：大模型领域发展时间线，高亮本篇位置 -->
+    <svg viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="120" x2="665" y2="120" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 已解析里程碑：实心青点 -->
+        <circle cx="70" cy="120" r="6" fill="#24555A" fill-opacity="0.85" stroke="#24555A"/>
+        <text x="70" y="96" text-anchor="middle">2017</text>
+        <text x="70" y="147" text-anchor="middle" fill="#2E2A22">Transformer</text>
+        <text x="70" y="163" text-anchor="middle" fill="#96897A">#001</text>
+
+        <circle cx="185" cy="120" r="6" fill="#24555A" fill-opacity="0.85" stroke="#24555A"/>
+        <text x="185" y="96" text-anchor="middle">2020</text>
+        <text x="185" y="147" text-anchor="middle" fill="#2E2A22">GPT-3</text>
+        <text x="185" y="163" text-anchor="middle" fill="#96897A">#004</text>
+
+        <circle cx="300" cy="120" r="6" fill="#24555A" fill-opacity="0.85" stroke="#24555A"/>
+        <text x="300" y="96" text-anchor="middle">2022</text>
+        <text x="300" y="147" text-anchor="middle" fill="#2E2A22">CoT</text>
+        <text x="300" y="163" text-anchor="middle" fill="#96897A">#024</text>
+
+        <circle cx="408" cy="120" r="6" fill="#24555A" fill-opacity="0.85" stroke="#24555A"/>
+        <text x="408" y="96" text-anchor="middle">2023</text>
+        <text x="408" y="147" text-anchor="middle" fill="#2E2A22">Voyager 技能库</text>
+        <text x="408" y="163" text-anchor="middle" fill="#96897A">#036</text>
+
+        <circle cx="512" cy="120" r="6" fill="#24555A" fill-opacity="0.85" stroke="#24555A"/>
+        <text x="512" y="96" text-anchor="middle">2025</text>
+        <text x="512" y="147" text-anchor="middle" fill="#2E2A22">R1 · 自博弈系列</text>
+        <text x="512" y="163" text-anchor="middle" fill="#96897A">#054–058</text>
+
+        <!-- 本篇：高亮 -->
+        <circle cx="612" cy="120" r="9" fill="#B54A2C"/>
+        <circle cx="612" cy="120" r="14" fill="none" stroke="#B54A2C" stroke-opacity="0.4"/>
+        <text x="612" y="88" text-anchor="middle" fill="#B54A2C" font-weight="600">2026.06</text>
+        <text x="612" y="147" text-anchor="middle" fill="#B54A2C" font-weight="600">OpenSkill</text>
+        <text x="612" y="163" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇 #059</text>
+
+        <!-- 下期：虚线占位 -->
+        <circle cx="668" cy="120" r="5" fill="none" stroke="#96897A" stroke-dasharray="3 3"/>
+        <text x="668" y="105" text-anchor="middle">?</text>
+      </g>
+      <text x="350" y="205" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#96897A">青色实心 = 本系列已解析 · 砖红 = 本篇 · 虚线 = 下一站</text>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的 OpenSkill：自进化主线走到 2026 年，终于卸下了“可验证环境”这根拐杖</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>论文开头有一句大实话：现有的自进化 agent，都默认自己站在一个“能用的学习闭环”里——要么有人工整理好的技能，要么有成功轨迹可以蒸馏，要么有验证器告诉你对错。可真实的部署现场呢？可能什么都没有，只有一句任务提示语。作者把这种最严苛的处境单独拎出来，命名为<em>开放世界自进化</em>：从零开始，既要自己造技能，又要自己造验证技能的信号。</p>
+  <p>具体来说，此前的方案各有一个致命的“暗桩”：</p>
+  <ul>
+    <li><strong>技能从哪来？</strong>人工写技能，贵且慢，还未必覆盖新领域；让模型凭参数记忆自己写，写出来的只能是它本来就懂的东西——遇到最新的 API、项目专属的规范、冷门的领域规则就抓瞎；从成功轨迹里蒸馏，前提是你得先成功一次，可开放世界里第一次往往就是失败的。</li>
+    <li><strong>验证信号从哪来？</strong>Reflexion 靠环境反馈，PRM 靠人工标注或模型打分（第 22–23 篇），自博弈 RL 靠“代码能跑通、数学能对答案”。可在“写一份医疗分析报告”这种任务里，没有任何东西会告诉你对不对。</li>
+  </ul>
+  <p>更扎心的是一个基准测试的发现：SkillsBench 专门测“技能质量是不是瓶颈”，结果显示让 Opus 4.6 自己给自己写技能，通过率 23.9%——<em>还不如不写</em>（不用技能是 25.5%）</em>。小抄写错了，比没有小抄更害人。这个反直觉的数据点，几乎是对整个“模型自产技能”路线的一次公开处刑。</p>
+
+  <div class="callout">
+    <span class="label">类比 · 考一门没有真题的新证</span>
+    想象你要考一门刚开设的证书，市面上一没有学霸笔记，二没有历年真题，三没有考纲。老三条路全断了：买笔记（人工技能，不存在）、凭记忆默小抄（模型自产，只会写你已经会的）、刷真题总结错题（轨迹蒸馏，没有题可刷）。OpenSkill 的主意乍听很“土”：去图书馆，把公开教材、官方文档、数据集说明书全部翻出来，自己编小抄；再照着教材里<em>白纸黑字、可以独立核对的事实</em>——某个公开数据集有多少行、某个指标必须落在什么区间、输出该是什么格式——给自己出一份模拟卷。模拟卷不是真题，但考点全部锚定在可验证的事实上，而不是“我觉得考这个”。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>把背景压缩成一句话，这篇论文要解的问题是：<em>在没有任何目标监督（没有标准答案、没有奖励、没有验证器）的开放世界里，agent 仅凭一句任务描述和可自由访问的开放世界资源，能否从零同时构造出“技能”与“验证信号”，并靠这套自建闭环真正提升目标任务的表现？</em></p>
+  <p>论文里有一段很较真的概念辨析，值得单独说：什么才算“监督”？作者划的边界是——<em>看任务输入不算监督</em>：任务描述和执行环境本来就该给你看；只有当你依赖了隐藏的标准答案、奖励或验证器输出，才算偷看。而整套流程必须做到：不仅自己不看答案，也不许反向工程标准测试来造自己的模拟题。</p>
+  <p>用数学语言说，agent 通过上下文里的技能集 $\mathcal{S}_i$ 来条件化自己的行为，全程不改权重；技能构造函数必须满足“监督自由”：</p>
+
+  <div class="formula-block">
+    $$\hat{\mathcal{S}}_i = f(\mathcal{I}_i, \mathcal{E}_i, \mathcal{K})$$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>其中 $\mathcal{I}_i$ 是任务指令，$\mathcal{E}_i$ 是执行环境，$\mathcal{K}$ 是开放世界知识——公开文档、代码库、论文、教程、网页，唯独不包括隐藏的测试 $\mathcal{T}^{\text{GT}}_i$。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    先别往下看。如果让你给自己的技能“出模拟考”，你怎么保证这份卷子不是自欺欺人？——提示：问题不在“出题的水平和做题的水平一样”吗？注意，出题用的知识来源，可以和做题用的知识来源<em>不是同一份</em>。想想这会有什么效果。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>OpenSkill 的答案是“三阶段流水线 + 一道泄漏屏障”：阶段一从开放世界取知识和“锚”，阶段二在沙盒里起草技能、自建模拟考、按诊断迭代，阶段三把冻结的技能零样本交给目标 agent 上考场。隐藏的标准测试被屏障锁在门外，直到最终评估那一刻才解锁。</p>
+
+  <h3>阶段一：两路检索——一路学知识，一路找“锚”</h3>
+  <p>第一路是主检索 $\mathcal{D}$：把任务指令、元数据和环境文件预览交给一个“深度调研 agent”（用的是 Gemini Deep Research），它满网检索，产出一份背景文档 $k_i$——需要哪些库的哪些 API、函数签名长什么样、参数默认值是什么、有哪些常见坑——再据此合成一份结构化的技能计划 $p_i$，把要写的技能拆成 1–4 份。有个细节很妙：查询合成时被明确要求“只查知识，不要包含解题方法”——<em>查教材可以，搜答案不行</em>。</p>
+  <p>第二路是论文的得意之笔：验证知识检索 $\mathcal{D}^v$。这一路不要 API 用法，只要四类“独立可验证的锚”：（一）官方文档里的参考值；（二）知名数据集的统计不变量——多少行、和是否为一、取值范围；（三）可以用别的工具交叉验证的程序；（四）已知的输入输出对。为了两路不重复，第一路已查到的前 4000 字符会作为“已知内容，勿重复”塞进第二路的提示词。</p>
+  <p>还有一道“除名过滤”：所有查询发出去之前，先要把基准测试的名字及其变体从查询里洗掉——防止搜索引擎顺藤摸瓜找到题库本身的答案页。防漏题，防到了搜索框里。</p>
+
+  <div class="formula-block">
+    $$\tilde{\mathcal{T}}_i = g(\mathcal{I}_i, \mathcal{E}_i, k_i^{v})$$
+    <span class="eqn mono">(2)</span>
+  </div>
+
+  <p>公式 (2) 是阶段二的灵魂：虚拟测试套件 $\tilde{\mathcal{T}}_i$ 由验证锚 $k_i^v$ 锚定生成，是隐藏测试 $\mathcal{T}^{\text{GT}}_i$ 的“影子替身”——等下细说。</p>
+
+  <figure>
+    <!-- 图 2：OpenSkill 三阶段总架构 + 泄漏屏障 -->
+    <svg viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrA" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrR" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <!-- 开放世界资源 -->
+      <rect x="215" y="12" width="280" height="46" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+      <text x="355" y="30" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#2E2A22" font-weight="600">开放世界资源 K</text>
+      <text x="355" y="48" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#96897A">官方文档 · 代码库 · 论坛 · 网页</text>
+      <!-- 箭头：开放世界 -> 两路检索 -->
+      <line x1="300" y1="58" x2="150" y2="100" stroke="#96897A" stroke-width="1" marker-end="url(#arrA)"/>
+      <line x1="410" y1="58" x2="330" y2="246" stroke="#96897A" stroke-width="1" marker-end="url(#arrA)"/>
+
+      <!-- Stage 1 -->
+      <rect x="22" y="102" width="206" height="170" rx="2" fill="#ECE4D4" stroke="#24555A"/>
+      <text x="125" y="122" text-anchor="middle" font-family="JetBrains Mono" font-size="12.5" fill="#24555A" font-weight="600">阶段一 · 知识获取</text>
+      <rect x="36" y="136" width="178" height="58" rx="2" fill="#F4EFE4" stroke="#96897A"/>
+      <text x="125" y="158" text-anchor="middle" font-family="JetBrains Mono" font-size="11.5" fill="#2E2A22">主检索 D（深度调研）</text>
+      <text x="125" y="178" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#96897A">背景知识 k_i · 技能计划 p_i</text>
+      <rect x="36" y="206" width="178" height="58" rx="2" fill="#F4EFE4" stroke="#96897A"/>
+      <text x="125" y="228" text-anchor="middle" font-family="JetBrains Mono" font-size="11.5" fill="#2E2A22">副检索 D^v（找验证锚）</text>
+      <text x="125" y="248" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#96897A">参考值 · 数据集不变量</text>
+      <text x="125" y="266" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#96897A">所有查询先过「除名」过滤</text>
+
+      <!-- Stage 2 -->
+      <rect x="252" y="102" width="222" height="238" rx="2" fill="#ECE4D4" stroke="#B54A2C"/>
+      <text x="363" y="122" text-anchor="middle" font-family="JetBrains Mono" font-size="12.5" fill="#B54A2C" font-weight="600">阶段二 · 无泄漏技能进化</text>
+      <rect x="270" y="136" width="186" height="32" rx="2" fill="#F4EFE4" stroke="#96897A"/>
+      <text x="363" y="157" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#2E2A22">① 起草技能 Ŝ⁽⁰⁾（1–4 份）</text>
+      <rect x="270" y="178" width="186" height="32" rx="2" fill="#F4EFE4" stroke="#96897A"/>
+      <text x="363" y="199" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#2E2A22">② 沙盒执行 · 虚拟测试打分 r̃</text>
+      <rect x="270" y="220" width="186" height="32" rx="2" fill="#F4EFE4" stroke="#96897A"/>
+      <text x="363" y="241" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#2E2A22">③ 结构化失败诊断 F</text>
+      <rect x="270" y="262" width="186" height="32" rx="2" fill="#F4EFE4" stroke="#96897A"/>
+      <text x="363" y="283" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#2E2A22">④ 修代码 或 定向检索补知识</text>
+      <!-- 循环箭头 -->
+      <path d="M 266,278 C 240,278 240,152 266,152" fill="none" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrR)"/>
+      <text x="243" y="220" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#B54A2C">≤3 轮</text>
+      <!-- 输出箭头 -->
+      <line x1="456" y1="152" x2="500" y2="152" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrR)"/>
+      <text x="478" y="142" text-anchor="middle" font-family="JetBrains Mono" font-size="9.5" fill="#B54A2C">r̃=1 放行</text>
+
+      <!-- 泄漏屏障 -->
+      <line x1="500" y1="92" x2="500" y2="358" stroke="#B54A2C" stroke-width="1.4" stroke-dasharray="5 5"/>
+      <text x="500" y="84" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#B54A2C" font-weight="600">泄漏屏障</text>
+      <text x="500" y="372" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#B54A2C">隐藏测试 T_GT 仅最终评估解锁</text>
+
+      <!-- Stage 3 -->
+      <rect x="512" y="102" width="170" height="150" rx="2" fill="#ECE4D4" stroke="#24555A"/>
+      <text x="597" y="122" text-anchor="middle" font-family="JetBrains Mono" font-size="12.5" fill="#24555A" font-weight="600">阶段三 · 零样本部署</text>
+      <rect x="524" y="136" width="146" height="56" rx="2" fill="#F4EFE4" stroke="#96897A"/>
+      <text x="597" y="158" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#2E2A22">目标 agent π_θ′</text>
+      <text x="597" y="178" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#2E2A22">携带冻结技能 Ŝ*</text>
+      <rect x="524" y="204" width="146" height="36" rx="2" fill="none" stroke="#B54A2C" stroke-dasharray="4 3"/>
+      <text x="597" y="227" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#B54A2C">隐藏测试 T_GT 判分</text>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · OpenSkill 总架构：开放世界同时供应“学什么”和“怎么判对错”，泄漏屏障把标准答案锁在门外</figcaption>
+  </figure>
+
+  <h3>阶段二：自建模拟考，外加一个“双盲阅卷官”</h3>
+  <p>技能初稿写好后，谁来批改？OpenSkill 的做法是请一位<em>独立验证器</em>：一个全新的 LLM 会话。关键在于“独立”二字——它和技能创作者共享同一个 Docker 容器（所以看得到产出的文件），却<em>不共享对话</em>：创作者的推理过程、草稿、实现代码，阅卷官一概看不到。这是刻意为之的防确认偏误设计：<em>考官能看你的答卷，但不许看你的草稿纸</em>。</p>
+  <p>这位阅卷官依据两样东西出题：任务环境里可独立复算的规则，以及阶段一找来的验证锚 $k_i^v$。它输出的是一份确定性 pytest 脚本——每条断言都是能直接执行、非对即错的硬检查，比如“该公开数据集的行数应精确等于某个已知值”“这个指标必须落在 [0, 1] 区间”“输出 JSON 必须包含指定字段”。断言数量上限 60 条，宁缺毋滥。</p>
+
+  <div class="formula-block">
+    $$\tilde{r}^{(j)}=\frac{1}{|\tilde{\mathcal{T}}_i|}\sum_{k=1}^{K}\tilde{t}_{i,k}\!\bigl(\pi_\theta(\mathcal{I}_i, \hat{\mathcal{S}}_i^{(j)}, \mathcal{E}_i)\bigr)$$
+    <span class="eqn mono">(3)</span>
+  </div>
+
+  <p>一个不含任何 LLM 的解析器跑一遍 pytest，算出虚拟通过率 $\tilde{r}^{(j)}$，作为这一轮技能的质量信号。等于 1 就放行；不等于 1，就进入全论文最有“学习方法论”味道的一步——<em>诊断驱动迭代</em>：</p>
+  <ul>
+    <li>阅卷官产出一份结构化失败报告：每条断言的结果、根因分析、修改建议。</li>
+    <li>一个轻量分类器读报告，判断失败属于哪一类：<em class="latin">SELF-FIXABLE</em>（实现 bug——变量名写错、差一错误、格式不匹配，自己能修）还是 <em class="latin">NEEDS-DR</em>（知识 gap——某个正确值不知道、某个库用法没学过，需要回去查资料）。前者直接把报告退还给创作者自己修；后者触发一次定向检索，把补到的知识追加进上下文——每个任务最多补 3 次，防止无限查资料。</li>
+    <li>循环最多 3 轮。分类器要是失效了，系统保守地默认“自己能修”——绝不多花一次检索的钱。这是很典型的工程保守主义。</li>
+  </ul>
+
+  <figure>
+    <!-- 图 3：虚拟验证器与诊断回路细节 -->
+    <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrB" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrC" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <text x="350" y="22" text-anchor="middle" font-family="JetBrains Mono" font-size="11.5" fill="#B54A2C" font-weight="600">双盲阅卷：看得到答卷，看不到草稿</text>
+
+      <!-- 输入：验证锚 -->
+      <rect x="20" y="66" width="150" height="62" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+      <text x="95" y="90" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#2E2A22">验证锚 k_i^v</text>
+      <text x="95" y="110" text-anchor="middle" font-family="JetBrains Mono" font-size="9.5" fill="#96897A">参考值 · 不变量 · 格式</text>
+
+      <!-- 独立验证器 -->
+      <rect x="210" y="56" width="170" height="82" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+      <text x="295" y="84" text-anchor="middle" font-family="JetBrains Mono" font-size="11.5" fill="#B54A2C" font-weight="600">独立验证器</text>
+      <text x="295" y="104" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#2E2A22">全新 LLM 会话</text>
+      <text x="295" y="122" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#2E2A22">不与创作者共享对话</text>
+
+      <!-- pytest 断言 -->
+      <rect x="420" y="56" width="140" height="82" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+      <text x="490" y="84" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#2E2A22">pytest 断言 ≤60</text>
+      <text x="490" y="104" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#96897A">assert rows == N</text>
+      <text x="490" y="122" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#96897A">assert 0 ≤ metric ≤ 1</text>
+
+      <!-- 解析器 -->
+      <rect x="590" y="56" width="90" height="82" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+      <text x="635" y="90" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#2E2A22">非 LLM</text>
+      <text x="635" y="108" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#2E2A22">解析器</text>
+      <text x="635" y="126" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#B54A2C" font-weight="600">→ r̃</text>
+
+      <!-- 失败诊断 -->
+      <rect x="420" y="182" width="140" height="62" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+      <text x="490" y="206" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#2E2A22">结构化诊断 F</text>
+      <text x="490" y="226" text-anchor="middle" font-family="JetBrains Mono" font-size="9.5" fill="#96897A">逐断言 · 根因 · 建议</text>
+
+      <!-- 分类器 -->
+      <rect x="210" y="182" width="170" height="62" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+      <text x="295" y="206" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#B54A2C" font-weight="600">gap-vs-bug 分类</text>
+      <text x="295" y="226" text-anchor="middle" font-family="JetBrains Mono" font-size="9.5" fill="#2E2A22">SELF-FIXABLE · NEEDS-DR</text>
+
+      <!-- 出口 -->
+      <rect x="20" y="182" width="150" height="62" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+      <text x="95" y="206" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#2E2A22">修代码 或 定向检索</text>
+      <text x="95" y="226" text-anchor="middle" font-family="JetBrains Mono" font-size="9.5" fill="#96897A">检索 ≤3 次 · 失败默认自修</text>
+
+      <!-- 箭头 -->
+      <line x1="170" y1="97" x2="210" y2="97" stroke="#96897A" stroke-width="1" marker-end="url(#arrB)"/>
+      <line x1="380" y1="97" x2="420" y2="97" stroke="#96897A" stroke-width="1" marker-end="url(#arrB)"/>
+      <line x1="560" y1="97" x2="590" y2="97" stroke="#96897A" stroke-width="1" marker-end="url(#arrB)"/>
+      <line x1="635" y1="138" x2="520" y2="182" stroke="#96897A" stroke-width="1" marker-end="url(#arrB)"/>
+      <line x1="420" y1="213" x2="380" y2="213" stroke="#96897A" stroke-width="1" marker-end="url(#arrB)"/>
+      <line x1="210" y1="213" x2="170" y2="213" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrC)"/>
+      <!-- 回环 -->
+      <path d="M 95,182 C 95,160 40,160 40,120" fill="none" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrC)"/>
+      <text x="52" y="152" text-anchor="middle" font-family="JetBrains Mono" font-size="9.5" fill="#B54A2C">修订技能</text>
+      <text x="350" y="278" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#96897A">r̃ = 1.0 才放行 · 否则最多迭代 3 轮 · 之后技能原样冻结</text>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 虚拟验证器工作流：出题的锚来自开放世界，阅卷的官与做题的人隔离，诊断后先分“bug 还是 gap”再对症下药</figcaption>
+  </figure>
+
+  <h3>阶段三：冻结技能，零样本上考场</h3>
+  <p>迭代结束，技能被“原样冻结”——注意不是挑一个虚拟通过率最高的快照，而是取循环终止时的最新版本，防止在自建模拟卷上刷分刷出来的“应试版”反而中选。冻结的技能被原样复制进目标 agent 的工作区，agent 带着它零样本地执行任务，隐藏测试此刻才第一次登场：</p>
+
+  <div class="formula-block">
+    $$\text{PassRate}=\frac{1}{n}\sum_{i=1}^{n}\mathcal{T}^{\text{GT}}_{i}\!\bigl(\pi_{\theta'}(\mathcal{I}_i, \hat{\mathcal{S}}^{*}_i, \mathcal{E}_i)\bigr)$$
+    <span class="eqn mono">(4)</span>
+  </div>
+
+  <p>注意 $\pi_{\theta'}$ 这个记号：目标 agent <em>不必是造技能的那个模型</em>。技能是一份显式的、可打开看的文件，不是焊死在权重里的暗物质——谁拿到都能用。这个选择事后被证明是神来之笔。</p>
+  <p>最后必须说说那道“泄漏屏障”，因为它是全文最较真的部分。作者做了四层隔离审计：代码层，基座 agent 的函数签名根本不接收任何测试路径；容器层，隐藏测试目录和答案目录压根没有挂载进 Docker 容器——<em>不是“不许看”，是“想看也找不到”</em>；Oracle 层，进化循环覆写了父类的判分调用，构造期间永远走不到标准答案的代码路径；日志层，逐条审计执行轨迹，零条引用。外加提示层明文告知验证器：“你只能用任务指令和环境文件，你没有任何权限访问答案。”</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>战场布置：三个基准——主战场 SkillsBench（11 个领域、84 个任务，专门考察“技能是否是短板”），外加 SocialMaze（社会推理）和 ScienceWorld（交互式科学实验）；两套目标 agent——Claude Code 里的 Opus 4.6 和 Codex 里的 GPT 5.2，来自两个互相较劲的模型家族。对手是七个自动化基线：不用技能的裸 agent、一次性自写技能的 Self-Gen 和 CoT、Anthropic 官方的 Skill Creator、从经验轨迹攒技能的 AutoSkill 和 Memento，外加 ScienceWorld 专用的 SkillNet。人类专家手写的技能作为参考上界，不参与排名。所有方法同一铁律：构建期间谁也不许碰隐藏测试。</p>
+
+  <table>
+    <thead>
+      <tr><th>方法</th><th>SB · Opus</th><th>SB · GPT</th><th>SM · Opus</th><th>SM · GPT</th><th>SW · Opus</th><th>SW · GPT</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">No Skill（裸 agent）</td><td>25.5</td><td>25.0</td><td>81.6</td><td>66.6</td><td>87.1</td><td>78.0</td></tr>
+      <tr><td class="text">Self-Gen</td><td>23.9</td><td>32.2</td><td>80.4</td><td>67.6</td><td>88.0</td><td>75.9</td></tr>
+      <tr><td class="text">CoT</td><td>23.9</td><td>33.3</td><td>79.4</td><td>66.7</td><td>88.0</td><td>80.0</td></tr>
+      <tr><td class="text">Skill Creator（Anthropic）</td><td>34.7</td><td>29.2</td><td>81.0</td><td>69.8</td><td>88.3</td><td>83.1</td></tr>
+      <tr><td class="text">AutoSkill</td><td>24.7</td><td>11.2</td><td>77.2</td><td>65.9</td><td>–</td><td>–</td></tr>
+      <tr><td class="text">Memento</td><td>30.1</td><td>15.6</td><td>80.3</td><td>67.4</td><td>–</td><td>–</td></tr>
+      <tr><td class="text">SkillNet</td><td>–</td><td>–</td><td>–</td><td>–</td><td>88.7</td><td>77.8</td></tr>
+      <tr><td class="text"><em>OpenSkill（本篇）</em></td><td><em>43.6</em></td><td><em>42.1</em></td><td><em>82.7</em></td><td><em>70.7</em></td><td><em>90.0</em></td><td><em>85.3</em></td></tr>
+      <tr><td class="text">Human（参考上界，不排名）</td><td>44.5</td><td>44.8</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+    </tbody>
+  </table>
+  <p style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);margin:-14px 0 24px;">单位：通过率 % · SB = SkillsBench · SM = SocialMaze · SW = ScienceWorld · “–”表示该方法未在该基准上运行</p>
+
+  <figure>
+    <!-- 图 4：SkillsBench 总体通过率对比条形图 -->
+    <svg viewBox="0 0 700 400" xmlns="http://www.w3.org/2000/svg">
+      <!-- 轴 -->
+      <line x1="160" y1="20" x2="160" y2="350" stroke="#96897A" stroke-width="1"/>
+      <line x1="160" y1="350" x2="660" y2="350" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="10" fill="#96897A">
+        <text x="160" y="368" text-anchor="middle">0</text>
+        <text x="260" y="368" text-anchor="middle">10</text>
+        <text x="360" y="368" text-anchor="middle">20</text>
+        <text x="460" y="368" text-anchor="middle">30</text>
+        <text x="560" y="368" text-anchor="middle">40</text>
+        <text x="660" y="368" text-anchor="middle">50</text>
+        <line x1="260" y1="345" x2="260" y2="350" stroke="#96897A"/>
+        <line x1="360" y1="345" x2="360" y2="350" stroke="#96897A"/>
+        <line x1="460" y1="345" x2="460" y2="350" stroke="#96897A"/>
+        <line x1="560" y1="345" x2="560" y2="350" stroke="#96897A"/>
+        <!-- 图例 -->
+        <rect x="470" y="8" width="14" height="10" fill="#24555A" fill-opacity="0.85"/>
+        <text x="490" y="17">Opus 4.6</text>
+        <rect x="556" y="8" width="14" height="10" fill="#B54A2C"/>
+        <text x="576" y="17">GPT 5.2</text>
+      </g>
+      <!-- 数据条：x = 160 + score*10 -->
+      <g font-family="JetBrains Mono" font-size="11.5">
+        <!-- No Skill 25.5 / 25.0 -->
+        <text x="150" y="47" text-anchor="end" fill="#2E2A22">No Skill</text>
+        <rect x="160" y="36" width="255" height="11" fill="#24555A" fill-opacity="0.85"/>
+        <rect x="160" y="50" width="250" height="11" fill="#B54A2C"/>
+        <text x="421" y="46" fill="#96897A">25.5</text>
+        <text x="416" y="60" fill="#96897A">25.0</text>
+        <!-- Self-Gen 23.9 / 32.2 -->
+        <text x="150" y="94" text-anchor="end" fill="#2E2A22">Self-Gen</text>
+        <rect x="160" y="83" width="239" height="11" fill="#24555A" fill-opacity="0.85"/>
+        <rect x="160" y="97" width="322" height="11" fill="#B54A2C"/>
+        <text x="405" y="93" fill="#96897A">23.9</text>
+        <text x="488" y="107" fill="#96897A">32.2</text>
+        <!-- CoT 23.9 / 33.3 -->
+        <text x="150" y="141" text-anchor="end" fill="#2E2A22">CoT</text>
+        <rect x="160" y="130" width="239" height="11" fill="#24555A" fill-opacity="0.85"/>
+        <rect x="160" y="144" width="333" height="11" fill="#B54A2C"/>
+        <text x="405" y="140" fill="#96897A">23.9</text>
+        <text x="499" y="154" fill="#96897A">33.3</text>
+        <!-- Skill-Creator 34.7 / 29.2 -->
+        <text x="150" y="188" text-anchor="end" fill="#2E2A22">Skill-Creator</text>
+        <rect x="160" y="177" width="347" height="11" fill="#24555A" fill-opacity="0.85"/>
+        <rect x="160" y="191" width="292" height="11" fill="#B54A2C"/>
+        <text x="513" y="187" fill="#96897A">34.7</text>
+        <text x="458" y="201" fill="#96897A">29.2</text>
+        <!-- AutoSkill 24.7 / 11.2 -->
+        <text x="150" y="235" text-anchor="end" fill="#2E2A22">AutoSkill</text>
+        <rect x="160" y="224" width="247" height="11" fill="#24555A" fill-opacity="0.85"/>
+        <rect x="160" y="238" width="112" height="11" fill="#B54A2C"/>
+        <text x="413" y="230" fill="#96897A">24.7</text>
+        <text x="278" y="244" fill="#96897A">11.2</text>
+        <!-- Memento 30.1 / 15.6 -->
+        <text x="150" y="282" text-anchor="end" fill="#2E2A22">Memento</text>
+        <rect x="160" y="271" width="301" height="11" fill="#24555A" fill-opacity="0.85"/>
+        <rect x="160" y="285" width="156" height="11" fill="#B54A2C"/>
+        <text x="467" y="277" fill="#96897A">30.1</text>
+        <text x="322" y="291" fill="#96897A">15.6</text>
+        <!-- OpenSkill 43.6 / 42.1 -->
+        <text x="150" y="329" text-anchor="end" fill="#B54A2C" font-weight="600">OpenSkill</text>
+        <rect x="160" y="318" width="436" height="11" fill="#24555A" fill-opacity="0.85"/>
+        <rect x="160" y="332" width="421" height="11" fill="#B54A2C"/>
+        <text x="602" y="324" fill="#B54A2C" font-weight="600">43.6</text>
+        <text x="587" y="338" fill="#B54A2C" font-weight="600">42.1</text>
+      </g>
+      <!-- Human 44.5 / 44.8 空心参考线 -->
+      <g font-family="JetBrains Mono" font-size="11.5">
+        <text x="150" y="365" text-anchor="end" fill="#96897A">Human</text>
+        <rect x="160" y="354" width="445" height="11" fill="none" stroke="#96897A"/>
+        <rect x="160" y="368" width="448" height="11" fill="none" stroke="#96897A"/>
+        <text x="611" y="360" fill="#96897A">44.5</text>
+        <text x="614" y="374" fill="#96897A">44.8</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · SkillsBench 总体通过率：OpenSkill 在两套目标模型上都拿下自动化方法最佳成绩，距人类专家技能仅一步之遥</figcaption>
+  </figure>
+
+  <h3>发现一：追平人类，全程没看过标准答案</h3>
+  <p>SkillsBench 上，OpenSkill 拿到 43.6%（Opus 4.6）和 42.1%（GPT 5.2），分别比各自的最强基线高出 +8.9 和 +8.8 个百分点，比裸 agent 高出 +18.1 / +17.1。而人类专家技能是 44.5% / 44.8%——差距被压到了 1–3 个百分点以内。要知道，人类专家是带着完整的领域知识、对照着任务亲手写的技能；而这个 agent 从始至终没有见过任何一道标准测试题。</p>
+
+  <h3>发现二：它是唯一“换个模型不翻车”的方法</h3>
+  <p>细看表格会发现一个有意思的分裂现象：一次性生成派（Self-Gen、CoT）能帮 GPT 5.2 涨分，在 Opus 4.6 上却双双跌破裸基线；迭代派正好相反——AutoSkill 和 Memento 在 Opus 上还行，一换到 GPT 5.2 直接崩盘：AutoSkill 从 24.7% 跌到 11.2%，Memento 从 30.1% 跌到 15.6%，双双低于“什么都不用”的 25.0%。换句话说，这些从模型自身经验里长出来的技能，与“生它的那个模型”深度耦合，换个宿主就成了毒药。OpenSkill 是唯一在两边都稳定大涨 17 个点以上的方法——开放世界来的知识本就不属于任何模型，自然谁都能用。</p>
+
+  <h3>发现三：知识密集领域大爆发，部分反超人类</h3>
+  <p>按领域拆开看，OpenSkill 在 Opus 上 11 个领域里 8 个最佳或并列最佳。涨幅最猛的恰恰是最吃“新知识”的领域：Health 领域从 24.8% 拉到 69.6%；GPT 5.2 上 Energy 领域从 0.0% 拉到 80.0%——而人类技能在这个领域也只有 53.3%；Cybersecurity 从 25.0% 到 52.5%，同样反超人类的 42.5%。道理不复杂：医疗、能源、网络安全这些领域拼的是最新的 API、领域专属规范、冷门数据集说明书——正是模型参数里没有或早已过时、而开放世界检索最擅长补给的东西。</p>
+
+  <h3>发现四：诚实时刻——Manufacturing 全军覆没</h3>
+  <p>值得一提的是论文里的一个“零”：Manufacturing（制造业）领域，所有自动化方法——包括 OpenSkill——全部 0.0%，而人类技能有 46.7%。开放世界检索不是万能钥匙，有些知识可能就是没被好好写到网上，或者任务要求远超任务描述所能提供的信息。作者把这个刺眼的零原样写进了主表，这种诚实值得一个好评。</p>
+
+  <h3>发现五：技能是资产——Opus 写的小抄，四个“学弟”白嫖</h3>
+  <p>既然技能是显式文件，那换模型用呢？作者把 Opus 4.6 生成的技能原封不动地塞给四个弱得多的模型：Haiku 4.5、Qwen 3 Coder、DeepSeek V3、Mistral Large 3。结果四个“学弟”全线涨分，比各自裸跑高出 5.5 到 14.8 个百分点，且<em>零适应性修改、零额外创造成本</em>。对照组里，AutoSkill 的技能迁移过去之后反而低于裸跑——技能本身把模型“带沟里”了。一次创造、处处复用，这才是“技能资产”该有的样子。</p>
+
+  <h3>发现六：自己出的模拟卷，到底靠不靠谱？</h3>
+  <p>这是全文最要害的问题：模拟卷通过了，真题也会通过吗？作者把自建验证器的判定和真实判分做了一次对账（84 个任务）：</p>
+
+  <table>
+    <thead>
+      <tr><th>判定对账（N=84）</th><th>真题通过</th><th>真题失败</th><th>合计</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">模拟卷通过（Proxy Pass）</td><td>39.29%</td><td>29.76%</td><td>69.05%</td></tr>
+      <tr><td class="text">模拟卷未过（Proxy Fail）</td><td>9.52%</td><td>21.43%</td><td>30.95%</td></tr>
+      <tr><td class="text">合计</td><td>48.81%</td><td>51.19%</td><td>100%</td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);margin:-14px 0 24px;">整体一致率 60.7% · 精确率 56.9% · 召回率 80.5% · Fisher 精确检验 OR=2.97（p=0.035），统计显著</p>
+
+  <p>一致率 60.7%，谈不上完美，但统计检验显著——一张“从没见过真题的模拟卷”能做到与真实成绩显著正相关，已经超出很多人的预期。更有意思的是覆盖面：抽 15 个任务，让 LLM 裁判逐条比对模拟卷是否覆盖了人类出题意图，结果覆盖了 88.9%（120/135）的测试意图。没盖住的 11.1% 集中在两类：基准自带的反作弊元检查，以及“分类学一致性、词形还原正确性”这类<em>需要超出任务描述的专业知识</em>才能出的深语义题。还有一个可爱的细节：模拟卷的题量中位数是官方真题的 3.4 倍，平均每个任务多出 15.3 条断言——自己给自己出题，比出题老师还较真，主要多在输出格式、类型合法性、边界条件这些防御性检查上。</p>
+
+  <h3>发现七：练三遍刚好，练十遍反而退步</h3>
+  <p>消融实验给了两条朴素但珍贵的经验。其一是迭代次数：3 轮最优（82.7%），5 轮掉到 79.9%，10 轮掉到 78.0%——在自己的模拟卷上无限制地“刷题”，会<em>过拟合到模拟卷</em>，反而忘了真题长什么样。其二是组件拆解：把开放世界查询和虚拟验证器都拆掉，只剩参数知识，成绩 74.5%；只装开放世界查询，80.6%；只装虚拟验证器，80.8%；两个都装，82.7%。两个组件各自贡献 +6.1 和 +6.3 个点，合体后再涨 2.1 个点——<em>互补，但纠错有重叠</em>，说明两者都在补“模型不知道自己错在哪”这块短板。</p>
+
+  <div class="callout">
+    <span class="label">这笔账怎么算</span>
+    每个任务的技能创造约花费 74.9 万 token、39 分钟；全基准 84 个任务跑完整个流水线约 140 小时、9700 万 token，按牌价折合约 1800 美元。听起来不便宜？别忘了技能是一次性资产：给四个弱模型复用时分文未花；部署时每个任务的推理耗时中位数 368.2 秒，对比裸 agent 的 347.6 秒，几乎零负担。贵在造资产，不在用资产。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>这篇论文的第一重贡献，是把“问题”本身立住了。<em>“开放世界自进化”这个设定，加上“看输入不算监督、依赖隐藏答案才算监督”这条边界</em>，等于给后续研究立了规矩——以后谁自称 supervision-free，都得过这道审计。定义问题的人，往往比解决问题的人影响更持久。</p>
+  <p>第二重贡献，是证明了一个反直觉的命题：<em>监督可以外包给世界</em>。此前所有人都默认“判对错的信号必须来自任务本身”——要么环境给，要么人工标，要么模型自评。OpenSkill 拿出了第四种可能：公开文档里的参考值、知名数据集的统计不变量、交叉验证的程序，这些本来就存在于世界里的“可验证事实”，足以撑起一个像样的练习场。真值不必藏在测试集里，它散落在开放世界里。</p>
+  <p>第三重贡献，是给“技能即外挂文物”这条技术路线补上了最硬的证据：可检查（打开文件就能审）、可迁移（四个异构模型零成本复用）、可审计（谁也没偷看答案）。与把技能烧进权重的 RL 路线相比，这条路便宜、透明、不锁死在单一模型上——对于要在真实生产环境里部署 agent 的团队，这不是学术趣味，是真金白银的工程账。</p>
+  <p>论文已被 EMNLP 2026 接收，并且开源了全部 84 个任务上演化出的技能和检索到的知识文档——等于把“考场、小抄、复习资料”整套公开，后来者可以直接在这上面做对照实验。果不其然，两个月后的 SkillAlchemy 就在同一个基准上接了下一棒。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>论文自己的“自我检讨”列了三条：开放世界的来源可能嘈杂、过时、自相矛盾，需要溯源与校验机制；虚拟任务可能高估技能质量，而如果有人从隐藏答案反推虚拟测试，“无监督”就成了假标签；开放世界检索增加了成本与延迟。都是实话。</p>
+  <p>但我觉得更值得咀嚼的是验证器的精度账：56.9% 的精确率意味着——<em>自评“通过了”的技能里，将近一半其实没通过真题</em>。拆开假阳性看，有三类很有代表性：12 个任务平均真实正确率高达 0.81，只差一口气，却因为“全对才给分”的一票否决制拿零分——模拟卷判它“大体不错”，严格来说不算冤枉它；11 个任务则是“格式全对、数值全错”，结构合格不等于语义正确，这是确定性断言天然的天花板；还有 2 个任务（化学相似性检索、代码翻译）虚拟验证器压根缺乏出题所需的专业知识，出了等于白出。</p>
+  <p>假阴性同样有故事：8 个里 5 个是 pytest 框架本身不适合任务类型（CVE 补丁、构建系统修复、证明助手）——<em>不是题出错了，是这种题型根本没法用 pytest 判卷</em>。这提示虚拟验证器的“题型库”还有很大的扩展空间。</p>
+  <p>往远处看，至少有三个方向值得追：技能的资产管理（检索、压缩、多目标选择，论文相关工作里已经冒出 SkillReducer、SkillMOO、Graph of Skills 一整排）；技能安全（技能文件是 agent 的上下文入口，天然是攻击面——一份被投毒的“技能”可比一个错答案危险得多）；以及本文留下的最大悬念——<em>外挂技能 vs 内化权重</em>，SKILL0、SIRI 等正在走“把技能烧进参数”的反向路线，两条路线的对决远未到终局。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把镜头拉远，OpenSkill 处在两条大线索的交汇处，而它真正的历史地位，是完成了“验证信号来源”的第三次搬家：</p>
+  <ul>
+    <li><strong>第一代：环境给。</strong>Reflexion 靠环境反馈当镜子（第 31 篇），代码任务靠单元测试判对错，Math-Shepherd 靠自动打分当牧羊人（第 23 篇）——验证信号是环境自带的，换到没有反馈机制的环境就失灵。</li>
+    <li><strong>第二代：自己算。</strong>自博弈系列把验证信号的生成也自动化了：Absolute Zero 用代码执行器出题、验证（第 55 篇），SWE-RL 用测试通过率当奖励（第 54 篇）。但它们仍然只在“天生可验证”的领域（数学、代码）里转，因为那里验证器免费。</li>
+    <li><strong>第三代：从世界锚定。</strong>OpenSkill 把“什么算对”锚定在公开文档的参考值、数据集的统计不变量、可交叉验证的程序上——验证信号第一次不再依赖任务自身，开放世界既是教材又是监考。</li>
+  </ul>
+  <p>与之并行的“技能”线索同样三级跳：Voyager 在《我的世界》里攒技能库（第 36 篇）→ AgentFactory、AutoSkill、Memento 从自身轨迹里攒技能 → OpenSkill 直接从开放世界攒技能。两条线在本文交汇：技能从世界来，验证也从世界来。下一站的悬念则写在论文的引用列表里——技能造出来之后怎么管、怎么防投毒、该不该烧进权重，整个“技能工程学”的框架才刚刚搭起第一层。</p>
+
+  <figure>
+    <!-- 图 5：四种技能范式对比 -->
+    <svg viewBox="0 0 700 268" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono">
+        <!-- 列标题 -->
+        <text x="105" y="34" text-anchor="middle" font-size="11.5" fill="#96897A">评价维度</text>
+        <text x="255" y="34" text-anchor="middle" font-size="11.5" fill="#2E2A22">人工策划</text>
+        <text x="395" y="34" text-anchor="middle" font-size="11.5" fill="#2E2A22">模型自产</text>
+        <text x="530" y="34" text-anchor="middle" font-size="11.5" fill="#2E2A22">监督式自进化</text>
+        <text x="640" y="34" text-anchor="middle" font-size="11.5" fill="#B54A2C" font-weight="600">开放世界</text>
+
+        <!-- 行 1：可扩展（不靠人写，也不受模型先验限制） -->
+        <text x="105" y="76" text-anchor="middle" font-size="10.5" fill="#2E2A22">可扩展</text>
+        <text x="255" y="76" text-anchor="middle" font-size="14" fill="#96897A">✗</text>
+        <text x="395" y="76" text-anchor="middle" font-size="14" fill="#24555A" font-weight="600">✓</text>
+        <text x="530" y="76" text-anchor="middle" font-size="14" fill="#24555A" font-weight="600">✓</text>
+        <text x="640" y="76" text-anchor="middle" font-size="14" fill="#24555A" font-weight="600">✓</text>
+
+        <!-- 行 2：有据可依（锚定真实证据，而非参数记忆） -->
+        <text x="105" y="126" text-anchor="middle" font-size="10.5" fill="#2E2A22">有据可依</text>
+        <text x="255" y="126" text-anchor="middle" font-size="14" fill="#24555A" font-weight="600">✓</text>
+        <text x="395" y="126" text-anchor="middle" font-size="14" fill="#96897A">✗</text>
+        <text x="530" y="126" text-anchor="middle" font-size="14" fill="#96897A">△</text>
+        <text x="640" y="126" text-anchor="middle" font-size="14" fill="#24555A" font-weight="600">✓</text>
+
+        <!-- 行 3：验证免监督（判对错不依赖隐藏答案） -->
+        <text x="105" y="176" text-anchor="middle" font-size="10.5" fill="#2E2A22">验证免监督</text>
+        <text x="255" y="176" text-anchor="middle" font-size="14" fill="#24555A" font-weight="600">✓</text>
+        <text x="395" y="176" text-anchor="middle" font-size="14" fill="#96897A">△</text>
+        <text x="530" y="176" text-anchor="middle" font-size="14" fill="#96897A">✗</text>
+        <text x="640" y="176" text-anchor="middle" font-size="14" fill="#24555A" font-weight="600">✓</text>
+
+        <!-- 分隔线与底注 -->
+        <line x1="20" y1="196" x2="680" y2="196" stroke="#96897A" stroke-opacity="0.5"/>
+        <text x="105" y="224" text-anchor="middle" font-size="10" fill="#96897A">（对应论文 Figure 1</text>
+        <text x="105" y="240" text-anchor="middle" font-size="10" fill="#96897A">的三属性）</text>
+        <text x="455" y="224" text-anchor="middle" font-size="10" fill="#96897A">△ = 部分满足：模型自产没有验证回路；监督式自进化的“据”</text>
+        <text x="455" y="240" text-anchor="middle" font-size="10" fill="#96897A">来自自身轨迹与自评，且判分依赖任务反馈或验证器输出</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 技能创造的四代范式：只有“开放世界”一列同时满足可扩展、有据可依、验证免监督三个属性</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>先看作者名单，堪称一次“多国部队”集结：通讯作者孙立策（Lichao Sun）所在的理海大学 <em class="latin">OpenLAIR</em> 实验室出两位共同一作（闫梓玲与宋定杰——注意论文里“同等贡献”的双星号，写论文的行话就是“谁也别抢功”），合作方横跨 UIC、UBC、Vector 研究所、Salesforce AI Research，还有哈佛医学院与麻省总医院的向力（Xiang Li）——所以 Health 领域成了实验里的重头戏，也就不奇怪了。名单里还有一位数据挖掘界的传奇：俞士纶（Philip S. Yu），这位发表了上千篇论文、引用数以十万计的 UIC 老教授，退休年纪仍活跃在 LLM 一线，而且同实验室更早的 CoEvoSkills（技能与验证器共同进化）正是这篇论文的“前作”——同门师兄弟先证明了“技能和裁判可以一起进化”，这一篇再把裁判的锚从任务本身换到开放世界。</p>
+  <p>代码仓库里还埋着一个小彩蛋：附录 B.3 里不小心泄露了系统的内部代号——<em class="latin">SkillWeaver</em> loop，“技能编织机”。想想还挺贴切：把散落世界各地的知识线索，一梭一梭织成一张能用的技能之网。</p>
+  <p>工程细节里最有画面感的是那个“双盲阅卷”设计：阅卷官和考生住在同一个 Docker 容器里，低头不见抬头见，能翻到彼此的产出文件，却被硬性规定<em>不许看对方的对话记录</em>——像极了阅卷老师能看你的答卷、但不能偷听你脑子里的解题独白。而那个 gap-vs-bug 分类器则是个彻头彻尾的“保守派”：一旦自己出故障，立刻退到“这 bug 你自己能修”，绝不多花一次检索的钱——典型的工程最小惊讶原则。</p>
+  <p>最幽默的对照来自 AutoSkill：在 Opus 上还能打 24.7%，换个 GPT 5.2 直接腰斩到 11.2%——技能不但没能迁移，还把宿主模型“带沟里”了；而 OpenSkill 的技能原样塞给弱好几个档次的 Haiku 4.5，还能再涨十几个点。同一个基准，两种命运，自己写的小抄和世界写的小抄，含金量高下立判。</p>
+
+  <figure>
+    <!-- 图 6：趣味插图——自学生涯 -->
+    <svg viewBox="0 0 700 215" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrD" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono">
+        <!-- 左半：图书馆查资料 -->
+        <rect x="40" y="70" width="52" height="14" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="52" y="54" width="52" height="14" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="46" y="38" width="52" height="14" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="75" y="106" text-anchor="middle" font-size="10" fill="#96897A">官方文档 · 数据集说明书</text>
+        <!-- 小机器人（考生） -->
+        <circle cx="150" cy="60" r="13" fill="none" stroke="#24555A" stroke-width="1.5"/>
+        <rect x="140" y="73" width="20" height="22" rx="3" fill="#24555A" fill-opacity="0.2" stroke="#24555A"/>
+        <line x1="130" y1="56" x2="138" y2="52" stroke="#24555A"/>
+        <line x1="130" y1="64" x2="138" y2="66" stroke="#24555A"/>
+        <text x="150" y="112" text-anchor="middle" font-size="10" fill="#24555A">查资料的我</text>
+        <!-- 中间箭头 -->
+        <line x1="205" y1="68" x2="300" y2="68" stroke="#B54A2C" stroke-width="1.5" marker-end="url(#arrD)"/>
+        <text x="252" y="55" text-anchor="middle" font-size="10" fill="#B54A2C">自己写小抄</text>
+        <!-- 右半：给自己出模拟考 -->
+        <rect x="330" y="40" width="200" height="80" rx="2" fill="#F4EFE4" stroke="#96897A"/>
+        <line x1="342" y1="40" x2="342" y2="120" stroke="#B54A2C" stroke-width="1.5"/>
+        <text x="348" y="60" font-size="10" fill="#2E2A22">assert rows == 10296</text>
+        <text x="348" y="78" font-size="10" fill="#2E2A22">assert 0 &lt;= score &lt;= 1</text>
+        <text x="348" y="96" font-size="10" fill="#2E2A22">assert "result" in out</text>
+        <!-- 小机器人（考官）判卷 -->
+        <circle cx="570" cy="65" r="13" fill="none" stroke="#B54A2C" stroke-width="1.5"/>
+        <rect x="560" y="78" width="20" height="22" rx="3" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C"/>
+        <!-- 红勾 -->
+        <path d="M 596,80 L 604,90 L 622,66" fill="none" stroke="#B54A2C" stroke-width="3"/>
+        <text x="575" y="118" text-anchor="middle" font-size="10" fill="#B54A2C">出题+阅卷的我</text>
+        <!-- 底部标语 -->
+        <text x="350" y="160" text-anchor="middle" font-size="13" fill="#2E2A22" font-weight="600">查资料的是我，出题的是我，阅卷的还是我</text>
+        <text x="350" y="182" text-anchor="middle" font-size="10" fill="#96897A">——开放世界自我修炼三部曲 · 出题的锚不在我的脑子里，在世界的白纸黑字里</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 6</span> · OpenSkill 的自学生涯：角色全是一个人扮演，但“教材”与“监考”都来自外部世界，这就是它不自欺欺人的全部秘密</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读完全文，最让我久久回味的，是论文在“上下文 vs 权重”这道选择题上表现出的清醒。作者明说了为什么不选改权重：贵、模型绑定、不可检查。OpenSkill 的技能像一本摊开的笔记本，任何模型翻开就能用，审计员逐行就能查；而烧进权重的技能像一块黑巧克力，咬开也不知道里面是什么。四个弱模型零成本白嫖 Opus 的技能这个实验，几乎是给“笔记型学习者”投了一张赞成票。但我并不觉得这是终局——SKILL0、SIRI 那边的“刷题型学习者”也在进步，或许最终的形态是先外挂攒技能、再挑高频技能内化，“先抄笔记、再练成条件反射”，两头的好处都占。</p>
+  <p>另一层启发在于这个设定本身的现实感。企业里真正想让 agent 干的活，恰恰是那种没有标注数据、没有评估体系、没有标准答案的“主管拍文件夹”式任务。学术界最爱的“可验证环境”在真实世界里是奢侈品。从这个角度说，OpenSkill 最有价值的不是那 43.6%，而是它把研究者的注意力拽回了<em>真实部署的默认处境</em>：没有裁判，才是常态。</p>
+  <p>而它最大的软肋，我以为是“验证器的单点故障”。整条流水线的信任链条，最终都压在那份自建模拟卷上——模拟卷的锚从世界来，这解决了“出题人瞎出”的问题，却没解决“出题人系统性出偏”的问题。消融实验里“练十遍反而退步”已经是个微缩预告：模拟卷和真题之间存在系统性缝隙，练得越狠，缝隙越大。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    如果 agent 自建的验证器本身出了系统性偏差——比如它总在格式上较真，从不检查数值对错——技能会不会在这份“跑偏的模拟卷”上越练越偏？更关键的是：<em>agent 自己能发现自己“练偏了”吗</em>？它需要什么样的机制才能发现“裁判错了”？下一篇要讲的“证据准入”思路，恰好是对这个问题的另一种回应——出题之前，先审题。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>SkillAlchemy: Open-World Agent Skill Creation（SkillAlchemy：开放世界的技能炼金术）</h3>
+    <p style="margin:0;">OpenSkill 证明了开放世界的材料能炼出好技能，但它对搜回来的知识几乎“照单全收”——虚拟测试通过就收编入库。可网上的文档会过时、会互相打架，两份“权威资料”观点相反时，该听谁的？两个月后出现的 SkillAlchemy 把战场推进到“准入”环节：它用“对比证据”挖掘出任务简报里没写明的隐性要求，再按“证据支持的适用范围”决定哪些操作程序有资格写进技能包——同样在 SkillsBench 上，把无技能基线拉高 19.9 个百分点，比最强自动化基线再高出 8.6 个百分点。搜回来的知识，凭什么标准判断谁配进技能？“炼金术”的炉子，下期开炉。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 059 篇</span>
+    <span>2026-09-29</span>
+  </footer>
+
+</div>
+</body>
+</html>
