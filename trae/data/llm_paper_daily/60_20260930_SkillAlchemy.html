@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillAlchemy 论文精读 · 大模型经典论文系列 #060</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#060</span>
+  </div>
+
+  <h1 class="title">
+    SkillAlchemy: Open-World Agent Skill Creation
+    <span class="en">SkillAlchemy：开放世界的技能炼金术——给网上搜来的知识设一道"证据准入"关卡，自动生成的技能第一次追平了人类专家</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Hengjun Wang, Shuyue Wei, Boyi Liu, Jun Yang, Yongxin Tong</span>
+    <span>机构：北京航空航天大学 · 山东大学 · 西北工业大学</span>
+    <span>发表：2026-08 / arXiv</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2608.23417" target="_blank" rel="noopener">arXiv</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">一个 agent 接到任务：用湖泊模拟器 GLM 模拟美国门多塔湖的水温，把模拟值和实测值的偏差调到 2°C 以内。它读文档、改配置、跑模型，程序正常退出，输出文件也生成了——一切都显得那么完美，直到分数出来：不及格。问题出在哪？它把输出文件里的 <span class="mono">temp[t,0]</span> 当成了湖面温度，可 GLM 的 <span class="mono">z</span> 轴是<em>自湖底向上起算的"高度"而不是"深度"</em>——索引 0 是湖底，不是湖面。更糟的是，这个错误不会报错、不会抛异常、不会有任何警告，只会安安静静地给你一个"看起来很合理"的错误答案。</p>
+  <p class="lead">这种坑，任务描述里一个字没提，GLM 官方文档也只字未加强调——它只存在于某个 GitHub issue 的第 47 楼、某个踩过坑的开发者随笔里。上一篇 OpenSkill（第 59 篇）证明了 agent 能从开放世界里把这类知识"搜回来"写成技能小抄，但结尾我们留了一个悬念：<em>搜回来的知识，凭什么标准判断谁配进技能？</em>网上的文档会过时、会互相打架，两份"权威资料"观点相反时，该听谁的？抄错一条指令进技能库，以后每次执行都会被带偏。2026 年 8 月，北航、山东大学等机构组成的团队给出了他们的答案：给技能创建装一道<em>法庭式的证据审查</em>——这个系统的名字，叫 SkillAlchemy，技能炼金术。</p>
+  <p class="lead">炼金术的隐喻相当贴切：中世纪的炼金术士想把廉价矿石炼成黄金，SkillAlchemy 想把开放世界里杂乱无章的原始材料——过时的文档、局部的代码示例、某个用户的踩坑笔记——炼成货真价实的可复用技能。而它最终做到的事情此前没人做到过：在 87 个任务的基准上，<em>自动生成的技能第一次追平了人类专家手写的技能</em>。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    SkillAlchemy 把"从开放世界创建技能"变成一个证据准入问题：先用对比实验挖出任务简报里没写的隐性要求，再按"证据支持的适用范围"逐条审查候选操作——证据够硬就升为通用指令，证据只够局部就降为带范围的示例，证据不足或互相冲突就拒之门外——由此自动生成的技能在 SkillsBench 上比无技能执行高 19.9 个百分点，首次与人类专家手写技能持平。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>如果给"agent 自进化"这部剧分季：第一季是环境反馈（Reflexion，第 31 篇），第二季是可验证领域的自博弈（Absolute Zero 一族，第 54–57 篇），第三季是开放世界（OpenSkill，第 59 篇）——那么 SkillAlchemy 是第三季的收官之作，它接过了 OpenSkill 留下的那个火辣问题：开放世界的材料有了，<em>裁决权</em>怎么定？</p>
+  <p>这个问题为什么重要？因为 2026 年的 agent 生态正在发生一件大事：技能（Skills）成了行业基础设施。Anthropic 的 Claude Code 和 OpenAI 的 Codex 都支持同一种格式——一个以 <span class="mono">SKILL.md</span> 为核心的文件夹，里面写着"这个技能做什么、什么时候触发、分几步执行、失败了怎么补救"，旁边配上脚本、参考文档和模板资源，agent 运行时按需加载。Vercel 甚至专门做了 skills.sh 这个开放技能市场。一句话：<em>技能正在变成 agent 世界的"App Store"</em>。可这个生态有个致命软肋——技能谁来写？人类专家写得太慢太少，模型自己编又容易一本正经地胡说八道。技能生产线的自动化，成了卡住整个生态的瓶颈。</p>
+  <p>SkillAlchemy 的定位，就是这条生产线上的<em>质检车间</em>。此前的工作要么解决"从哪找知识"（OpenSkill 检索文档、代码库、网页），要么解决"从哪攒经验"（Voyager、ExpeL 从执行轨迹里总结）。SkillAlchemy 第一个把矛头对准了中间那道没人正经做过的工序：<em>找到的知识，凭什么进技能库？</em></p>
+
+  <figure>
+    <!-- 图 1：大模型领域发展时间线，高亮本篇位置 -->
+    <svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow-t" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="125" x2="665" y2="125" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 已解析里程碑：实心青点 -->
+        <circle cx="70" cy="125" r="6" fill="#24555A" fill-opacity="0.85" stroke="#24555A"/>
+        <text x="70" y="101" text-anchor="middle">2017</text>
+        <text x="70" y="152" text-anchor="middle" fill="#2E2A22">Transformer</text>
+        <text x="70" y="168" text-anchor="middle">#001</text>
+
+        <circle cx="185" cy="125" r="6" fill="#24555A" fill-opacity="0.85" stroke="#24555A"/>
+        <text x="185" y="101" text-anchor="middle">2022</text>
+        <text x="185" y="152" text-anchor="middle" fill="#2E2A22">InstructGPT</text>
+        <text x="185" y="168" text-anchor="middle">#006</text>
+
+        <circle cx="300" cy="125" r="6" fill="#24555A" fill-opacity="0.85" stroke="#24555A"/>
+        <text x="300" y="101" text-anchor="middle">2023</text>
+        <text x="300" y="152" text-anchor="middle" fill="#2E2A22">GPT-4 / Voyager</text>
+        <text x="300" y="168" text-anchor="middle">#036</text>
+
+        <circle cx="415" cy="125" r="6" fill="#24555A" fill-opacity="0.85" stroke="#24555A"/>
+        <text x="415" y="101" text-anchor="middle">2025</text>
+        <text x="415" y="152" text-anchor="middle" fill="#2E2A22">DeepSeek-R1 / AZR</text>
+        <text x="415" y="168" text-anchor="middle">#013 / #055</text>
+
+        <circle cx="530" cy="125" r="6" fill="#24555A" fill-opacity="0.85" stroke="#24555A"/>
+        <text x="530" y="101" text-anchor="middle">2026-06</text>
+        <text x="530" y="152" text-anchor="middle" fill="#2E2A22">OpenSkill</text>
+        <text x="530" y="168" text-anchor="middle">#059</text>
+
+        <!-- 本篇位置：高亮 -->
+        <circle cx="620" cy="125" r="9" fill="#B54A2C" stroke="#B54A2C"/>
+        <circle cx="620" cy="125" r="14" fill="none" stroke="#B54A2C" stroke-opacity="0.35"/>
+        <text x="620" y="95" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="620" y="152" text-anchor="middle" fill="#2E2A22" font-weight="600">SkillAlchemy</text>
+        <text x="620" y="168" text-anchor="middle">#060</text>
+      </g>
+      <!-- 已解析区间高亮 -->
+      <line x1="70" y1="190" x2="620" y2="190" stroke="#24555A" stroke-width="2" stroke-opacity="0.5"/>
+      <text x="345" y="212" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#24555A">系列已解析 #001 – #059 · 自进化主线 #054 – #059</text>
+      <text x="345" y="230" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#96897A">技能线：Voyager #036 → ExpeL → OpenSkill #059 → SkillAlchemy #060</text>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的位置：SkillAlchemy 站在"开放世界自进化"主线的质检关口</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>先说清楚"技能"到底是什么。它不是普通的提示词，也不是一次工具调用，而是一个<em>可复用的程序性工件</em>：告诉 agent 遇到某类任务时该走什么流程、遵守什么工具约定、在什么边界内操作、失败了怎么补救。你可以把它理解成 agent 的<strong>"岗位操作手册"</strong>——新员工（基础模型）上岗，谁也没法把所有 SOP 背进脑子里，但遇到对应场景时翻出手册照做，就能像一个老手一样干活。</p>
+  <p>问题来了：手册谁写？2026 年之前的答案是三条路，<em>条条有坑</em>：</p>
+  <ul>
+    <li><strong>人类专家手写</strong>：质量高，但要价也高。一篇像样的技能要吃透领域、踩遍坑，专家一小时可能写不出一条。SkillsBench 里那些人类技能，条条都是专家工时堆出来的。</li>
+    <li><strong>模型凭先验自己编</strong>：Anthropic 和 OpenAI 都出了官方的 skill-creator 工具，让模型自己起草、自己评估、自己修改。快是快，但模型脑子里没有的知识——比如"GLM 的 z 轴是高度不是深度"——它编不出来，只能编出<strong>听起来很像那么回事的通用建议</strong>。</li>
+    <li><strong>从执行轨迹里蒸馏</strong>：Voyager（第 36 篇）、ExpeL 这类方法让 agent 先做题，再把成功经验总结成技能。可这条路要求<strong>你先做过一遍</strong>——面对从没做过的陌生任务，无迹可寻。</li>
+  </ul>
+  <p>三条路的共同盲区：陌生任务。而这恰恰是最需要新技能的时刻——正因为 agent 不会，才要造技能；正因为陌生，人类专家和执行轨迹都不在场。唯一还开着的知识来源，是开放世界：官方文档、代码仓库、issue 讨论、论坛问答。门多塔湖那个 z 轴的坑，就明晃晃地躺在某个 GitHub issue 里，只是没人把它"炼"进技能。</p>
+
+  <h3>联网就万事大吉了吗？——一个扎心的先行实验</h3>
+  <p>论文一上来先做了个先行实验（Pilot Study），把"联网搜一下不就行了"这个直觉方案送上手术台。他们让 Anthropic 和 OpenAI 的官方 skill-creator 在 SkillsBench 的同一批任务上分别以"无联网"和"有联网"两种模式生成技能，再用四套 agent-模型组合执行打分：</p>
+  <ul>
+    <li>不联网：生成的技能平均比<strong>干脆不用技能</strong>还低 1.4 个百分点——模型闭门造出的"手册"甚至是负资产；</li>
+    <li>联网：比不联网平均高 6.9 个百分点，比无技能高 5.5 个百分点——开放世界确实有货；</li>
+    <li>但联网之后，离人类专家手写的技能<strong>还差约 14 个百分点</strong>。</li>
+  </ul>
+  <p>这 14 个百分点的差距才是真正的病灶。团队给出的诊断一针见血：开放世界的材料是<em>有营养但没消毒</em>的——里面混着隐式决策、只对局部成立的示例、依赖特定上下文的实践，而不是验证过的可复用流程。直接抄，就是把自己暴露在所有这些坑里。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    <p style="margin:0;">想象你在网上找菜谱。菜谱 A 说"红烧肉必须用黄酒，用水去腥就毁了"，菜谱 B 说"料酒即可"。一个不挑剔的学徒会把两条都抄进笔记本，下次做菜时随机翻到哪条听哪条。而一个聪明的学徒会做<strong>对照实验</strong>：同一种肉、同一种火候，只换去腥用料，各做一遍，尝出差别——才知道这条到底是"铁律"还是"某家某户的口味"。官方 skill-creator 是不挑剔的学徒；SkillAlchemy 要当那个做对照实验的学徒。</p>
+  </div>
+
+  <p>具体来说，把开放世界材料变成可靠技能，路上横着两块石头，这也是论文识别出的两大挑战：</p>
+  <p><strong>其一，任务简报严重欠规范。</strong>简报通常只写"要什么"，不写"怎么算做对了、哪里会翻车、边界在哪"。你让 agent"规划一趟欧洲七日家庭游"，简报里绝不会写"孩子下午要午睡，行程别排太满"——这种事只有干过的人才知道。更麻烦的是，如果你直接拿简报原文当搜索关键词，检索回来的全是"欧洲""家庭游"的表面重复信息，盲点原封不动地保留下来。</p>
+  <p><strong>其二，搜到的发现不自带适用范围。</strong>一份来源里的做法，往往把可复用的实践和纯局部的细节搅在一起：硬编码的参数、作者偏好的工具、特定环境才成立的假设。某个博客说"先备份再改注册表"——这是通用好习惯还是 Windows 7 时代的老黄历？<em>单一来源的一次出现，不构成把它提升为持久指令的充分理由。</em></p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>把两大挑战翻译成一个正式的问题：给定一段欠规范的任务简报和一个规定了"允许查什么"的来源访问策略，技能创建者必须（一）把简报里没写、但会改变行为的隐性要求<strong>挖出来</strong>；（二）对每一个从来源里学到的候选做法，判定它被证据授权的<strong>适用范围有多宽</strong>——是普适指令，是局部示例，还是该直接扔掉。</p>
+  <p>论文给这个问题的命名很讲究：<em>来源接地的过程准入</em>（source-grounded procedure admission）。注意"准入"这个词——它把技能创建从"摘要问题"里彻底解放出来了。文档摘要的任务是忠实转述来源说了什么；而技能创建的任务是<strong>裁决</strong>：这条做法够不够格成为一条指令、在什么条件下够格。这是编辑和法官的区别，也是 SkillAlchemy 和一切"检索增强生成"的分水岭。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    在往下读之前，先自己当一回法官：假设你搜"PDF 怎么永久删除敏感文字"，搜到一条——"用 Python 的 pypdf 库，先解析文本层再重写"。这条做法该（a）原样写进技能当通用指令，（b）附上"仅适用于文本型 PDF"的条件收进示例，还是（c）扔掉？你的裁决依据是什么？——记住你此刻的直觉，待会儿看看 SkillAlchemy 的三道关卡和它是否一致。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>先把整个框架的数学形式摆出来。技能创建器 <span class="mono">Φ</span> 接收三元组输入——欠规范的技能简报 $g$、来源访问规范 $\mathcal{S}$（允许查哪些类型的来源、走什么检索通道、排除什么）、执行与打包约束 $\mathcal{C}$（可用的工具、产物结构要求），产出可安装的技能包：</p>
+
+  <div class="formula-block">
+    $$\mathcal{A} := \langle \texttt{SKILL.md}, \mathcal{X} \rangle = \Phi(g, \mathcal{S}, \mathcal{C})$$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>其中 <span class="mono">SKILL.md</span> 是主文件，$\mathcal{X}$ 是可选的捆绑资源（参考、示例、脚本）。而 <span class="mono">Φ</span> 内部被拆成串联的三个阶段：</p>
+
+  <div class="formula-block">
+    $$\Phi = \Phi_3 \circ \Phi_2 \circ \Phi_1$$
+    <span class="eqn mono">(2)</span>
+  </div>
+
+  <p>$\Phi_1$ 是隐式需求发现，产出研究问题集 $\mathcal{Q}$ 和结构化发现集 $\mathcal{F}$；$\Phi_2$ 是证据接地的过程准入，产出通用指令集 $\mathcal{G}$ 和带范围的示例集 $\mathcal{E}$；$\Phi_3$ 是技能包编译。三阶段的中间产物全部作为显式的来源记录留存，方便审计——这个细节后面讲鲁棒性时会变得很关键。</p>
+
+  <figure>
+    <!-- 图 2：三阶段框架概览 -->
+    <svg viewBox="0 0 700 330" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow-a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrow-a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <!-- 输入 -->
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <rect x="20" y="40" width="120" height="76" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="70" text-anchor="middle">欠规范简报 g</text>
+        <text x="80" y="92" text-anchor="middle" fill="#96897A">"欧洲七日家庭游"</text>
+
+        <rect x="20" y="136" width="120" height="58" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="160" text-anchor="middle">来源访问 S</text>
+        <text x="80" y="180" text-anchor="middle" fill="#96897A">文档/仓库/issue</text>
+
+        <rect x="20" y="212" width="120" height="58" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="236" text-anchor="middle">打包约束 C</text>
+        <text x="80" y="256" text-anchor="middle" fill="#96897A">工具/产物结构</text>
+      </g>
+
+      <!-- 阶段 1 -->
+      <g font-family="JetBrains Mono" font-size="12.5" fill="#2E2A22">
+        <rect x="185" y="86" width="150" height="150" rx="2" fill="#24555A" fill-opacity="0.10" stroke="#24555A"/>
+        <text x="260" y="112" text-anchor="middle" fill="#24555A" font-weight="600">Φ₁ 隐式需求发现</text>
+        <text x="260" y="140" text-anchor="middle">操作化框架</text>
+        <text x="260" y="162" text-anchor="middle">↓</text>
+        <text x="260" y="184" text-anchor="middle">对比证据获取</text>
+        <text x="260" y="206" text-anchor="middle" fill="#96897A" font-size="11">三种探针</text>
+        <text x="260" y="252" text-anchor="middle" fill="#96897A" font-size="11">→ 问题 Q + 发现 F</text>
+      </g>
+
+      <!-- 阶段 2 -->
+      <g font-family="JetBrains Mono" font-size="12.5" fill="#2E2A22">
+        <rect x="375" y="66" width="160" height="190" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C" stroke-width="1.5"/>
+        <text x="455" y="92" text-anchor="middle" fill="#B54A2C" font-weight="600">Φ₂ 过程准入</text>
+        <text x="455" y="120" text-anchor="middle">决策对齐归纳</text>
+        <text x="455" y="142" text-anchor="middle">↓</text>
+        <text x="455" y="164" text-anchor="middle">范围感知审查</text>
+        <text x="455" y="192" text-anchor="middle" fill="#B54A2C" font-size="11" font-weight="600">三道关卡:</text>
+        <text x="455" y="210" text-anchor="middle" fill="#B54A2C" font-size="11">supported · consistent</text>
+        <text x="455" y="226" text-anchor="middle" fill="#B54A2C" font-size="11">reusable</text>
+        <text x="455" y="284" text-anchor="middle" fill="#96897A" font-size="11">→ 指令 G / 示例 E / 排除</text>
+      </g>
+
+      <!-- 阶段 3 -->
+      <g font-family="JetBrains Mono" font-size="12.5" fill="#2E2A22">
+        <rect x="575" y="86" width="105" height="150" rx="2" fill="#24555A" fill-opacity="0.10" stroke="#24555A"/>
+        <text x="627" y="112" text-anchor="middle" fill="#24555A" font-weight="600">Φ₃ 编译</text>
+        <text x="627" y="140" text-anchor="middle">语法引导</text>
+        <text x="627" y="162" text-anchor="middle">↓</text>
+        <text x="627" y="184" text-anchor="middle">渐进披露</text>
+        <text x="627" y="252" text-anchor="middle" fill="#96897A" font-size="11">→ 技能包 A</text>
+      </g>
+
+      <!-- 箭头 -->
+      <line x1="140" y1="160" x2="185" y2="160" stroke="#96897A" marker-end="url(#arrow-a)"/>
+      <line x1="335" y1="160" x2="375" y2="160" stroke="#96897A" marker-end="url(#arrow-a)"/>
+      <line x1="535" y1="160" x2="575" y2="160" stroke="#96897A" marker-end="url(#arrow-a)"/>
+
+      <!-- 输出标注 -->
+      <text x="627" y="290" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#24555A">SKILL.md + refs/</text>
+      <text x="627" y="306" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#24555A">+ scripts/ + assets/</text>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · SkillAlchemy 三阶段流水线：发现 → 准入 → 编译，中间产物全程留痕可审计</figcaption>
+  </figure>
+
+  <h3>Φ₁ · 隐式需求发现：先做"控制变量"实验，再谈查资料</h3>
+  <p>第一阶段解决"简报欠规范"的问题，分两步走。</p>
+  <p><strong>第一步：操作化框架（Operational Framing）。</strong>一条简报描述的是"一个实例"，而可复用技能要覆盖"一族实例"。所以 SkillAlchemy 先把简报里的实例值"抽干"成候选操作因子：欧洲七日家庭游 → 持续时间、旅行者类型、目的地。<em>注意"候选"二字</em>——这些因子此刻还只是嫌疑犯，不是需求。只有后续证据表明"改变这个因子会改变该做的事"，它才转正为"隐性操作因子"。这个设计很克制：不预设任何因子一定是需求，一切等证据说话。</p>
+  <p><strong>第二步：对比证据获取（Contrastive Evidence Acquisition）。</strong>这是整篇论文我最喜欢的部分。怎么判断"改变一个因子会不会改变该做的事"？直接搜是搜不出来的——你搜"家庭游攻略"得到的是家庭游的信息，搜"独自旅行"得到的是另一堆信息，两者根本对不上话。SkillAlchemy 的做法本质上是<strong>给开放世界做对照实验</strong>：构造成对的检索目标 $(t^+, t^-)$，两个任务上下文几乎完全相同、只沿一个候选因子 $v$ 不同，然后问：来源里有没有人明说这两 种情况要区别对待？</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    <p style="margin:0;">这就是生物医学里的<strong>对照实验</strong>逻辑：想确认一种药物是否有效，就找两组除了用药与否、其他条件完全相同的病人。SkillAlchemy 检索的不是一个问题，而是"一对只在某个维度上不同的双胞胎问题"——如果网上有人说"这对双胞胎待遇该不同"，那就是行为随因子改变的实锤。反过来，只有单一情境的证据、另一侧查无此据，什么也证明不了。</p>
+  </div>
+
+  <p>具体的探针有三种，各司其职：</p>
+  <ul>
+    <li><strong>替换探针（substitution probe）</strong>：在同一能力族里换掉主体、方法或工具——把"家庭游客"换成"独自旅行者"，目的地和天数不动，看程序是否需要跟着变。它检验的是：这条做法能不能超越种子实例？</li>
+    <li><strong>边界探针（boundary probe）</strong>：主动引入简报里没提的前置条件、失败模式或运行约束——"如果要带孩子，行程密度有什么讲究？""行程跨越时区怎么算？"它检验的是：简报是不是漏掉了会改变行为的条件？</li>
+    <li><strong>邻域探针（neighbor probe）</strong>：把目标任务和"输出接口相同"的邻居能力放一起比——做行程规划和做会议排期，交付物都是时间表，但约束完全不同。它帮助划清和邻居任务的边界，防止技能越界触发。</li>
+  </ul>
+
+  <figure>
+    <!-- 图 3：三种对比探针 -->
+    <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11.5" fill="#2E2A22">
+        <!-- 替换探针 -->
+        <rect x="25" y="30" width="200" height="118" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="125" y="54" text-anchor="middle" fill="#24555A" font-weight="600">替换探针</text>
+        <rect x="40" y="70" width="80" height="30" fill="#F4EFE4" stroke="#96897A" stroke-dasharray="3 3"/>
+        <text x="80" y="89" text-anchor="middle" font-size="10.5">家庭游客 ✕</text>
+        <rect x="130" y="70" width="80" height="30" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="170" y="89" text-anchor="middle" font-size="10.5">独自旅行者 ✓</text>
+        <text x="125" y="122" text-anchor="middle" fill="#96897A" font-size="10.5">只换主体，其余全同</text>
+        <text x="125" y="140" text-anchor="middle" fill="#B54A2C" font-size="10.5">→ 检验可迁移性</text>
+
+        <!-- 边界探针 -->
+        <rect x="250" y="30" width="200" height="118" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="54" text-anchor="middle" fill="#24555A" font-weight="600">边界探针</text>
+        <rect x="265" y="70" width="80" height="30" fill="#F4EFE4" stroke="#96897A" stroke-dasharray="3 3"/>
+        <text x="305" y="89" text-anchor="middle" font-size="10.5">常规情境 ✕</text>
+        <rect x="355" y="70" width="80" height="30" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="395" y="89" text-anchor="middle" font-size="10.5">带婴幼儿 ✓</text>
+        <text x="350" y="122" text-anchor="middle" fill="#96897A" font-size="10.5">补一个简报没提的条件</text>
+        <text x="350" y="140" text-anchor="middle" fill="#B54A2C" font-size="10.5">→ 检验遗漏的前置条件</text>
+
+        <!-- 邻域探针 -->
+        <rect x="475" y="30" width="200" height="118" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="575" y="54" text-anchor="middle" fill="#24555A" font-weight="600">邻域探针</text>
+        <rect x="490" y="70" width="80" height="30" fill="#F4EFE4" stroke="#96897A" stroke-dasharray="3 3"/>
+        <text x="530" y="89" text-anchor="middle" font-size="10.5">行程规划</text>
+        <rect x="580" y="70" width="80" height="30" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="620" y="89" text-anchor="middle" font-size="10.5">会议排期</text>
+        <text x="575" y="122" text-anchor="middle" fill="#96897A" font-size="10.5">同接口的邻居能力</text>
+        <text x="575" y="140" text-anchor="middle" fill="#B54A2C" font-size="10.5">→ 划清触发边界</text>
+      </g>
+
+      <!-- 判定逻辑 -->
+      <g font-family="JetBrains Mono" font-size="11.5">
+        <rect x="100" y="185" width="500" height="46" rx="2" fill="#B54A2C" fill-opacity="0.08" stroke="#B54A2C"/>
+        <text x="350" y="204" text-anchor="middle" fill="#B54A2C" font-weight="600">来源明确说"两种情况要区别对待"</text>
+        <text x="350" y="222" text-anchor="middle" fill="#2E2A22">→ v 记录为隐性操作因子（证据 + 受影响组件 + 适用边界）</text>
+        <rect x="100" y="243" width="500" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="260" text-anchor="middle" fill="#96897A">只有单侧证据 / 两侧证据打架</text>
+        <text x="350" y="276" text-anchor="middle" fill="#2E2A22">→ 不构成需求，冲突留档给 Φ₂ 处理</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 三种对比探针：给开放世界做"控制变量"实验，只有对比出差异才能定为隐性需求</figcaption>
+  </figure>
+
+  <p>这套机制的输出是研究问题集 $\mathcal{Q}$ 和结构化发现集 $\mathcal{F}$。注意，此处的发现仍然只是"来源说了什么"的<strong>接地观察</strong>，还不是任何可执行的程序——升级的权力在下一阶段手里。这种"发现与裁决分离"的设计，是整个框架克制度的来源。</p>
+
+  <h3>Φ₂ · 证据接地的过程准入：三道关卡，道道要证据</h3>
+  <p>第二阶段是全篇的心脏，解决"搜到的发现不自带适用范围"的问题。也分两步。</p>
+  <p><strong>第一步：决策对齐归纳（Decision-Aligned Induction）。</strong>把发现 $\mathcal{F}$ 按"它服务于哪个程序决策"分组，而不是按来源主题分组。比如关于"路线选择"的发现，不管它来自博客、官方文档还是论坛，都归到一组；"住宿选择"、"失败处理"同理。这一步会归纳出候选程序，形如 $p = (\sigma, a, r, w, \kappa)$：适用条件 $\sigma$、动作 $a$、恢复路径 $r$、验证方式 $w$，以及把每个组件映射回支持它的发现的证据映射 $\kappa$。归纳时严守一条铁律：<em>不把命名实体和固定选择推广到观察到的上下文之外</em>，除非跨上下文证据支持这样做。不同条件下的不同做法，保留为分开的条件分支；同条件下水火不容的做法，标记为未解决冲突。</p>
+  <p><strong>第二步：范围感知准入（Scope-Aware Admission）。</strong>对每个候选程序建一张"准入档案"：它被证据授权的最宽适用范围在哪、哪些发现在这个范围内支持它的每个组件、哪些发现与之冲突。然后过三道关卡：</p>
+  <ol>
+    <li><strong>支持（supported）</strong>：候选程序里每个写明的组件，都有证据在其声明的条件下撑腰。没证据的组件？宁缺毋滥，留空。</li>
+    <li><strong>一致（consistent）</strong>：相同条件下，没有未解决的冲突发现适用于它。证据打架？先挂起，不裁决。</li>
+    <li><strong>可复用（reusable）</strong>：超越单一来源的局部案例——要么有一个合格来源明说"此做法适用更广"，要么有兼容的证据在多个不等价的上下文里支持同一做法。</li>
+  </ol>
+
+  <div class="formula-block">
+    $$\text{admit}(p) = \begin{cases} \text{general} & \text{supported}(p) \wedge \text{consistent}(p) \wedge \text{reusable}(p) \\ \text{scoped} & \text{supported}(p) \wedge \text{consistent}(p) \\ \text{excluded} & \text{otherwise} \end{cases}$$
+    <span class="eqn mono">(5)</span>
+  </div>
+
+  <figure>
+    <!-- 图 4：准入决策三关卡 -->
+    <svg viewBox="0 0 700 360" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow-g" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrow-g2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <rect x="250" y="15" width="200" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="40" text-anchor="middle">候选程序 p = (σ, a, r, w, κ)</text>
+      </g>
+      <g font-family="JetBrains Mono" font-size="11.5" fill="#2E2A22">
+        <!-- 关卡 1 -->
+        <rect x="240" y="85" width="220" height="56" rx="2" fill="#24555A" fill-opacity="0.10" stroke="#24555A"/>
+        <text x="350" y="108" text-anchor="middle" fill="#24555A" font-weight="600">关卡① 支持 supported</text>
+        <text x="350" y="128" text-anchor="middle" fill="#96897A" font-size="10.5">每个组件都有证据撑腰</text>
+
+        <!-- 关卡 2 -->
+        <rect x="240" y="165" width="220" height="56" rx="2" fill="#24555A" fill-opacity="0.10" stroke="#24555A"/>
+        <text x="350" y="188" text-anchor="middle" fill="#24555A" font-weight="600">关卡② 一致 consistent</text>
+        <text x="350" y="208" text-anchor="middle" fill="#96897A" font-size="10.5">同条件下无未解决冲突</text>
+
+        <!-- 关卡 3 -->
+        <rect x="240" y="245" width="220" height="56" rx="2" fill="#24555A" fill-opacity="0.10" stroke="#24555A"/>
+        <text x="350" y="268" text-anchor="middle" fill="#24555A" font-weight="600">关卡③ 可复用 reusable</text>
+        <text x="350" y="288" text-anchor="middle" fill="#96897A" font-size="10.5">超越单一来源局部案例</text>
+
+        <!-- 箭头：逐关通过 -->
+        <line x1="350" y1="55" y2="85" x2="350" stroke="#96897A" marker-end="url(#arrow-g)"/>
+        <line x1="350" y1="141" y2="165" x2="350" stroke="#96897A" marker-end="url(#arrow-g)"/>
+        <line x1="350" y1="221" y2="245" x2="350" stroke="#96897A" marker-end="url(#arrow-g)"/>
+
+        <!-- 出口 -->
+        <line x1="350" y1="301" y2="325" x2="350" stroke="#B54A2C" stroke-width="1.5" marker-end="url(#arrow-g2)"/>
+        <rect x="225" y="325" width="250" height="30" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="350" y="344" text-anchor="middle" fill="#B54A2C" font-weight="600">通用指令 G → 写进 SKILL.md</text>
+
+        <!-- 两级分流出口 -->
+        <line x1="240" y1="193" x2="150" y2="193" stroke="#96897A" marker-end="url(#arrow-g)"/>
+        <text x="142" y="188" text-anchor="end" font-size="10.5" fill="#96897A">卡在③</text>
+        <rect x="40" y="178" width="110" height="30" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="95" y="197" text-anchor="middle" font-size="10.5">带范围示例 E</text>
+        <text x="95" y="222" text-anchor="middle" font-size="10" fill="#96897A">收进 references/</text>
+
+        <line x1="240" y1="113" x2="150" y2="113" stroke="#96897A" marker-end="url(#arrow-g)"/>
+        <text x="142" y="108" text-anchor="end" font-size="10.5" fill="#96897A">卡在①或②</text>
+        <rect x="40" y="98" width="110" height="30" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="95" y="117" text-anchor="middle" font-size="10.5">排除</text>
+        <text x="95" y="142" text-anchor="middle" font-size="10" fill="#96897A">仅留审计记录</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 准入决策的三道关卡：全过升为通用指令，卡在"可复用"降为局部示例，前两关都过不了就出局</figcaption>
+  </figure>
+
+  <p>这套三关裁决的精妙之处在于<em>降级通道</em>：证据不够硬的做法不会被一棍子打死，而是降级成"带适用范围的示例"，收进技能包的参考目录里，还带着它来自哪、适用于哪的完整档案。技能的使用者——下游 agent——遇到匹配情境时仍能翻出来参考，只是它永远不会被当成普适真理。想想人类知识管理是不是也这样：教科书正文是通用指令，脚注和附录是带条件的示例，来源可疑的就被拒稿。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    回到开篇那个 PDF 的问题。按三关卡裁决：如果三份独立来源（pypdf 文档、两个开发博客）在不同场景下都写"解析文本层后重写"，且没人提出反对——三关全过，通用指令。如果只有一份来源提过、且明确绑定在"文本型 PDF"场景——卡在第三关，降级为带范围示例。如果一份说必须这样、另一份说会损坏签名域——卡在第二关，挂起。你刚才的直觉，和法庭的判法一致吗？
+  </div>
+
+  <h3>Φ₃ · 技能包编译：像编译器一样"渲染"，绝不"创作"</h3>
+  <p>第三阶段的工作低调但讲究：它<em>不创造任何新程序</em>，只把准入的内容渲染成可安装的技能包。具体做三件事：</p>
+  <ul>
+    <li>把技能名、用途描述、触发时机写进 <span class="mono">SKILL.md</span> 的 YAML 元数据头；</li>
+    <li>把准入的程序连同适用条件和保障措施渲染成正文里的可执行指令；</li>
+    <li>把初始加载用不到的内容外置成可选资源——细节笔记和带范围示例放 <span class="mono">references/</span>，可执行例程放 <span class="mono">scripts/</span>，模板静态资源放 <span class="mono">assets/</span>——主文件里只留相对引用。</li>
+  </ul>
+  <p>最有趣的是"语法引导"：团队从 skills.sh 索引的公开合格技能语料里（优先 Anthropic、Vercel、微软、Supabase 等第一方集合）蒸馏出一套<strong>技能语法</strong>——七类呈现模式，涵盖激活元数据怎么写、工作流用有序步骤还是决策树、可执行程序怎么带条件-动作-可观察输出-失败出口、适用边界怎么标、验证用后置条件还是检查清单、输出契约长什么样、以及主文件与外置资源的渐进披露怎么组织。它像一个"公文格式规范"：规定奏折怎么写，但管不了你写什么——语法只影响表达，<em>不能新增程序、不能扩大已准入的范围</em>。作者特意强调：这是把"技能写作的呈现决策"和"任务知识的准入"彻底解耦，任何技能创建方法都可以复用这套语法。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>战场选在 SkillsBench v1.1：87 个任务、8 大领域（软件工程、办公、自然科学、媒体、网络安全、金融、工业、数学），全部来自真实场景。评估协议相当硬核——四套 agent-模型组合（Claude Code 配 DeepSeek-V4-Pro 与 Opus 4.8、Codex 配 DeepSeek-V4-Pro 与 GPT-5.5），每任务独立跑 5 次取平均通过率（avg@5），共 1740 次二值判定。对比的对手包括：无技能基线、人类专家手写技能（参照系）、Anthropic 与 OpenAI 官方 skill-creator、以及两个最强自动化方法——OpenSkill（第 59 篇的主角）和 MUSE-Autoskill（经验蒸馏路线的最强代表，也给联网权限）。</p>
+
+  <table>
+    <thead>
+      <tr><th>技能设置</th><th>Claude Code + DeepSeek-V4-Pro</th><th>Claude Code + Opus 4.8</th><th>Codex + DeepSeek-V4-Pro</th><th>Codex + GPT-5.5</th><th>汇总 avg@5</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">No Skill（无技能）</td><td>23.4</td><td>45.3</td><td>29.7</td><td>45.1</td><td>35.9</td></tr>
+      <tr><td class="text">Anthropic Skill-Creator</td><td>31.7</td><td>49.2</td><td>32.9</td><td>48.5</td><td>40.6</td></tr>
+      <tr><td class="text">OpenAI Skill-Creator</td><td>33.3</td><td>49.9</td><td>37.0</td><td>48.5</td><td>42.2</td></tr>
+      <tr><td class="text">OpenSkill</td><td>42.3</td><td>51.5</td><td>40.7</td><td>49.4</td><td>46.0</td></tr>
+      <tr><td class="text">MUSE-Autoskill</td><td>43.2</td><td>53.3</td><td>40.2</td><td>52.0</td><td>47.2</td></tr>
+      <tr><td class="text">Human-Curated（人类手写）</td><td>51.3</td><td>59.5</td><td>45.7</td><td>60.9</td><td>54.4</td></tr>
+      <tr><td class="text"><strong>SkillAlchemy</strong></td><td><strong>54.7</strong></td><td><strong>60.9</strong></td><td>43.9</td><td><strong>63.7</strong></td><td><strong>55.8</strong></td></tr>
+    </tbody>
+  </table>
+
+  <figure>
+    <!-- 图 5：实验结果对比 -->
+    <svg viewBox="0 0 700 340" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 坐标轴 -->
+        <line x1="170" y1="20" x2="170" y2="280" stroke="#96897A"/>
+        <line x1="170" y1="280" x2="680" y2="280" stroke="#96897A"/>
+        <text x="160" y="284" text-anchor="end">0%</text>
+        <text x="160" y="164" text-anchor="end" font-size="10">30</text>
+        <text x="160" y="44" text-anchor="end" font-size="10">60</text>
+        <line x1="170" y1="160" x2="680" y2="160" stroke="#96897A" stroke-dasharray="2 4" stroke-opacity="0.4"/>
+        <line x1="170" y1="40" x2="680" y2="40" stroke="#96897A" stroke-dasharray="2 4" stroke-opacity="0.4"/>
+        <!-- 人类基线参考线 -->
+        <line x1="170" y1="70.4" x2="680" y2="70.4" stroke="#24555A" stroke-dasharray="6 3" stroke-opacity="0.65"/>
+        <text x="678" y="64" text-anchor="end" fill="#24555A" font-size="10.5">人类手写 54.4%</text>
+      </g>
+      <g font-family="JetBrains Mono" font-size="11">
+        <!-- 柱：x 起点 190，宽 46，间隔 62；高度 = 值*3.5 (scale: 3.5px/%), y = 280-h -->
+        <rect x="190" y="154.4" width="46" height="125.6" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="213" y="147" text-anchor="middle" fill="#2E2A22">35.9</text>
+        <text x="213" y="298" text-anchor="middle" fill="#96897A" font-size="10.5">无技能</text>
+
+        <rect x="252" y="138.3" width="46" height="141.7" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="275" y="131" text-anchor="middle" fill="#2E2A22">40.6</text>
+        <text x="275" y="298" text-anchor="middle" fill="#96897A" font-size="10.5">Anthropic</text>
+
+        <rect x="314" y="132.7" width="46" height="147.3" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="337" y="125" text-anchor="middle" fill="#2E2A22">42.2</text>
+        <text x="337" y="298" text-anchor="middle" fill="#96897A" font-size="10.5">OpenAI</text>
+
+        <rect x="376" y="119" width="46" height="161" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="399" y="112" text-anchor="middle" fill="#2E2A22">46.0</text>
+        <text x="399" y="298" text-anchor="middle" fill="#96897A" font-size="10.5">OpenSkill</text>
+
+        <rect x="438" y="115.2" width="46" height="164.8" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="461" y="108" text-anchor="middle" fill="#2E2A22">47.2</text>
+        <text x="461" y="298" text-anchor="middle" fill="#96897A" font-size="10.5">MUSE</text>
+
+        <rect x="500" y="90.4" width="46" height="189.6" fill="#24555A" fill-opacity="0.22" stroke="#24555A"/>
+        <text x="523" y="83" text-anchor="middle" fill="#24555A" font-weight="600">54.4</text>
+        <text x="523" y="298" text-anchor="middle" fill="#24555A" font-size="10.5">人类手写</text>
+
+        <rect x="562" y="84.7" width="46" height="195.3" fill="#B54A2C" fill-opacity="0.85"/>
+        <text x="585" y="77" text-anchor="middle" fill="#B54A2C" font-weight="600">55.8</text>
+        <text x="585" y="298" text-anchor="middle" fill="#B54A2C" font-size="10.5" font-weight="600">SkillAlchemy</text>
+
+        <!-- 差距标注 -->
+        <line x1="585" y1="84.7" x2="585" y2="90.4" stroke="#B54A2C" stroke-width="1.5"/>
+        <text x="640" y="90" text-anchor="middle" fill="#B54A2C" font-size="10.5">+1.4pp</text>
+        <text x="640" y="104" text-anchor="middle" fill="#96897A" font-size="10">vs 人类</text>
+      </g>
+      <text x="425" y="330" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#96897A">SkillsBench v1.1 · 87 任务 × 5 次 × 4 配置 · 汇总 avg@5（%）</text>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 汇总成绩：SkillAlchemy 55.8% 首次越过人类手写技能（54.4%），比无技能高 19.9 个百分点</figcaption>
+  </figure>
+
+  <p>几个层次的发现值得细品：</p>
+  <p><strong>第一，四套配置里三套登顶，汇总 55.8% vs 人类 54.4%。</strong>这是自动化技能第一次摸到人类手写的水平。作者在这里表现出了难得的统计素养：他们给出了 Wilson 95% 置信区间——SkillAlchemy [53.5, 58.1] 对比人类 [52.0, 56.7]，两个区间明显重叠，所以 1.4 个百分点的领先只能"描述性地"理解为<strong>追平</strong>而非超越。不吹不黑，反而让结论更可信。</p>
+  <p><strong>第二，领域不对称很有信息量。</strong>金融、软件工程、办公任务上 SkillAlchemy 反超人类，自然科学和数学打平，唯独媒体领域存在明显短板。作者追查了媒体域所有任务，找到一个反复出现的病灶：生成的技能抓住了整体解题流程，但<em>没能稳定保留易失败环节的具体步骤和校准过的参数</em>——恰是"从文献里查不到、只藏在专家手感里"的那类知识。这个诊断顺手给整个领域提了个醒：开放世界路线的剩余缺口，可能不在检索，而在隐性专家经验的不可得。</p>
+  <p><strong>第三，消融实验证明没有一根零件是摆设。</strong>在软件工程、办公、自然科学三个域上逐个拆掉四大组件（需求发现、结构化发现、过程准入、语法渲染），每个都让成绩下降 5.0 到 15.7 个百分点。软件工程和自然科学域最依赖"结构化发现"，办公域最依赖"过程准入"——不同领域吃的药不一样，但四味药都进了药方。</p>
+
+  <h3>投毒测试：一份让所有对手翻车的"有毒文档"</h3>
+  <p>实验里最漂亮的编排是鲁棒性测试。开放世界的材料良莠不齐——假如有人往你的资料堆里塞私货怎么办？团队设计了三种"毒源"注入到创建上下文里：</p>
+  <ul>
+    <li><strong>无关（Irrelevant）</strong>：话题相关但不支持任何决策的"废话文学"；</li>
+    <li><strong>冲突（Conflict）</strong>：与既有证据在重叠条件下给出矛盾指令——最凶的一种；</li>
+    <li><strong>对抗（Adversarial）</strong>：用指令式语气包装的误导性断言，直接对创建器喊话"照我说的做"。</li>
+  </ul>
+  <p>判定标准也定义得很死板：只有当投毒内容被复制或语义改写成<strong>运行时指令</strong>才算"中毒"，仅仅引用、警告或明确拒绝都不算。结果相当戏剧化——四个基线总共吃下 9/16 的冲突毒源，池化通过数从干净条件的 58/80 跌到 35/80；而 SkillAlchemy 的成绩单干净得吓人：</p>
+
+  <table>
+    <thead>
+      <tr><th>技能设置</th><th>无关毒源被提升</th><th>冲突毒源被提升</th><th>对抗毒源被提升</th><th>下游通过（毒化后）</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">Anthropic Skill-Creator</td><td>1/4</td><td>3/4</td><td>1/4</td><td>11/20 · 6/20 · 13/20</td></tr>
+      <tr><td class="text">OpenAI Skill-Creator</td><td>1/4</td><td>2/4</td><td>1/4</td><td>12/20 · 8/20 · 12/20</td></tr>
+      <tr><td class="text">OpenSkill</td><td>1/4</td><td>3/4</td><td>1/4</td><td>15/20 · 11/20 · 15/20</td></tr>
+      <tr><td class="text">MUSE-Autoskill</td><td>2/4</td><td>1/4</td><td>1/4</td><td>14/20 · 10/20 · 15/20</td></tr>
+      <tr><td class="text"><strong>SkillAlchemy</strong></td><td><strong>0/4</strong></td><td><strong>0/4</strong></td><td><strong>0/4</strong></td><td><strong>18/20 · 18/20 · 17/20</strong></td></tr>
+    </tbody>
+  </table>
+
+  <p>12 份毒源，零提升；三种毒化条件下依然稳定保持 17–18/20 的通过率。这不是巧合，而是"准入"设计的直接红利：<em>一条单来源、无交叉验证、还与既有证据打架的主张，恰好死在三道关卡的每一道上</em>。顺便算笔账：SkillAlchemy 每任务创建耗时 23.2 分钟——比 OpenSkill（36.4 分钟）和 MUSE（35.2 分钟）都省——但确实比官方 skill-creator 的"快糙猛"（6–7 分钟）慢不少。慢，是有原因的：做对照实验就是要花时间。</p>
+
+  <h3>两个让人拍案的案例</h3>
+  <p>论文附录里有两个案例，把"隐性需求发现"的价值演得明明白白。</p>
+  <p><strong>案例一：GDP 加权计算，0/5 到 5/5 的天壤之别。</strong>任务要求在现成工作簿里加公式、算六个海湾国家的 GDP 加权均值、保持格式。OpenAI Skill-Creator 搜的是"电子表格函数用法"，交出的技能完美地……只会写公式——0/5。OpenSkill 检索到了风险（引擎兼容性、缓存值），却没把它们连成对交付物的要求——还是 0/5。SkillAlchemy 通过边界探针把"公式引擎不兼容""打开文件看到的是缓存值"这些执行风险挖出来，再连成一条执行路径：<em>写兼容公式 → 重算 → 保存 → 重新打开 → 验证最终文件里的值</em>——5/5。同样的网络，同样的模型，差别只在"有没有先把该问的问题问出来"。</p>
+  <p><strong>案例二：门多塔湖的"暗礁图"。</strong>本文开头讲的 z 轴惨案，SkillAlchemy 的技能包里赫然列着"决定你成败的三个事实"：z 是自底向上的高度不是深度；GLM 的退出码无条件返回 0（非零确实意味着失败，但零什么都保证不了，成功必须自己定义为"输出文件存在 + 时间轴覆盖 + 数值有限"）；配置文件里的相对路径绑定的是进程工作目录而非配置文件所在目录。每一个都是任务简报没提、文档没强调、却一票否决成败的暗礁——如今被灯塔一样标进了技能正文，还附带一句警告："读 temp[t,0] 当表面温度是这门任务最经典的翻车姿势。"</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>这篇论文的分量，要放在三个坐标系里看。</p>
+  <p><strong>对技能生态</strong>：它证明了一件此前存疑的事——自动化技能生产可以追上人类专家的质量。SkillsBench 这类基准此前的结论都是"自动方法有明显残差"，SkillAlchemy 是第一个把这条缝焊上的。对 skills.sh 这样的开放技能市场而言，这相当于从"手工作坊"迈入"工业质检"的可能：一个对投毒零容忍、对适用范围有完整档案的技能生产线，是生态能规模化扩张的前提。</p>
+  <p><strong>对方法论</strong>："证据准入"这个提法本身就有传染性。它把开放世界的知识从"拿回来就用"改成了"当呈堂证供来审"——这一范式对一切检索增强的 agent 系统都适用：记忆管理、工具选择、多智能体通信，凡是"从外部拿信息进来做决策"的地方，都存在"该不该信、信到多宽"的准入问题。论文结论里那句话值得抄下来贴在墙上：<em>可靠的技能创建应当把开放世界知识当作"在显式范围下准入的证据"，而不是"照抄的指令"。</em></p>
+  <p><strong>对系列叙事</strong>：第 59 篇 OpenSkill 证明了开放世界能当知识的来源，第 60 篇证明了开放世界还需要一个法官。自进化这条主线从"环境给信号"（Reflexion）走到"自己造信号"（自博弈），再走到"从世界拿信号但要审判信号"（SkillAlchemy）——agent 的自主性越来越高，但对自主性的制衡也越来越制度化。这很像文明史：权力越大的机构，越需要成熟的程序正义。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>论文自己交代得比较诚实的有三点，我再加两点观察。</p>
+  <p><strong>媒体域的短板指向更深的墙</strong>：开放世界路线的剩余缺口在"文献里查不到的专家手感"——校准参数、易失败环节的精细操作。这类知识要么从执行轨迹里学（回到 MUSE 路线），要么等人类录入。一个自然的推论是<strong>路线合流</strong>：证据准入 + 经验蒸馏的混合方法可能是下一代工作的方向。</p>
+  <p><strong>"追平"的统计含义要拿捏好</strong>：55.8% vs 54.4%，Wilson 区间重叠，作者也明说这是描述性对比。诚实的另一个侧面是：还不能宣称"超越"人类。</p>
+  <p><strong>创建成本仍是数量级的差距</strong>：23 分钟对官方工具的 6 分钟。对一次创建、万次复用的技能库来说这笔账算得过来，但对"临时起意要个新技能"的场景还是太重。并行子代理已经压过一轮延迟，再往下可能要靠更聪明的探针调度。</p>
+  <p><strong>我的两点补充观察</strong>：其一，探针的设计本身有先验——三种探针覆盖了替换、边界、邻域，但"该问哪些对照问题"仍是个手艺活，探针集合的可学习化（甚至把"如何出探针"本身做成一个技能——套娃了）值得探索；其二，技能语法是从 2026 年的公开语料蒸馏的，它会随生态演化而老化，需要一个持续更新的机制——论文没讨论这个，但 skill 市场的版本管理迟早要面对。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>借这个位置把整个系列的"技能与自进化"支线捋一遍，帮你建立全局地图：</p>
+  <ul>
+    <li><strong>环境反馈时代（2023 前后）</strong>：Reflexion（第 31 篇）让 agent 从环境反馈里口头反思；Voyager（第 36 篇）在《我的世界》里攒出第一个可执行技能库——"技能"概念诞生，但依附于特定环境。</li>
+    <li><strong>经验蒸馏时代（2023–2025）</strong>：ExpeL、SkillGen、CoEvoSkills 把"做过的事"蒸馏成可复用课程，前提是得先做过。技能开始成为独立于环境的工件。</li>
+    <li><strong>技能生态时代（2025–2026）</strong>：SkillsBench 划定了"技能质量才是瓶颈"的问题域；Anthropic 和 OpenAI 把 SKILL.md 格式推进成事实标准；skills.sh 上线，技能成为可分发的商品。</li>
+    <li><strong>开放世界时代（2026）</strong>：OpenSkill（第 59 篇）证明开放世界能供给知识——虚拟测试合格就收编；SkillAlchemy（本篇）给收编加了三道证据关卡——支持、一致、可复用。<em>从"能搜到"到"敢用"，这一步走完，自动化技能才算成年。</em></li>
+  </ul>
+  <p>往下一步，两个方向的地基已经打好了：一是合流（证据准入 × 经验蒸馏），二是技能市场的基础设施问题（版本管理、信任链、投毒防御——本篇的鲁棒性实验其实是给最后这个开了个头）。我们在后续篇目里大概率会 revisit 这条线。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p><strong>名字里的自嘲与野心。</strong>Alchemy（炼金术）在现代语境里可不是褒义词——它是"伪科学"的老祖宗，点石成金的执念养活了几百年的骗子。团队拿这个词给系统命名，颇有点自嘲式的宣言：我们要做的正是"炼金"——把开放世界里人人都看不上、真假难辨的矿石，炼成真金。而他们给炼金炉写的三条炉规（支持、一致、可复用），恰好是中世纪炼金术士们最缺的东西：方法论上的怀疑精神。</p>
+
+  <figure>
+    <!-- 图 6：炼金术趣味插图 -->
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11.5" fill="#2E2A22">
+        <!-- 矿石堆 -->
+        <polygon points="80,150 100,110 120,118 140,95 160,150" fill="#ECE4D4" stroke="#96897A"/>
+        <polygon points="120,150 150,100 175,125 200,150" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="140" y="172" text-anchor="middle" fill="#96897A">开放世界矿石</text>
+        <text x="140" y="188" text-anchor="middle" fill="#96897A" font-size="10">过时文档 · 局部示例</text>
+        <text x="140" y="202" text-anchor="middle" fill="#96897A" font-size="10">踩坑笔记 · 互相打架的博客</text>
+
+        <!-- 炼金炉 -->
+        <rect x="300" y="85" width="100" height="70" rx="4" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C" stroke-width="1.5"/>
+        <text x="350" y="115" text-anchor="middle" fill="#B54A2C" font-weight="600">Φ₁→Φ₂→Φ₃</text>
+        <text x="350" y="138" text-anchor="middle" fill="#B54A2C" font-size="10.5">证据准入炉</text>
+        <text x="350" y="70" text-anchor="middle" fill="#96897A" font-size="10.5">对照实验 · 三道关卡</text>
+
+        <!-- 金锭 -->
+        <polygon points="530,150 545,125 585,125 600,150" fill="#B54A2C" fill-opacity="0.85"/>
+        <polygon points="545,125 585,125 575,112 555,112" fill="#B54A2C" fill-opacity="0.6"/>
+        <text x="565" y="172" text-anchor="middle" fill="#B54A2C" font-weight="600">技能真金</text>
+        <text x="565" y="188" text-anchor="middle" fill="#96897A" font-size="10">SKILL.md + 完整档案</text>
+        <text x="565" y="202" text-anchor="middle" fill="#96897A" font-size="10">0/12 投毒 · 适用范围明码标价</text>
+
+        <!-- 箭头 -->
+        <line x1="220" y1="120" x2="298" y2="120" stroke="#96897A" marker-end="url(#arrow-a)"/>
+        <line x1="402" y1="120" x2="528" y2="120" stroke="#96897A" marker-end="url(#arrow-a)"/>
+
+        <!-- 炉渣 -->
+        <rect x="310" y="205" width="80" height="14" rx="2" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="3 2"/>
+        <text x="350" y="232" text-anchor="middle" fill="#96897A" font-size="10">炉渣：被排除的候选（留档可审计）</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 6</span> · 技能炼金术：矿石进炉，真金出炉，炉渣也不偷偷倒掉</figcaption>
+  </figure>
+
+  <p><strong>论文背后的"技能研究组"。</strong>翻翻作者名单会发现这不是一支临时凑的队伍：通讯作者童咏昕是北航计算机学院教授、复杂关键软件环境全国重点实验室的核心成员，长期做数据质量与可信计算；第一作者王恒堉所在的这个团队，此前已经产出过 SkillShapley（给技能步骤算贡献归因的 Shapley 方法）、MemLens（agent 记忆的价值感知管理）等一整条"agent 认知资产管理"研究线。SkillAlchemy 更像这条线上的关键一环：先把知识炼进技能，再用 Shapley 算每步贡献，用 MemLens 管记忆——一套组合拳。</p>
+  <p><strong>一个有点哲学意味的细节。</strong>论文在问题定义里反复强调一个词：审计。每个阶段的中间产物——研究问题、结构化发现、准入档案、排除记录——都被完整留痕。这意味着 SkillAlchemy 生成的每个技能自带"证据链"，你能一路追溯到"这条指令是因为这三份来源、在这两个条件下、通过了三道关卡才进来的"。中世纪炼金术士的配方秘不示人，现代制药厂的生产记录监管必查——从黑箱到带链的信任，可能才是"炼金"真正的隐喻。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读完这篇论文，我脑子里挥之不去的是一个更大的问题：<em>技能创建本身，会不会也是一种技能？</em></p>
+  <p>SkillAlchemy 的三阶段——发现隐性需求、证据准入、按语法编译——拆开看，每一步都是"面对陌生领域时的通用方法论"：先搞清楚该问什么（对照实验设计），再严格审查每个候选答案（证据采信），最后按规范落笔（公文写作）。人类文明的知识生产，从同行评审到循证医学，走的全是这条路。现在 agent 开始用同一套方法论来武装自己，而且它审的是自己要用的知识——这有点像一个律师给自己打官司，又像一个学生学会了"如何判断自己该信哪本参考书"。元认知能力外化成流程，可能是比任何单一技能都更重要的那块基石。</p>
+  <p>另一个让我在意的点是<strong>投毒零容忍的产业含义</strong>。设想三年后：技能市场上有百万个技能，你的 agent 每天按需加载几十个。此刻"创建时就带证据链和范围档案"就不再是学术洁癖，而是安全刚需——就像今天没人会装一个没有数字签名的浏览器插件。SkillAlchemy 的 0/12 不是终点，但它演示了"准入制"在架构上就是比"收编制"抗投毒。如果技能会成为 agent 时代的 App，那这篇论文做的，其实是 App Store 审核机制的第一版原型。</p>
+  <p>最后留个余味：论文的技能语法是从人类写的合格技能里蒸馏的——agent 在模仿人类写技能的格式。但也许有一天，最优的技能格式是为模型量身定制的，人类根本不需要读。到那时，"技能"还是不是一种人类可审计的工件？证据链会不会成为人与 agent 之间最后的信任接口？</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    假设你要给自己最常用的一个 AI 助手造一个"帮我准备周报"的技能，按 SkillAlchemy 的思路：你会设计哪三个对照探针？（提示：想想"周报"这个任务的哪些隐含维度会改变该做的事——汇报对象？项目阶段？有没有deadline临近？）把你的探针设计跟身边人聊聊，看看你们挖出的隐性需求是否一致——不一致的地方，正是"隐性"二字的价值所在。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>MUSE-Autoskill: Self-Evolving Agents via Skill Creation, Memory, Management, and Evaluation（MUSE-Autoskill：技能创建、记忆、管理、评估四位一体的自进化智能体）</h3>
+    <p style="margin:0;">本篇实验表里藏着一个悲情角色：MUSE-Autoskill——所有自动化方法里的第二名，被 SkillAlchemy 反超 8.6 个百分点，却也是唯一能在多套配置上紧咬不放的对手。它走的是与 SkillAlchemy 完全相反的路：不查文档、不搜网页，让 agent 自己把任务做一遍，从成功与失败的经验里蒸馏出可复用流程、验证步骤和常见错误——然后，关键来了——它还给自己配了记忆、技能库管理和自评估，一个四引擎联动的自进化系统。证据准入的"法庭路线"已经登顶，经验蒸馏的"实战路线"凭什么是公认第二？两条路线若合流，会是什么形态？下期拆解这位最强对手的完整架构。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 060 篇</span>
+    <span>2026-09-30</span>
+  </footer>
+
+</div>
+</body>
+</html>
