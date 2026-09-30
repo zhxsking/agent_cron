@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MUSE-Autoskill 论文精读 · 大模型经典论文系列 #061</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  /* 中文没有真实斜体设计，混排斜体会被浏览器"伪斜体"强行倾斜 CJK 字形，
+     可读性差且违背"禁止伪斜体"的初衷。默认 <em> 用于中文/中英混排强调，
+     改用颜色+字重区分，不使用斜体。 */
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  /* 仅当强调内容是纯英文/拉丁字母（如论文英文标题、模型英文名等）时，
+     才使用 Lora 的真实 ital 轴斜体：<em class="latin">Attention</em> */
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#061</span>
+  </div>
+
+  <h1 class="title">
+    MUSE-Autoskill: Self-Evolving Agents via Skill Creation, Memory, Management, and Evaluation
+    <span class="en">MUSE-Autoskill：技能的一生——被创建、被测试、被记住、被传承，agent 的经验第一次沉淀成可复利的资产</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Huawei Lin, Peng Li, Jie Song, Fuxin Jiang, Tieying Zhang</span>
+    <span>机构：字节跳动 ByteBrain 团队 · 罗切斯特理工学院</span>
+    <span>发表：2026-05 / arXiv（审稿中，30 页）</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2605.27366" target="_blank" rel="noopener">arXiv</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">先看一组让很多人坐不住的数字。在 SkillsBench 的 75 个真实任务上，把 MUSE-Autoskill 自己写出的技能，直接塞给另一个名叫 Hermes 的 agent——注意，是塞给<em>别的</em> agent，一行代码不改、一个字不调整——Hermes 拿到 51.90% 的准确率。而给 Hermes 人类专家手写的官方技能，得分是 48.02%。<em>agent 自己写的"作业笔记"，居然比专家写的"官方教材"还好用。</em>更扎心的是对照组：把 Codex 写的技能同样塞给 Hermes，得分 37.01%——比 Hermes 不用任何技能裸考还低 0.23 个百分点，妥妥的负资产。同样是大模型、同样是自动生成技能，为什么一个成了外挂，一个成了毒药？</p>
+  <p class="lead">上一篇 SkillAlchemy（第 60 篇）里，这位"最强对手"已经预告登场：不查文档、不搜网页，让 agent 自己把任务做一遍，从经验里蒸馏技能。但有一个时间上的小彩蛋要在这里点破——MUSE-Autoskill 的论文（2026 年 5 月）其实<em>早于</em> OpenSkill（6 月）和 SkillAlchemy（8 月）问世。也就是说，在"证据准入的法庭路线"登顶之前，"经验蒸馏的实战路线"已经先完成了自己的成人礼：它不只是又一个技能生成器，它重新回答了一个更根本的问题——<em>技能到底是个什么东西？</em></p>
+  <p class="lead">这篇来自字节跳动 ByteBrain 团队的论文给出的答案只有一句话：技能不该是"生成即终点"的一次性工件，而该是一个有完整一生的资产——出生（创建）、体检（评估）、上岗（执行）、记笔记（记忆）、评优或退休（管理）、返厂升级（精炼）。这一整套流程，论文起了个名字叫"技能生命周期"。而 MUSE，就是这套生命周期跑起来的那台机器。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    把技能从"一次性生成物"升级为"全生命周期管理的资产"：在运行循环里按需创建、用沙箱里的单元测试把关、给每个技能配一本专属记忆笔记、失败自动触发精炼——由此 agent 自创技能首次在覆盖任务上反超人类专家手写技能（85.24% vs 81.17%），且迁移给别的 agent 使用时超过人类技能（51.90% vs 48.02%）。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>如果沿"技能"这条支线看：Voyager（第 36 篇）在《我的世界》里攒出第一个可执行技能库，证明"技能"这个抽象是可行的；此后 Anthropic 把 <span class="mono">SKILL.md</span> 文件夹格式推成事实标准，技能成了可分发的商品；OpenSkill（第 59 篇）证明开放世界能当知识来源；SkillAlchemy（第 60 篇）给"搜回来的知识"加了三道证据关卡。这条线的每一步都在回答"技能从哪来"——但几乎没有工作认真回答过另一个同等重要的问题：<em>技能生成之后，怎么活？</em></p>
+  <p>MUSE-Autoskill 补的正是这块拼图。它站在"经验蒸馏"路线的集大成位置：Voyager 式的"从执行轨迹里总结技能"它继承了，但更进一步——技能进了库只是开始，还要被测试、被记笔记、被合并、被修剪、被迁移给别的 agent。用论文自己的话说，技能应该被视为<em>长寿命的、有经验感知的、可测试的资产</em>（long-lived, experience-aware, and testable assets），而不是锁在模型权重里的黑盒行为。</p>
+  <p>一个有意思的定位细节：在论文那张梳理了 Voyager、AutoSkill、EvoSkill、SkillGen、Anthropic Skills、Skill1、SkillOS 等所有前辈的对比表里，MUSE-Autoskill 是唯一在七个维度上全部打勾的方法——创建、记忆、管理、评估、精炼、跨 agent 迁移、免训练。它不是在某个单点上更聪明，而是<em>第一个把整条生命周期走通的</em>。</p>
+
+  <figure>
+    <!-- 图 1：大模型领域发展时间线，高亮本篇位置 -->
+    <svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="125" x2="665" y2="125" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 已解析里程碑：实心青点 -->
+        <circle cx="70" cy="125" r="6" fill="#24555A" fill-opacity="0.85" stroke="#24555A"/>
+        <text x="70" y="101" text-anchor="middle">2017</text>
+        <text x="70" y="152" text-anchor="middle" fill="#2E2A22">Transformer</text>
+        <text x="70" y="168" text-anchor="middle">#001</text>
+
+        <circle cx="175" cy="125" r="6" fill="#24555A" fill-opacity="0.85" stroke="#24555A"/>
+        <text x="175" y="101" text-anchor="middle">2022</text>
+        <text x="175" y="152" text-anchor="middle" fill="#2E2A22">InstructGPT</text>
+        <text x="175" y="168" text-anchor="middle">#006</text>
+
+        <circle cx="280" cy="125" r="6" fill="#24555A" fill-opacity="0.85" stroke="#24555A"/>
+        <text x="280" y="101" text-anchor="middle">2023</text>
+        <text x="280" y="152" text-anchor="middle" fill="#2E2A22">Voyager</text>
+        <text x="280" y="168" text-anchor="middle">#036</text>
+
+        <circle cx="385" cy="125" r="6" fill="#24555A" fill-opacity="0.85" stroke="#24555A"/>
+        <text x="385" y="101" text-anchor="middle">2025</text>
+        <text x="385" y="152" text-anchor="middle" fill="#2E2A22">DeepSeek-R1 / AZR</text>
+        <text x="385" y="168" text-anchor="middle">#013 / #055</text>
+
+        <!-- 本篇位置：高亮 -->
+        <circle cx="495" cy="125" r="9" fill="#B54A2C" stroke="#B54A2C"/>
+        <circle cx="495" cy="125" r="14" fill="none" stroke="#B54A2C" stroke-opacity="0.35"/>
+        <text x="495" y="95" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="495" y="152" text-anchor="middle" fill="#2E2A22" font-weight="600">MUSE-Autoskill</text>
+        <text x="495" y="168" text-anchor="middle">#061</text>
+
+        <circle cx="580" cy="125" r="6" fill="#24555A" fill-opacity="0.85" stroke="#24555A"/>
+        <text x="580" y="101" text-anchor="middle">2026-06</text>
+        <text x="580" y="152" text-anchor="middle" fill="#2E2A22">OpenSkill</text>
+        <text x="580" y="168" text-anchor="middle">#059</text>
+
+        <circle cx="648" cy="125" r="6" fill="#24555A" fill-opacity="0.85" stroke="#24555A"/>
+        <text x="648" y="101" text-anchor="middle">2026-08</text>
+        <text x="648" y="152" text-anchor="middle" fill="#2E2A22">SkillAlchemy</text>
+        <text x="648" y="168" text-anchor="middle">#060</text>
+      </g>
+      <!-- 已解析区间高亮 -->
+      <line x1="70" y1="190" x2="648" y2="190" stroke="#24555A" stroke-width="2" stroke-opacity="0.5"/>
+      <text x="359" y="212" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#24555A">系列已解析 #001 – #060 · 本篇按主题回补技能线（MUSE 论文实际早于 #059 / #060）</text>
+      <text x="359" y="230" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#96897A">技能线：Voyager #036 → OpenSkill #059 → SkillAlchemy #060 → MUSE #061</text>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的位置：MUSE-Autoskill 是"技能资产化"的转折点，也是经验蒸馏路线的集大成</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>先把"技能"这个词再钉准一次（第 59、60 篇的老读者可以跳过这段）：一个技能就是一个以 <span class="mono">SKILL.md</span> 为核心的文件夹——主文件写清"我是谁、什么时候调用我、分几步做、参数是什么"，旁边可选地放可执行脚本、参考资源和测试。agent 遇到任务时先翻目录，找到相关技能就加载照做。它相当于给"什么都知道一点"的通用模型，配了一本<strong>特定领域的岗位操作手册</strong>。</p>
+  <p>2026 年，自动生成技能已经不是新鲜事。从 Voyager 的代码技能库，到 AutoSkill、EvoSkill、SkillGen，再到用强化学习联合优化技能的 Skill1、SkillOS，再到 Anthropic 和 OpenAI 的官方 skill-creator，这条赛道相当拥挤。但 MUSE 团队把这些工作摆上解剖台之后，发现了四个反复出现的"结构性缺口"——注意，不是"做得不够好"，而是<em>压根没人做</em>：</p>
+  <ul>
+    <li><strong>缺口一：创建与使用错位。</strong>现有方法的技能大多在"考场外"生成——开一个独立的会话，让模型凭空构思一个技能。它看不到 agent 真正解题时的上下文：不知道 agent 卡在哪一步、踩了什么坑、工具实际返回了什么。写出来的技能像<em>没进过厨房的人写的菜谱</em>，步骤都对，就是做不出菜。</li>
+    <li><strong>缺口二：没有技能级记忆。</strong>技能被创建后就是静态文件，用一百次也不长记性。上次执行发现"这个接口的日期格式必须是 ISO 8601"——这个宝贵的教训没有地方记，下次照样踩坑。</li>
+    <li><strong>缺口三：静态、无验证。</strong>生成的技能不经过任何测试就入库。错了怎么办？没有机制发现，更没有机制修复。技能库变成了一个<em>不设质检的仓库</em>。</li>
+    <li><strong>缺口四：上下文处理粗糙。</strong>长任务里，平铺的对话历史要么被粗暴截断、要么撑爆上下文窗口。而 agent 偏偏经常需要回头看早前的信息——一刀切掉，等于让棋手下到中盘就忘记开局。</li>
+  </ul>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    <p style="margin:0;">想象两家餐厅。第一家买了本印出来的标准菜谱——干净、漂亮、谁都能看，但本店的灶火偏旺、这批酱油偏咸，菜谱一概不知，每次都得厨师现场重新摸索。第二家的厨师每做一道菜就在自己的笔记本上添一笔："<em>本店灶火旺，收汁要提前两分钟</em>""<em>三号锅传热不均，煎鱼先中火</em>"——这本笔记越写越厚，新来的厨师照着做，第一天就能出师。前者是"静态的、孤立的技能工件"，后者是"有生命周期、有记忆的技能资产"。MUSE 要造的，就是第二家餐厅。</p>
+  </div>
+
+  <p>这四个缺口也解释了开篇那个悬案的一半：Codex 生成的技能为什么迁给 Hermes 反而是毒药？因为一个从没见过目标 agent 运行时上下文、没经过测试、也不记录使用经验的技能，本质上是一份<strong>来历不明的手抄纸条</strong>——写得再工整，你也不知道它能不能信。至于另一半答案，看完方法部分自然揭晓。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>把四个缺口收拢成一个正式的问题表述：<em>如何让 agent 自己创建的技能，成为可以长期积累、质量可靠、并且能跨 agent 迁移的资产？</em></p>
+  <p>这个问题可以拆成四问：技能的创建如何接入 agent 的运行时上下文（而不是另开会话凭空造）？技能的质量用什么机制验证和修复？每个技能的使用经验如何跨任务、跨会话地积累？长任务的上下文如何在不清零、不爆窗的前提下持续运转？——四问分别对应四个缺口，MUSE 的整个架构就是这四问的答案拼图。</p>
+  <p>这里有个值得停一秒的观念转变：此前大家默认"技能生成"是主线任务，"技能管理"是工程杂活。这篇论文把优先级倒了过来——<em>生成只是生命周期五分之一，剩下五分之四决定技能能不能活下来、能不能增值。</em>这个视角切换，是它后面所有实验结果能成立的底层原因。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    先别往下看，凭直觉排个序：上面四个缺口里，你觉得哪一个对"技能能否长期复用"杀伤力最大？是技能写得不好（创建错位），是技能不带笔记（无记忆），是技能没测试（无验证），还是长任务先崩了（上下文）？记住你的答案，文末我们对着实验数据再回头看。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+
+  <h3>总体架构：把 skill_create 塞进 ReAct 循环</h3>
+  <p>MUSE 的骨架是一个标准的 ReAct 循环（第 35 篇的老朋友）：Planning（拆解问题、决定下一步）→ Action（执行动作）→ Observation（收集反馈、修正计划），循环往复直到任务完成。真正特别的地方在于两件事。</p>
+  <p>第一，agent 只随身携带两个内置技能：<span class="mono">skill_create</span>（创建新技能）和 <span class="mono">web_search</span>（联网搜索）。其余所有能力都从技能库里来——<em> minimalist 到近乎禅意</em>：能力不由框架预装，而是边干活边长出来。</p>
+  <p>第二，也是最关键的：<span class="mono">skill_create</span> 是<em>在运行循环内部</em>被调用的。当 agent 在解题途中发现"现有技能不够用"时，它就地写一份高规格说明——我想要一个什么功能的技能、输入什么、输出什么——系统随即在当前上下文里生成技能包。技能从出生那一刻起，就带着第一手的战场情报：agent 卡在哪、工具返回了什么、验证器要什么格式。缺口一，就此关闭。</p>
+
+  <h3>技能的一生：五阶段生命周期</h3>
+  <p>技能在 MUSE 里的完整一生，走的是"创建 → 评估 → 注册 → 执行 → 记忆 → 管理/精炼"的闭环：</p>
+  <p><strong>创建（Creation）。</strong>给定 agent 的规格说明，系统按流水线组装技能包：先生成 <span class="mono">SKILL.md</span> 定义接口，再规划内部结构（<span class="mono">scripts/</span> 可执行代码、<span class="mono">resources/</span> 辅助数据、代码型技能还有 <span class="mono">tests/</span> 测试），最后生成全部文件。产出一个完整、可执行的技能包。</p>
+  <p><strong>评估（Evaluation）——入职体检。</strong>这是全文最"软件工程"的一步：代码型技能若带 <span class="mono">tests/</span>，就在沙箱里真跑单元测试，<em>测试不过，不予注册</em>。纯文本的流程型技能没有单测怎么办？降级用沙箱执行检查和源轨迹的运行时反馈当"弱验证信号"。一旦检查失败，agent 检查错误堆栈，调用 <span class="mono">update_skill</span> 打补丁再测——"创建 → 评估 → 注册"这个小循环，让每个入库技能都留有一条<em>具体的审计路径</em>：它要么通过了生成的测试，要么熬过了沙箱检查。缺口三，关闭。</p>
+  <p><strong>执行（Execution）。</strong>技能执行不另造引擎，复用 agent 已有的通用工具（读文件、终端命令、沙箱调用），代码通过一组沙箱生命周期工具在隔离容器里跑：<span class="mono">create_sandbox</span>、<span class="mono">sandbox_run</span>、<span class="mono">sandbox_upload/download</span>、<span class="mono">close_sandbox</span>。每个沙箱是独立进程、独立文件系统，失败和副作用都被关在笼子里。</p>
+  <p><strong>记忆（Memory）。</strong>下一小节单独讲——这是 MUSE 名字里 M 的由来。</p>
+  <p><strong>管理（Management）——图书馆整理术。</strong>每个技能用 <span class="mono">SKILL.md</span> 的元数据建立索引；任务开始时，一份技能目录被注入系统提示（沿用 Anthropic 的渐进披露模式——先只看目录，需要时再读全文）。入库之后还有三条维护通道：<em>精炼</em>（技能执行出错就基于错误反馈重写或再生成）、<em>合并</em>（新技能与旧技能高度重叠时，合成一个更通用的）、<em>修剪</em>（反复失败或长期没人用的技能，移出活跃目录）。技能库像一个有人打理的图书馆，而不是杂物间。</p>
+
+  <figure>
+    <!-- 图 2：MUSE-Autoskill 总体架构 -->
+    <svg viewBox="0 0 700 430" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow-m1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrow-m2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+        <marker id="arrow-m3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#24555A"/>
+        </marker>
+      </defs>
+
+      <!-- 运行时层 -->
+      <text x="22" y="28" font-family="JetBrains Mono" font-size="11" fill="#96897A" letter-spacing="1">RUNTIME · 运行时</text>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <rect x="22" y="40" width="70" height="88" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="57" y="78" text-anchor="middle">任务</text>
+        <text x="57" y="98" text-anchor="middle" fill="#96897A" font-size="10.5">输入</text>
+
+        <rect x="140" y="40" width="270" height="88" rx="2" fill="#24555A" fill-opacity="0.10" stroke="#24555A" stroke-width="1.5"/>
+        <text x="275" y="62" text-anchor="middle" fill="#24555A" font-weight="600">Master Agent · ReAct 循环</text>
+        <rect x="155" y="74" width="70" height="34" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="190" y="95" text-anchor="middle" font-size="10.5">Planning</text>
+        <rect x="240" y="74" width="62" height="34" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="271" y="95" text-anchor="middle" font-size="10.5">Action</text>
+        <rect x="317" y="74" width="78" height="34" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="356" y="95" text-anchor="middle" font-size="10.5">Observation</text>
+
+        <rect x="450" y="40" width="228" height="88" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="564" y="62" text-anchor="middle" fill="#24555A" font-weight="600">上下文管理</text>
+        <text x="564" y="84" text-anchor="middle" font-size="10.5" fill="#96897A">对话 DAG · 双指针</text>
+        <text x="564" y="102" text-anchor="middle" font-size="10.5" fill="#96897A">Level-1 / Level-2 压缩</text>
+        <text x="564" y="120" text-anchor="middle" font-size="10.5" fill="#96897A">头尾锁定 · 可完整回放</text>
+      </g>
+      <line x1="92" y1="84" x2="140" y2="84" stroke="#96897A" marker-end="url(#arrow-m1)"/>
+      <line x1="410" y1="84" x2="450" y2="84" stroke="#96897A" marker-end="url(#arrow-m1)"/>
+
+      <!-- 技能生命周期层 -->
+      <text x="22" y="168" font-family="JetBrains Mono" font-size="11" fill="#96897A" letter-spacing="1">SKILL LIFECYCLE · 技能生命周期</text>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <rect x="22" y="180" width="150" height="92" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C" stroke-width="1.5"/>
+        <text x="97" y="202" text-anchor="middle" fill="#B54A2C" font-weight="600">skill_create</text>
+        <text x="97" y="224" text-anchor="middle" font-size="10.5" fill="#96897A">循环内调用·带上下文</text>
+        <text x="97" y="244" text-anchor="middle" font-size="10.5">SKILL.md + scripts/</text>
+        <text x="97" y="260" text-anchor="middle" font-size="10.5">+ resources/ + tests/</text>
+
+        <rect x="212" y="180" width="150" height="92" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="287" y="202" text-anchor="middle" fill="#24555A" font-weight="600">评估 · 入职体检</text>
+        <text x="287" y="224" text-anchor="middle" font-size="10.5" fill="#96897A">沙箱单元测试</text>
+        <text x="287" y="244" text-anchor="middle" font-size="10.5" fill="#96897A">不过 = 不予注册</text>
+        <text x="287" y="264" text-anchor="middle" font-size="10.5" fill="#96897A">弱验证：沙箱执行检查</text>
+
+        <rect x="402" y="180" width="130" height="92" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="467" y="202" text-anchor="middle" fill="#24555A" font-weight="600">Skill Bank</text>
+        <text x="467" y="224" text-anchor="middle" font-size="10.5" fill="#96897A">目录索引·渐进披露</text>
+        <text x="467" y="244" text-anchor="middle" font-size="10.5" fill="#96897A">精炼 / 合并 / 修剪</text>
+
+        <rect x="572" y="180" width="106" height="92" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="625" y="202" text-anchor="middle" fill="#24555A" font-weight="600">Refiner</text>
+        <text x="625" y="224" text-anchor="middle" font-size="10.5" fill="#96897A">update_skill</text>
+        <text x="625" y="244" text-anchor="middle" font-size="10.5" fill="#96897A">失败触发精炼</text>
+      </g>
+      <!-- 生命周期箭头 -->
+      <line x1="172" y1="226" x2="212" y2="226" stroke="#96897A" marker-end="url(#arrow-m1)"/>
+      <line x1="362" y1="226" x2="402" y2="226" stroke="#24555A" marker-end="url(#arrow-m3)"/>
+      <text x="382" y="216" text-anchor="middle" font-family="JetBrains Mono" font-size="9.5" fill="#24555A">通过</text>
+      <!-- 失败 → Refiner → 回评估 -->
+      <path d="M 287 272 L 287 300 L 625 300 L 625 272" fill="none" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrow-m2)"/>
+      <text x="456" y="294" text-anchor="middle" font-family="JetBrains Mono" font-size="9.5" fill="#B54A2C">测试失败 → 打补丁 → 重测（闭环）</text>
+      <!-- 检索：Skill Bank → Runtime -->
+      <line x1="467" y1="180" x2="360" y2="130" stroke="#24555A" stroke-width="1.2" marker-end="url(#arrow-m3)"/>
+      <text x="440" y="146" font-family="JetBrains Mono" font-size="9.5" fill="#24555A">检索注入</text>
+      <!-- 运行时 → 创建：需要新技能 -->
+      <line x1="200" y1="128" x2="110" y2="180" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#arrow-m2)"/>
+      <text x="120" y="150" font-family="JetBrains Mono" font-size="9.5" fill="#B54A2C">需要新技能</text>
+
+      <!-- 记忆层 -->
+      <text x="22" y="326" font-family="JetBrains Mono" font-size="11" fill="#96897A" letter-spacing="1">MEMORY · 三级记忆</text>
+      <g font-family="JetBrains Mono" font-size="11.5" fill="#2E2A22">
+        <rect x="22" y="338" width="212" height="72" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C" stroke-width="1.5"/>
+        <text x="128" y="360" text-anchor="middle" fill="#B54A2C" font-weight="600">技能级记忆（独有）</text>
+        <text x="128" y="380" text-anchor="middle" font-size="10.5" fill="#96897A">每个技能一本 .memory.md</text>
+        <text x="128" y="397" text-anchor="middle" font-size="10.5" fill="#96897A">记录坑 · 格式怪癖 · 使用心得</text>
+
+        <rect x="262" y="338" width="200" height="72" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="362" y="360" text-anchor="middle" fill="#24555A" font-weight="600">短期记忆</text>
+        <text x="362" y="380" text-anchor="middle" font-size="10.5" fill="#96897A">当前任务上下文</text>
+        <text x="362" y="397" text-anchor="middle" font-size="10.5" fill="#96897A">超预算时自适应压缩</text>
+
+        <rect x="490" y="338" width="188" height="72" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="584" y="360" text-anchor="middle" fill="#24555A" font-weight="600">长期记忆</text>
+        <text x="584" y="380" text-anchor="middle" font-size="10.5" fill="#96897A">跨会话持久笔记</text>
+        <text x="584" y="397" text-anchor="middle" font-size="10.5" fill="#96897A">永不压缩 · 持续累积</text>
+      </g>
+      <!-- 记忆层连接 -->
+      <line x1="128" y1="338" x2="97" y2="272" stroke="#96897A" stroke-dasharray="3 3" marker-end="url(#arrow-m1)"/>
+      <line x1="362" y1="338" x2="290" y2="130" stroke="#96897A" stroke-dasharray="3 3" marker-end="url(#arrow-m1)"/>
+      <line x1="520" y1="338" x2="500" y2="272" stroke="#96897A" stroke-dasharray="3 3" marker-end="url(#arrow-m1)"/>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · MUSE-Autoskill 三层架构：ReAct 运行时、五阶段技能生命周期、三级记忆。skill_create 在循环内调用（红），单元测试是注册的闸门，失败走 Refiner 闭环（红）</figcaption>
+  </figure>
+
+  <h3>三级记忆：给每个技能发一本专属笔记本</h3>
+  <p>MUSE 的名字展开是 <em class="latin">Memory-Utilizing Skill Evolution</em>——用记忆驱动的技能进化。它的记忆系统分三级，前两级是同行们（MemGPT、Generative Agents、Reflexion）搭好的地基，第三级是自己的发明：</p>
+  <ul>
+    <li><strong>短期记忆</strong>：当前任务的上下文——中间推理步骤、观察结果、临时执行产物。会随任务推进被自适应压缩（马上讲）。</li>
+    <li><strong>长期记忆</strong>：跨会话的持久笔记，记那些不属于任何单个技能的一般性经验——"这个项目锁了包版本""批量 I/O 更快"。永不压缩，只增不减。</li>
+    <li><strong>技能级记忆</strong>——<em>独有的一级</em>：技能库里每个技能随身带一个 <span class="mono">.memory.md</span>，agent 每次用它都往上追加笔记：已知的失败模式、输入格式的怪癖、性能上的注意事项。下次这个技能被再次加载时，<span class="mono">.memory.md</span> 会连同 <span class="mono">SKILL.md</span> 一起被读到 agent 眼前——<em>上次踩过的坑，这次直接绕开</em>。</li>
+  </ul>
+  <p>注意这个设计的巧妙之处：一般的"经验记忆"挂在会话或 agent 身上，换任务、换 agent 就断档；技能级记忆挂在<em>技能</em>身上，技能走到哪，记忆跟到哪——哪怕技能被迁移给另一个 agent，这本笔记本也一起过去。缺口二，以最彻底的方式关闭。</p>
+
+  <h3>上下文管理：一份可以随时"回放原始录像"的活动摘要</h3>
+  <p>长任务是所有 agent 的天敌。MUSE 的做法是把对话历史组织成一张 DAG（有向无环图）：每一轮对话是一个节点，记录模型响应、工具调用、观察和 token 用量。每个节点带两组指针——一组可变的 <span class="mono">parent_id</span>，串起当前真正发给模型的"活动链"；一组不可变的 <span class="mono">history_prev/next</span>，保住完整的原始历史。活动链永远只是全历史的一个子图。</p>
+  <p>预算超了怎么办？两级压缩，先温和后激烈：</p>
+  <p><strong>Level-1（单节点摘要）</strong>：扫描活动链，找出单个超大的节点（通常是一次巨大的工具输出），只把<em>这一个节点</em>的内容替换成紧凑摘要。它是最不破坏结构的操作——每轮的边界、计划/行动/观察的三段式全部保留，后面的轮次仍能按原位置引用前面的内容。</p>
+  <p><strong>Level-2（链压缩）</strong>：如果 Level-1 之后还超预算，就把中间一段连续节点合并成一个合成摘要节点。这一步会丢掉每轮的边界结构，所以只在单节点摘要救不回来时才触发。无论哪一级，<em>原始节点都原封不动地留在全历史里</em>——任何一次被压缩的运行都能完整"回放"用于分析。另外，头几轮和尾几轮（KEEP_FIRST / KEEP_LAST，各 5 轮）永远锁定不动，因为"指令在开头、结论在结尾"，中间才最容易被遗忘。</p>
+  <p>为什么不干脆把最老的中间轮次直接删掉？团队给了一个漂亮的量化答案：初步实验显示，多步任务中 agent <em>有 30%–40% 的概率需要回头看早期上下文</em>（核对输入文件名、回忆解析格式细节），截断等于逼它重新摸索一遍；而摘要能以约十分之一的 token 成本保住这些事实。缺口四，关闭。顺带一提，压缩本身很省：平均每 10–20 轮才触发一次额外的摘要调用。</p>
+
+  <figure>
+    <!-- 图 3：对话 DAG 与两级压缩 -->
+    <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow-c1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="10.5" fill="#2E2A22">
+        <!-- Lane 1: 完整历史 -->
+        <text x="185" y="42" fill="#96897A">① 完整历史（不可变 · history 指针串起 · 可随时回放）</text>
+        <g>
+          <rect x="185" y="52" width="30" height="26" fill="#ECE4D4" stroke="#96897A"/><text x="200" y="69" text-anchor="middle" font-size="9">T1</text>
+          <rect x="220" y="52" width="30" height="26" fill="#ECE4D4" stroke="#96897A"/><text x="235" y="69" text-anchor="middle" font-size="9">T2</text>
+          <rect x="255" y="52" width="30" height="26" fill="#ECE4D4" stroke="#96897A"/><text x="270" y="69" text-anchor="middle" font-size="9">T3</text>
+          <rect x="290" y="52" width="30" height="26" fill="#ECE4D4" stroke="#96897A"/><text x="305" y="69" text-anchor="middle" font-size="9">T4</text>
+          <rect x="325" y="52" width="30" height="26" fill="#ECE4D4" stroke="#96897A"/><text x="340" y="69" text-anchor="middle" font-size="9">T5</text>
+          <rect x="360" y="52" width="30" height="26" fill="#ECE4D4" stroke="#96897A"/><text x="375" y="69" text-anchor="middle" font-size="9">T6</text>
+          <rect x="395" y="52" width="30" height="26" fill="#ECE4D4" stroke="#96897A"/><text x="410" y="69" text-anchor="middle" font-size="9">T7</text>
+          <rect x="430" y="52" width="30" height="26" fill="#ECE4D4" stroke="#96897A"/><text x="445" y="69" text-anchor="middle" font-size="9">T8</text>
+          <rect x="465" y="52" width="30" height="26" fill="#ECE4D4" stroke="#96897A"/><text x="480" y="69" text-anchor="middle" font-size="9">T9</text>
+          <rect x="500" y="52" width="30" height="26" fill="#ECE4D4" stroke="#96897A"/><text x="515" y="69" text-anchor="middle" font-size="9">T10</text>
+          <rect x="535" y="52" width="30" height="26" fill="#ECE4D4" stroke="#96897A"/><text x="550" y="69" text-anchor="middle" font-size="9">T11</text>
+          <rect x="570" y="52" width="30" height="26" fill="#ECE4D4" stroke="#96897A"/><text x="585" y="69" text-anchor="middle" font-size="9">T12</text>
+          <rect x="605" y="52" width="30" height="26" fill="#ECE4D4" stroke="#96897A"/><text x="620" y="69" text-anchor="middle" font-size="9">T13</text>
+          <rect x="640" y="52" width="30" height="26" fill="#ECE4D4" stroke="#96897A"/><text x="655" y="69" text-anchor="middle" font-size="9">T14</text>
+        </g>
+
+        <!-- Lane 2: Level-1 -->
+        <text x="185" y="122" fill="#96897A">② Level-1 单节点摘要：只重写超大的那一轮（T7），其余原样</text>
+        <g>
+          <rect x="185" y="132" width="170" height="26" fill="#24555A" fill-opacity="0.16" stroke="#24555A"/><text x="270" y="149" text-anchor="middle" font-size="9" fill="#24555A">T1 – T5 锁定</text>
+          <rect x="360" y="132" width="30" height="26" fill="#ECE4D4" stroke="#96897A"/><text x="375" y="149" text-anchor="middle" font-size="9">T6</text>
+          <rect x="395" y="132" width="30" height="26" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C" stroke-width="1.5"/><text x="410" y="149" text-anchor="middle" font-size="8.5" fill="#B54A2C">摘要</text>
+          <rect x="430" y="132" width="30" height="26" fill="#ECE4D4" stroke="#96897A"/><text x="445" y="149" text-anchor="middle" font-size="9">T8</text>
+          <rect x="465" y="132" width="30" height="26" fill="#ECE4D4" stroke="#96897A"/><text x="480" y="149" text-anchor="middle" font-size="9">T9</text>
+          <rect x="500" y="132" width="170" height="26" fill="#24555A" fill-opacity="0.16" stroke="#24555A"/><text x="585" y="149" text-anchor="middle" font-size="9" fill="#24555A">T10 – T14 锁定</text>
+        </g>
+
+        <!-- Lane 3: Level-2 -->
+        <text x="185" y="202" fill="#96897A">③ Level-2 链压缩：中段 T6–T9 合并成一个合成节点（仅在 L1 不够时）</text>
+        <g>
+          <rect x="185" y="212" width="170" height="26" fill="#24555A" fill-opacity="0.16" stroke="#24555A"/><text x="270" y="229" text-anchor="middle" font-size="9" fill="#24555A">T1 – T5 锁定</text>
+          <rect x="360" y="212" width="135" height="26" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C" stroke-width="1.5"/>
+          <text x="427" y="229" text-anchor="middle" font-size="8.5" fill="#B54A2C">合成摘要节点</text>
+          <rect x="500" y="212" width="170" height="26" fill="#24555A" fill-opacity="0.16" stroke="#24555A"/><text x="585" y="229" text-anchor="middle" font-size="9" fill="#24555A">T10 – T14 锁定</text>
+        </g>
+
+        <line x1="427" y1="240" x2="427" y2="262" stroke="#96897A" marker-end="url(#arrow-c1)"/>
+        <text x="440" y="272" fill="#96897A">原始节点永不改写 → 活动链可随时从全历史重建，压缩过的运行也能完整回放</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 对话 DAG 上的两级自适应压缩：头尾各 5 轮锁定，先做单节点摘要（保留结构），不够再合并中段（合成节点）；全历史始终只读保留</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+
+  <h3>一场"同脑不同躯"的公平对决</h3>
+  <p>MUSE 的实验设计有个罕见的较真劲儿：它拉来三个对手——Codex、Claude Code、Hermes，然后<em>给四个 agent 装上同一颗大脑</em>。全部使用同一个 GPT-5.5 部署（gpt-5.5-2026-04-24），解码参数一律用默认值。最绝的是 Claude Code——它的模型调用通过一个兼容桥被路由到 GPT-5.5 上，等于给 Claude 的"躯体"做了换脑手术。这样一来，四个 agent 的成绩差异就<em>只能</em>归因于系统设计：提示词、工具循环、上下文处理、技能机制——一场纯粹比"躯体工程"的比赛。</p>
+  <p>战场两个：SkillsBench（75 个任务公共集，四个超域——科学与工程 18、数据分析 18、文档处理 14、运维与规划 25；每个任务在独立 Docker 容器里跑 5 次，自动验证器只检查最终产物文件，产出 [0,1] 的分数）和 SkillLearnBench（20 个任务、100 个已验证实例的持续技能生成基准，每实例跑一次）。评分协议相当严苛：自创技能设置和人类技能设置<em>用同一个分母</em>——没能生成可用技能的任务直接记零分，不许用无技能成绩回填。</p>
+
+  <table>
+    <thead>
+      <tr><th>基准</th><th>Agent</th><th>无技能</th><th>人类技能</th><th>自创技能</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">SkillsBench</td><td class="text">Hermes</td><td>37.24%</td><td>48.02%</td><td>–</td></tr>
+      <tr><td class="text">SkillsBench</td><td class="text">Codex</td><td>44.80%</td><td>57.58%</td><td>47.52%</td></tr>
+      <tr><td class="text">SkillsBench</td><td class="text">Claude Code</td><td>42.43%</td><td>56.15%</td><td>44.27%</td></tr>
+      <tr><td class="text">SkillsBench</td><td class="text"><strong>MUSE-Autoskill</strong></td><td><strong>46.95%</strong></td><td><strong>59.67%</strong></td><td><strong>53.42%</strong></td></tr>
+      <tr><td class="text">SkillLearnBench</td><td class="text">Hermes</td><td>37.0%</td><td>70.0%</td><td>–</td></tr>
+      <tr><td class="text">SkillLearnBench</td><td class="text">Codex</td><td>39.0%</td><td>68.0%</td><td>40.0%</td></tr>
+      <tr><td class="text">SkillLearnBench</td><td class="text">Claude Code</td><td>33.0%</td><td>63.0%</td><td>37.0%</td></tr>
+      <tr><td class="text">SkillLearnBench</td><td class="text"><strong>MUSE-Autoskill</strong></td><td><strong>43.0%</strong></td><td><strong>72.0%</strong></td><td><strong>48.0%</strong></td></tr>
+    </tbody>
+  </table>
+
+  <figure>
+    <!-- 图 4：SkillsBench 主结果 -->
+    <svg viewBox="0 0 700 330" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 图例 -->
+        <rect x="190" y="12" width="12" height="12" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="208" y="22" font-size="10.5">无技能</text>
+        <rect x="280" y="12" width="12" height="12" fill="#24555A" fill-opacity="0.35" stroke="#24555A"/>
+        <text x="298" y="22" font-size="10.5">人类技能</text>
+        <rect x="382" y="12" width="12" height="12" fill="#B54A2C" fill-opacity="0.8"/>
+        <text x="400" y="22" font-size="10.5">自创技能</text>
+
+        <!-- 坐标轴 -->
+        <line x1="160" y1="40" x2="160" y2="290" stroke="#96897A"/>
+        <line x1="160" y1="290" x2="685" y2="290" stroke="#96897A"/>
+        <text x="152" y="294" text-anchor="end" font-size="10">0</text>
+        <text x="152" y="224" text-anchor="end" font-size="10">20</text>
+        <text x="152" y="154" text-anchor="end" font-size="10">40</text>
+        <text x="152" y="84" text-anchor="end" font-size="10">60</text>
+        <line x1="160" y1="220" x2="685" y2="220" stroke="#96897A" stroke-dasharray="2 4" stroke-opacity="0.4"/>
+        <line x1="160" y1="150" x2="685" y2="150" stroke="#96897A" stroke-dasharray="2 4" stroke-opacity="0.4"/>
+        <line x1="160" y1="80" x2="685" y2="80" stroke="#96897A" stroke-dasharray="2 4" stroke-opacity="0.4"/>
+      </g>
+      <g font-family="JetBrains Mono" font-size="10.5">
+        <!-- Hermes 组（无自创） -->
+        <rect x="172" y="159.7" width="30" height="130.3" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="187" y="153" text-anchor="middle" fill="#2E2A22">37.2</text>
+        <rect x="208" y="121.9" width="30" height="168.1" fill="#24555A" fill-opacity="0.35" stroke="#24555A"/>
+        <text x="223" y="115" text-anchor="middle" fill="#24555A">48.0</text>
+        <text x="205" y="308" text-anchor="middle" fill="#96897A">Hermes</text>
+
+        <!-- Codex 组 -->
+        <rect x="299" y="133.2" width="30" height="156.8" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="314" y="127" text-anchor="middle" fill="#2E2A22">44.8</text>
+        <rect x="335" y="88.5" width="30" height="201.5" fill="#24555A" fill-opacity="0.35" stroke="#24555A"/>
+        <text x="350" y="82" text-anchor="middle" fill="#24555A">57.6</text>
+        <rect x="371" y="123.7" width="30" height="166.3" fill="#B54A2C" fill-opacity="0.8"/>
+        <text x="386" y="117" text-anchor="middle" fill="#B54A2C">47.5</text>
+        <text x="350" y="308" text-anchor="middle" fill="#96897A">Codex</text>
+
+        <!-- Claude Code 组 -->
+        <rect x="444" y="141.5" width="30" height="148.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="459" y="135" text-anchor="middle" fill="#2E2A22">42.4</text>
+        <rect x="480" y="93.5" width="30" height="196.5" fill="#24555A" fill-opacity="0.35" stroke="#24555A"/>
+        <text x="495" y="87" text-anchor="middle" fill="#24555A">56.2</text>
+        <rect x="516" y="135.1" width="30" height="154.9" fill="#B54A2C" fill-opacity="0.8"/>
+        <text x="531" y="129" text-anchor="middle" fill="#B54A2C">44.3</text>
+        <text x="495" y="308" text-anchor="middle" fill="#96897A">Claude Code</text>
+
+        <!-- MUSE 组 -->
+        <rect x="589" y="125.7" width="30" height="164.3" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="604" y="119" text-anchor="middle" fill="#2E2A22">47.0</text>
+        <rect x="625" y="81.2" width="30" height="208.8" fill="#24555A" fill-opacity="0.35" stroke="#24555A"/>
+        <text x="640" y="75" text-anchor="middle" fill="#24555A" font-weight="600">59.7</text>
+        <rect x="661" y="103.0" width="24" height="187.0" fill="#B54A2C" fill-opacity="0.8"/>
+        <text x="673" y="97" text-anchor="middle" fill="#B54A2C" font-weight="600">53.4</text>
+        <text x="640" y="322" text-anchor="middle" fill="#B54A2C" font-weight="600">MUSE</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · SkillsBench 主结果（75 任务 × 5 次，严格全任务分母）：MUSE 在无技能、人类技能、自创技能三种设置下全部第一</figcaption>
+  </figure>
+
+  <p>三个层次的结果值得分别品读：</p>
+  <p><strong>第一层：无技能也第一，说明"躯体"本身就硬。</strong>46.95% 的裸考成绩领先 Codex（44.80%）、Claude Code（42.43%）和 Hermes（37.24%）。这部分差距来自 ReAct 循环、沙箱工具和上下文管理的工程功底——大脑相同，躯体分出了高下。</p>
+  <p><strong>第二层：人类技能给谁都涨分，MUSE 涨得最多。</strong>人类技能让四个 agent 全部提升 10.78–13.73 个百分点，MUSE 达到 59.67%（+12.72pp）。同一批人类技能，MUSE 用出了最好的效果——按超域拆分，它在 4 个域里的 3 个（科学与工程、文档处理、运维规划）拿下人类技能条件下的最高分，只有数据分析输给了 Claude Code。</p>
+  <p><strong>第三层：自创技能的真正惊喜在"覆盖子集"。</strong>全任务口径下 MUSE 自创技能 53.42%，领先 Codex（47.52%）和 Claude Code（44.27%）。但这个数字被"没能生成技能的任务记零分"狠狠拖住了——75 个任务里 MUSE 只覆盖了 47 个。而在<strong>成功覆盖的 47 个任务上</strong>，MUSE 自创技能的准确率达到 <em>85.24%</em>，<em>高于同一子集上人类专家技能的 81.17%</em>。这是本文最重的一个数字：一旦技能生成成功，生命周期管理出来的技能，质量可以超过人类手写。</p>
+
+  <div class="callout">
+    <span class="label">瓶颈的反转</span>
+    <p style="margin:0;">这个结果把整条赛道的瓶颈诊断彻底反转了：此前大家默认"自动技能质量不行"，拼命打磨技能内容本身。MUSE 的数据说——<em>质量问题其实已经解决了一半，真正的瓶颈是覆盖率</em>（75 个任务里 28 个连一条可用的源轨迹都攒不出来）。论文的失败分析显示，这 28 个缺口集中在运维与规划（12 个）和数据分析（9 个）。攻关方向应该从"把已有技能写好"转向"把成功轨迹的覆盖面扩大"——比如从失败的轨迹里提取部分诊断技能，而不是干等一次完全成功的运行。</p>
+  </div>
+
+  <h3>跨 agent 迁移：技能是"谁写的"比"谁用"更重要</h3>
+  <p>回到开篇的悬案。迁移实验的做法：把 Codex、Claude Code、MUSE 各自生成的技能库，原封不动注入 Hermes（一个完全不同的 agent 框架），任务级零修改，未覆盖任务记零分：</p>
+
+  <table>
+    <thead>
+      <tr><th>Hermes 的配置</th><th>覆盖任务</th><th>全 75 任务准确率</th><th>相对无技能</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">无技能（基线）</td><td>75</td><td>37.24%</td><td>–</td></tr>
+      <tr><td class="text">人类专家技能</td><td>75</td><td>48.02%</td><td>+10.78pp</td></tr>
+      <tr><td class="text">+ Codex 自创技能</td><td>47</td><td>37.01%</td><td>−0.23pp</td></tr>
+      <tr><td class="text">+ Claude Code 自创技能</td><td>44</td><td>45.97%</td><td>+8.73pp</td></tr>
+      <tr><td class="text"><strong>+ MUSE 自创技能</strong></td><td>47</td><td><strong>51.90%</strong></td><td><strong>+14.66pp</strong></td></tr>
+    </tbody>
+  </table>
+
+  <figure>
+    <!-- 图 5：跨 agent 迁移结果 -->
+    <svg viewBox="0 0 700 265" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11">
+        <!-- 参考线：人类技能 48.02 -->
+        <line x1="622" y1="18" x2="622" y2="238" stroke="#24555A" stroke-dasharray="6 3" stroke-opacity="0.7"/>
+        <text x="618" y="30" text-anchor="end" fill="#24555A" font-size="10.5">人类技能线 48.02%</text>
+
+        <!-- 无技能 -->
+        <text x="182" y="55" text-anchor="end" fill="#96897A">无技能</text>
+        <rect x="190" y="40" width="335" height="26" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="532" y="58" fill="#2E2A22">37.24</text>
+
+        <!-- 人类技能 -->
+        <text x="182" y="99" text-anchor="end" fill="#24555A">人类技能</text>
+        <rect x="190" y="84" width="432" height="26" fill="#24555A" fill-opacity="0.35" stroke="#24555A"/>
+        <text x="629" y="102" fill="#24555A">48.02</text>
+
+        <!-- Codex -->
+        <text x="182" y="143" text-anchor="end" fill="#96897A">+ Codex 技能</text>
+        <rect x="190" y="128" width="333" height="26" fill="#ECE4D4" stroke="#96897A" stroke-dasharray="4 3"/>
+        <text x="530" y="146" fill="#96897A">37.01</text>
+        <text x="560" y="146" fill="#B54A2C" font-size="10">▼ 比裸考还低</text>
+
+        <!-- Claude Code -->
+        <text x="182" y="187" text-anchor="end" fill="#96897A">+ Claude Code 技能</text>
+        <rect x="190" y="172" width="414" height="26" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="611" y="190" fill="#2E2A22">45.97</text>
+
+        <!-- MUSE -->
+        <text x="182" y="231" text-anchor="end" fill="#B54A2C" font-weight="600">+ MUSE 技能</text>
+        <rect x="190" y="216" width="467" height="26" fill="#B54A2C" fill-opacity="0.85"/>
+        <text x="664" y="234" fill="#B54A2C" font-weight="600">51.90</text>
+      </g>
+      <text x="420" y="260" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#96897A">接收方：Hermes（技能原样注入，零修改）· 严格 75 任务分母</text>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 跨 agent 迁移：MUSE 写的技能把 Hermes 抬过人类技能线（+14.66pp），Codex 写的技能反而是负资产（−0.23pp）</figcaption>
+  </figure>
+
+  <p>这张图藏着本文最深的洞察。Codex 和 MUSE 的技能库覆盖面一模一样（都是 47 个任务），迁移效果却天差地别——所以差距不在覆盖，而在<em>技能本身的表示质量</em>。为什么同样是 GPT-5.5 写的技能，一个能跨框架增值、一个原框架内都收不回成本？论文没把话说满，但技能解剖的数据给了一条强线索（见下节）：MUSE 的技能更长、更程序化、自带测试和失败模式说明——本质上更接近"独立于任何 agent 的知识工件"，而不是"某个 agent 操作习惯的快照"。这也回答了开篇的悬案：技能迁移的成败，取决于技能里编码的是<em>领域知识</em>还是<em>运行时私有习惯</em>。</p>
+
+  <h3>技能经济学：一次投入，三次回本</h3>
+  <p>自动生成技能不是免费的——创建要烧 token。MUSE 顺手把这笔账算清楚了：</p>
+  <ul>
+    <li><strong>创建成本最低</strong>：一次性创建中位数 364K token、156 秒、6 轮对话——比 Codex（446K）和 Claude Code（557K）都便宜，因为技能是在已有解题上下文里就地蒸馏的，不用从头摸索。</li>
+    <li><strong>复用反而更省</strong>：在覆盖的 47 个任务上，用自创技能比无技能<em>又准又快又省</em>——准确率 74.92% → 85.24%，中位 token 579K → 499K，中位延迟 729 秒 → 435 秒。技能把"开放式探索推理"压缩成了"照手册走流程"。</li>
+    <li><strong>摊销账</strong>：相比用人类技能，自创技能每次复用省约 139K token 和 321 秒。回本点可以这样估：</li>
+  </ul>
+
+  <div class="formula-block">
+    $$n^{*} = \left\lceil \frac{C_{\text{create}}}{C_{\text{human}} - C_{\text{self}}} \right\rceil = \left\lceil \frac{363.6\mathrm{K}}{638\mathrm{K} - 499\mathrm{K}} \right\rceil \approx 3 \ \text{次}$$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>token 成本大约复用 3 次回本，延迟成本第一次复用就回本。对一个预期被调用成百上千次的基础设施型技能，这是一笔怎么算都划算的买卖——前提是它真的"活"得够久，而这恰恰是生命周期管理保证的事。</p>
+
+  <h3>三个封神案例与一次公开处刑</h3>
+  <p>论文的案例研究选得极有戏剧性，三正一反：</p>
+  <p><strong>案例一：自适应巡航控制（40% → 100%）。</strong>任务要求设计一个离散 PID 控制器，满足超调量、稳态误差、上升时间的验证器约束。MUSE 裸考只有 40%（5 次中 2 次成功）。生成的技能 <span class="mono">implement-acc-simulation</span> 把离散 PID 方程、抗积分饱和、增益整定经验法则和验证器要求的 JSON 格式全部固化——100%。更有说服力的是：同一个技能交给 Hermes，Hermes 从 20% 涨到 60%。<em>技能传递的是领域知识，不是 MUSE 的操作习惯。</em></p>
+  <p><strong>案例二：Flink 查询（20% → 100%）。</strong>要写一个 Apache Flink Java 作业，读取 gzip 压缩的 Google ClusterData 轨迹，做微秒级事件时间会话化，输出格式分毫不差。基线 5 次只成 1 次——因为 agent 在轮次预算内根本无法从文档里反推出这个项目的 POJO 和 AppBase 骨架约定。生成的技能把这些"只可意会"的工程约定连同 Maven 验证配方（含合成 gzipped 测试数据）一起打包——5/5 全过。</p>
+  <p><strong>案例三：GDP 加权计算（20% → 100%）。</strong>Excel 工作簿里做双条件查找和 SUMPRODUCT 加权均值，要求保格式、禁宏。技能 <span class="mono">excel-financial-formula-modeling</span> 点名 openpyxl、列出公式模式、外加一步"从源数据重算目标单元格"的自检——同一个技能描述领着 Hermes 走完了一模一样的流程，一字未改。</p>
+  <p><strong>反面教材：HVAC 控制（80% → 20%）。</strong>MUSE 自创技能最大的一次翻车。源轨迹里用了一个依赖特定噪声分布的标定窗口和增益估计程序——在当初那次运行里好使，可新鲜运行的标定数据方差一变，调出来的增益就跑出验证器的稳定裕度。<em>技能把"恰好用过一次的招式"当成了"通用解法"</em>，比裸考的试错还脆。这个案例诚实得近乎自残，它揭示的风险（技能对源轨迹过拟合）也直接写进了论文的质量审计结论里。</p>
+
+  <h3>技能解剖：长得像谁，就很像谁</h3>
+  <p>最后一块拼图：把各家生成的技能包拆开对比结构。50 个 MUSE 技能包对上 189 个人类技能包：</p>
+
+  <table>
+    <thead>
+      <tr><th>技能来源</th><th>SKILL.md 中位行数</th><th>纯文档包占比</th><th>带 scripts/</th><th>带 tests/</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">人类专家手写</td><td>165</td><td>65.1%</td><td>27.0%</td><td>0%</td></tr>
+      <tr><td class="text">Codex 生成</td><td>128</td><td>14.0%</td><td>46.0%</td><td>0%</td></tr>
+      <tr><td class="text">Claude Code 生成</td><td>89</td><td>19.1%</td><td>72.3%</td><td>0%</td></tr>
+      <tr><td class="text"><strong>MUSE 生成</strong></td><td><strong>310</strong></td><td><strong>90.0%</strong></td><td>8.0%</td><td><strong>8.0%</strong></td></tr>
+    </tbody>
+  </table>
+
+  <p>MUSE 的技能是全场最长、最"话痨"的——中位数 310 行，几乎是人类的两倍。但多出来的篇幅全花在刀刃上：输入输出 schema、验证器要的文件约定、失败模式、校验步骤。而且它是<em>唯一</em>会给技能生成单元测试的（8%），也是唯一以"自包含文本文档"为主的（90%）——Codex 和 Claude Code 更爱塞辅助脚本。有意思的对照：Codex 的技能绑定了大量脚本，等于绑定了特定的执行习惯，迁移时水土不服；MUSE 的技能更像一份写给"任何会读文档的 agent"的独立说明书——这大概就是迁移实验里那 14.66pp 与 −0.23pp 之间差距的结构性来源。质量审计还确认了一件事：50 个技能包里没有一个硬编码验证器期望输出、按任务 ID 分支或偷读答案文件——干净。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p><strong>给领域递了一张坐标系。</strong>"技能生命周期五阶段"（创建、记忆、管理、评估、精炼）此后成了组织技能研究的天然框架——任何新方法都能往这五个格子里对号入座，缺哪格补哪格。这张对比表本身就是这篇论文被大量后续工作引用的原因：它让"技能系统"从一堆名字各异的系统，变成一个有公共语言的研究领域。</p>
+  <p><strong>证明了技能是 agent 无关的资产。</strong>跨 agent 迁移实验此前几乎没人认真做过——文献里的"可移植"多数只是换个底层模型 backbone，或者同族产品的不同变体。MUSE 是第一个把生成的技能<em>原样注入另一个 agent</em>并做严格全任务评估的。51.90% 超过人类技能的 48.02%，这个数字宣告：技能的价值可以脱离"作者 agent"独立存在——技能市场在原理上成立。</p>
+  <p><strong>训练无关带来的可移植性。</strong>与 RL 路线（Skill1、SkillOS）相比，MUSE 完全在推理时运转、零微调。RL 路线的技能行为和训练出的策略/管理员耦合，换 backbone 要重训；MUSE 的技能换模型即插即用。这在模型以月为单位迭代的 2026 年，是实打实的工程优势。</p>
+  <p><strong>从论文走进生产线。</strong>这篇论文罕见的有一整节"真实部署"：字节跳动内部，<em>SkillMarket</em> 把技能创建管线开放给终端用户——一次成功的轨迹自动蒸馏成自测试的技能包，无需人工撰写；<em>ArkClaw</em> 把技能检索做成 find-skill 能力，让 agent 先找现有技能再造新的，还计划把整个 agent 封装成可调用的子技能；<em>SkillHub</em> 把完整生命周期做成托管服务，团队在一个地方存技能、评技能、管技能连同它们的专属记忆。论文作者的愿景很直白：未来开发者不再手搓 agent 流水线，而是<em>编排和版本化技能</em>，维护成本从胶水代码转移到持续评估的共享技能生态——agent 的能力随维护而复利，而不是随维护而磨损。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>论文的 Limitations 一节写得相当坦白，我把它整理成四条，外加一点延伸：</p>
+  <ul>
+    <li><strong>覆盖率是硬伤</strong>：75 个任务里 28 个没能生成可用技能（运维与规划 12 个、数据分析 9 个）。全任务分数被严重压低，"85.24% vs 81.17%"只对覆盖子集成立。</li>
+    <li><strong>同任务重评可能高估</strong>：每个自创技能都从单条成功轨迹蒸馏而来，又回到<em>同一个任务</em>上重评。验证器是确定性的、也做了泄漏检查，但这个协议天然有利于"记住这个任务"。作者自己承认这会"高估任务内增益"，并把 SkillLearnBench（独立实例、一次一评）定位为佐证而非合并证据——这份克制值得尊敬。</li>
+    <li><strong>迁移只测了一个方向</strong>：技能只迁入了 Hermes，四 agent 两两之间的完整迁移矩阵没做；每任务 5 次运行，单任务置信区间也偏宽。</li>
+    <li><strong>幻觉与过拟合风险仍在</strong>：HVAC 案例就是活证——技能可能编码不实的事实、脆弱的路径假设、过拟合源轨迹的启发式。单元测试和沙箱检查<em>降低</em>但不<em>消除</em>风险；高影响场景下，技能共享前仍需来源追踪、对抗测试和人工评审。</li>
+  </ul>
+  <p>往前看，路标其实已经画出来了：其一，从失败轨迹里提取"部分诊断技能"，别干等一次完全成功——这是对覆盖率瓶颈的直接回应；其二，与开放世界路线合流——MUSE 的经验蒸馏管"做过的事"，SkillAlchemy 的证据准入管"查到的事"，两条补给线迟早要接进同一座技能库；其三，把记忆从"每技能一本笔记"升级成持续沉淀的知识库——下一篇的主角，干的正是这件事。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>借这个位置把"技能与自进化"支线的全局地图再刷一遍：</p>
+  <ul>
+    <li><strong>环境反馈时代（2023 前后）</strong>：Reflexion（第 31 篇）让 agent 从环境反馈里口头反思；Voyager（第 36 篇）在《我的世界》里攒出第一个可执行技能库——"技能"概念诞生，但技能是环境专属的消耗品。</li>
+    <li><strong>经验蒸馏时代（2023–2025）</strong>：ExpeL、SkillGen、AutoSkill 把"做过的事"蒸馏成可复用课程。技能开始独立于环境，但仍是"生成即终点"的一次性工件。</li>
+    <li><strong>技能生态时代（2025–2026）</strong>：Anthropic 把 SKILL.md 推成事实标准，技能成了可分发商品；SkillsBench 划定"技能质量才是瓶颈"的问题域。</li>
+    <li><strong>资产化与开放世界时代（2026）</strong>：MUSE（本篇）宣布技能是全生命周期资产——可测试、可记忆、可迁移；OpenSkill（第 59 篇）打开开放世界的知识水龙头；SkillAlchemy（第 60 篇）给进水的知识加了三道证据关卡。<em>技能从"能生成"到"能养老"到"能验货"，基础设施的三块基石到齐了。</em></li>
+  </ul>
+  <p>有意思的是时间线的错位：这三篇论文的实际发表顺序是 MUSE（5 月）→ OpenSkill（6 月）→ SkillAlchemy（8 月），我们的系列按"法庭路线压轴"的戏剧结构倒着讲。但倒着看反而看得分明：经验蒸馏路线先把"技能的一生"跑通，开放世界路线再解决"新知识从哪来"，证据准入路线最后守住"进来的知识可信吗"——<em>一条生产线的三个车间，谁也替代不了谁</em>。下一步几乎注定是合流：能从经验里长、能从世界里学、进门要过安检的技能库。下期预告的那篇论文，正是合流的第一声号角。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p><strong>名字里藏着一枚希腊神话彩蛋。</strong>MUSE 展开是 <em class="latin">Memory-Utilizing Skill Evolution</em>，缩写恰好是"缪斯"——九位掌管艺术与科学的女神。而希腊神话里有个更妙的设定：缪斯的母亲，正是记忆女神谟涅摩叙涅（Mnemosyne）。<em>记忆孕育技艺</em>——团队给系统起这个名字，几乎不可能是巧合：给技能配记忆（.memory.md），让经验孕育出可复用的能力，神话结构和系统架构严丝合缝地互为镜像。顺便说，缪斯九姐妹各管一摊——史诗、历史、天文、悲剧、舞蹈……像不像一个按领域索引的技能库？</p>
+
+  <figure>
+    <!-- 图 6：记忆女神与缪斯趣味插图 -->
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow-f1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrow-f2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 记忆女神 -->
+        <circle cx="115" cy="115" r="52" fill="#24555A" fill-opacity="0.12" stroke="#24555A" stroke-width="1.5"/>
+        <text x="115" y="108" text-anchor="middle" fill="#24555A" font-weight="600">Mnemosyne</text>
+        <text x="115" y="126" text-anchor="middle" fill="#24555A" font-size="10">记忆女神</text>
+        <text x="115" y="190" text-anchor="middle" fill="#96897A" font-size="10">.memory.md · 长期记忆</text>
+        <text x="115" y="205" text-anchor="middle" fill="#96897A" font-size="10">短期记忆</text>
+
+        <!-- 九缪斯 = 技能库 -->
+        <g>
+          <circle cx="290" cy="62" r="15" fill="#ECE4D4" stroke="#96897A"/>
+          <circle cx="345" cy="62" r="15" fill="#ECE4D4" stroke="#96897A"/>
+          <circle cx="400" cy="62" r="15" fill="#ECE4D4" stroke="#96897A"/>
+          <circle cx="290" cy="118" r="15" fill="#ECE4D4" stroke="#96897A"/>
+          <circle cx="345" cy="118" r="17" fill="#B54A2C" fill-opacity="0.85" stroke="#B54A2C"/>
+          <text x="345" y="122" text-anchor="middle" fill="#F4EFE4" font-size="8.5">SKILL</text>
+          <circle cx="400" cy="118" r="15" fill="#ECE4D4" stroke="#96897A"/>
+          <circle cx="290" cy="174" r="15" fill="#ECE4D4" stroke="#96897A"/>
+          <circle cx="345" cy="174" r="15" fill="#ECE4D4" stroke="#96897A"/>
+          <circle cx="400" cy="174" r="15" fill="#ECE4D4" stroke="#96897A"/>
+        </g>
+        <text x="345" y="212" text-anchor="middle" fill="#96897A" font-size="10">九缪斯 = 按领域索引的技能库</text>
+
+        <!-- 迁移 -->
+        <rect x="530" y="88" width="130" height="56" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="595" y="111" text-anchor="middle" fill="#B54A2C" font-weight="600">别的 agent</text>
+        <text x="595" y="130" text-anchor="middle" fill="#B54A2C" font-size="10">Hermes · Codex …</text>
+        <text x="595" y="170" text-anchor="middle" fill="#96897A" font-size="10">技能走到哪</text>
+        <text x="595" y="185" text-anchor="middle" fill="#96897A" font-size="10">记忆跟到哪</text>
+      </g>
+      <line x1="167" y1="115" x2="272" y2="115" stroke="#96897A" marker-end="url(#arrow-f1)"/>
+      <text x="220" y="103" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#96897A">孕育</text>
+      <line x1="362" y1="118" x2="528" y2="116" stroke="#B54A2C" marker-end="url(#arrow-f2)"/>
+      <text x="448" y="105" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#B54A2C">迁移 51.90%</text>
+    </svg>
+    <figcaption><span class="fig-num">图 6</span> · 命名彩蛋：记忆女神谟涅摩叙涅孕育九缪斯——"记忆孕育技艺"，正是 MUSE 的架构隐喻</figcaption>
+  </figure>
+
+  <p><strong>给 Claude Code"换脑"的兼容桥。</strong>实验里最让懂行的人会心一笑的细节：为了让四个 agent 共享同一颗 GPT-5.5 大脑，团队给 Claude Code 架了一座兼容桥，把它的模型调用重路由过去。想象一下这个画面——Claude 的壳、GPT 的芯，同台竞技。这种"控制变量"级别的较真在 agent 论文里相当罕见，它把"到底是模型强还是系统强"这笔糊涂账，第一次算得明明白白。</p>
+  <p><strong>一支"实习生出品"的论文。</strong>首页脚注写着：这项工作完成于第一作者在字节 ByteBrain 团队实习期间。30 页、9 图、15 表、四个 agent 的全面对照、跨 agent 迁移、生产系统落地——一份实习答卷做到这个密度，多少有点"实习生文学"的新高度了。而通讯作者团队把它和 SkillMarket、ArkClaw、SkillHub 三个内部系统串成一条从研究到生产的证据链，这也是工业界论文最该有、却最少有的写法。</p>
+  <p><strong>刻舟求剑的现代版。</strong>HVAC 那次翻车（80% → 20%）值得再咀嚼一遍：源轨迹里的标定程序对着<em>那一次</em>的噪声数据调参，恰好好使；换个随机种子，方差一变，增益就飘了。两千多年前《吕氏春秋》记的那个楚国人，在船帮上刻下记号说"这是剑掉下去的地方"——他把一次性的观测当成了可复用的规律。MUSE 的教训如出一辙：<em>从单次经验里蒸馏技能，最大的风险不是记错，而是把偶然记成了必然。</em>论文把这一点写进审计结论而不是藏进附录，这种学术诚实本身就是加分项。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>合上论文，我最强的感受是一个会计学比喻：<em>MUSE 给 agent 记了第一本"资产负债表"。</em>此前的 agent 每次会话都是从零开始——经验是流水，流过即逝，能力全靠模型权重这一项"固定资产"。MUSE 之后，经验开始折旧入账：技能是资产（可增值、可迁移、可审计），记忆是折旧记录（哪个技能好使、哪个有坑），评估是审计（测试不过不入账），修剪是资产减值。85.24% 这个数字之所以能超过人类的 81.17%，本质上是因为<em>人类专家写技能是一次性投入，而 MUSE 的技能在使用中持续复利</em>——每用一次，笔记厚一分。</p>
+  <p>第二个感受是软件工程史的既视感。MUSE 的技能包生态，几乎逐条对应着现代软件供应链：<span class="mono">SKILL.md</span> 是 README 和接口文档，<span class="mono">tests/</span> 是 CI 流水线（测试不过不许发包），技能目录加渐进披露是包管理器的 registry，合并与修剪是依赖治理，跨 agent 迁移是"一次构建、处处运行"，而 SkillHub 就是 npm/PyPI 的 agent 版。回看软件史，工业级生态的爆发从来不是从"人人都会写代码"开始的，而是从"包管理 + 持续集成 + 注册中心"这三件套成熟开始的。<em>agent 生态现在凑齐的，恰好也是这三件套。</em>照这个节奏，"agent 界的 npm 时刻"可能比大多数人预想的近。</p>
+  <p>再往深处想一步：当技能可以脱离作者 agent 独立增值，"agent 的能力"这个概念本身就在改写。能力不再只住在权重里（出生定终身），而是分布在<em>权重 + 技能资产层</em>（后天可积累、可交易、可继承）。这引出一串此前不存在的问题：一个团队多年沉淀的技能库，产权归谁？技能市场上一条被投毒的技能，责任链怎么追？MUSE 的作者们只轻轻点了一句"技能会成为定义工作流的原语"——但资产化必然伴随治理问题，这块拼图还完全空着，大概率是未来两年这条线的主战场。</p>
+  <p>最后回到开头思考题的答案。四个缺口哪个最致命？实验给出的排序很可能是：<em>创建错位（缺口一）和技能表示质量 > 验证 > 记忆 > 上下文</em>。证据是迁移实验——同样的覆盖、同样的脑子，Codex 的技能一迁就死，MUSE 的技能一迁就活，差的正是"在运行时上下文里创建"这一条血脉。而你最初押的是哪个？如果押错了也别懊恼——这篇论文之前的整个赛道，几乎都押错了。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    设想三年后，你所在的团队有一个积累了两万条技能的 SkillHub，覆盖了你们业务的所有流程。某天底层模型换代，旧技能突然有一半开始失灵。按 MUSE 的设计，哪些机制会自动救场？哪些只能靠人？再想深一层：如果是"业务环境变了"而不是"模型变了"呢？——把你的答案和身边做工程的朋友对一对，你会发现这其实是一道关于"知识资产如何对抗熵增"的开放题。
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>WikiSkill: Compiling Agent Experience into Persistent Knowledge for Skill Evolution（WikiSkill：把 agent 经验编译成持久知识库，让技能与知识共同进化）</h3>
+    <p style="margin:0;">本篇 MUSE 给每个技能配了专属记忆——但那终究只是"每人一本的个人笔记本"。下一篇，一支工业界团队把格局打开：把经验编译成一座持久演化的知识库（wiki），技能每次升级都站在全库积累的知识上。他们的发现一个比一个反直觉：小模型带上进化出的技能，能打赢大了好几圈的模型裸奔；技能跨模型、跨家族迁移照样好使；最扎心的一条——<em>别的模型进化出来的技能，可能比你自己进化的还好用</em>。这句话等于当面宣告：决定技能价值的，是知识的沉淀方式，而不是谁的脑子。知识库与技能的"共同进化"长什么样？下期拆解。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 061 篇</span>
+    <span>2026-10-01</span>
+  </footer>
+
+</div>
+</body>
+</html>

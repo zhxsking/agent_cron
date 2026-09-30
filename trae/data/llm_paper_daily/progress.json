@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 60,
-  "last_run_date": "2026-09-30",
+  "last_index": 61,
+  "last_run_date": "2026-10-01",
   "papers_covered": [
     {
       "index": 1,
@@ -482,10 +482,18 @@
       "date": "2026-08-24",
       "era": "自博弈训练期 2025–",
       "filename": "60_20260930_SkillAlchemy.html"
+    },
+    {
+      "index": 61,
+      "title_en": "MUSE-Autoskill: Self-Evolving Agents via Skill Creation, Memory, Management, and Evaluation",
+      "title_zh": "MUSE-Autoskill：技能的一生——被创建、被测试、被记住、被传承，agent 的经验第一次沉淀成可复利的资产",
+      "date": "2026-05-26",
+      "era": "自博弈训练期 2025–",
+      "filename": "61_20261001_MUSE_Autoskill.html"
     }
   ],
   "next_preview": {
-    "title_en": "MUSE-Autoskill: Self-Evolving Agents via Skill Creation, Memory, Management, and Evaluation",
-    "title_zh": "MUSE-Autoskill：技能创建、记忆、管理、评估四位一体的自进化智能体"
+    "title_en": "WikiSkill: Compiling Agent Experience into Persistent Knowledge for Skill Evolution",
+    "title_zh": "WikiSkill：把 agent 经验编译成持久知识库，让技能与知识共同进化"
   }
 }
