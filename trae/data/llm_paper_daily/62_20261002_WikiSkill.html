@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WikiSkill 论文精读 · 大模型经典论文系列 #062</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  /* 中文没有真实斜体设计，混排斜体会被浏览器"伪斜体"强行倾斜 CJK 字形，
+     可读性差且违背"禁止伪斜体"的初衷。默认 <em> 用于中文/中英混排强调，
+     改用颜色+字重区分，不使用斜体。 */
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  /* 仅当强调内容是纯英文/拉丁字母（如论文英文标题、模型英文名等）时，
+     才使用 Lora 的真实 ital 轴斜体：<em class="latin">Attention</em> */
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#062</span>
+  </div>
+
+  <h1 class="title">
+    WikiSkill: Compiling Agent Experience into Persistent Knowledge for Skill Evolution
+    <span class="en">WikiSkill：给 agent 一本永不回滚的"维基"——经验被编译成知识，知识再长出技能</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Liyan Tang, Cyrus Rashtchian, Chun-Sung Ferng, Andrew Tomkins, Da-Cheng Juan, Tu Vu</span>
+    <span>机构：Google Research · Virginia Tech</span>
+    <span>发表：2026-08 / arXiv 2608.27454</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2608.27454" target="_blank" rel="noopener">arXiv</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">先看一个让人坐直身体的消融实验。同一套技能进化框架、同一个模型、同样跑满全部迭代次数，只动一个开关——把"技能提案者"阅读一本笔记的权限拿掉——平均成绩就从 63.7% 掉到 48.7%。整整 15.0 个百分点，不来自更大的模型、不来自更多的数据、也不来自更强的算法，全部来自<em>一本笔记本身</em>。这本笔记，论文里叫 <em class="latin">wiki</em>（维基）。</p>
+  <p class="lead">为什么一本笔记值 15 个点？回顾"技能"这条支线：Voyager（第 36 篇）攒出了第一个可执行技能库，Anthropic 把 <span class="mono">SKILL.md</span> 推成事实标准，OpenSkill（第 59 篇）打通了开放世界的知识来源，SkillAlchemy（第 60 篇）给搜来的知识加了证据关卡，上一篇 MUSE-Autoskill（第 61 篇）更是把"技能的一生"从创建到传承打理得明明白白。但这条线上的几乎所有框架都有一个共同的盲区：进化过程本身会产生海量洞察——"这个改法为什么被拒""这个错误上一轮不是已经见过了吗"——它们去哪了？答案是：<em>散落在优化历史的故纸堆里，下一轮从头考古，再踩一遍坑</em>。就像一家公司只保存"最终发布的操作手册"，却把所有复盘会议的纪要都扔进了碎纸机。</p>
+  <p class="lead">这篇来自 Google Research 与 Virginia Tech 的论文，回应了一个看似朴素的问题：能不能给 agent 配一本只增不减的维基，让经验沉淀成知识、让知识长出技能？他们的答案是一个三层架构加一个四角色循环，核心设计哲学浓缩成一句话就是——<em>技能可以回滚，知识永不回滚</em>。就凭这一点，9B 小模型"带着技能"在测试中打败了 27B 大模型"裸奔"。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    把 agent 的执行经验持续"编译"进一个永不回滚的持久知识库（wiki），让每一轮技能更新都站在沉淀知识的肩膀上——技能可回滚、知识永不丢。凭这个设计，WikiSkill 在 5 个基准、5 个模型上全面超越现有技能进化方法（EvoSkill、SkillOpt、Trace2Skill），甚至让 9B 小模型带着技能胜过 27B 大模型裸奔，而消融实验证明：那本"维基"本身就是 15 个百分点。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>"技能"这条支线走到 2026 年，已经把"技能从哪来"（Voyager 的轨迹总结、OpenSkill 的开放世界经验蒸馏、SkillAlchemy 的证据准入）和"技能怎么活"（MUSE-Autoskill 的全生命周期管理）都回答了个遍。但有一个更底层的问题始终没人正面回答：<em>进化过程中学到的东西，存在哪里？</em></p>
+  <p>现有框架的答案五花八门但都有共同缺陷：EvoSkill 把历次提案和评估结果累积成一份平铺的反馈历史；Trace2Skill 从执行轨迹里提炼教训后直接焊进技能文件；SkillOpt 靠被拒编辑的反馈和逐轮元指导来传递信息。它们的共同点是——<em>知识没有自己独立的表示</em>。洞察要么锁在技能文件里跟着技能一起被回滚，要么散落在优化日志里没人再看第二眼。用一个比喻：图书馆里只有"成书"（技能），既没有"原始档案库"（raw traces 的系统利用），更没有"百科全书"（沉淀的知识层）。</p>
+  <p>WikiSkill 补的正是这块拼图，而且来头有迹可循——论文开篇就致意了 Karpathy 在 2026 年 4 月那篇爆火的 <em class="latin">LLM Wiki</em> gist（我们在趣味延伸里细讲这段故事）。Karpathy 倡导"把经验编译成持久、可复利的知识"，WikiSkill 把这个理念从个人知识管理搬进了 agent 实验室，第一次让<em>持久知识库成为技能进化流水线中的一等公民</em>。它也是这条支线上第一篇正面回答"进化产出的知识如何组织与复用"的工作。</p>
+
+  <figure>
+    <!-- 图 1：大模型领域发展时间线，高亮本篇位置 -->
+    <svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="125" x2="665" y2="125" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 已解析里程碑：实心青点 -->
+        <circle cx="70" cy="125" r="6" fill="#24555A" fill-opacity="0.85" stroke="#24555A"/>
+        <text x="70" y="101" text-anchor="middle">2017</text>
+        <text x="70" y="152" text-anchor="middle" fill="#2E2A22">Transformer</text>
+        <text x="70" y="168" text-anchor="middle">#001</text>
+
+        <circle cx="178" cy="125" r="6" fill="#24555A" fill-opacity="0.85" stroke="#24555A"/>
+        <text x="178" y="101" text-anchor="middle">2023</text>
+        <text x="178" y="152" text-anchor="middle" fill="#2E2A22">Voyager 技能库</text>
+        <text x="178" y="168" text-anchor="middle">#036</text>
+
+        <circle cx="286" cy="125" r="6" fill="#24555A" fill-opacity="0.85" stroke="#24555A"/>
+        <text x="286" y="101" text-anchor="middle">2025</text>
+        <text x="286" y="152" text-anchor="middle" fill="#2E2A22">DeepSeek-R1 / AZR</text>
+        <text x="286" y="168" text-anchor="middle">#013 / #055</text>
+
+        <circle cx="400" cy="125" r="6" fill="#24555A" fill-opacity="0.85" stroke="#24555A"/>
+        <text x="400" y="101" text-anchor="middle">2026</text>
+        <text x="400" y="152" text-anchor="middle" fill="#2E2A22">技能进化线</text>
+        <text x="400" y="168" text-anchor="middle">#059–#061</text>
+
+        <!-- 本篇位置：高亮 -->
+        <circle cx="515" cy="125" r="9" fill="#B54A2C" stroke="#B54A2C"/>
+        <circle cx="515" cy="125" r="14" fill="none" stroke="#B54A2C" stroke-opacity="0.35"/>
+        <text x="515" y="95" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇位置</text>
+        <text x="515" y="152" text-anchor="middle" fill="#2E2A22" font-weight="600">WikiSkill</text>
+        <text x="515" y="168" text-anchor="middle">#062</text>
+
+        <circle cx="620" cy="125" r="6" fill="#24555A" fill-opacity="0.85" stroke="#24555A"/>
+        <text x="620" y="101" text-anchor="middle">2026-09</text>
+        <text x="620" y="152" text-anchor="middle" fill="#2E2A22">ReasoningBank</text>
+        <text x="620" y="168" text-anchor="middle">记忆路线</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的位置：技能进化支线的最新一站，也是"知识层"的起点</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>先把舞台搭好。所谓"技能进化"，如今已有一套相当标准的工作流：让 agent 在训练任务上跑一遍（rollout），分析成功与失败的轨迹，据此提出技能的新建或修改，再在验证集上把关——有效就保留，无效就回滚。三大 SOTA 基线各显神通：<em class="latin">EvoSkill</em> 把技能进化当作在候选程序前沿上的搜索，维护一份平铺的提案历史；<em class="latin">Trace2Skill</em> 用并行分析员拆解轨迹再层级合并补丁；<em class="latin">SkillOpt</em> 靠被拒编辑的反馈和逐轮元指导迭代。听起来都很合理，直到你问一个扎心的问题：</p>
+  <p>第 3 轮迭代里，提案者发现"模型总是把物品拿起来又放回原地，陷入死循环"，于是提议了一条规则，但验证集表现没涨，提案被拒。第 5 轮迭代里，<em>同一个死循环又出现了</em>——而此时，第 3 轮的根因分析、被拒提案的完整 diff、以及"这条规则为什么没用"的教训，分别躺在滚动覆盖的优化日志和被回滚的技能目录里。提案者两手空空，只能从零开始重新踩坑，甚至<em>再提一次一模一样注定失败的方案</em>。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    这就像维护一份代码：一种做法是每次改代码前，先从 <span class="mono">git blame</span> 里一行行考古出历史决策的蛛丝马迹；另一种做法是手边始终摊着一份<em>持续更新的设计文档</em>，为什么这么改、哪条路试过不行、下一步打算怎么办，全都白纸黑字写着。前者靠考古，后者靠积累。现有技能进化框架全是"考古派"，WikiSkill 要让 agent 当"积累派"。
+  </div>
+
+  <p>更深一层的问题是"回滚"的副作用。验证门控为了防止技能越改越糟，把不达标的修改连同其背后的洞察一起扔掉——<em>洗澡水和孩子一起倒掉了</em>。一次失败的提案里往往埋着对错误模式的深刻理解，恰恰是最该沉淀的知识。另外，只存成功案例的"高光集锦"式记忆也不行：失败信号才是教 agent 最多的东西。这就把需求逼到了一个很具体的位置：需要一个独立于技能、独立于日志、只增不减、还能被后续每一轮迭代直接引用的知识载体。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>把上面的痛点浓缩成一句话：<em>如何把 agent 在交互中积累的执行经验，系统性地沉淀为可复用、可迁移的持久知识，从而支撑长期、跨迭代的技能进化？</em></p>
+  <p>这个问题可以拆成三小问：第一，<em>沉淀什么</em>——原始轨迹、提炼知识、可执行技能，哪些该分开存放、哪些该合并归一？第二，<em>怎么组织</em>——知识以什么结构存放，才能既装得下失败教训，又让后续提案者查得快、用得上？第三，<em>怎么用</em>——知识层和技能层谁在台前、谁在幕后，各自的访问权限怎么划？这第三问尤其微妙，因为它暗藏一个反直觉的设计决策。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    假设进化到第 4 轮，你手里有一本记录了三轮教训的维基。现在有两个人选可以读它：A. 正在跑任务、直接决定成败的推理 agent；B. 负责改写技能文件的提案 agent。直觉上，"给干活的人看笔记"似乎更有用——你会把维基的阅读权限给谁？还是干脆两个人都给？先记住你的答案，第 05 节的消融实验会给出一个让人意外的结论。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>WikiSkill 的全貌可以概括为"<em>三层架构、四个角色、一条铁律</em>"。铁律你已经知道了：技能可回滚，wiki 永不回滚。下面从架构讲到循环。</p>
+
+  <h3>第一步：把工作区切成三层——经验、知识、技能各回各家</h3>
+  <p>WikiSkill 给 agent 的工作区划了三个互不越界的目录，对应三种性质完全不同的东西：</p>
+  <ul>
+    <li><span class="mono">raw/</span>（原始层）：存放每轮迭代产生的完整执行轨迹——推理过程、工具调用、调用结果、最终答案，一字不改。<em>不可变、只增不减</em>，相当于图书馆的原始档案库。</li>
+    <li><span class="mono">wiki/</span>（维基层）：整个框架的心脏。里面是一本持续维护的"维基"：<span class="mono">patterns/</span> 目录下是一个个模式页（pattern page），每页记录一种具体的失败模式或成功策略，附上可执行的解法；<span class="mono">logs.md</span> 是演化日志；<span class="mono">skill-impact.md</span> 是技能影响账本，程序化记录每次提案的 diff、验证分数和接受与否；<span class="mono">index.md</span> 是总目录。这一层<em>跨迭代持久、跨迭代复利</em>。</li>
+    <li><span class="mono">skills/</span>（技能层）：真正被推理 agent 在运行时加载的技能集。每个技能目录两个文件：<span class="mono">SKILL.md</span> 是技能正文（指令、适用条件），<span class="mono">PURPOSE.md</span> 则是一张"出生证明"——回链到催生它的维基模式页，说明<em>我为什么存在</em>。</li>
+  </ul>
+
+  <figure>
+    <!-- 图 2：三层知识架构 -->
+    <svg viewBox="0 0 700 400" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow-a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- Raw Layer -->
+        <rect x="60" y="30" width="440" height="72" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="58" font-weight="600">raw/ · 原始层</text>
+        <text x="80" y="80" fill="#96897A">完整执行轨迹 · 不可变 · 只增不减</text>
+        <text x="540" y="70" fill="#96897A">档案库</text>
+
+        <!-- Wiki Layer（高亮） -->
+        <rect x="60" y="160" width="440" height="96" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C" stroke-width="1.5"/>
+        <text x="80" y="188" fill="#B54A2C" font-weight="600">wiki/ · 维基层（核心创新）</text>
+        <text x="80" y="210" fill="#2E2A22">patterns/ 模式页 · logs.md 演化日志</text>
+        <text x="80" y="232" fill="#2E2A22">skill-impact.md 影响账本 · index.md 目录</text>
+        <text x="540" y="212" fill="#B54A2C" font-weight="600">永不回滚</text>
+
+        <!-- Skills Layer -->
+        <rect x="60" y="314" width="440" height="72" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="80" y="342" font-weight="600">skills/ · 技能层</text>
+        <text x="80" y="364" fill="#96897A">SKILL.md 技能正文 + PURPOSE.md 出生证明</text>
+        <text x="540" y="354" fill="#24555A">可回滚</text>
+
+        <!-- 层间箭头 -->
+        <line x1="240" y1="102" x2="240" y2="158" stroke="#96897A" stroke-width="1.2" marker-end="url(#arrow-a)"/>
+        <text x="252" y="136" fill="#96897A">编译：根因分析 / 策略提取</text>
+        <line x1="240" y1="256" x2="240" y2="312" stroke="#96897A" stroke-width="1.2" marker-end="url(#arrow-a)"/>
+        <text x="252" y="290" fill="#96897A">支撑：提案的依据与素材</text>
+
+        <!-- 右侧回路：技能注入推理 -->
+        <path d="M 500 350 C 640 350 640 66 504 66" fill="none" stroke="#24555A" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#arrow-a)"/>
+        <text x="612" y="208" fill="#24555A" text-anchor="middle">技能注入推理 agent</text>
+        <text x="612" y="226" fill="#96897A" text-anchor="middle">跑出新轨迹</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · 三层知识架构：轨迹被"编译"进维基，维基"支撑"技能生长，技能再注入推理——一个闭环</figcaption>
+  </figure>
+
+  <p>注意一个精妙的对称性：技能层是<em>可逆的</em>（验证不过就回滚），维基层是<em>只进不退的</em>（无论验证结果如何，新知识照单全收）。失败也留在账上——因为"知道哪条路不通"本身就是知识。</p>
+
+  <h3>第二步：四个角色跑一轮循环</h3>
+  <p>每一轮迭代，四个角色接力完成一次"经验 → 知识 → 技能"的转化：</p>
+  <ol>
+    <li><strong>推理 agent（Inference Agent）</strong>：带着当前技能集在训练任务上跑轨迹。技能全文直接注入系统提示词（沿用先前工作的全量注入设定，排除检索失败等干扰变量）。<em>铁面无私的一条：训练 rollout 期间禁止阅读维基</em>——为什么，第五节揭晓。</li>
+    <li><strong>维基维护员（Wiki Maintainer）</strong>：拿到采样后的轨迹子集（每轮最多 8 条：至多 5 条失败的做根因分析 + 至多 3 条成功的做策略提取，单条日志截断在 15,000 字符以防撑爆上下文），在现有维基上做<em>增量补丁式编辑</em>——新建模式页、给旧模式页补充新证据、修订解法，同时更新目录、追加演化日志。</li>
+    <li><strong>技能提案者（Skill Proposer）</strong>：一个多轮 <em class="latin">ReAct</em> 式的自主 agent。初始只拿到维基目录、技能影响账本和一份简洁的任务成败摘要，然后<em>按需</em>用 <span class="mono">read_file</span> 工具去深挖具体的模式页和原始轨迹，自己决定看什么、看多深。产出是一条<em>原子提案</em>：一次只新建一个技能，或只给一个已有技能打补丁。</li>
+    <li><strong>门控与回滚（Gating and Rollback）</strong>：提案应用后得到候选技能集，在验证集上跑分。只有<em>严格超过历史最佳</em>才接受；否则回滚技能。但无论接受与否，这条提案的 diff、验证分数和结论都会被程序化地记进维基的影响账本——给未来的提案者留一份"此路不通"或"此路可通"的官方档案。</li>
+  </ol>
+
+  <div class="formula-block">
+    $$S_k \leftarrow \begin{cases}S'_k & \text{if } \mathcal{R}(\mathcal{T}_{\text{val},k}) > \mathcal{R}_{\text{best}}\\[2pt] S_{k-1} & \text{otherwise}\end{cases}$$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>其中 $S'_k = \text{Apply}(S_{k-1}, P_k)$ 是应用提案 $P_k$ 后的候选技能集，$\mathcal{R}(\mathcal{T}_{\text{val},k})$ 是验证集得分，$\mathcal{R}_{\text{best}}$ 是历史最佳。接受则刷新 $\mathcal{R}_{\text{best}}$；拒绝则回滚到 $S_{k-1}$。<em>但维基 $W_k$ 不出现在这个公式里——因为它从不参与回滚</em>。每轮收尾，外层循环还会把提案结果写回维基，完成状态转移 $W_{k-1} \to W_k$。整个循环最多跑 8 轮；若验证集拿到满分则提前终止。</p>
+
+  <figure>
+    <!-- 图 3：进化循环流程图 -->
+    <svg viewBox="0 0 700 430" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow-b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="arrow-c" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 推理 agent -->
+        <rect x="30" y="30" width="200" height="64" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="130" y="57" text-anchor="middle" font-weight="600">① 推理 agent</text>
+        <text x="130" y="78" text-anchor="middle" fill="#96897A">注入技能 · 禁读维基</text>
+
+        <!-- raw -->
+        <rect x="290" y="30" width="180" height="64" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="380" y="57" text-anchor="middle" font-weight="600">raw/ 轨迹</text>
+        <text x="380" y="78" text-anchor="middle" fill="#96897A">采样 8 条 / 轮</text>
+
+        <!-- wiki maintainer -->
+        <rect x="520" y="30" width="150" height="64" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="595" y="57" text-anchor="middle" font-weight="600">② 维基维护员</text>
+        <text x="595" y="78" text-anchor="middle" fill="#96897A">根因分析</text>
+
+        <!-- wiki -->
+        <rect x="520" y="180" width="150" height="70" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C" stroke-width="1.5"/>
+        <text x="595" y="209" text-anchor="middle" fill="#B54A2C" font-weight="600">wiki/ 维基</text>
+        <text x="595" y="230" text-anchor="middle" fill="#B54A2C">持久 · 永不回滚</text>
+
+        <!-- proposer -->
+        <rect x="290" y="180" width="180" height="70" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="380" y="209" text-anchor="middle" font-weight="600">③ 技能提案者</text>
+        <text x="380" y="230" text-anchor="middle" fill="#96897A">ReAct · 按需读档</text>
+
+        <!-- proposal -->
+        <rect x="60" y="180" width="170" height="70" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="145" y="209" text-anchor="middle" font-weight="600">原子提案 P_k</text>
+        <text x="145" y="230" text-anchor="middle" fill="#96897A">新建 / 补丁一个技能</text>
+
+        <!-- gating -->
+        <rect x="30" y="330" width="250" height="70" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A" stroke-width="1.2"/>
+        <text x="155" y="357" text-anchor="middle" fill="#24555A" font-weight="600">④ 验证门控</text>
+        <text x="155" y="378" text-anchor="middle" fill="#24555A">验证集严格更优 → 接受</text>
+
+        <!-- skills -->
+        <rect x="360" y="330" width="200" height="70" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="460" y="357" text-anchor="middle" font-weight="600">skills/ 技能集</text>
+        <text x="460" y="378" text-anchor="middle" fill="#96897A">否则回滚 · wiki 保留</text>
+
+        <!-- arrows -->
+        <line x1="230" y1="62" x2="288" y2="62" stroke="#96897A" stroke-width="1.2" marker-end="url(#arrow-b)"/>
+        <line x1="470" y1="62" x2="518" y2="62" stroke="#96897A" stroke-width="1.2" marker-end="url(#arrow-b)"/>
+        <line x1="595" y1="94" x2="595" y2="178" stroke="#96897A" stroke-width="1.2" marker-end="url(#arrow-b)"/>
+        <line x1="518" y1="215" x2="472" y2="215" stroke="#96897A" stroke-width="1.2" marker-end="url(#arrow-b)"/>
+        <line x1="290" y1="215" x2="232" y2="215" stroke="#96897A" stroke-width="1.2" marker-end="url(#arrow-b)"/>
+        <line x1="145" y1="250" x2="145" y2="328" stroke="#96897A" stroke-width="1.2" marker-end="url(#arrow-b)"/>
+        <line x1="280" y1="365" x2="358" y2="365" stroke="#96897A" stroke-width="1.2" marker-end="url(#arrow-b)"/>
+        <!-- 回路：技能回到推理 agent -->
+        <path d="M 620 330 C 690 240 690 120 232 62" fill="none" stroke="#B54A2C" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#arrow-c)"/>
+        <text x="665" y="140" fill="#B54A2C" text-anchor="middle">进入第 k+1 轮</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · WikiSkill 进化循环：每轮"跑任务 → 维护维基 → 提案技能 → 验证门控"，技能可回滚、维基只增不减</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>实验的铺面相当扎实：<strong>5 个基准</strong>覆盖五种能力——数学推理（LiveMath）、网络搜索（SealQA）、表格操作（SpreadSheet）、长文档问答（OfficeQA）、具身交互任务（ALFWorld）；<strong>5 个模型</strong>横跨开源与闭源——Qwen-3.5-4B/9B、Qwen-3.6-27B、Gemma-4-31B、Gemini-3.5-Flash；对手是三大 SOTA 基线加"无技能"对照。每个设置独立跑 3 次完整进化取平均，再用 1000 次配对 bootstrap 检验显著性（p&lt;0.05）。</p>
+
+  <table>
+    <thead>
+      <tr><th>推理模型</th><th>无技能</th><th>Trace2Skill</th><th>EvoSkill</th><th>SkillOpt</th><th>WikiSkill</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">Qwen-3.5-4B</td><td>26.2</td><td>32.1</td><td>33.7</td><td>35.2</td><td><b>38.5</b></td></tr>
+      <tr><td class="text">Qwen-3.5-9B</td><td>29.9</td><td>36.7</td><td>42.3</td><td>40.2</td><td><b>47.4</b></td></tr>
+      <tr><td class="text">Qwen-3.6-27B</td><td>39.4</td><td>47.3</td><td>53.3</td><td>50.7</td><td><b>63.3</b></td></tr>
+      <tr><td class="text">Gemma-4-31B</td><td>41.3</td><td>45.8</td><td>43.4</td><td>49.1</td><td><b>54.9</b></td></tr>
+      <tr><td class="text">Gemini-3.5-Flash</td><td>49.5</td><td>55.6</td><td>56.1</td><td>55.9</td><td><b>68.1</b></td></tr>
+    </tbody>
+  </table>
+
+  <figure>
+    <!-- 图 4：主结果条形图 -->
+    <svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#96897A">
+        <!-- 网格线 -->
+        <line x1="60" y1="190.4" x2="690" y2="190.4" stroke="#96897A" stroke-opacity="0.25" stroke-dasharray="3 3"/>
+        <text x="52" y="194" text-anchor="end">20</text>
+        <line x1="60" y1="127.6" x2="690" y2="127.6" stroke="#96897A" stroke-opacity="0.25" stroke-dasharray="3 3"/>
+        <text x="52" y="131" text-anchor="end">40</text>
+        <line x1="60" y1="64.8" x2="690" y2="64.8" stroke="#96897A" stroke-opacity="0.25" stroke-dasharray="3 3"/>
+        <text x="52" y="68" text-anchor="end">60</text>
+        <line x1="60" y1="260" x2="690" y2="260" stroke="#96897A"/>
+
+        <!-- 图例 -->
+        <rect x="250" y="16" width="14" height="14" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="270" y="27" fill="#2E2A22">无技能</text>
+        <rect x="350" y="16" width="14" height="14" fill="#B54A2C" fill-opacity="0.75"/>
+        <text x="370" y="27" fill="#2E2A22">WikiSkill</text>
+
+        <!-- Qwen-3.5-4B -->
+        <rect x="89" y="181.4" width="32" height="78.6" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="105" y="176" text-anchor="middle" fill="#96897A">26.2</text>
+        <rect x="125" y="144.5" width="32" height="115.5" fill="#B54A2C" fill-opacity="0.75"/>
+        <text x="141" y="139" text-anchor="middle" fill="#B54A2C" font-weight="600">38.5</text>
+        <text x="123" y="280" text-anchor="middle" fill="#2E2A22">Qwen-3.5</text>
+        <text x="123" y="296" text-anchor="middle" fill="#2E2A22">4B</text>
+
+        <!-- Qwen-3.5-9B -->
+        <rect x="215" y="170.1" width="32" height="89.9" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="231" y="165" text-anchor="middle" fill="#96897A">29.9</text>
+        <rect x="251" y="117.8" width="32" height="142.2" fill="#B54A2C" fill-opacity="0.75"/>
+        <text x="267" y="112" text-anchor="middle" fill="#B54A2C" font-weight="600">47.4</text>
+        <text x="249" y="280" text-anchor="middle" fill="#2E2A22">Qwen-3.5</text>
+        <text x="249" y="296" text-anchor="middle" fill="#2E2A22">9B</text>
+
+        <!-- Qwen-3.6-27B -->
+        <rect x="341" y="141.8" width="32" height="118.2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="357" y="137" text-anchor="middle" fill="#96897A">39.4</text>
+        <rect x="377" y="70.1" width="32" height="189.9" fill="#B54A2C" fill-opacity="0.75"/>
+        <text x="393" y="65" text-anchor="middle" fill="#B54A2C" font-weight="600">63.3</text>
+        <text x="375" y="280" text-anchor="middle" fill="#2E2A22">Qwen-3.6</text>
+        <text x="375" y="296" text-anchor="middle" fill="#2E2A22">27B</text>
+
+        <!-- Gemma-4-31B -->
+        <rect x="467" y="136.1" width="32" height="123.9" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="483" y="131" text-anchor="middle" fill="#96897A">41.3</text>
+        <rect x="503" y="95.3" width="32" height="164.7" fill="#B54A2C" fill-opacity="0.75"/>
+        <text x="519" y="90" text-anchor="middle" fill="#B54A2C" font-weight="600">54.9</text>
+        <text x="501" y="280" text-anchor="middle" fill="#2E2A22">Gemma-4</text>
+        <text x="501" y="296" text-anchor="middle" fill="#2E2A22">31B</text>
+
+        <!-- Gemini-3.5-Flash -->
+        <rect x="593" y="111.5" width="32" height="148.5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="609" y="106" text-anchor="middle" fill="#96897A">49.5</text>
+        <rect x="629" y="55.7" width="32" height="204.3" fill="#B54A2C" fill-opacity="0.75"/>
+        <text x="645" y="50" text-anchor="middle" fill="#B54A2C" font-weight="600">68.1</text>
+        <text x="627" y="280" text-anchor="middle" fill="#2E2A22">Gemini-3.5</text>
+        <text x="627" y="296" text-anchor="middle" fill="#2E2A22">Flash</text>
+
+        <!-- 9B+技能 > 27B裸奔 标注 -->
+        <line x1="267" y1="117.8" x2="357" y2="141.8" stroke="#24555A" stroke-width="1" stroke-dasharray="4 3"/>
+        <text x="312" y="108" text-anchor="middle" fill="#24555A">9B + 技能 &gt; 27B 裸奔</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 五个模型的平均准确率（%）：无技能 vs WikiSkill（表 1 数据）</figcaption>
+  </figure>
+
+  <h3>发现一：全面、且稳定地赢</h3>
+  <p>五个模型上，WikiSkill 的平均分全部第一。比每个模型身后的最强竞品还分别高出 3.3、5.1、10.0、5.8、12.0 个点。更难得的是"稳"：对手们的发挥像坐过山车——EvoSkill 在 Qwen-9B 的 LiveMath 上大杀四方（28.2% → 58.1%），到 Gemma-4-31B 上同一基准却<em>不升反降</em>（33.9% → 29.8%）；SkillOpt 在 Gemini Flash 的 SealQA 上也倒退（29.4% → 28.2%）。WikiSkill 在几乎所有模型-基准组合上都是正增益。单点爆发靠运气，处处开花靠的是"每轮都站在知识肩膀上"的结构优势。</p>
+
+  <h3>发现二：技能进化与模型缩放是"互补品"</h3>
+  <p>一个漂亮的规律浮出水面：在 Qwen 家族内，WikiSkill 的平均增益随模型规模递增——4B +12.3、9B +17.5、27B +23.9 个点。在 SpreadSheet 上最夸张，27B 模型直接涨了 40.9 个点。<em>越强的模型，从技能进化中获益越大</em>——这不是一项只拯救弱模型的技术，而是与模型缩放并肩的另一条增长曲线。反过来也成立：小模型带技能可以越级挑战——Qwen-3.5-9B + WikiSkill 拿到 47.4%，把无技能的 Qwen-3.6-27B（39.4%）斩落马下；连 4B + 技能（38.5%）都几乎追平 27B 裸奔。如果你关心部署成本，这就是那句老话的新版本：<em>与其买更大的脑子，不如给它一本更好的笔记本</em>。</p>
+
+  <h3>发现三：技能可以跨模型"移植"，而且别人家的可能更好</h3>
+  <p>跨模型迁移实验的结果有两层意外。第一层：WikiSkill 进化出的技能跨模型、跨家族迁移都有效。第二层更反直觉：<em>别的模型进化出的技能，常常比自己进化的还好用</em>。</p>
+
+  <table>
+    <thead>
+      <tr><th>执行模型（任务）</th><th>无技能</th><th>自进化技能</th><th>外来技能</th><th>外来技能来源</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">Qwen-3.5-9B（ALFWorld）</td><td>34.7</td><td>63.4</td><td><b>70.2</b></td><td class="text">Qwen-3.6-27B</td></tr>
+      <tr><td class="text">Gemma-4-31B（LiveMath）</td><td>33.9</td><td>56.7</td><td><b>73.1</b></td><td class="text">Qwen-3.5-4B</td></tr>
+      <tr><td class="text">Gemini-3.5-Flash（LiveMath）</td><td>33.0</td><td>72.6</td><td><b>73.9</b></td><td class="text">Qwen-3.6-27B</td></tr>
+      <tr><td class="text">Gemini-3.5-Flash（SpreadSheet）</td><td>50.5</td><td>76.6</td><td>18.1 ⚠</td><td class="text">Qwen-3.5-4B</td></tr>
+    </tbody>
+  </table>
+
+  <p>看第二行：4B 小模型进化出的数学技能，给 31B 的 Gemma 用，从 33.9% 拉到 73.1%——比自己进化的 56.7% 高出 16 个点。<em>小模型进化的技能反而更牛</em>，为什么？论文的解释是：小模型自身能力有限，被迫把每一步都写成明确、通用、不依赖模型内功的详细程序——而恰恰是这种"傻瓜式"的显式知识，放到大模型身上如虎添翼。这引出一个重要洞察：<em>发现好知识和执行好知识是两种可以分离的能力</em>。</p>
+  <p>但迁移也有翻车现场（第四行）：4B 进化的 SpreadSheet 技能把 Gemini Flash 从 50.5% 拖到 18.1%。错误分析找到两个原因：小模型的技能里塞满了"单行 Python 命令、字符串转换规则"这类低级 workaround，它们帮小模型避免执行失败，却<em>捆住了强模型的手脚</em>，让它不敢写端到端的完整脚本；碎片化的诊断流程还引入冗余工具调用，把强模型的交互预算提前耗尽。可见技能分两种：<em>通用程序性知识</em>（越迁移越香）和<em>模型特异的补丁</em>（一迁移就毒）。怎么让 wiki 多沉淀前者、少沉淀后者，是这条路线下一个值得挖的富矿。</p>
+
+  <h3>消融：那本维基值 15 个点，而且不能给错人</h3>
+  <p>回到开篇的悬念。消融实验在 Gemini-3.5-Flash 上做了 2×2 组合：推理 agent 和提案者各自有没有维基阅读权。结论有两个：</p>
+
+  <table>
+    <thead>
+      <tr><th>配置（推理 / 提案者）</th><th>LiveMath</th><th>SpreadSheet</th><th>五基准均值</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">无技能基线</td><td>33.0</td><td>50.5</td><td>40.4</td></tr>
+      <tr><td class="text">都不给读维基</td><td>43.8</td><td>44.4</td><td>45.3</td></tr>
+      <tr><td class="text">仅推理读（提案者无）</td><td>51.3</td><td>49.9</td><td>48.7</td></tr>
+      <tr><td class="text">双开</td><td>64.8</td><td>80.2</td><td>60.9</td></tr>
+      <tr><td class="text">仅提案者读（默认）</td><td><b>72.6</b></td><td><b>76.6</b></td><td><b>63.7</b></td></tr>
+    </tbody>
+  </table>
+
+  <figure>
+    <!-- 图 5：消融结果条形图 -->
+    <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11.5" fill="#2E2A22">
+        <!-- 网格 -->
+        <line x1="180" y1="40" x2="180" y2="268" stroke="#96897A"/>
+        <line x1="330" y1="40" x2="330" y2="268" stroke="#96897A" stroke-opacity="0.25" stroke-dasharray="3 3"/>
+        <text x="330" y="288" text-anchor="middle" fill="#96897A">20</text>
+        <line x1="480" y1="40" x2="480" y2="268" stroke="#96897A" stroke-opacity="0.25" stroke-dasharray="3 3"/>
+        <text x="480" y="288" text-anchor="middle" fill="#96897A">40</text>
+        <line x1="630" y1="40" x2="630" y2="268" stroke="#96897A" stroke-opacity="0.25" stroke-dasharray="3 3"/>
+        <text x="630" y="288" text-anchor="middle" fill="#96897A">60</text>
+
+        <!-- 无技能基线 -->
+        <text x="170" y="66" text-anchor="end">无技能基线</text>
+        <rect x="180" y="50" width="303" height="24" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="492" y="67" fill="#96897A">40.4</text>
+
+        <!-- 都不给读 -->
+        <text x="170" y="111" text-anchor="end">都不给读维基</text>
+        <rect x="180" y="95" width="340" height="24" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="529" y="112" fill="#96897A">45.3</text>
+
+        <!-- 仅推理读 -->
+        <text x="170" y="156" text-anchor="end">仅推理读</text>
+        <rect x="180" y="140" width="365" height="24" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="554" y="157" fill="#96897A">48.7</text>
+
+        <!-- 双开 -->
+        <text x="170" y="201" text-anchor="end">双开（都读）</text>
+        <rect x="180" y="185" width="457" height="24" fill="#24555A" fill-opacity="0.18" stroke="#24555A"/>
+        <text x="646" y="202" fill="#24555A">60.9</text>
+
+        <!-- 默认 -->
+        <text x="170" y="246" text-anchor="end" fill="#B54A2C" font-weight="600">仅提案者读（默认）</text>
+        <rect x="180" y="230" width="478" height="24" fill="#B54A2C" fill-opacity="0.75"/>
+        <text x="667" y="247" fill="#B54A2C" font-weight="600">63.7</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 消融实验（Gemini-3.5-Flash，五基准平均准确率 %）：维基给提案者读是 15 个点的差距来源；给推理 agent 读反而掉分</figcaption>
+  </figure>
+
+  <p>第一，<em>维基本身就是增益的来源</em>：提案者失去维基访问权（同时移除维护员，知识不再跨轮积累）后，均值从 63.7% 掉到 48.7%——正是开篇那 15 个点。没有沉淀下来的知识，提案者在疑难杂症面前就是无头苍蝇。</p>
+  <p>第二，回答第 03 节的思考题：<em>给推理 agent 开维基阅读权，是帮倒忙</em>。双开配置 60.9%，比默认的 63.7% 低了 2.8 个点，LiveMath 上更是从 72.6% 掉到 64.8%。论文的假设很精彩：推理 agent 如果能直接读维基，一些任务知识会"走捷径"直接从维基进入轨迹，<em>轨迹本身反而变得没有信息量了</em>——你观察不到 agent 在没有维基帮助时的真实挣扎，也就分析不出它到底哪里不会。这就像让学生开卷考试，你再也看不出他哪些知识点没掌握。知识的正确用法是"喂给教练"，而不是"塞给选手"。</p>
+
+  <h3>案例解剖：一条技能的三轮进化史</h3>
+  <p>ALFWorld（具身家务任务）上 Qwen-3.6-27B 的案例把整个机制讲活了。一个反复出现的错误是：agent 拿起物品、查看、放下、又挪走，陷入"拿起-放下"死循环。</p>
+
+  <figure>
+    <!-- 图 6：案例研究时间线 -->
+    <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow-d" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <line x1="60" y1="130" x2="650" y2="130" stroke="#96897A" stroke-width="1.2" marker-end="url(#arrow-d)"/>
+
+        <!-- Iter 0 -->
+        <circle cx="130" cy="130" r="7" fill="#ECE4D4" stroke="#96897A" stroke-width="1.5"/>
+        <line x1="130" y1="123" x2="135" y2="118" stroke="#96897A" stroke-width="1.5"/>
+        <line x1="130" y1="137" x2="135" y2="142" stroke="#96897A" stroke-width="1.5"/>
+        <text x="130" y="105" text-anchor="middle" fill="#96897A">第 0 轮</text>
+        <text x="130" y="163" text-anchor="middle" fill="#2E2A22">模式页：take-examine-move-loop.md</text>
+        <text x="130" y="180" text-anchor="middle" fill="#B54A2C">提案 goal-directed-action ✗ 被拒</text>
+        <text x="130" y="197" text-anchor="middle" fill="#96897A">教训记入影响账本</text>
+
+        <!-- Iter 1 -->
+        <circle cx="330" cy="130" r="8" fill="#B54A2C" fill-opacity="0.8"/>
+        <text x="330" y="105" text-anchor="middle" fill="#96897A">第 1 轮</text>
+        <text x="330" y="163" text-anchor="middle" fill="#2E2A22">新技能：break-repetition-loop</text>
+        <text x="330" y="180" text-anchor="middle" fill="#24555A">规则：Never Return an Item</text>
+        <text x="330" y="197" text-anchor="middle" fill="#24555A">to Its Origin Location ✓ 接受</text>
+
+        <!-- Iter 4 -->
+        <circle cx="530" cy="130" r="8" fill="#B54A2C" fill-opacity="0.8"/>
+        <text x="530" y="105" text-anchor="middle" fill="#96897A">第 4 轮</text>
+        <text x="530" y="163" text-anchor="middle" fill="#2E2A22">新证据：multi-operation-loop.md</text>
+        <text x="530" y="180" text-anchor="middle" fill="#24555A">增补：Each Operation Type</text>
+        <text x="530" y="197" text-anchor="middle" fill="#24555A">ONCE Per Item ✓ 接受</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 6</span> · ALFWorld 案例的技能进化时间线：第 0 轮的失败教训被维基留档，直接孕育了第 1 轮的成功技能，第 4 轮继续精炼</figcaption>
+  </figure>
+
+  <p>注意这条时间线里的因果链：第 0 轮提案失败，但<em>失败本身被维基留了档</em>（提案 diff + 拒绝原因记入 skill-impact.md）；第 1 轮的提案者读过这份档案，知道"泛泛的目标导向规则没用"，于是提出了一条具体可执行的规则——"绝不把物品放回原位"——一击即中；此后新的死循环变体出现，维基同步累积新证据，到第 4 轮技能增补"每种操作对同一物品只做一次"，继续通过验证。<em>技能在成长，而支撑它成长的每一步证据都查得到出处</em>——PURPOSE.md 里写得明明白白。这已经不是"生成技能"，而是"栽培技能"。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>第一，它给"技能进化"补上了缺失的知识层，把此前隐式的问题显式化了：EvoSkill 们的优化历史是"副产品"，WikiSkill 的维基是"主资产"。论文的消融把这一点锤死了——15 个点的差距不是来自更聪明的提案者，而是来自<em>把学过的东西留下来</em>这件朴素的事。</p>
+  <p>第二，它分离了两种能力：发现知识（skill discovery）与执行知识（skill execution）。跨模型迁移实验表明，这两者可以由不同的模型分担——弱模型进化出的显式知识，强模型执行起来如虎添翼。工程含义直接写在脸上：<em>一次进化，处处分发</em>。与其给每个部署的模型各跑一条进化流水线，不如让"最会写技能的模型"维护一本公共维基，全团队共享。</p>
+  <p>第三，它把"部署后自提升"这条 2026 年的主线又向前推了一步：不碰模型权重，靠外部资产持续变强。与微软的 EvoLib（演进库）、Self-Harness（自改挽具）以及 Google 自家的 ReasoningBank（推理记忆）一起，WikiSkill 代表了一个正在合流的方向——<em>agent 的经验不再是一次性消费品，而是可以复利的资产</em>。参数缩放买的是"天赋"，测试时算力买的是"思考时间"，而持久知识库攒的是"资历"——三条曲线，可以叠加。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>论文的 Limitations 一节写得相当坦诚，四条硬伤都指向未来的活儿：</p>
+  <ul>
+    <li><strong>全量注入，未测检索</strong>：为隔离技能质量这一变量，所有技能全文塞进提示词。技能一多，检索与触发的开销和失败率就成了新问题——而这恰恰是真实系统绕不开的。</li>
+    <li><strong>严格门控的副作用</strong>：只有"立即涨分"的提案才被接受，那些"本轮持平、下轮发力"的中性提案会被一刀切掉。进化因此偏保守，可能错过需要多步铺垫的复杂改进。</li>
+    <li><strong>维基只增不减</strong>：论文自己承认，随着进化轮次拉长，模式页、日志、diff 会无限累积，缺一个自动修剪机制。人类维基靠编辑吵架来去重删减，agent 的维基还没长出这个器官。</li>
+    <li><strong>没有超长程任务</strong>：基准里最长的任务也就几十步交互。真正的软件工程任务动辄数百步、数小时，如何在单次超长 rollout 内在线更新知识，还是空白。</li>
+  </ul>
+  <p>另外从迁移实验也能读出一个未解难题：wiki 会同时沉淀"通用程序"和"模型特异补丁"，前者是蜜、后者是毒，但目前的机制并不区分它们。为知识打上"通用性"标签，或许会成为这条路线的下一个关键发明。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把镜头拉远，这个领域对"知识"的处理方式经历了几次搬家：<em>预训练时代</em>，知识搬进参数，一次训练终身受用，但更新昂贵且不透明；<em>对齐与应用时代</em>，指令跟随让参数里的知识能被"唤醒"，可新知识还是进不去；<em>推理范式时代</em>（第 20–23 篇），思维链把"思考过程"临时外化，用完即弃；<em>agent 时代</em>（第 35 篇起），工具与环境给了模型"动手"的能力；<em>技能支线</em>（第 36、59–61 篇），程序性知识终于搬进了文件系统——可复用、可审计、可分发。</p>
+  <p>WikiSkill 站在这个脉络的最新一格：在"技能"之外，又给<em>陈述性知识与经验教训</em>安了一个永久的家。至此，agent 的"外置知识栈"凑齐了三层——一次性思考（思维链）、程序性知识（技能）、复利型经验（维基）。它与 ReasoningBank 的"记忆路线"、EvoLib 的"库路线"正在从三个方向逼近同一件事：让经验不再蒸发。下一次范式的候选词，也许就是"<em>经验复利</em>"。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>这篇论文的灵感源头值得单独讲一段。2026 年 4 月，Andrej Karpathy——就是那个Transformer 时代反复出现在我们系列里的 Karpathy——在 GitHub 上发了一份只有几页的 gist，标题就叫 <em class="latin">LLM Wiki</em>。核心主张一句话：<em>别让 LLM 每次都从原始资料里重新发现知识，先让它把知识整理进一套持续维护的维基</em>。他把个人知识库切成三层：raw 层放原始资料（PDF、笔记、书签，只读不改）；wiki 层是 LLM 亲手写的 markdown（摘要、概念页、交叉引用）；再加一份 schema 教 LLM 怎么维护这套维基。这份 gist 迅速拿下五千多星，"第二大脑"社区为之沸腾，因为分工设计实在优雅——<em>你读，LLM 写</em>（You read it; the LLM writes it）。</p>
+  <p>WikiSkill 的作者们读到这份 gist 后问了一个漂亮的问题：既然个人知识可以这么"编译"，<em>agent 的经验为什么不行？</em>于是 raw 层变成了执行轨迹，wiki 层变成了模式页，schema 变成了外层循环的调度代码，而"你"变成了跑任务的推理 agent。一篇顶会级别的系统论文，骨架竟来自一份工程师博客式的 gist——这大概是"研究品味"最好的注脚之一。</p>
+  <p>另一个耐人寻味的细节在作者名单里。本文的六位作者来自 Google Research 和 Virginia Tech，而被 WikiSkill 明确击败的基线之一 EvoSkill，正出自本文资深作者 Tu Vu 所在团队的先前工作——连 EvoSkill 用的 OfficeQA 基准和任务划分都被 WikiSkill 原封不动继承了下来。<em>用自己的新框架打败自己的旧框架</em>，这在大模型史上从来都是好故事的固定开头。顺带一提，第一作者 Liyan Tang 也是 agent 评测领域的老熟人，此前以 InfiAgent、DABStep 等工作为人所知。</p>
+
+  <figure>
+    <!-- 图 7：趣味插图：经验的复利 -->
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11.5" fill="#2E2A22">
+        <!-- 坐标 -->
+        <line x1="70" y1="200" x2="640" y2="200" stroke="#96897A"/>
+        <line x1="70" y1="200" x2="70" y2="40" stroke="#96897A" marker-end="url(#arrow-e)"/>
+        <text x="640" y="220" text-anchor="end" fill="#96897A">迭代轮次 →</text>
+        <text x="80" y="36" fill="#96897A">累积知识</text>
+
+        <!-- 散落历史：锯齿虚线 -->
+        <path d="M 100 180 L 160 120 L 220 175 L 280 115 L 340 170 L 400 110 L 460 165 L 520 105" fill="none" stroke="#96897A" stroke-width="1.6" stroke-dasharray="6 4"/>
+        <text x="300" y="88" fill="#96897A" text-anchor="middle">散落的优化历史：每轮从零考古</text>
+
+        <!-- wiki：复利上升曲线 -->
+        <path d="M 100 185 C 240 183 380 150 520 55" fill="none" stroke="#B54A2C" stroke-width="2.4"/>
+        <text x="520" y="42" fill="#B54A2C" text-anchor="middle" font-weight="600">持久 wiki：知识复利</text>
+
+        <!-- 终点小书 -->
+        <rect x="540" y="132" width="34" height="26" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <line x1="548" y1="140" x2="566" y2="140" stroke="#B54A2C"/>
+        <line x1="548" y1="148" x2="566" y2="148" stroke="#B54A2C"/>
+        <text x="557" y="172" fill="#B54A2C" text-anchor="middle" font-size="10">wiki/</text>
+      </g>
+      <defs>
+        <marker id="arrow-e" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><span class="fig-num">图 7</span> · 经验的两种命运：散落即蒸发（虚线锯齿），沉淀即复利（实线爬升）</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>读完这篇论文，我最强烈的感受是：它其实在讲一个经济学故事。参数缩放的边际成本越来越高——下一代大模型的训练费用以亿计；测试时算力按 token 收费，每一分"多想一会儿"都是真金白银。而维基式知识积累的边际成本几乎为零：反正轨迹已经跑出来了，多写几页 markdown 而已。<em>15 个点买一叠 markdown 文件，这可能是 2026 年性价比最高的一笔交易。</em>"经验复利"完全有资格成为继参数缩放、测试时算力之后的第三条增长曲线——而且是一条几乎免费、可以和前两条叠加的曲线。</p>
+  <p>对每天维护 prompt 库、技能库、SOP 文档的从业者，这篇论文还有一个扎心的镜像问题：你维护的那些库，是不是也只有"成书"没有"维基"？每次改 prompt 靠 git blame 考古、每次踩过的坑在下一个项目里重新踩一遍——我们人类自己，何尝不是那个没有持久知识库的 agent。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    维基只增不减，短期是复利，长期是膨胀——模式页越攒越多、影响账本越记越长，提案者的上下文窗口总有装不下的一天。人类维基靠"编辑互殴"来去重和删减条目，agent 的维基该靠什么？一个会"遗忘"的维基和一个"全记"的维基，哪个会让技能进化走得更快？如果让你设计一个维基修剪 agent，它的验收标准应该长什么样？
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>ReasoningBank: Scaling Agent Self-Evolving with Reasoning Memory（ReasoningBank：把成功的推理策略存进"记忆银行"，让 agent 在测试时按需检索自己的经验）</h3>
+    <p style="margin:0;">WikiSkill 用"维基"沉淀经验、再编译成技能——知识是静态文件，进场要靠全量注入。但 Google 的另一支团队反其道而行：不写文件，建"银行"——把每次任务里证明有效的推理策略存成一笔笔"存款"，遇到新问题时按需检索最相关的几笔来花。静态维基 vs 动态记忆，编译路线 vs 检索路线，两条路线正在 2026 年正面相遇——而他们发现的最反直觉的事情是：给记忆配上一种特别的测试时缩放，效果竟能超过模型本身变大。这场"维基与银行的对决"，下期见分晓。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 062 篇</span>
+    <span>2026-10-02</span>
+  </footer>
+
+</div>
+</body>
+</html>
