@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 62,
-  "last_run_date": "2026-10-02",
+  "last_index": 63,
+  "last_run_date": "2026-10-03",
   "papers_covered": [
     {
       "index": 1,
@@ -496,12 +496,20 @@
       "title_en": "WikiSkill: Compiling Agent Experience into Persistent Knowledge for Skill Evolution",
       "title_zh": "WikiSkill：给 agent 一本永不回滚的“维基”——经验被编译成知识，知识再长出技能",
       "date": "2026-08-27",
-      "era": "经验复利期 2026–",
+      "era": "经验复利期 2025–",
       "filename": "62_20261002_WikiSkill.html"
+    },
+    {
+      "index": 63,
+      "title_en": "ReasoningBank: Scaling Agent Self-Evolving with Reasoning Memory",
+      "title_zh": "ReasoningBank：把推理策略存进“记忆银行”——成功是存款，失败也是存款，agent 在测试时越用越聪明",
+      "date": "2025-09-29",
+      "era": "经验复利期 2025–",
+      "filename": "63_20261003_ReasoningBank.html"
     }
   ],
   "next_preview": {
-    "title_en": "ReasoningBank: Scaling Agent Self-Evolving with Reasoning Memory",
-    "title_zh": "ReasoningBank：把成功的推理策略存进“记忆银行”，让 agent 在测试时按需检索自己的经验"
+    "title_en": "Agent KB: Leveraging Cross-Domain Experience for Agentic Problem Solving",
+    "title_zh": "Agent KB：让经验跨越领域与框架流动——从一个人的记忆银行，到所有 agent 的共享知识库"
   }
 }

@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReasoningBank 论文精读 · 大模型经典论文系列 #063</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#063</span>
+  </div>
+
+  <h1 class="title">
+    ReasoningBank: Scaling Agent Self-Evolving with Reasoning Memory
+    <span class="en">ReasoningBank：把推理策略存进"记忆银行"——成功是存款，失败也是存款，agent 在测试时越用越聪明</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Siru Ouyang, Jun Yan, I-Hung Hsu, Yanfei Chen, et al.</span>
+    <span>机构：Google Cloud AI Research · UIUC · Yale</span>
+    <span>发表：2025-09 · arXiv 2509.25140 · ICLR 2026</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2509.25140" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/google-research/reasoning-bank" target="_blank" rel="noopener">GitHub</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">想象一位入职第一百天的员工：他知道打印室在负一层、知道给财务报销单前先找主管签"第三方审批"那一栏、知道上周那个"改个按钮颜色"的需求其实牵扯三个仓库。而隔壁那位 AI 助手，今天在购物网站上用了一个太宽泛的搜索词、被几百个无关商品淹死，明天遇到几乎一样的任务——又原样淹死一次。它入职了多少天，就"第一天"了多少天：不是它笨，是它<em>没有"昨天"</em>。</p>
+  <p class="lead">上一篇我们读完了 WikiSkill：agent 给自己写一本"维基"，把经验编译成知识、知识再长出技能。文末埋了一个悬念——Google 的另一支团队反其道而行：不写书，<em>开银行</em>。这一篇，我们就来兑现这场"维基 vs 银行"的对决。而比赛中最反直觉的发现是：这家银行里最值钱的存款，竟然是<em>失败</em>。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    给 agent 开一家"记忆银行"：把每次任务（无论成败）的推理策略蒸馏成一张张"存单"，新任务来了按需检索、用完再存——不训练、不微调、不需要任何真实标签，agent 在纯测试阶段越用越聪明；再配上 MaTTS 缩放，"记忆"本身成为继参数、算力之后的第三条缩放曲线。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>把本系列最近十篇连起来看，一条主线已经浮出水面：<em>agent 如何不靠人喂数据、自己攒本事</em>。Absolute Zero 让模型自博弈出题 (#55)，R-Zero 把出题人和解题人拆成两个模型 (#56)，OpenSkill、SkillAlchemy、MUSE-Autoskill 一路把"技能"从网上海选、证据准入、沉淀传承 (#59–#61)，直到 WikiSkill 把经验编译成一本永不回滚的维基 (#62)。</p>
+  <p>但这条线上的大部分工作都有一个共同前提：<em>要有"训练"这一步</em>——要么强化学习更新权重，要么 SFT 蒸馏新数据。ReasoningBank 把这个前提也扔掉了：权重一个字节都不动，全部发生在测试时（test-time）。任务像流水一样一件件到来，agent 一边干活一边把经验存进外挂的记忆库，干得越久越老练。它承接了"经验沉淀"的叙事，却又另辟一条<em>零训练、纯检索</em>的路线；更重要的是，它第一次把"记忆驱动的经验缩放"（memory-driven experience scaling）郑重其事地摆上台面——在大模型领域，一件东西被称为"新的缩放维度"，基本等同于拿到了一张长期饭票。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="tl-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="130" x2="680" y2="130" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="10.5" fill="#96897A">
+        <!-- 2017 Transformer -->
+        <circle cx="70" cy="130" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="70" y="108" text-anchor="middle">2017</text>
+        <text x="70" y="156" text-anchor="middle">Transformer #001</text>
+        <!-- 2020 GPT-3 -->
+        <circle cx="170" cy="130" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="170" y="108" text-anchor="middle">2020</text>
+        <text x="170" y="156" text-anchor="middle">GPT-3 #004</text>
+        <!-- 2022 InstructGPT -->
+        <circle cx="265" cy="130" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="265" y="108" text-anchor="middle">2022</text>
+        <text x="265" y="156" text-anchor="middle">InstructGPT #006</text>
+        <!-- 2023 LLaMA -->
+        <circle cx="355" cy="130" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="355" y="108" text-anchor="middle">2023</text>
+        <text x="355" y="156" text-anchor="middle">LLaMA #007</text>
+        <!-- 2024 o1 -->
+        <circle cx="445" cy="130" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="445" y="108" text-anchor="middle">2024</text>
+        <text x="445" y="156" text-anchor="middle">o1 推理 #020</text>
+        <!-- 2025 自进化 -->
+        <circle cx="530" cy="130" r="5" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="530" y="108" text-anchor="middle">2025</text>
+        <text x="530" y="156" text-anchor="middle">自进化 #055+</text>
+        <!-- 本篇 -->
+        <circle cx="612" cy="130" r="9" fill="#B54A2C"/>
+        <text x="612" y="96" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇 2025-09</text>
+        <text x="612" y="158" text-anchor="middle" fill="#2E2A22" font-weight="600">ReasoningBank #063</text>
+        <!-- 未来 -->
+        <circle cx="678" cy="130" r="4" fill="none" stroke="#96897A" stroke-dasharray="2 2"/>
+        <text x="678" y="112" text-anchor="middle">下一站</text>
+      </g>
+      <!-- 已解析区段高亮 -->
+      <line x1="70" y1="176" x2="612" y2="176" stroke="#24555A" stroke-width="2" opacity="0.35"/>
+      <text x="341" y="192" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#24555A" opacity="0.8">─── 本系列已精读覆盖的演进区段 ───</text>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的 ReasoningBank：从"训练时进化"迈向"测试时进化"的转折点</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>论文开篇戳破了一个行业默契的尴尬：agent 越来越多被部署在"持久岗位"上——长期挂机的客服、常年值守的运维助手、每天处理工单的编码 agent。它们天然会遇到一条源源不断的任务流。但现实是，绝大多数 agent 把每个新任务都当成孤岛处理，于是注定三件事：<em>重复过去犯过的错、丢弃相关问题上攒下的洞察、永远无法随着时间变强</em>。</p>
+  <p>"给它加个记忆不就行了？"——加记忆这件事，此前有两大门派。第一派存<em>原始轨迹</em>，代表作 Synapse：把整段交互历史原封不动塞回上下文，像新员工入职发一盘自己上周工作的完整录像带；第二派存<em>成功例程</em>，代表作 AWM（Agent Workflow Memory）：从成功轨迹里归纳出可复用的工作流，像把老师的操作步骤印成 SOP 合订本。作者毫不客气地指出这两派的两个死穴：</p>
+  <ul>
+    <li><em>提炼不出可迁移的"打法"</em>：录像带和 SOP 都绑死了具体任务的具体步骤，换个网站、换个问法就对不上号；</li>
+    <li><em>只存成功，不存失败</em>：仿佛一家只进账不错账的账房——而 agent 自己踩过的坑，恰恰是它最了解、最不该浪费的信息。</li>
+  </ul>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    存原始轨迹，是给新司机发一箱行车记录仪硬盘；存成功工作流，是发一本《倒车入库九步法》。而老师傅带徒弟时真正传的，是那种一句顶一万句的心得："这个路口的左转道在右边，别信导航。"——<em>高层的、可迁移的、带教训的推理策略</em>，才是记忆该存的东西。ReasoningBank 这个名字起得也讲究：不叫 Memory Base，不叫 Knowledge Pool，偏偏叫 Bank（银行）——存款生息、越滚越多，取的时候还能挑最相关的一笔来花。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>把背景压缩成一个问题：<em>在任务流式到来、且没有任何真实标签的纯测试阶段，agent 如何从自己的成败轨迹中，自动蒸馏出可迁移的推理策略，并让这些策略真正被后续任务用上？</em></p>
+  <p>注意两个苛刻的约束。其一，"流式"：第 N 个任务来的时候，你不知道第 N+1 个是什么，记忆只能边干边攒；其二，"无标签"：不像训练数据有标准答案，测试时没人告诉你刚才那单干得对不对——agent 必须自己给自己发"绩效评定"。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    先别往下翻。一家记忆银行如果要接纳"失败轨迹"入库，第一个技术障碍是什么？——没有标签，agent 怎么知道某次交互算失败？就算判出来了，把"我是怎么错的"存起来，对下一个任务真的有正收益，还是只是往库里灌噪音？记住你的答案，我们到实验部分对账。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>ReasoningBank 的整体设计有一种"刻意做减法"的美感：整个框架只有一张存单格式、三个闭环步骤、外加一个缩放开关。作者在脚注里专门声明——检索和巩固环节故意用最朴素的实现，好让所有增益都能归因于<em>记忆内容本身</em>。</p>
+
+  <h3>第一步：定好存单格式（Memory Schema）</h3>
+  <p>每条记忆项是一张三段式的"存单"：<em>标题</em>（title，一句话点破核心策略，相当于存单上的户名）、<em>描述</em>（description，一句话摘要，柜员扫一眼就知道这笔钱是什么来路）、<em>内容</em>（content，蒸馏出的推理步骤、决策依据或操作要点，即本金）。关键设计在于：存的是<em>打法</em>而不是<em>过程</em>——"这个网站的高级搜索藏在哪里"这种执行细节被刻意抽象掉，留下"先收窄搜索范围再动手"这类换一个网站也成立的策略。</p>
+
+  <h3>第二步：跑通存取闭环（Retrieval → Extraction → Consolidation）</h3>
+  <p>新任务到来时，agent 先用嵌入相似度在记忆库里检索最相关的经验（默认只取 top-1，对，就一条），把存单内容注入系统指令，并附上一句很有分寸感的话："这些是我过去积累的经验，你觉得相关就用，不相关就忽略。"</p>
+  <p>任务做完后，进入整个框架最精彩的一步——<em>提取</em>。首先，LLM-as-a-Judge 出场：同一个模型换上裁判的身份，只看任务描述、交互轨迹和最终状态，输出"成功/失败"的二值判定，全程不需要任何真实标签。然后按判定结果分两条提取路线：</p>
+  <ul>
+    <li><em>成功轨迹</em>：追问"为什么会成"，把偶然踩中的好运和真实有效的策略区分开，提炼出验证过的打法；</li>
+    <li><em>失败轨迹</em>：追问"为什么栽了"，做反事实反思，提炼出预防性教训——"下次遇到类似情况，先别这么干"。</li>
+  </ul>
+  <p>每条轨迹最多提取三条记忆项（防止存单泛滥），最后简单地追加进记忆库——不剪枝、不去重、不合并。用公式写出来，这个闭环朴素得近乎天真：</p>
+
+  <div class="formula-block">
+    $$\mathcal{M}_{t+1} \;=\; \mathcal{M}_t \;\cup\; \text{Extract}\big(\text{Judge}(\tau_t),\,\tau_t\big), \qquad a_{t+1} \sim \pi_{\mathcal{L}}\big(\cdot \,\big|\, \text{TopK}(\mathcal{M},\,q),\, q\big)$$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>左边是"干完活存钱"：第 $t$ 个任务的轨迹 $\tau_t$ 先过裁判，再按成败分路提取，并入记忆库 $\mathcal{M}$。右边是"接活先取钱"：新任务 $q$ 来了，检索最相关的几条记忆，作为额外指令喂给策略 $\pi_{\mathcal{L}}$。一存一取，就是 ReasoningBank 的全部。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 400" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="rb-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="rb-arrow-a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 任务流 -->
+        <rect x="20" y="40" width="110" height="66" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="75" y="68" text-anchor="middle">任务流</text>
+        <text x="75" y="88" text-anchor="middle" fill="#96897A">q1 → q2 → …</text>
+        <!-- agent -->
+        <rect x="185" y="40" width="150" height="66" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="260" y="68" text-anchor="middle">Agent</text>
+        <text x="260" y="88" text-anchor="middle" fill="#96897A">与环境交互</text>
+        <!-- 轨迹 -->
+        <rect x="390" y="40" width="140" height="66" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="460" y="68" text-anchor="middle">轨迹 τt</text>
+        <text x="460" y="88" text-anchor="middle" fill="#96897A">思考+动作序列</text>
+        <!-- judge -->
+        <rect x="390" y="170" width="140" height="56" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="460" y="193" text-anchor="middle" fill="#24555A" font-weight="600">LLM-as-a-Judge</text>
+        <text x="460" y="211" text-anchor="middle" fill="#24555A">自判成败·无标签</text>
+        <!-- 提取：成功/失败两路 -->
+        <rect x="180" y="278" width="170" height="58" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="265" y="300" text-anchor="middle" fill="#B54A2C" font-weight="600">成功 → 提炼"为什么会成"</text>
+        <text x="265" y="320" text-anchor="middle" fill="#96897A" font-size="11">验证过的策略</text>
+        <rect x="380" y="278" width="170" height="58" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="465" y="300" text-anchor="middle" fill="#B54A2C" font-weight="600">失败 → 追问"为什么栽了"</text>
+        <text x="465" y="320" text-anchor="middle" fill="#96897A" font-size="11">预防性教训（更值钱）</text>
+        <!-- 记忆银行 -->
+        <rect x="20" y="170" width="130" height="166" rx="2" fill="#ECE4D4" stroke="#B54A2C" stroke-width="1.5"/>
+        <text x="85" y="196" text-anchor="middle" fill="#B54A2C" font-weight="600">记忆银行</text>
+        <text x="85" y="216" text-anchor="middle" fill="#96897A" font-size="11">title / desc /</text>
+        <text x="85" y="232" text-anchor="middle" fill="#96897A" font-size="11">content 三件套</text>
+        <text x="85" y="258" text-anchor="middle" fill="#96897A" font-size="11">— 存单 1 —</text>
+        <text x="85" y="276" text-anchor="middle" fill="#96897A" font-size="11">— 存单 2 —</text>
+        <text x="85" y="294" text-anchor="middle" fill="#96897A" font-size="11">— 存单 3 —</text>
+        <text x="85" y="322" text-anchor="middle" fill="#24555A" font-size="11">简单追加·不剪枝</text>
+        <!-- 箭头：任务流→agent→轨迹 -->
+        <line x1="130" y1="73" x2="185" y2="73" stroke="#96897A" stroke-width="1" marker-end="url(#rb-arrow)"/>
+        <line x1="335" y1="73" x2="390" y2="73" stroke="#96897A" stroke-width="1" marker-end="url(#rb-arrow)"/>
+        <!-- 轨迹→judge -->
+        <line x1="460" y1="106" x2="460" y2="170" stroke="#96897A" stroke-width="1" marker-end="url(#rb-arrow)"/>
+        <!-- judge→两路提取 -->
+        <line x1="425" y1="226" x2="320" y2="278" stroke="#96897A" stroke-width="1" marker-end="url(#rb-arrow)"/>
+        <line x1="485" y1="226" x2="470" y2="278" stroke="#96897A" stroke-width="1" marker-end="url(#rb-arrow)"/>
+        <!-- 两路→银行 -->
+        <line x1="265" y1="336" x2="130" y2="300" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#rb-arrow-a)"/>
+        <line x1="380" y1="336" x2="140" y2="316" stroke="#B54A2C" stroke-width="1.2" marker-end="url(#rb-arrow-a)"/>
+        <!-- 银行→agent 检索（闭环） -->
+        <path d="M 85 170 L 85 73 L 185 73" fill="none" stroke="#B54A2C" stroke-width="1.4" stroke-dasharray="5 3" marker-end="url(#rb-arrow-a)"/>
+        <text x="152" y="60" text-anchor="middle" fill="#B54A2C" font-size="11" font-weight="600">取：检索 top-k 注入指令</text>
+        <text x="40" y="366" font-size="11" fill="#96897A">存：新经验不断入行</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · ReasoningBank 闭环：任务驱动交互，轨迹过"自判成败"的裁判，成功提炼策略、失败提炼教训，双双存入银行；新任务再从银行取款——一存一取，永不停业</figcaption>
+  </figure>
+
+  <h3>第三步：给银行配一台"复利机"（MaTTS）</h3>
+  <p>到这里，ReasoningBank 已经是一家能自我造血的银行了。但作者往前多推了一步：测试时缩放（test-time scaling）——就是 o1 那套"给更多算力多想一会儿"的思路（本系列 #20、#21）——能不能和记忆搭出化学反应？</p>
+  <p>直接组合的问题在于<em>浪费</em>：朴素做法（vanilla TTS）让同一道题跑 $k$ 条轨迹，每条独立入库，彼此老死不相往来。可"同一道题的五种解法"之间最宝贵的东西恰恰是<em>对比信号</em>——为什么路径 A 成了、路径 B 栽了？差在哪一步？于是作者提出 MaTTS（Memory-aware Test-Time Scaling），两种玩法：</p>
+  <ul>
+    <li><em>并行缩放</em>：同一任务并行走 $k$ 条轨迹，然后让模型做"自我对比"（<em class="latin">self-contrast</em>）——多条轨迹摆在一起找共性、挑出偶发的侥幸解，再统一提炼入库。像棋手复盘时把五盘棋谱摊开对照着看。</li>
+    <li><em>串行缩放</em>：一条轨迹走完不打烊，迭代"自我精炼"（<em class="latin">self-refine</em>），而且精炼过程中写下的中间检查笔记也一并入库——那些没进最终答案的中间推理、半途的纠错，全是有价值的一手信号。</li>
+  </ul>
+
+  <figure>
+    <svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="mt-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="mt-arrow-a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11.5" fill="#2E2A22">
+        <!-- (a) vanilla TTS -->
+        <text x="120" y="28" text-anchor="middle" fill="#96897A" font-weight="600">(a) 朴素 TTS：各存各的</text>
+        <rect x="40" y="48" width="52" height="20" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="100" y="48" width="52" height="20" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="160" y="48" width="52" height="20" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="126" y="92" text-anchor="middle" fill="#96897A">k 条轨迹互不相识</text>
+        <line x1="66" y1="68" x2="66" y2="130" stroke="#96897A" stroke-width="1" marker-end="url(#mt-arrow)"/>
+        <line x1="126" y1="68" x2="126" y2="130" stroke="#96897A" stroke-width="1" marker-end="url(#mt-arrow)"/>
+        <line x1="186" y1="68" x2="186" y2="130" stroke="#96897A" stroke-width="1" marker-end="url(#mt-arrow)"/>
+        <rect x="55" y="132" width="142" height="22" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="126" y="147" text-anchor="middle">独立入库 ×k</text>
+        <text x="126" y="188" text-anchor="middle" fill="#96897A">对比信号被浪费 ✗</text>
+        <!-- (b) parallel -->
+        <text x="360" y="28" text-anchor="middle" fill="#24555A" font-weight="600">(b) 并行缩放：先对比再入库</text>
+        <rect x="290" y="48" width="52" height="20" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="350" y="48" width="52" height="20" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="410" y="48" width="52" height="20" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <path d="M 316 68 L 316 96 L 372 96" fill="none" stroke="#24555A" stroke-width="1"/>
+        <path d="M 376 68 L 376 96" fill="none" stroke="#24555A" stroke-width="1"/>
+        <path d="M 436 68 L 436 96 L 380 96" fill="none" stroke="#24555A" stroke-width="1"/>
+        <rect x="302" y="100" width="150" height="24" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="377" y="116" text-anchor="middle" fill="#24555A" font-weight="600">self-contrast 自对比</text>
+        <line x1="377" y1="124" x2="377" y2="150" stroke="#24555A" stroke-width="1" marker-end="url(#mt-arrow)"/>
+        <rect x="292" y="152" width="170" height="22" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="377" y="167" text-anchor="middle" fill="#B54A2C" font-weight="600">共性=可靠 · 分歧=噪声</text>
+        <text x="377" y="192" text-anchor="middle" fill="#96897A">对比信号榨干 ✓</text>
+        <!-- (c) sequential -->
+        <text x="600" y="28" text-anchor="middle" fill="#B54A2C" font-weight="600">(c) 串行缩放：边走边记</text>
+        <rect x="530" y="48" width="140" height="22" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="600" y="63" text-anchor="middle">初版轨迹</text>
+        <line x1="600" y1="70" x2="600" y2="92" stroke="#96897A" stroke-width="1" marker-end="url(#mt-arrow)"/>
+        <rect x="530" y="94" width="140" height="22" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="600" y="109" text-anchor="middle" fill="#24555A">检查 → 修正 → 再检查</text>
+        <line x1="600" y1="116" x2="600" y2="138" stroke="#96897A" stroke-width="1" marker-end="url(#mt-arrow)"/>
+        <rect x="530" y="140" width="140" height="22" rx="2" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="600" y="155" text-anchor="middle" fill="#B54A2C" font-weight="600">中间笔记也入库</text>
+        <text x="600" y="192" text-anchor="middle" fill="#96897A">半途的纠错不浪费 ✓</text>
+        <!-- 底部飞轮 -->
+        <rect x="150" y="222" width="420" height="52" rx="2" fill="#ECE4D4" stroke="#B54A2C" stroke-width="1.2"/>
+        <text x="360" y="243" text-anchor="middle" fill="#B54A2C" font-weight="600">复利飞轮：好记忆 → 引导更多样的探索 → 更强的对比信号 → 更好的记忆</text>
+        <text x="360" y="263" text-anchor="middle" fill="#96897A" font-size="11">记忆与测试时缩放互相放大，1+1 &gt; 2</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · MaTTS 的三种形态：朴素 TTS 把对比信号白白扔掉；并行缩放先对比再入库，串行缩放连中间笔记都入库——存进去的每一笔都带着"利息"</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>实验覆盖两大场景、三个基准：网页浏览（WebArena 684 个任务、Mind2Web 1341 个任务）和软件工程（SWE-Bench-Verified 500 个真实 GitHub issue），三个骨干模型（Gemini-2.5-Flash / Gemini-2.5-Pro / Claude-3.7-Sonnet）。先看总账：</p>
+
+  <table>
+    <thead>
+      <tr><th>基准 · 骨干模型</th><th>无记忆</th><th>最强基线</th><th>ReasoningBank</th><th>+MaTTS</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">WebArena 整体 · Flash</td><td>40.5</td><td>44.1 (AWM)</td><td>48.8</td><td>51.8</td></tr>
+      <tr><td class="text">WebArena 整体 · Pro</td><td>46.7</td><td>47.7 (Synapse)</td><td>53.9</td><td>56.3</td></tr>
+      <tr><td class="text">WebArena 整体 · Claude-3.7</td><td>41.7</td><td>42.6 (Synapse)</td><td>46.3</td><td>48.8</td></tr>
+      <tr><td class="text">SWE-Bench-Verified · Flash</td><td>34.2</td><td>35.4 (Synapse)</td><td>38.8</td><td>—</td></tr>
+      <tr><td class="text">SWE-Bench-Verified · Pro</td><td>54.0</td><td>53.4 (Synapse)</td><td>57.4</td><td>—</td></tr>
+      <tr><td class="text">WebArena-Shopping · Gemma-3-12B</td><td>17.1</td><td>21.4 (AWM)</td><td>24.1</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <p>三个骨干模型上整体成功率最高提升 8.3 个百分点（相对提升约 20%），而且在需要跨网站迁移的 Multi 子集上，AWM 不仅没赚到还倒贴，ReasoningBank 却稳定增益——策略级记忆的迁移性肉眼可见。更有意思的是最后一行：换上区区 12B 的开源小模型 Gemma-3，成功率从 17.1 拉到 24.1（相对提升 41%）。<em>模型越小，记忆越香</em>——这对算力紧张的开发者是个大好消息。</p>
+  <p>但真正的重头戏，是回答开头思考题的两张"对账单"。</p>
+
+  <h3>对账单一：失败存款到底值不值钱？</h3>
+  <p>在 WebArena-Shopping 上做消融：只用成功轨迹建记忆 vs 成败兼收。结果相当戏剧化：</p>
+
+  <table>
+    <thead>
+      <tr><th>记忆方法</th><th>只存成功</th><th>成败兼收</th><th>结论</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">Synapse（存原始轨迹）</td><td>40.6</td><td>41.7</td><td class="text">失败基本是噪音</td></tr>
+      <tr><td class="text">AWM（存成功工作流）</td><td>44.4</td><td>42.2</td><td class="text">失败反而有毒 ↓</td></tr>
+      <tr><td class="text">ReasoningBank</td><td>46.5</td><td>49.7</td><td class="text">失败是正资产 ↑</td></tr>
+    </tbody>
+  </table>
+
+  <p>同样一批失败轨迹，放进别人家记忆里是毒药，放进 ReasoningBank 里是补药。差别就在提取环节：Synapse 和 AWM 只会原样复读或归纳流程，失败轨迹里的错误操作也被当成"经验"复述出去；而 ReasoningBank 对失败走的是<em>反事实反思</em>路线，存进来的不是"我干了什么"，而是"下次别这么干"。<em>失败存款的利息，取决于你怎么记账。</em></p>
+
+  <h3>对账单二：记忆和缩放，谁放大谁？</h3>
+  <p>MaTTS 的缩放实验（WebArena-Shopping，缩放因子 $k$ 从 1 到 5）给出了一个漂亮的双向验证。看 BoN（五条轨迹里挑最好）这一头：<em>记忆越好，算力越不白花</em>——无记忆时五条轨迹只把 39.0 抬到 42.2；配上 ReasoningBank，同样五条轨迹能抬到 55.1。再看 Pass@1（记忆巩固后随机抽一条的平均质量）这一头：<em>缩放反过来也喂养记忆</em>——Synapse 和 AWM 在缩放下几乎原地踏步（40.6→41.2、44.4→45.5），ReasoningBank 却从 49.7 涨到 53.0。弱记忆配多算力是<em>收益递减</em>，强记忆配多算力是<em>复利循环</em>。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 左：BoN 柱状图 -->
+        <text x="180" y="24" text-anchor="middle" font-weight="600" fill="#24555A">BoN@k=5：记忆越好，算力越不白花</text>
+        <line x1="60" y1="210" x2="330" y2="210" stroke="#96897A"/>
+        <!-- 无记忆 39→42.2 -->
+        <rect x="75" y="127.4" width="30" height="82.6" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="107" y="121.6" width="30" height="88.4" fill="#96897A" opacity="0.45"/>
+        <text x="106" y="228" text-anchor="middle" fill="#96897A">无记忆</text>
+        <text x="106" y="244" text-anchor="middle" fill="#96897A" font-size="10">39.0→42.2</text>
+        <!-- Synapse 40.6→44.4 -->
+        <rect x="165" y="124.9" width="30" height="85.1" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="197" y="117.1" width="30" height="92.9" fill="#96897A" opacity="0.45"/>
+        <text x="196" y="228" text-anchor="middle" fill="#96897A">Synapse</text>
+        <text x="196" y="244" text-anchor="middle" fill="#96897A" font-size="10">44.4</text>
+        <!-- AWM 44.4→47.6 -->
+        <rect x="255" y="118.5" width="30" height="91.5" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="287" y="111.9" width="30" height="98.1" fill="#96897A" opacity="0.45"/>
+        <text x="286" y="228" text-anchor="middle" fill="#96897A">AWM</text>
+        <text x="286" y="244" text-anchor="middle" fill="#96897A" font-size="10">47.6</text>
+        <!-- RB 49.7→55.1 -->
+        <rect x="345" y="96.5" width="30" height="113.5" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C"/>
+        <rect x="377" y="85.7" width="30" height="124.3" fill="#B54A2C"/>
+        <text x="376" y="228" text-anchor="middle" fill="#B54A2C" font-weight="600">RB+MaTTS</text>
+        <text x="376" y="244" text-anchor="middle" fill="#B54A2C" font-size="10" font-weight="600">49.7→55.1</text>
+        <text x="376" y="76" text-anchor="middle" fill="#B54A2C" font-weight="600" font-size="12">55.1</text>
+        <!-- 图例 -->
+        <rect x="66" y="36" width="12" height="12" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="84" y="46" fill="#96897A" font-size="10">k=1 基线</text>
+        <rect x="150" y="36" width="12" height="12" fill="#96897A" opacity="0.45"/>
+        <text x="168" y="46" fill="#96897A" font-size="10">k=5 BoN</text>
+        <!-- 右：Pass@1 对比 -->
+        <text x="555" y="24" text-anchor="middle" font-weight="600" fill="#24555A">Pass@1：缩放反过来喂养记忆</text>
+        <g>
+          <text x="430" y="70" text-anchor="end" fill="#96897A" font-size="10.5">Synapse  40.6 →</text>
+          <line x1="438" y1="66" x2="508" y2="66" stroke="#96897A" marker-end="url(#fk-arrow)"/>
+          <text x="514" y="70" fill="#96897A">41.2 几乎不动</text>
+          <text x="430" y="110" text-anchor="end" fill="#96897A" font-size="10.5">AWM  44.4 →</text>
+          <line x1="438" y1="106" x2="516" y2="106" stroke="#96897A" marker-end="url(#fk-arrow)"/>
+          <text x="522" y="110" fill="#96897A">45.5 微涨</text>
+          <text x="430" y="160" text-anchor="end" fill="#B54A2C" font-size="11" font-weight="600">RB  49.7 →</text>
+          <line x1="438" y1="156" x2="548" y2="156" stroke="#B54A2C" stroke-width="1.6" marker-end="url(#fk-arrow-a)"/>
+          <text x="554" y="160" fill="#B54A2C" font-weight="600">53.0 复利</text>
+        </g>
+        <!-- 右下：飞轮 -->
+        <circle cx="500" cy="212" r="46" fill="none" stroke="#B54A2C" stroke-dasharray="4 3"/>
+        <text x="500" y="208" text-anchor="middle" fill="#B54A2C" font-weight="600" font-size="11">记忆 ⇄ 缩放</text>
+        <text x="500" y="226" text-anchor="middle" fill="#96897A" font-size="10">双向正反馈</text>
+      </g>
+      <defs>
+        <marker id="fk-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="fk-arrow-a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 记忆与缩放的协同：左图——同样的五条轨迹，记忆越强抬升越高；右图——同样做缩放，只有强记忆能把多样性转化为更高质量的记忆（弱记忆收益递减，强记忆复利循环）</figcaption>
+  </figure>
+
+  <h3>还有三张让人踏实的补充账单</h3>
+  <p><em>裁判判错了怎么办？</em>实测 LLM-as-a-Judge 与真实标签的一致率只有 72.7%——接近三成的判定是错的。但把裁判准确率从 100% 一路人为压到 50%（瞎猜），ReasoningBank 的表现在 70%–90% 区间几乎纹丝不动。策略级的存单自带容错：一次误判混进来的坏经验，会被后续大量正确经验稀释掉。</p>
+  <p><em>记忆库越满越好吗？</em>恰恰相反：检索 top-1 时成功率 49.7，top-2 掉到 46.0，top-4 只剩 44.4。<em>记忆贵精不贵多</em>——塞太多相关度不足的存单进上下文，反而互相打架。</p>
+  <p><em>要花多少钱？</em>每任务的 token 开销只比无记忆基线多 4.3%（五万出头的 token），换来 20.5% 的性能提升；交互步数平均省 1.6 步，其中成功案例省得最多（购物场景 6.8 步 → 4.7 步，相对减少 26.9%）。也就是说，这钱主要不是靠"少走了弯路"省出来的，而是<em>从一开始就走对了路</em>。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>这篇论文被 ICLR 2026 接收，但它真正的影响在于立起了一块路牌。<em>参数缩放</em>（把模型变大）和<em>算力缩放</em>（让模型多想）之后，ReasoningBank 给出了第三条正交的增长曲线：<em>经验缩放</em>（让模型多攒）——前两条都要烧钱，这一条几乎免费：轨迹反正已经跑出来了，多蒸馏几条存单而已。</p>
+  <p>它同时给"测试时学习"（test-time learning）这个范式补上了关键一环：o1 证明了推理时多算有用，但它每次任务之间是失忆的；ReasoningBank 证明了<em>跨任务</em>的测试时积累同样有用，且不需要任何梯度更新。论文发表后短短半年，跟进工作已经排起队：Agent KB 把经验库扩成跨框架共享，TAME 研究记忆进化的安全护栏，EvoMemBench 专门给"自进化记忆"立了新基准。一个研究方向成熟的标志，是它开始有了自己的对照组和 benchmark。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>作者在附录里罕见地坦诚，把家底亮了个干净。三个主要局限：</p>
+  <ul>
+    <li><em>只管"存什么"，不管"怎么管"</em>：检索是最朴素的嵌入相似度，巩固是简单追加——没有合并、没有去重、更没有遗忘。库越来越大之后怎么办，论文没答案（但MaTTS 的对比信号和后续的去重工作指了方向）。</li>
+    <li><em>裁判是软肋</em>：整个闭环的地基是 LLM-as-a-Judge 的自我评定。虽然实验证明它对噪声鲁棒，但在真正模糊的任务上，系统性误判仍可能让错误经验滚雪球。</li>
+    <li><em>存单之间不组合</em>：每条记忆项独立检索、独立使用，没有"把几条小策略拼成一个大策略"的机制。作者在展望中自己给出了路线图：按 planning / tool-use / operational / user-centric 分类的<em>模块化记忆</em>、episodic + working + long-term 的<em>分层记忆栈</em>、会分解查询多跳检索的<em>推理密集型检索器</em>——这基本就是下一代记忆系统的招标书。</li>
+  </ul>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>借着图 1，把整个系列串一遍：Transformer 奠定了架构地基 (#001)，BERT 与 GPT-2 确立了预训练范式 (#002–003)，GPT-3 用规模化撞开了涌现之门 (#004)，Chinchilla 校准了"模型与数据的最优配比 (#005)，InstructGPT 用人类反馈完成对齐 (#006)，LLaMA 点燃开源燎原之火 (#007–012)。随后是推理范式时代：CoT 点火 (#024)，o1 引爆 (#020)，测试时算力缩放定型 (#021)。再往后，舞台交给 agent：从 ReAct 的推理-行动循环 (#035) 到 SWE 系列的工程化 (#047–052)，再到自进化主线——自博弈出题 (#055)、技能炼金 (#059–061)、知识编译 (#062)。</p>
+  <p>ReasoningBank 站在这条长河的当前位置，做的事情可以一句话概括：<em>把"进化"从训练时搬到测试时，把"经验"从数据集变成银行账户</em>。它之前的进化要动权重（贵、慢、危险），它之后的进化只需要动一份 JSON 文件（便宜、即时、可回滚）。 WikiSkill 用"维基"回答了"经验沉淀成什么"，ReasoningBank 用"银行"回答了"经验如何被使用"——静态编译对动态检索，这一组对偶将在 2026 年被反复讨论。而它抛出的"经验缩放"概念，大概率是接下来几年 agent 领域最热的关键词之一。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>论文里最迷人的发现，藏在分析章节：一条记忆的<em>一生</em>。研究者追踪了名为 <em class="latin">User-Specific Information Navigation</em>（按用户信息导航）的记忆项在整个测试过程中的演化，发现它像生物一样逐级进化：最初只是一条呆板的程序性策略（"去找导航链接"）；几轮任务后长出自反思（"核对一遍用户 ID 再动手，免得搞错对象"）；再往后学会自适应检查（"动手前先系统性地用一遍搜索和过滤器，确认没有遗漏"）；最终成熟为组合策略（"交叉对照任务要求和当前选项，重新评估后再决策"）。作者特意指出，这种从低级动作到高级推理的演化曲线，<em>像极了强化学习的学习动态——但全程没有一次梯度更新</em>。进化不必写在权重里，也可以写在一份记忆清单上。</p>
+
+  <figure>
+    <svg viewBox="0 0 720 240" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11" fill="#2E2A22">
+        <!-- 四级台阶 -->
+        <rect x="40"  y="170" width="150" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="115" y="188" text-anchor="middle">① 程序性策略</text>
+        <text x="115" y="204" text-anchor="middle" fill="#96897A" font-size="10">"去找导航链接"</text>
+        <rect x="210" y="130" width="150" height="40" rx="2" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="285" y="148" text-anchor="middle">② 自适应自反思</text>
+        <text x="285" y="164" text-anchor="middle" fill="#96897A" font-size="10">"再核对一遍 ID"</text>
+        <rect x="380" y="90" width="150" height="40" rx="2" fill="#24555A" fill-opacity="0.12" stroke="#24555A"/>
+        <text x="455" y="108" text-anchor="middle" fill="#24555A">③ 自适应检查</text>
+        <text x="455" y="124" text-anchor="middle" fill="#96897A" font-size="10">"先用搜索和过滤器"</text>
+        <rect x="550" y="50" width="150" height="40" rx="2" fill="#B54A2C" fill-opacity="0.15" stroke="#B54A2C" stroke-width="1.4"/>
+        <text x="625" y="68" text-anchor="middle" fill="#B54A2C" font-weight="600">④ 组合策略</text>
+        <text x="625" y="84" text-anchor="middle" fill="#96897A" font-size="10">"交叉对照·重新评估"</text>
+        <!-- 台阶连线 -->
+        <line x1="190" y1="170" x2="210" y2="150" stroke="#96897A" stroke-width="1" marker-end="url(#ev-arrow)"/>
+        <line x1="360" y1="130" x2="380" y2="110" stroke="#96897A" stroke-width="1" marker-end="url(#ev-arrow)"/>
+        <line x1="530" y1="90" x2="550" y2="70" stroke="#96897A" stroke-width="1" marker-end="url(#ev-arrow)"/>
+        <!-- 旗帜 -->
+        <line x1="625" y1="50" x2="625" y2="24" stroke="#B54A2C"/>
+        <path d="M 625 24 L 651 31 L 625 38 Z" fill="#B54A2C"/>
+        <!-- 底注 -->
+        <text x="360" y="232" text-anchor="middle" fill="#96897A">一条记忆的四级的演化：没有一次梯度更新，只有一次次"存-取-再存"</text>
+      </g>
+      <defs>
+        <marker id="ev-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · 一条记忆的"一生"：从呆板动作到组合策略的四级进化——像极了 RL 的学习曲线，却没有一次参数更新</figcaption>
+  </figure>
+
+  <p>三个官方案例也各有味道。其一，用户问"我最早的一笔订单是哪天"，无记忆的 agent 只看了"最近订单"表格就作答，ReasoningBank 凭着"翻完整历史再回答"的存单找对了答案——它记得的不是这个网站，而是"别被表面入口骗了"这类元策略。其二，一个重度导航的购物任务，基线 agent 跌跌撞撞走了 29 步，ReasoningBank 靠着"分类过滤"的旧经验 10 步收官。其三最妙：某次失败的搜索（关键词太宽，返回一堆无关商品）被反思成两条新存单——"优化搜索词"和"善用功能过滤器"——同一个坑，再也没踩过第二次。</p>
+  <p>再看作者名单，也是一场小小的学术联谊：Google Cloud AI Research 领衔，UIUC 的韩家炜（Jiawei Han）——数据挖掘领域泰斗级人物——压阵，一作 Siru Ouyang 正是韩组博士生，Yale 的 Xiangru Tang 也在列（这位作者马上会在下一篇论文里以一作身份登场，此处按下不表）。致谢里还留了一句："感谢 Jiao Sun、Jing Nathan Yan 和 Google Cloud AI Research 的同事们"——一篇十八位作者的论文，致谢只有短短三行，倒是很有 Google 内部论文的极简风。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>上一篇 WikiSkill 我们算过"知识复利"的账，这一篇的账更极端：token 开销 +4.3%，性能 +20.5%。<em>参数缩放的边际成本以亿计，算力缩放按 token 收费，经验缩放几乎免费</em>——因为它的原料（轨迹）本来就是生产过程的副产品，不捡白不捡。三家银行抢的不是你的存款，是你的废水：谁先建好回收管道，谁就有下一代的自来水。</p>
+  <p>"失败比成功更值钱"这个发现，也值得所有人（包括人类）重读一遍。Synapse 和 AWM 的失败证明了：失败经验的价值不在"记录"而在<em>转译</em>——把"我干了什么"翻译成"下次别这么干"，错误才从噪音变成护栏。这几乎就是人类教育学的老结论（负例划定概念边界），在 agent 身上重新验证了一次。顺带一提，如果你在自己的 agent 项目里做过 retry 日志、踩坑文档，恭喜，你早就手工运营着一家 ReasoningBank——只是你的"提取 prompt"还没写进系统罢了。</p>
+  <p>剩下的问题同样值得警惕：记忆银行开了，可谁来当银保监会？论文证明了它对裁判噪声鲁棒，但没回答——当错误记忆被 MaTTS 的复利飞轮放大时，上限在哪里？系统性的自我强化偏差，会不会让一家银行变成庞氏骗局？TAME 等后续工作已经开始给记忆进化加装安全审计，这个方向才刚刚开始。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    ReasoningBank 的记忆是"一个人"的银行：同一个 agent 自己存、自己取。那如果允许跨用户、跨 agent 共享记忆呢？一个用户深夜踩过的坑，能让千里之外另一个 agent 白天绕道走——这听起来像天堂。但当记忆可以流通，恶意的"错误经验"是不是也像假钞一样可以注资污染整家银行？如果未来出现"记忆市场"——高手 agent 的成功存单挂牌出售——定价该按成功率，还是按可迁移性？你会买谁的记忆？
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Agent KB: Leveraging Cross-Domain Experience for Agentic Problem Solving（Agent KB：让经验跨越领域与框架流动——从一个人的记忆银行，到所有 agent 的共享知识库）</h3>
+    <p style="margin:0;">ReasoningBank 再能复利，存折上也只有"一个人"的名字——同一个 agent 自己挣钱自己花。可现实里的 agent 们各干各的：浏览器专家攒的网页经验，代码助手完全用不上；A 框架的 agent 踩过的坑，B 框架的 agent 原样再踩一遍。如果给所有 agent 开一家"中央银行"，经验跨领域、跨框架自由流通，会发生什么？有趣的是，Agent KB 的作者名单里，赫然出现了本篇作者团队中那位 Yale 的名字——而这项工作早在 ReasoningBank 之前就已上路。个体记忆如何长成集体记忆，下期见分晓。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 063 篇</span>
+    <span>2026-10-03</span>
+  </footer>
+
+</div>
+</body>
+</html>
