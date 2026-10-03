@@ -1,7 +1,7 @@
 {
   "_schema": "papers_covered 每项字段固定为：index(数字) / title_en(论文原文标题) / title_zh(中文意译标题) / date(YYYY-MM-DD 论文发表日期) / era(时代分组，格式如\"奠基期 2014–2017\") / filename(文件名，不含路径)。next_preview 记录上一篇文章末尾『下期预告』模块中承诺的下一篇论文，为空表示无强制约束、可按演进脉络自行判断选题。",
-  "last_index": 63,
-  "last_run_date": "2026-10-03",
+  "last_index": 64,
+  "last_run_date": "2026-10-04",
   "papers_covered": [
     {
       "index": 1,
@@ -506,10 +506,18 @@
       "date": "2025-09-29",
       "era": "经验复利期 2025–",
       "filename": "63_20261003_ReasoningBank.html"
+    },
+    {
+      "index": 64,
+      "title_en": "Agent KB: Leveraging Cross-Domain Experience for Agentic Problem Solving",
+      "title_zh": "Agent KB：让经验跨越领域与框架流动——从一个人的记忆银行，到所有 agent 的共享知识库",
+      "date": "2025-07-08",
+      "era": "经验复利期 2025–",
+      "filename": "64_20261004_Agent_KB.html"
     }
   ],
   "next_preview": {
-    "title_en": "Agent KB: Leveraging Cross-Domain Experience for Agentic Problem Solving",
-    "title_zh": "Agent KB：让经验跨越领域与框架流动——从一个人的记忆银行，到所有 agent 的共享知识库"
+    "title_en": "MemOS: A Memory OS for AI System",
+    "title_zh": "MemOS：给 AI 装一个“记忆操作系统”——当记忆像内存一样被调度、被换页、被计价"
   }
 }
