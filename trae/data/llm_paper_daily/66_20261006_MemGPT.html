@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MemGPT 论文精读 · 大模型经典论文系列 #066</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false}
+  ]});"></script>
+<style>
+  :root{
+    --bg:      #F4EFE4;
+    --bg2:     #ECE4D4;
+    --ink:     #2E2A22;
+    --muted:   #96897A;
+    --rule:    #96897A;
+    --accent:  #B54A2C;
+    --accent2: #24555A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Lora',serif;
+    font-size:18px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:72px 28px 120px;
+  }
+
+  /* ---------- 标签 / 图注 / 数据用等宽字体 ---------- */
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- 顶部系列标识 ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--accent2);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .kicker .idx{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  h1.title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:40px;
+    line-height:1.28;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .en{
+    display:block;
+    font-style:normal;
+    font-weight:400;
+    font-size:22px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .links-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    display:flex;
+    gap:18px;
+    margin:-4px 0 40px;
+  }
+  .links-line a{
+    color:var(--accent2);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .links-line a:hover{ border-bottom-color:var(--accent2); }
+
+  .meta-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:22px 0 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+  }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--rule);
+    margin:48px 0;
+  }
+
+  /* ---------- 开篇引子 ---------- */
+  .lead{
+    font-size:20px;
+    line-height:1.8;
+    margin:0 0 12px;
+  }
+  .lead + .lead{ color:var(--ink); }
+
+  /* ---------- 小节标题 ---------- */
+  h2{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:56px 0 20px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent);
+  }
+  h3{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:34px 0 14px;
+    color:var(--accent2);
+  }
+
+  p{ margin:0 0 18px; }
+
+  /* 中文没有真实斜体设计，混排斜体会被浏览器"伪斜体"强行倾斜 CJK 字形，
+     可读性差且违背"禁止伪斜体"的初衷。默认 <em> 用于中文/中英混排强调，
+     改用颜色+字重区分，不使用斜体。 */
+  em{
+    font-style:normal;
+    font-weight:600;
+    color:var(--accent);
+  }
+  /* 仅当强调内容是纯英文/拉丁字母（如论文英文标题、模型英文名等）时，
+     才使用 Lora 的真实 ital 轴斜体：<em class="latin">Attention</em> */
+  em.latin{
+    font-style:italic;
+    font-weight:400;
+    color:inherit;
+  }
+
+  a{ color:var(--accent2); text-decoration-thickness:1px; }
+
+  /* ---------- 提示 / 引用框 ---------- */
+  .callout{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    padding:18px 22px;
+    margin:26px 0;
+    border-radius:2px;
+  }
+  .callout .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--accent2);
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .callout.question{ border-left-color:var(--accent); }
+  .callout.question .label{ color:var(--accent); }
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:var(--bg2);
+    border-left:3px solid var(--accent2);
+    border-radius:2px;
+    padding:16px 20px;
+    overflow-x:auto;
+    margin:24px 0;
+  }
+  pre code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+  }
+
+  /* ---------- 公式块 ---------- */
+  .formula-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin:32px 0;
+    padding:20px 0;
+  }
+  .formula-block .eqn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    position:absolute;
+    right:0;
+  }
+
+  /* ---------- 三线表 ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:28px 0;
+    font-size:15px;
+  }
+  thead tr{ border-bottom:1px solid var(--rule); }
+  tbody tr:last-child{ border-bottom:1px solid var(--rule); }
+  tbody tr:nth-child(odd){ background:rgba(150,137,122,0.06); }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:left;
+    padding:10px 14px;
+    font-weight:500;
+  }
+  td{
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:14.5px;
+  }
+  td.text{ font-family:'Lora',serif; font-size:15px; }
+
+  /* ---------- 图表容器 ---------- */
+  figure{
+    margin:36px 0;
+    padding:0;
+  }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:12px;
+  }
+  figcaption .fig-num{ color:var(--accent); }
+
+  /* ---------- 列表 ---------- */
+  ul, ol{ margin:0 0 20px; padding-left:24px; }
+  li{ margin-bottom:8px; }
+
+  /* ---------- 思考题 ---------- */
+  .think{
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:18px 22px;
+    margin:28px 0;
+  }
+  .think .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-bottom:8px;
+  }
+
+  /* ---------- 下期预告 ---------- */
+  .next-up{
+    background:var(--bg2);
+    padding:28px 26px;
+    border-radius:2px;
+    margin:40px 0;
+  }
+  .next-up .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .next-up h3{ margin:0 0 8px; color:var(--ink); }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:24px;
+    border-top:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  @media (max-width:600px){
+    .page{ padding:48px 18px 90px; }
+    h1.title{ font-size:30px; }
+    h2{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ 顶部标识 ============ -->
+  <div class="kicker">
+    <span>大模型经典论文精读系列</span>
+    <span class="idx">#066</span>
+  </div>
+
+  <h1 class="title">
+    MemGPT: Towards LLMs as Operating Systems
+    <span class="en">MemGPT：让 LLM 自己当操作系统——上下文是内存，对话是中断，一段 system prompt 实现的虚拟内存管理</span>
+  </h1>
+
+  <div class="meta-line">
+    <span>作者：Charles Packer, Sarah Wooders, Kevin Lin, Vivian Fang, Shishir G. Patil, Ion Stoica, Joseph E. Gonzalez</span>
+    <span>机构：UC Berkeley · Sky Computing Lab</span>
+    <span>发表：2023-10 · arXiv 2310.08560（v2 更新于 2024-02）</span>
+  </div>
+
+  <div class="links-line">
+    <a href="https://arxiv.org/abs/2310.08560" target="_blank" rel="noopener">arXiv</a>
+    <a href="https://github.com/letta-ai/letta" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://research.memgpt.ai/" target="_blank" rel="noopener">Project</a>
+  </div>
+
+  <!-- ============ 开篇引子 ============ -->
+  <p class="lead">2023 年 10 月 12 日是个周四，伯克利 Sky Computing Lab 的博士生 Charles Packer 把团队的论文悄悄挂上了 arXiv，想着周末过完再张罗正式发布。结果周日就有人把论文翻了出来，贴上了 Hacker News——帖子在榜首挂了大约 48 小时，那个还没来得及宣传的 GitHub 仓库几天之内涌进 11000 个 star、1200 多个 fork。Packer 后来只能苦笑：<em>“someone scooped us”（被人抢发了）</em>。一篇不训练、不微调、参数一行不改的论文，凭什么让整个社区集体失眠？因为它干了一件听起来像科幻的事——<em>让 LLM 自己当自己的操作系统</em>。</p>
+  <p class="lead">上篇 MemOS（#065）结尾留了句话：“仅靠系统调用，建不成操作系统。”MemOS 给 AI 装了一个有调度器、有三层架构的“Windows”，但这条“记忆操作系统”路线的源头，其实是两年前这个更疯狂的实验：没有独立进程，没有注册表，整套内存管理逻辑全部塞在一段 system prompt 里，模型一边跟你聊天，一边给自己“换页”、给自己“写盘”。它就是 MemGPT——本系列连讲四篇的记忆赛道（WikiSkill → ReasoningBank → Agent KB → MemOS），今天终于要回到那个起点。</p>
+
+  <div class="callout question">
+    <span class="label">一句话总结</span>
+    把操作系统的“虚拟内存”思想塞进 LLM 的 system prompt：上下文窗口是内存，外部存储是磁盘，函数调用是系统调用——让模型<em>自己决定</em>什么留在“内存”、什么换出到“磁盘”、什么时候再换回来，用一个固定上下文的模型，造出“上下文无限”的幻觉。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 领域定位 ============ -->
+  <h2><span class="num">01</span>领域定位</h2>
+  <p>在本系列的谱系里，MemGPT 是“agent 记忆”这条线的正源。往前看，它站在几篇本系列老朋友的肩膀上：<em class="latin">Toolformer</em>（#034）教会了模型调函数，<em class="latin">ReAct</em>（#035）让思考与行动交织，<em class="latin">Voyager</em>（#036）给 agent 攒出了第一个技能库，<em class="latin">Generative Agents</em>（#037）的“记忆流”第一次让 25 个 agent 记住了彼此。这些工作其实都在暗示同一件事：模型需要一个窗口之外的状态。MemGPT 第一次把这个状态做成了完整的“操作系统”——有分层存储、有中断机制、有自我编辑，一步到位。</p>
+  <p>往后看，它孵化出记忆赛道最炙手可热的创业公司 Letta（原 MemGPT 项目，2024 年 9 月出隐身即拿下 Felicis 领投的 1000 万美元种子轮，天使投资人里赫然写着 Google DeepMind 首席科学家 Jeff Dean 的名字），也直接刺激了 Mem0、Zep、MemOS（#065）等一整个赛道的诞生。可以说，没有 MemGPT 的“疯狂”，就没有后来“给 AI 装记忆”这门生意的火种。</p>
+
+  <figure>
+    <!-- 图 1：大模型领域发展时间线，标注/高亮本篇位置 -->
+    <svg viewBox="0 0 700 270" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="100" x2="660" y2="100" stroke="#96897A" stroke-width="1"/>
+      <g font-family="JetBrains Mono" font-size="11">
+        <!-- 图例 -->
+        <g fill="#96897A">
+          <circle cx="470" cy="22" r="4" fill="#24555A"/>
+          <text x="482" y="26">已解析论文</text>
+          <circle cx="580" cy="22" r="4" fill="#F4EFE4" stroke="#96897A"/>
+          <text x="592" y="26">事件/未解析</text>
+        </g>
+
+        <!-- 节点 1：Transformer -->
+        <circle cx="70" cy="100" r="5" fill="#24555A"/>
+        <text x="70" y="76" text-anchor="middle" fill="#96897A">2017</text>
+        <text x="70" y="126" text-anchor="middle" fill="#2E2A22" font-weight="600">Transformer</text>
+        <text x="70" y="141" text-anchor="middle" fill="#96897A">#001</text>
+
+        <!-- 节点 2：BERT -->
+        <circle cx="160" cy="100" r="5" fill="#24555A"/>
+        <text x="160" y="76" text-anchor="middle" fill="#96897A">2018</text>
+        <text x="160" y="126" text-anchor="middle" fill="#2E2A22" font-weight="600">BERT</text>
+        <text x="160" y="141" text-anchor="middle" fill="#96897A">#002</text>
+
+        <!-- 节点 3：GPT-3 -->
+        <circle cx="250" cy="100" r="5" fill="#24555A"/>
+        <text x="250" y="76" text-anchor="middle" fill="#96897A">2020</text>
+        <text x="250" y="126" text-anchor="middle" fill="#2E2A22" font-weight="600">GPT-3</text>
+        <text x="250" y="141" text-anchor="middle" fill="#96897A">#004</text>
+
+        <!-- 节点 4：ChatGPT -->
+        <circle cx="340" cy="100" r="5" fill="#24555A"/>
+        <text x="340" y="76" text-anchor="middle" fill="#96897A">2022</text>
+        <text x="340" y="126" text-anchor="middle" fill="#2E2A22" font-weight="600">ChatGPT</text>
+        <text x="340" y="141" text-anchor="middle" fill="#96897A">#006</text>
+
+        <!-- 节点 5：MemGPT 本篇 -->
+        <circle cx="445" cy="100" r="8" fill="#B54A2C"/>
+        <text x="445" y="66" text-anchor="middle" fill="#B54A2C" font-weight="600">本篇 · 2023-10</text>
+        <text x="445" y="126" text-anchor="middle" fill="#B54A2C" font-weight="600">MemGPT</text>
+        <text x="445" y="141" text-anchor="middle" fill="#96897A">#066</text>
+
+        <!-- 节点 6：Letta 成立 -->
+        <circle cx="540" cy="100" r="5" fill="#F4EFE4" stroke="#96897A"/>
+        <text x="540" y="76" text-anchor="middle" fill="#96897A">2024</text>
+        <text x="540" y="126" text-anchor="middle" fill="#2E2A22">Letta 成立</text>
+
+        <!-- 节点 7：记忆赛道 -->
+        <circle cx="625" cy="100" r="5" fill="#24555A"/>
+        <text x="625" y="76" text-anchor="middle" fill="#96897A">2025</text>
+        <text x="625" y="126" text-anchor="middle" fill="#2E2A22" font-weight="600">记忆赛道</text>
+        <text x="625" y="141" text-anchor="middle" fill="#96897A">MemOS #065</text>
+      </g>
+
+      <!-- 记忆谱系注释带 -->
+      <g font-family="JetBrains Mono" font-size="11" fill="#24555A">
+        <path d="M 105 185 L 105 192 L 655 192 L 655 185" fill="none" stroke="#24555A" stroke-width="1" stroke-dasharray="3 3"/>
+        <text x="350" y="214" text-anchor="middle">记忆谱系：函数调用（Toolformer·ReAct #034–035）→ 记忆流与技能库（Voyager·GenAgents #036–037）</text>
+        <text x="350" y="232" text-anchor="middle">→ <tspan fill="#B54A2C" font-weight="600">记忆操作系统（MemGPT #066）</tspan>→ 记忆赛道（Letta · Mem0 · MemOS #065）</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 1</span> · 大模型发展脉络中的 MemGPT：它出生于 agent 化浪潮的 2023 年秋天，却成了两年后整个“记忆赛道”的源头</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 研究背景 ============ -->
+  <h2><span class="num">02</span>研究背景</h2>
+  <p>2023 年秋天，AI 圈的主要矛盾，是人民群众日益增长的长对话需求和 LLM 死活不变的上下文窗口之间的矛盾。论文里有一张今天看来颇为怀旧的表格：</p>
+
+  <table>
+    <thead>
+      <tr><th>模型</th><th>上下文窗口</th><th>大约能聊几条消息</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">Llama 2</td><td>4k tokens</td><td>~60 条</td></tr>
+      <tr><td class="text">Mistral 7B</td><td>8k tokens</td><td>~140 条</td></tr>
+      <tr><td class="text">GPT-3.5 Turbo</td><td>16k tokens</td><td>~300 条</td></tr>
+      <tr><td class="text">GPT-4</td><td>32k tokens</td><td>~600 条</td></tr>
+      <tr><td class="text">GPT-4 Turbo</td><td>128k tokens</td><td>~2600 条</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:-12px; font-size:14px; color:var(--muted);">按 1k token 系统提示、每条消息约 50 token 估算（论文表 1）。也就是说，当时的旗舰模型陪你认真聊一个下午就“失忆”了。</p>
+
+  <p>乍一看，出路有两条，但论文开篇就把两条都堵死了。<em>第一条路：把窗口做大</em>。注意力的计算和显存开销随序列长度二次方增长，成本先扛不住；更要命的是 Liu 等人 2023 年的著名发现——即便给了长窗口，模型也用不好，放在窗口<em>中间</em>的信息照样被无视，学界管这叫 <em class="latin">lost in the middle</em>。窗口大了，只是把“金鱼”养进了更大的鱼缸，记性并没有变好。</p>
+  <p><em>第二条路：截断或总结</em>。聊不下的旧消息直接扔掉，或者让另一个模型压缩成摘要。这条路的问题是丢失是必然的：“你上周说过你和 James 分手了”这种一句顶一万句的细节，在摘要里大概率会被压成“用户聊了聊近况”。对客服机器人是小事，对一个要长期陪伴用户的助理，是致命的。</p>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    <p style="margin:0;">把上下文窗口想象成你的<em>办公桌桌面</em>。方案一是换一张 100 平米的大桌子——贵得离谱，而且事实证明桌子越大，东西越容易找不到（lost in the middle）。方案二是每天下班让秘书写一页“今日工作摘要”烧掉所有原件——省地方，但细节全灭。而操作系统界在半个多世纪前就给出了第三条路：<em>虚拟内存</em>——桌面就这么大，但系统在桌子底下接了一个仓库，按需把文件搬上桌、用完搬回去，让你产生“桌子无限大”的错觉。1960 年代的程序员靠这个技巧跑起了比内存大得多的程序；MemGPT 的作者们问的问题是：<em>这个老 trick，能不能原封不动搬给 LLM 用？</em></p>
+  </div>
+
+  <p>顺带一提这项研究的起点，一点也不宏大——Letta 官方博客后来披露，MemGPT 最初只是想<em>给一个 Discord 聊天机器人改善记忆</em>：让网友们的机器人能记住昨天聊过什么。结果做着做着，问题滚雪球般滚成了“LLM 的内存管理到底该怎么做”，于是一支系统研究团队把它做成了一篇论文。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 核心问题 ============ -->
+  <h2><span class="num">03</span>核心问题</h2>
+  <p>论文要解决的问题可以一句话说清：<em>如何让一个上下文窗口固定且有限的 LLM，产生“上下文无限”的幻觉</em>——同时不打断对话、不丢失关键事实、不依赖人工写死的规则。</p>
+  <p>这里面藏着一个真正的设计难题：在内存和磁盘之间搬数据的“搬运工”该是谁？传统操作系统的搬运工是内核里的页面调度算法，冷酷、精确、不懂业务。但 LLM 的“页面”是自然语言，哪些消息重要、哪些事实值得留下，恰恰是需要理解语义才能做的判断——这又正是 LLM 自己最擅长的事。</p>
+
+  <div class="think">
+    <span class="label">思考一下</span>
+    如果由你来决定“哪些信息留在上下文里”，你会选谁当搬运工：一套人工规则（比如“永远保留最近 20 条”）？一个专门训练的小模型？还是让 LLM 自己管自己？前两个方案听起来稳妥，MemGPT 偏偏选了最激进的第三个——先记住你的选择，看看论文的理由能不能说服你。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 方法详解 ============ -->
+  <h2><span class="num">04</span>方法详解</h2>
+  <p>先说结论：MemGPT 的“工程清单”短得可疑——<em>一个原封不动的商用 LLM、两个外部数据库、两段管理代码、一份长长的 system prompt</em>。没有训练，没有微调，没有梯度。整篇论文的核心，是把操作系统的内存管理哲学翻译成模型能读懂的说明书。</p>
+
+  <figure>
+    <!-- 图 2：MemGPT 架构示意图 -->
+    <svg viewBox="0 0 700 430" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="fg2arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+        <marker id="fg2arrA" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B54A2C"/>
+        </marker>
+      </defs>
+
+      <!-- 主上下文容器 -->
+      <rect x="30" y="30" width="300" height="190" fill="#ECE4D4" stroke="#96897A"/>
+      <text x="180" y="54" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#24555A" font-weight="600">主上下文（prompt）＝ 内存</text>
+      <rect x="48" y="70" width="264" height="36" fill="#F4EFE4" stroke="#96897A"/>
+      <text x="180" y="93" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#2E2A22">系统指令（只读 · “BIOS”）</text>
+      <rect x="48" y="114" width="264" height="36" fill="#F4EFE4" stroke="#96897A"/>
+      <text x="180" y="137" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#2E2A22">工作上下文（可读写 · 便签）</text>
+      <rect x="48" y="158" width="264" height="48" fill="#F4EFE4" stroke="#96897A"/>
+      <text x="180" y="178" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#2E2A22">FIFO 队列（滚动消息历史）</text>
+      <text x="180" y="196" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#96897A">队首常驻：递归摘要</text>
+
+      <!-- 外部上下文容器 -->
+      <rect x="370" y="30" width="300" height="190" fill="#ECE4D4" stroke="#96897A"/>
+      <text x="520" y="54" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#24555A" font-weight="600">外部上下文 ＝ 磁盘</text>
+      <rect x="388" y="70" width="264" height="56" fill="#F4EFE4" stroke="#96897A"/>
+      <text x="520" y="92" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#2E2A22">召回存储</text>
+      <text x="520" y="110" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#96897A">全部历史消息日志 · 可检索</text>
+      <rect x="388" y="136" width="264" height="64" fill="#F4EFE4" stroke="#96897A"/>
+      <text x="520" y="158" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#2E2A22">归档存储</text>
+      <text x="520" y="176" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#96897A">向量数据库（任意长文本）</text>
+      <text x="520" y="192" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#96897A">pgvector + HNSW</text>
+
+      <!-- LLM 处理器 -->
+      <rect x="255" y="252" width="190" height="62" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+      <text x="350" y="278" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#B54A2C" font-weight="600">LLM 处理器</text>
+      <text x="350" y="298" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#96897A">读 prompt · 产出函数调用</text>
+
+      <!-- 队列管理器 -->
+      <rect x="30" y="352" width="180" height="62" fill="#ECE4D4" stroke="#96897A"/>
+      <text x="120" y="378" text-anchor="middle" font-family="JetBrains Mono" font-size="12.5" fill="#2E2A22" font-weight="600">队列管理器</text>
+      <text x="120" y="398" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#96897A">70% 警告 · 100% 冲刷</text>
+
+      <!-- 函数执行器 -->
+      <rect x="490" y="352" width="180" height="62" fill="#ECE4D4" stroke="#96897A"/>
+      <text x="580" y="378" text-anchor="middle" font-family="JetBrains Mono" font-size="12.5" fill="#2E2A22" font-weight="600">函数执行器</text>
+      <text x="580" y="398" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#96897A">执行换入 / 换出</text>
+
+      <!-- 箭头 -->
+      <line x1="175" y1="220" x2="300" y2="250" stroke="#96897A" stroke-width="1" marker-end="url(#fg2arr)"/>
+      <text x="185" y="245" font-family="JetBrains Mono" font-size="10.5" fill="#96897A">prompt tokens</text>
+
+      <line x1="445" y1="285" x2="555" y2="348" stroke="#96897A" stroke-width="1" marker-end="url(#fg2arr)"/>
+      <text x="470" y="325" font-family="JetBrains Mono" font-size="10.5" fill="#96897A">输出＝函数调用</text>
+
+      <line x1="570" y1="348" x2="520" y2="226" stroke="#96897A" stroke-width="1" marker-end="url(#fg2arr)"/>
+      <text x="595" y="295" font-family="JetBrains Mono" font-size="10.5" fill="#96897A">换入 / 换出</text>
+
+      <line x1="120" y1="348" x2="115" y2="226" stroke="#96897A" stroke-width="1" marker-end="url(#fg2arr)"/>
+      <text x="36" y="290" font-family="JetBrains Mono" font-size="10.5" fill="#96897A">驱逐 · 递归摘要</text>
+
+      <!-- heartbeat 回路 -->
+      <path d="M 515 350 C 460 338, 455 318, 448 300" fill="none" stroke="#B54A2C" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#fg2arrA)"/>
+      <text x="462" y="345" font-family="JetBrains Mono" font-size="10.5" fill="#B54A2C">request_heartbeat 唤醒</text>
+    </svg>
+    <figcaption><span class="fig-num">图 2</span> · MemGPT 架构：主上下文（内存）三段式 + 外部上下文（磁盘）双数据库，LLM 处理器通过函数调用亲自搬运数据（据论文图 3 重绘）</figcaption>
+  </figure>
+
+  <h3>第一步：把“内存”切成三段</h3>
+  <p>模型的 prompt——也就是它的“内存”——被划成三个连续区块，各司其职：</p>
+  <ul>
+    <li><strong>系统指令</strong>：只读的“主板说明书”，写明内存层级怎么用、有哪些函数可以调。相当于 BIOS/固件，开机后谁也不许改。</li>
+    <li><strong>工作上下文</strong>：一块固定大小的<em>可读写便签</em>，存放蒸馏过的关键事实——用户叫什么、喜欢什么、agent 自己的人设是什么。它只能通过函数调用修改，是“核心记忆”的载体。</li>
+    <li><strong>FIFO 队列</strong>：一段滚动的消息流水账，用户消息、模型回复、系统警告、函数结果都往里追加。注意队首第一条永远是<em>递归摘要</em>——被驱逐消息的摘要的摘要，保证模型对“很早以前”至少有个模糊印象。</li>
+  </ul>
+
+  <h3>第二步：把“磁盘”建成两个数据库</h3>
+  <p>窗口之外的一切都叫外部上下文，分两类：<strong>召回存储</strong>是全部历史消息的完整日志——注意是全文，不是摘要，永久保存、随时可搜回来；<strong>归档存储</strong>则是一个通用读写仓库，能塞任意长度的文本，底层用向量数据库实现（论文版本用的是 PostgreSQL 的 pgvector 扩展加 HNSW 索引，检索跑在 <em class="latin">text-embedding-ada-002</em> 嵌入上）。语义检索打分用的就是标准余弦相似度：</p>
+
+  <div class="formula-block">
+    $$ \text{sim}(q,d) = \frac{q \cdot d}{\lVert q \rVert \, \lVert d \rVert} $$
+    <span class="eqn mono">(1)</span>
+  </div>
+
+  <p>其中 $q$ 是查询的嵌入向量，$d$ 是某条存储内容的嵌入向量。公式本身平平无奇——真正新奇的是<em>按下检索键的权限归谁</em>：在传统 RAG 里，检索由外部流水线做主；在 MemGPT 里，检索是模型自己发起的系统调用。</p>
+
+  <h3>第三步：队列管理器——唯一“冷酷”的部分</h3>
+  <p>整个系统里只有队列管理器是纯粹的普通代码，不掺一点模型的不确定性。它干两件事：</p>
+  <ul>
+    <li><strong>70% 警戒</strong>：当 prompt 用量到达上下文窗口的约 70%，它往队列里插一条系统消息——“内存快满了”。相当于手机弹出“存储空间不足”的通知，给模型一个抢救的机会：赶紧把重要事实抄进便签、把长流水账搬进仓库。</li>
+    <li><strong>100% 冲刷</strong>：用量触顶时，驱逐大约一半的消息腾地方，并用“旧摘要 + 被驱逐消息”生成新的递归摘要。被驱逐者并不消失——它们全文进入召回存储，之后随时可以被搜回上下文（“换入”）。</li>
+  </ul>
+
+  <h3>第四步：一切输出皆系统调用</h3>
+  <p>这是 MemGPT 最异想天开的设计：<em>模型输出的不是聊天文本，而是函数调用</em>。想记事，调 <span class="mono">working_context.append</span>；想改便签，调 <span class="mono">working_context.replace</span>；想存长材料，调 <span class="mono">archival_storage.insert</span>；想翻旧账，调 <span class="mono">recall_storage.search</span> 或 <span class="mono">archival_storage.search</span>——连“回复用户”这个动作本身，都要通过 <span class="mono">send_message</span> 函数完成。函数执行的结果（包括报错，比如“便签已满写不进去了”）会被塞回上下文，模型看到后果再决定下一步。这是论文里最像操作系统的时刻：系统调用、错误码、重试，一应俱全。</p>
+
+  <pre><code>// 模型的"内心独白"全部变成函数调用：
+{
+  "function": "archival_storage.search",
+  "args": { "query": "James 六旗乐园 生日", "page": 0 },
+  "request_heartbeat": true
+}
+// ↑ 干完这件立刻叫醒我，我还有下一步
+
+{
+  "function": "send_message",
+  "args": { "message": "你们是在六旗乐园认识的呀，太巧了！" }
+}
+// ↑ 不带 heartbeat：说完这句，把控制权还给用户</code></pre>
+
+  <h3>第五步：中断与心跳——让模型“想说完再停”</h3>
+  <p>很多任务一口气调不完函数：搜到第一页结果，得翻到第二页；读完一份文档，还得再去搜另一份。MemGPT 借来操作系统的<em>中断</em>概念，给每个函数调用留了个特殊参数 <span class="mono">request_heartbeat=true</span>——含义是“函数执行完，请立刻把我叫醒继续”。就像你嘱咐外卖小哥“放门口之后给我发条消息”，模型可以一口气完成“搜索 → 翻页 → 再搜 → 读文档 → 作答”的链式动作，再交还控制权。触发推理的“事件”也被泛化了：不只是用户消息，系统警报、文档上传完成的通知、甚至定时器都能唤醒模型——最后这个意味着 agent 可以<em>不请自来</em>，主动找你说话。</p>
+
+  <figure>
+    <!-- 图 3：换页生命周期 -->
+    <svg viewBox="0 0 700 330" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="fg3arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 第一行 -->
+        <rect x="22" y="36" width="190" height="78" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="117" y="68" text-anchor="middle" font-weight="600">① 新消息入队</text>
+        <text x="117" y="90" text-anchor="middle" font-size="10.5" fill="#96897A">进入 FIFO 队列</text>
+        <text x="117" y="104" text-anchor="middle" font-size="10.5" fill="#96897A">上下文持续增长</text>
+
+        <rect x="255" y="36" width="190" height="78" fill="#B54A2C" fill-opacity="0.08" stroke="#B54A2C"/>
+        <text x="350" y="68" text-anchor="middle" font-weight="600" fill="#B54A2C">② 70% 警戒线</text>
+        <text x="350" y="90" text-anchor="middle" font-size="10.5" fill="#96897A">系统消息：内存压力警告</text>
+        <text x="350" y="104" text-anchor="middle" font-size="10.5" fill="#96897A">“存储空间不足，请清理”</text>
+
+        <rect x="488" y="36" width="190" height="78" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="583" y="68" text-anchor="middle" font-weight="600">③ 模型自我抢救</text>
+        <text x="583" y="90" text-anchor="middle" font-size="10.5" fill="#96897A">重要事实写入工作上下文</text>
+        <text x="583" y="104" text-anchor="middle" font-size="10.5" fill="#96897A">长内容搬进归档存储</text>
+
+        <!-- 第二行（从右往左读） -->
+        <rect x="488" y="216" width="190" height="78" fill="#B54A2C" fill-opacity="0.08" stroke="#B54A2C"/>
+        <text x="583" y="248" text-anchor="middle" font-weight="600" fill="#B54A2C">④ 100% 触顶冲刷</text>
+        <text x="583" y="270" text-anchor="middle" font-size="10.5" fill="#96897A">驱逐约一半消息</text>
+        <text x="583" y="284" text-anchor="middle" font-size="10.5" fill="#96897A">腾出上下文空间</text>
+
+        <rect x="255" y="216" width="190" height="78" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="350" y="248" text-anchor="middle" font-weight="600">⑤ 递归摘要</text>
+        <text x="350" y="270" text-anchor="middle" font-size="10.5" fill="#96897A">旧摘要＋被驱逐消息</text>
+        <text x="350" y="284" text-anchor="middle" font-size="10.5" fill="#96897A">生成新摘要放队首</text>
+
+        <rect x="22" y="216" width="190" height="78" fill="#24555A" fill-opacity="0.08" stroke="#24555A"/>
+        <text x="117" y="248" text-anchor="middle" font-weight="600" fill="#24555A">⑥ 永久换出</text>
+        <text x="117" y="270" text-anchor="middle" font-size="10.5" fill="#96897A">被驱逐消息全文进入召回存储</text>
+        <text x="117" y="284" text-anchor="middle" font-size="10.5" fill="#96897A">之后可随时“换入”搜回</text>
+
+        <!-- 箭头 -->
+        <line x1="212" y1="75" x2="253" y2="75" stroke="#96897A" stroke-width="1" marker-end="url(#fg3arr)"/>
+        <line x1="445" y1="75" x2="486" y2="75" stroke="#96897A" stroke-width="1" marker-end="url(#fg3arr)"/>
+        <line x1="583" y1="114" x2="583" y2="214" stroke="#96897A" stroke-width="1" marker-end="url(#fg3arr)"/>
+        <line x1="486" y1="255" x2="445" y2="255" stroke="#96897A" stroke-width="1" marker-end="url(#fg3arr)"/>
+        <line x1="253" y1="255" x2="212" y2="255" stroke="#96897A" stroke-width="1" marker-end="url(#fg3arr)"/>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 3</span> · 一次长对话中 MemGPT 的“换页”生命周期：70% 警告 → 自我抢救 → 100% 冲刷 → 递归摘要 → 永久换出，循环往复</figcaption>
+  </figure>
+
+  <h3>一张表看懂全部类比</h3>
+  <table>
+    <thead>
+      <tr><th>操作系统</th><th>MemGPT</th><th>备注</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">CPU 处理器</td><td class="text">LLM 处理器</td><td class="text">推理引擎，读内存、发系统调用</td></tr>
+      <tr><td class="text">内存（RAM）</td><td class="text">主上下文</td><td class="text">系统指令 + 工作上下文 + FIFO 队列</td></tr>
+      <tr><td class="text">磁盘</td><td class="text">外部上下文</td><td class="text">召回存储 + 归档存储</td></tr>
+      <tr><td class="text">换页（paging）</td><td class="text">函数调用搬数据</td><td class="text">换入 / 换出</td></tr>
+      <tr><td class="text">缺页中断</td><td class="text">内存压力警告</td><td class="text">70% 警戒、100% 冲刷</td></tr>
+      <tr><td class="text">系统中断</td><td class="text">request_heartbeat</td><td class="text">函数链式调用，模型自我唤醒</td></tr>
+      <tr><td class="text">引导固件（BIOS）</td><td class="text">系统指令</td><td class="text">只读的“操作系统说明书”</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <span class="label">类比</span>
+    <p style="margin:0;">如果 Transformer 是发动机（#001），InstructGPT 教会它说人话（#006），Toolformer 教会它用计算器（#034），那 MemGPT 做的事相当于把发动机装上车之后，再教它<em>考驾照、看仪表盘、自己决定什么时候加油</em>——车上的每一件事，都由它自己判断，因为只有司机知道目的地在哪儿。</p>
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 实验结果 ============ -->
+  <h2><span class="num">05</span>实验结果</h2>
+  <p>论文选了两个“上下文窗口是硬天花板”的领域做实验：多轮会话（记忆）和文档分析（阅读）。全部实验<em>零训练零微调</em>，直接拿 API 模型跑。</p>
+
+  <h3>实验一：深度记忆检索（DMR）——最惊人的翻盘</h3>
+  <p>在 MSC（Multi-Session Chat）数据集上，模型先陪用户连聊五段会话，然后被问一个只在很早会话里出现过的细节问题（“用户和 James 第一次见面是在哪儿？”）。固定上下文的基线模型只能拿到前几段会话的<em>有损摘要</em>，MemGPT 则可以翻查完整历史。结果：</p>
+
+  <table>
+    <thead>
+      <tr><th>底层模型</th><th>固定上下文</th><th>+ MemGPT</th><th>准确率提升</th><th>ROUGE-L 提升</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="text">GPT-3.5 Turbo</td><td>38.7%</td><td>66.9%</td><td>+28.2 pt</td><td>0.394 → 0.629</td></tr>
+      <tr><td class="text">GPT-4</td><td>32.1%</td><td>92.5%</td><td>+60.4 pt</td><td>0.296 → 0.814</td></tr>
+      <tr><td class="text">GPT-4 Turbo</td><td>35.3%</td><td>93.4%</td><td>+58.1 pt</td><td>0.359 → 0.827</td></tr>
+    </tbody>
+  </table>
+
+  <p>注意一个反直觉的细节：基线里 GPT-4 比 GPT-3.5 还惨（32.1% 对 38.7%）——因为<em>大家都被“摘要”这个有损压缩坑了</em>，模型再聪明，也变不出被摘要抹掉的细节。而 MemGPT 版 GPT-4 把准确率拉到 92.5%，靠的不是模型变聪明，而是它终于能<em>翻到原始记录</em>。用论文的话说：基线拿到的是会议纪要，MemGPT 拿到的是完整录音 + 播放器。</p>
+
+  <h3>实验二：开场白任务——机器比人更像“那个人”</h3>
+  <p>让 agent 主动给用户发起新会话的开场白——考的是它对用户人设的记忆掌握得多细。用与“标准人设标签”的嵌入余弦相似度（SIM-1）打分：人类写的参考开场白得分 0.800，MemGPT（GPT-4）拿到 <em>0.868</em>——机器生成的开场白比数据集里人类自己写的更像“它认识的那个人”，而且更啰嗦，覆盖的人设细节更多。你的 AI 比你朋友还记得你上个月随口提过的事，想想有点微妙。</p>
+
+  <h3>实验三：文档分析——窗口小不是读不了长文档的借口</h3>
+  <p>在 Liu 等人那套基于 NaturalQuestions-Open 的多文档问答设置里，检索回来的文档越多、越长，固定上下文的基线就越狼狈——塞不下就得截断，截断就可能正好删掉答案。MemGPT 则完全不慌：文档一页一页换进来读，读不完的翻页再读，准确率随文档数量增长保持稳定，彻底没有“截断衰减”这回事。顺带一提，同样的架构还能顺藤摸瓜读完全远超窗口的单个大文件——论文之外的读者很快发现，这就是后来各种“AI 读 PDF”产品的雏形。</p>
+
+  <h3>实验四：嵌套键值检索——多跳链式查找的降维打击</h3>
+  <p>最能体现“函数链”威力的是这个刻意设计的任务：给模型一批“键值对”，但值本身可能是另一个键——要拿到真正的值，就得一层一层追下去。140 对 UUID、约 8k token、最多四层嵌套，像不像在图书馆查“马斯克的生日”， encyclopedia 说“见 B 卷 312 页”，翻过去写着“见 D 卷索引”……</p>
+
+  <figure>
+    <!-- 图 4：嵌套 KV 检索对比 -->
+    <svg viewBox="0 0 700 310" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="JetBrains Mono" font-size="11">
+        <!-- 图例 -->
+        <rect x="330" y="12" width="12" height="12" fill="#96897A"/>
+        <text x="348" y="22" fill="#2E2A22">GPT-3.5 固定</text>
+        <rect x="460" y="12" width="12" height="12" fill="#24555A"/>
+        <text x="478" y="22" fill="#2E2A22">GPT-4 固定</text>
+        <rect x="572" y="12" width="12" height="12" fill="#B54A2C"/>
+        <text x="590" y="22" fill="#2E2A22">MemGPT(GPT-4)</text>
+
+        <!-- 网格线 -->
+        <g stroke="#96897A" stroke-opacity="0.25">
+          <line x1="70" y1="48" x2="650" y2="48"/>
+          <line x1="70" y1="98" x2="650" y2="98"/>
+          <line x1="70" y1="148" x2="650" y2="148"/>
+          <line x1="70" y1="198" x2="650" y2="198"/>
+        </g>
+        <line x1="70" y1="248" x2="650" y2="248" stroke="#96897A"/>
+        <g fill="#96897A">
+          <text x="60" y="52" text-anchor="end">100</text>
+          <text x="60" y="102" text-anchor="end">75</text>
+          <text x="60" y="152" text-anchor="end">50</text>
+          <text x="60" y="202" text-anchor="end">25</text>
+          <text x="60" y="252" text-anchor="end">0</text>
+        </g>
+        <text x="30" y="30" fill="#96897A">准确率%</text>
+
+        <!-- 0 层 -->
+        <rect x="73" y="48" width="34" height="200" fill="#96897A"/>
+        <rect x="113" y="48" width="34" height="200" fill="#24555A"/>
+        <rect x="153" y="48" width="34" height="200" fill="#B54A2C"/>
+        <!-- 1 层 -->
+        <text x="90" y="240" text-anchor="middle" fill="#96897A">0</text>
+        <rect x="188" y="48" width="34" height="200" fill="#24555A"/>
+        <rect x="228" y="48" width="34" height="200" fill="#B54A2C"/>
+        <text x="205" y="240" text-anchor="middle" fill="#96897A">0</text>
+        <!-- 2 层 -->
+        <text x="265" y="240" text-anchor="middle" fill="#96897A">0</text>
+        <rect x="303" y="48" width="34" height="200" fill="#24555A"/>
+        <rect x="343" y="48" width="34" height="200" fill="#B54A2C"/>
+        <text x="320" y="240" text-anchor="middle" fill="#96897A">0</text>
+        <!-- 3 层 -->
+        <text x="380" y="240" text-anchor="middle" fill="#96897A">0</text>
+        <text x="420" y="240" text-anchor="middle" fill="#96897A">0</text>
+        <rect x="433" y="48" width="34" height="200" fill="#B54A2C"/>
+        <!-- 4 层 -->
+        <text x="495" y="240" text-anchor="middle" fill="#96897A">0</text>
+        <text x="535" y="240" text-anchor="middle" fill="#96897A">0</text>
+        <rect x="548" y="48" width="34" height="200" fill="#B54A2C"/>
+
+        <!-- x 轴标签 -->
+        <g fill="#2E2A22" text-anchor="middle">
+          <text x="130" y="270">0 层</text>
+          <text x="245" y="270">1 层</text>
+          <text x="360" y="270">2 层</text>
+          <text x="475" y="270">3 层</text>
+          <text x="590" y="270">4 层</text>
+        </g>
+        <text x="360" y="294" text-anchor="middle" fill="#96897A">KV 嵌套层级（多跳链长）→</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 4</span> · 嵌套键值检索：GPT-3.5 一层嵌套就归零，GPT-4 扛到三层，MemGPT 全程近乎满分（数值据论文图 6 近似绘制）</figcaption>
+  </figure>
+
+  <p>GPT-3.5 固定上下文在一层嵌套时就完全失灵，GPT-4 扛到三层也归零——因为它们得<em>一次性</em>在心里追完整条链。MemGPT 靠 <span class="mono">request_heartbeat</span> 驱动的函数链，一层一层查、查完再查下一层，四层嵌套依然近乎满分。<em>把“深度推理”翻译成“顺序执行的系统调用”</em>，是这套架构最漂亮的一击。</p>
+
+  <div class="callout">
+    <span class="label">最令人惊讶的发现</span>
+    <p style="margin:0;">整套系统没有训练任何东西。“记忆能力”完全来自 system prompt 里那份自然语言说明书——GPT-4 读了说明书就会当操作系统了。这大概是 2023 年关于“涌现能力”最实用的注脚：有些看起来需要专门构建的能力，其实早就睡在模型里，缺的只是一份足够好的说明书。</p>
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ 影响与意义 ============ -->
+  <h2><span class="num">06</span>影响与意义</h2>
+  <p>MemGPT 对领域的第一重贡献是<em>词汇</em>：它发明并普及了 <em class="latin">virtual context management</em>（虚拟上下文管理）和"LLM OS"这套话语体系。在此之前，“给模型加记忆”是各家 prompt 工程师的自留地技巧；在此之后，它变成了一门有分层、有调度、有中断语义的<em>系统工程学科</em>——有了正确的词汇，大家才能讨论架构。今天你听到的 <em class="latin">stateful agent</em>（有状态智能体）、<em class="latin">memory tier</em>（记忆分层）、<em class="latin">context engineering</em>（上下文工程），源头都能摸回这篇论文。</p>
+  <p>第二重贡献是<em>赛道</em>。论文项目后来演化为开源框架与创业公司 Letta——2024 年 9 月 23 日出隐身当天宣布两件事：项目从 MemGPT 改名 Letta，以及完成 Felicis 领投的 1000 万美元种子轮（投后估值 7000 万美元），天使名单里包括 Jeff Dean 和 Hugging Face CEO Clem Delangue。Packer 对 TechCrunch 放话：“我们要做 OpenAI 的开源替代品。”而在它身后，Mem0、Zep、LangMem、MemOS（#065）相继入场，本系列近几篇讲的 WikiSkill、ReasoningBank、Agent KB，都在回答 MemGPT 提出的问题。</p>
+  <p>第三重贡献是<em>持续的研究纲领</em>。Letta 团队 2025 年 4 月又发表 <em class="latin">sleep-time compute</em>：让一个后台 agent 在“闲时”替主 agent 重新整理记忆，同样的准确率，测试时算力开销约降至五分之一，每查询平均成本约降至四成——等于给这台“操作系统”加上了睡眠整理碎片整理功能。</p>
+
+  <figure>
+    <!-- 图 5：MemGPT 谱系图 -->
+    <svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="fg5arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#96897A"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono" font-size="11.5" fill="#2E2A22">
+        <!-- 承前 -->
+        <rect x="15" y="42" width="170" height="66" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="100" y="68" text-anchor="middle" font-weight="600">承前</text>
+        <text x="100" y="88" text-anchor="middle" font-size="10.5" fill="#96897A">函数调用 · 记忆流</text>
+        <text x="100" y="102" text-anchor="middle" font-size="10.5" fill="#96897A">（#034–037）</text>
+
+        <!-- MemGPT -->
+        <rect x="245" y="32" width="210" height="80" fill="#B54A2C" fill-opacity="0.12" stroke="#B54A2C"/>
+        <text x="350" y="64" text-anchor="middle" fill="#B54A2C" font-weight="600" font-size="13">MemGPT（#066）</text>
+        <text x="350" y="84" text-anchor="middle" font-size="10.5" fill="#96897A">虚拟上下文管理 · 2023-10</text>
+        <text x="350" y="100" text-anchor="middle" font-size="10.5" fill="#96897A">“LLM 自己当操作系统”</text>
+
+        <line x1="185" y1="75" x2="241" y2="75" stroke="#96897A" stroke-width="1" marker-end="url(#fg5arr)"/>
+
+        <!-- 后代 -->
+        <g stroke="#96897A" stroke-width="1">
+          <line x1="330" y1="112" x2="77" y2="162"/>
+          <line x1="340" y1="112" x2="215" y2="162"/>
+          <line x1="350" y1="112" x2="353" y2="162"/>
+          <line x1="370" y1="112" x2="491" y2="162"/>
+          <line x1="378" y1="112" x2="629" y2="162"/>
+        </g>
+
+        <rect x="15" y="166" width="124" height="64" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="77" y="190" text-anchor="middle" font-weight="600">Letta（2024）</text>
+        <text x="77" y="210" text-anchor="middle" font-size="10" fill="#96897A">公司化 · 开源框架</text>
+
+        <rect x="153" y="166" width="124" height="64" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="215" y="190" text-anchor="middle" font-weight="600">Sleep-time</text>
+        <text x="215" y="210" text-anchor="middle" font-size="10" fill="#96897A">闲时整理记忆 · 2025</text>
+
+        <rect x="291" y="166" width="124" height="64" fill="#F4EFE4" stroke="#96897A" stroke-dasharray="4 3"/>
+        <text x="353" y="190" text-anchor="middle" font-weight="600">Mem0（2025）</text>
+        <text x="353" y="210" text-anchor="middle" font-size="10" fill="#96897A">记忆即服务 · 未解析</text>
+
+        <rect x="429" y="166" width="124" height="64" fill="#ECE4D4" stroke="#96897A"/>
+        <text x="491" y="190" text-anchor="middle" font-weight="600">MemOS（#065）</text>
+        <text x="491" y="210" text-anchor="middle" font-size="10" fill="#96897A">三层记忆 OS · 2025</text>
+
+        <rect x="567" y="166" width="124" height="64" fill="#F4EFE4" stroke="#96897A" stroke-dasharray="4 3"/>
+        <text x="629" y="190" text-anchor="middle" font-weight="600">更多后续</text>
+        <text x="629" y="210" text-anchor="middle" font-size="10" fill="#96897A">A-Mem · Zep · …</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 5</span> · MemGPT 的谱系：一篇论文孵化出一条赛道（虚线框为本系列尚未解析的后续）</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 局限性与未来方向 ============ -->
+  <h2><span class="num">07</span>局限性与未来方向</h2>
+  <p>论文自己也承认，这套“操作系统”的毛病不少，而且个个要命：</p>
+  <ul>
+    <li><strong>函数调用依赖症</strong>。整个系统的前提是模型能可靠地按说明书调函数。GPT-4 表现优秀，GPT-3.5 就明显拉胯——DMR 上 66.9% 对 92.5%，文档分析里差距更大。操作系统再精巧，也得看 CPU 给不给力：这个"OS"的版本号，实际上是被底层模型的指令遵循能力锁死的。</li>
+    <li><strong>贵，而且慢</strong>。一次用户提问可能触发一长串推理调用——搜索、翻页、再搜、读文档、作答，每一步都是真金白银的 token。论文没有给出延迟与成本分析，但每个复现过的人都会第一时间感受到账单的凉意。</li>
+    <li><strong>递归摘要有损</strong>。“会议纪要的纪要的纪要”，摘要叠摘要，细节注定层层蒸发。MemGPT 靠“原文都在召回存储里”兜底，但队首那条摘要本身，仍然是压缩过的二手货。</li>
+    <li><strong>换页策略全凭“良心”</strong>。传统 OS 的页面置换算法经过几十年打磨；MemGPT 的换页策略是模型读说明书后“凭自觉”执行的，没有任何学习机制。模型哪天判断失误，把关键信息存歪了地方，就真的找不回来了。</li>
+    <li><strong>评测偏窄</strong>。只考了问答类任务，没有复杂推理、创意写作，也没有和“直接把文档塞满 128k 窗口”的长上下文原生用法做正面对比。</li>
+  </ul>
+  <p>这些坑，后来者各认领了一个：Mem0 说记忆不该让模型自己管，该做成平台服务（下期主角）；MemOS 说光靠系统调用建不成操作系统，得有真正的调度器与存储分层（上篇主角）；Letta 自己则用 <em class="latin">sleep-time compute</em> 补成本课，用记忆块可视化（ADE）补可控性课。一篇论文留下一串 TODO，才是它成为经典的方式。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 领域演进脉络 ============ -->
+  <h2><span class="num">08</span>领域演进脉络</h2>
+  <p>把镜头拉远，看看这一篇在全图里的位置。2017 年 Transformer（#001）造出发动机；2018–2020 年 BERT（#002）与 GPT-2/3（#003/004）确立预训练范式；2020–2022 年 GPT-3 与 Chinchilla（#005）把“规模化”逼成显学；2022 年起 InstructGPT（#006）、DPO（#008）解决对齐，CoT（#024）点燃推理，agent 化浪潮随之而来——Toolformer（#034）、ReAct（#035）交出工具与行动，Voyager（#036）、Generative Agents（#037）攒出技能库与记忆流。到 2023 年秋天，所有零件都在桌上了，只差有人把它们组装成整车：MemGPT 用操作系统的图纸完成了这次总装，LLM 从“会说话的引擎”变成“带内存管理的机器”。</p>
+  <p>此后两年，两条线并行狂奔：一条是推理范式期（#013–023），o1、DeepSeek-R1 把“思考”本身做成可训练的能力——但再能思考的模型，窗口之外依然一片黑暗；另一条就是 MemGPT 开出的记忆赛道：ReasoningBank（#063）把推理策略存进银行，Agent KB（#064）让经验跨 agent 流动，MemOS（#065）给记忆装上调度器与计价体系。窗口越做越大（2k → 128k → 百万级），记忆赛道却越来越火——因为所有人都看清了一件事：<em>“窗口大”和“记得住、用得好”根本是两回事</em>，而这个判断，正是 MemGPT 在 2023 年就写下的注脚。</p>
+
+  <hr class="rule">
+
+  <!-- ============ 趣味延伸 ============ -->
+  <h2><span class="num">09</span>趣味延伸</h2>
+  <p>这篇论文的诞生史本身就是个段子合集。起点卑微到好笑：一切只是为了<em>给一个 Discord 聊天机器人改善记忆</em>。发表过程堪称事故：2023 年 10 月 12 日（周四）论文悄悄挂上 arXiv，团队打算周末后正式宣传，结果周日就被人翻出来贴上 Hacker News，霸榜约 48 小时，GitHub 几天内 11000 星——Packer 的原话是 “someone scooped us”，学术圈少见的“被自己的论文抢先发布”。仓库最初挂在他个人账号 <span class="mono">cpacker/MemGPT</span> 下，2024 年 2 月攒到约 1.8 万星，改名迁移到 <span class="mono">letta-ai/letta</span>，如今两万多星。</p>
+  <p>考据党还能发现一个细节：对比 arXiv 的 v1 和 v2，作者名单变了——v1 只有六个人，v2 里多了一位压阵的大佬：Ion Stoica。这位 Sky Computing Lab 的联合主管是 Databricks 联合创始人，实验室更是 Spark 和 Ray 的诞生地。这也解释了论文气质的来源：<em>在一间系统研究实验室里，“LLM 的上下文问题”从来不是什么 AI 前沿难题，而是 1970 年代就解决过的内存管理问题</em>——系统人看 AI，看到的全是老朋友。所谓降维打击，就是用五十年前的操作系统教科书，给最前沿的 AI 指出一条明路。</p>
+  <p>还有改名的段子。2024 年项目从 MemGPT 改叫 Letta，官方理由啼笑皆非又无比真实：当时 "MemGPT" 一词身兼三职——指论文里的技术、指“带记忆的聊天机器人”这个物种、指他们那个代码仓库，大家聊天全靠猜。一个名字三个意思，索引彻底失效，只好挥刀改名。顺带一提，在后来的 Letta 框架里，论文里的“工作上下文”演化成了可插拔的记忆块，函数也改了名：<span class="mono">core_memory_append</span>、<span class="mono">archival_memory_search</span>……古老的系统调用，至今还在迭代版本号。</p>
+
+  <figure>
+    <!-- 图 6：趣味插图 -->
+    <svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <line x1="350" y1="20" x2="350" y2="220" stroke="#96897A" stroke-dasharray="4 4"/>
+      <g font-family="JetBrains Mono" font-size="12" fill="#2E2A22">
+        <!-- 左：金鱼缸 -->
+        <text x="180" y="34" text-anchor="middle" font-weight="600">固定上下文（传统方案）</text>
+        <path d="M 95 62 L 112 158 Q 114 168 126 168 L 234 168 Q 246 168 248 158 L 265 62" fill="#ECE4D4" stroke="#96897A" stroke-width="1.2"/>
+        <path d="M 100 92 Q 130 84 160 92 T 220 92 T 258 92 L 258 160 L 100 160 Z" fill="#24555A" fill-opacity="0.18"/>
+        <ellipse cx="165" cy="125" rx="22" ry="11" fill="#B54A2C"/>
+        <path d="M 187 125 L 205 113 L 205 137 Z" fill="#B54A2C"/>
+        <circle cx="154" cy="122" r="1.8" fill="#2E2A22"/>
+        <circle cx="130" cy="105" r="2.5" fill="none" stroke="#24555A"/>
+        <circle cx="136" cy="94" r="3.5" fill="none" stroke="#24555A"/>
+        <circle cx="272" cy="58" r="4" fill="#24555A" fill-opacity="0.5"/>
+        <circle cx="282" cy="44" r="3" fill="#24555A" fill-opacity="0.5"/>
+        <circle cx="270" cy="72" r="2.5" fill="#24555A" fill-opacity="0.5"/>
+        <text x="180" y="196" text-anchor="middle" fill="#96897A" font-size="11">装不下的，只能溢出（截断/遗忘）</text>
+
+        <!-- 右：机器人管家 -->
+        <text x="530" y="34" text-anchor="middle" font-weight="600" fill="#B54A2C">MemGPT 方案</text>
+        <circle cx="440" cy="88" r="15" fill="#ECE4D4" stroke="#2E2A22"/>
+        <line x1="440" y1="73" x2="440" y2="60" stroke="#2E2A22"/>
+        <circle cx="440" cy="57" r="3" fill="#B54A2C"/>
+        <rect x="424" y="103" width="32" height="30" rx="2" fill="#ECE4D4" stroke="#2E2A22"/>
+        <rect x="460" y="98" width="22" height="16" fill="#B54A2C" fill-opacity="0.2" stroke="#B54A2C"/>
+
+        <rect x="540" y="150" width="110" height="9" fill="#ECE4D4" stroke="#96897A"/>
+        <line x1="547" y1="159" x2="547" y2="184" stroke="#96897A"/>
+        <line x1="643" y1="159" x2="643" y2="184" stroke="#96897A"/>
+        <rect x="575" y="132" width="24" height="18" fill="#24555A" fill-opacity="0.25" stroke="#24555A"/>
+        <text x="595" y="205" text-anchor="middle" fill="#96897A" font-size="10.5">桌＝上下文窗口</text>
+
+        <rect x="540" y="52" width="110" height="8" fill="#ECE4D4" stroke="#96897A"/>
+        <rect x="552" y="60" width="24" height="17" fill="#24555A" fill-opacity="0.25" stroke="#24555A"/>
+        <rect x="588" y="60" width="24" height="17" fill="#24555A" fill-opacity="0.25" stroke="#24555A"/>
+        <rect x="624" y="60" width="20" height="17" fill="#24555A" fill-opacity="0.25" stroke="#24555A"/>
+        <text x="595" y="44" text-anchor="middle" fill="#96897A" font-size="10.5">架＝外部存储</text>
+
+        <path d="M 486 106 Q 520 122 556 138" fill="none" stroke="#B54A2C" stroke-width="1.2" stroke-dasharray="4 3"/>
+        <path d="M 556 128 Q 520 116 486 100" fill="none" stroke="#B54A2C" stroke-width="1.2" stroke-dasharray="4 3"/>
+        <text x="505" y="135" fill="#B54A2C" font-size="10">换入/换出</text>
+
+        <text x="530" y="228" text-anchor="middle" fill="#96897A" font-size="11">小桌也能干大活：自己动手，丰衣足食</text>
+      </g>
+    </svg>
+    <figcaption><span class="fig-num">图 6</span> · 两种活法：金鱼靠大缸，管家靠调度</figcaption>
+  </figure>
+
+  <hr class="rule">
+
+  <!-- ============ 个人解读与延伸思考 ============ -->
+  <h2><span class="num">10</span>个人解读与延伸思考</h2>
+  <p>回头看，MemGPT 最持久的遗产不是那套具体机制（后来的框架大多改得面目全非），而是它示范的一种<em>方法论</em>：当 AI 的新问题看起来无从下手时，去计算机科学的历史档案馆里翻一翻——1950 年代至今，人类在“有限的机器上跑无限的需求”这件事上攒了一整柜子的智慧，虚拟内存、进程调度、中断、缓冲区管理，每一个都可能正好对上 LLM 的某个痛点。MemGPT 翻到的是“虚拟内存”这一页；MemOS 翻到的是“存储分层与调度”那一页；一定还有人在翻“文件系统权限模型”那一页。跨学科的类比不是修辞，是生产力。</p>
+  <p>更深一层，我觉得 MemGPT 悄悄改写了“记忆”的定义。在它之前，大家默认记忆是<em>训练</em>出来的东西——要么在预训练语料里，要么在微调权重里；在它之后，记忆成了<em>运行时</em>的东西——一张可以被读写的便签、一个可以被查询的仓库。本系列前面讲的 ReasoningBank 的记忆银行、Agent KB 的共享知识库、MemOS 的记忆立方体，本质上都是沿着这条路往下走：<em>把“学习”从梯度下放到读写操作</em>。模型参数不变，状态在变——这可能是通向持续学习最朴素的第一块踏脚石。</p>
+  <p>而 MemGPT 与 MemOS 的对照尤其耐人寻味。MemGPT 的哲学是“自治”：让 LLM 自己当内核，自己管理自己，优雅，但黑盒；MemOS 的哲学是“分层”：记忆该交给独立的操作系统去调度，可控，但笨重。这几乎就是操作系统史上“微内核 vs 宏内核”之争在 AI 世纪的复刻。两篇文章隔着两年遥遥相望，谁也没说服谁——而这场架构路线之争，大概率会伴随整个记忆赛道的青春期。</p>
+
+  <div class="think">
+    <span class="label">留个问题给你</span>
+    上下文窗口这几年涨了一百倍不止，百万 token 的模型已经不稀奇。有人因此宣判“记忆管理已死”。可 lost in the middle 从未根治，长窗口的推理成本更是随长度高企。你觉得：当窗口真的“无限长”的那天，我们还需要 MemGPT 这样的操作系统吗？还是说，“能用注意力看完一切”和“该看什么才看什么”，永远是两个问题？
+  </div>
+
+  <!-- ============ 下期预告 ============ -->
+  <div class="next-up">
+    <span class="label">下期预告</span>
+    <h3>Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory（Mem0：给 AI 记忆做减法——不造操作系统，把对话蒸馏成几条关键事实，LOCOMO 上领先 OpenAI Memory 约 26%）</h3>
+    <p style="margin:0;">MemGPT 让模型自己当操作系统，优雅是优雅，但贵也是真贵——用户每问一句话，都可能触发一串搜索、翻页、再搜索的函数调用，账单和延迟一起飞。2025 年，一支印度创业团队反手泼来一盆冷水：记忆根本不需要操作系统，需要的是<em>减法</em>——把冗长对话蒸馏成几条最关键的事实存起来，用时再取，够用就好。凭着这套“极简主义”，Mem0 在 LOCOMO 基准上比 OpenAI 自己的 Memory 功能相对提升约 26%，还把检索延迟压到秒级。当“记忆操作系统”遇上“记忆减法哲学”，这两条路线谁对谁错？记忆赛道的正面对决，下一篇正式开打，下期见。</p>
+  </div>
+
+  <footer>
+    <span>大模型经典论文精读系列 · 第 066 篇</span>
+    <span>2026-10-06</span>
+  </footer>
+
+</div>
+</body>
+</html>
